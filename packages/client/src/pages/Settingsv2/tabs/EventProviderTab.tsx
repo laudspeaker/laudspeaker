@@ -31,11 +31,11 @@ const EventProviderTab = () => {
   const loadData = async () => {
     try {
       const {
-        data: { posthogSetupped, javascriptSnippetSetupped },
+        data: { workspace },
       } = await ApiService.get<Account>({ url: "/accounts" });
 
-      setIsPosthogSetupped(posthogSetupped);
-      setIsJavascriptSnippetSetupped(javascriptSnippetSetupped);
+      setIsPosthogSetupped(workspace?.posthogSetupped);
+      setIsJavascriptSnippetSetupped(workspace?.javascriptSnippetSetupped);
     } catch (e) {
       toast.error("Error while loading data");
     }

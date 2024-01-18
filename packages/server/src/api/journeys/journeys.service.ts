@@ -46,9 +46,8 @@ import {
 import {
   AnalyticsEvent,
   AnalyticsEventCondition,
+  AttributeChangeEvent,
   AttributeConditions,
-  AttributeGroup,
-  Branch,
   Channel,
   ComponentEvent,
   CustomComponentStepMetadata,
@@ -67,7 +66,6 @@ import { ExitStepMetadata } from '../steps/types/step.interface';
 import { TimeDelayStepMetadata } from '../steps/types/step.interface';
 import { TimeWindow } from '../steps/types/step.interface';
 import { TimeWindowStepMetadata } from '../steps/types/step.interface';
-import { CustomerAttribute } from '../steps/types/step.interface';
 import { AttributeSplitMetadata } from '../steps/types/step.interface';
 import { Temporal } from '@js-temporal/polyfill';
 import generateName from '@good-ghosting/random-name-generator';
@@ -78,6 +76,7 @@ import {
 import { JourneyLocationsService } from './journey-locations.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { RedisService } from '@liaoliaots/nestjs-redis';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -117,7 +116,8 @@ export class JourneysService {
     @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(JourneyLocationsService)
     private readonly journeyLocationsService: JourneyLocationsService,
-    @InjectQueue('transition') private readonly transitionQueue: Queue
+    @InjectQueue('transition') private readonly transitionQueue: Queue,
+    @Inject(RedisService) private redisService: RedisService
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -189,8 +189,7 @@ export class JourneysService {
    */
 
   async getJourneys(account: Account, session: string) {
-
-    console.log("In getJourneys");
+    console.log('In getJourneys');
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -198,11 +197,15 @@ export class JourneysService {
 
     try {
       const journeys = await queryRunner.manager.find(Journey, {
-          where: { owner: { id: account.id } }
+        where: {
+          workspace: {
+            id: account.teams?.[0]?.organization?.workspaces?.[0].id,
+          },
+        },
       });
 
       // Map each Journey object to its id
-      const journeyIds = journeys.map(journey => journey.id);
+      const journeyIds = journeys.map((journey) => journey.id);
 
       // Commit the transaction before returning the data
       await queryRunner.commitTransaction();
@@ -216,9 +219,7 @@ export class JourneysService {
       // Release the query runner which will return it to the connection pool
       await queryRunner.release();
     }
-  
   }
-
 
   /**
    * Creates a journey.
@@ -232,10 +233,11 @@ export class JourneysService {
     try {
       const startNodeUUID = uuid();
       const nextNodeUUID = uuid();
+      const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
       const journey = await this.journeysRepository.create({
         name,
-        owner: { id: account.id },
+        workspace: workspace,
         visualLayout: {
           nodes: [],
           edges: [
@@ -298,13 +300,22 @@ export class JourneysService {
     queryRunner: QueryRunner,
     session: string
   ) {
+    account = await queryRunner.manager.findOne(Account, {
+      where: { id: account.id },
+      relations: ['teams.organization.workspaces'],
+    });
+
     try {
       const startNodeUUID = uuid();
       const nextNodeUUID = uuid();
 
+      const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
       const journey = await queryRunner.manager.create(Journey, {
         name,
-        owner: { id: account.id },
+        workspace: {
+          id: workspace.id,
+        },
         visualLayout: {
           nodes: [],
           edges: [
@@ -365,10 +376,14 @@ export class JourneysService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     let err: any;
+
+    const workspace = user.teams?.[0]?.organization?.workspaces?.[0];
     try {
       const oldJourney = await queryRunner.manager.findOne(Journey, {
         where: {
-          owner: { id: user.id },
+          workspace: {
+            id: workspace.id,
+          },
           id,
         },
       });
@@ -380,10 +395,13 @@ export class JourneysService {
       const res = await queryRunner.manager
         .createQueryBuilder(Journey, 'journey')
         .select('COUNT(*)')
-        .where('starts_with(name, :oldName) = TRUE AND "ownerId" = :ownerId', {
-          oldName: oldJourney.name.substring(0, copyEraseIndex),
-          ownerId: user.id,
-        })
+        .where(
+          'starts_with(name, :oldName) = TRUE AND "workspaceId" = :workspaceId',
+          {
+            oldName: oldJourney.name.substring(0, copyEraseIndex),
+            workspaceId: workspace.id,
+          }
+        )
         .execute();
       const newName =
         oldJourney.name.substring(0, copyEraseIndex) +
@@ -427,7 +445,7 @@ export class JourneysService {
           .map((oldStep) => {
             return {
               createdAt: new Date(),
-              owner: oldStep.owner,
+              workspace: oldStep.workspace,
               type: oldStep.type,
               journey: newJourney,
               customers: [],
@@ -440,9 +458,12 @@ export class JourneysService {
 
       let visualLayout: any = JSON.stringify(oldJourney.visualLayout);
 
+      // console.log('\n\n\n\n', workspace, oldJourney);
+
       for (let i = 0; i < oldSteps.length; i++) {
-        const oldStepID = oldSteps[i].id;
-        const newStepID = newSteps[i].id;
+        const oldStepID = oldSteps[i]?.id;
+        const newStepID = newSteps[i]?.id;
+
         visualLayout = visualLayout.replaceAll(oldStepID, newStepID);
         if (oldSteps[i].type === StepType.TRACKER) {
           const newStepName = generateName({ number: true }).dashed;
@@ -493,9 +514,13 @@ export class JourneysService {
     queryRunner: QueryRunner,
     clientSession: ClientSession
   ) {
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
     const journeys = await queryRunner.manager.find(Journey, {
       where: {
-        owner: { id: account.id },
+        workspace: {
+          id: workspace.id,
+        },
         isActive: true,
         isStopped: false,
         isPaused: false,
@@ -503,7 +528,7 @@ export class JourneysService {
         isDynamic: true,
       },
     });
-    let customer = await this.customersService.findById(
+    const customer = await this.customersService.findById(
       account,
       customerId,
       clientSession
@@ -511,16 +536,17 @@ export class JourneysService {
     for (const journey of journeys) {
       // get segments for journey
       let change: 'ADD' | 'REMOVE' | 'DO_NOTHING' = 'DO_NOTHING';
-      let doesInclude = await this.customersService.isCustomerEnrolledInJourney(
-        account,
-        customer,
-        journey,
-        session,
-        queryRunner
-      );
+      const doesInclude =
+        await this.customersService.isCustomerEnrolledInJourney(
+          account,
+          customer,
+          journey,
+          session,
+          queryRunner
+        );
       //let shouldInclude = true;
       // TODO_JH: implement the following
-      let shouldInclude = this.customersService.checkCustomerMatchesQuery(
+      const shouldInclude = this.customersService.checkCustomerMatchesQuery(
         journey.inclusionCriteria,
         account,
         session,
@@ -533,7 +559,7 @@ export class JourneysService {
       //    if customer in segment
       //        shouldInclude = true
       if (!doesInclude && shouldInclude) {
-        let journeyEntrySettings = journey.journeyEntrySettings ?? {
+        const journeyEntrySettings = journey.journeyEntrySettings ?? {
           enrollmentType: JourneyEnrollmentType.CurrentAndFutureUsers,
         };
         if (
@@ -554,10 +580,10 @@ export class JourneysService {
       }
       switch (change) {
         case 'ADD':
-          await this.enrollCustomerInJourney(
+          await this.enrollCustomersInJourney(
             account,
             journey,
-            customer,
+            [customer],
             session,
             queryRunner,
             clientSession
@@ -577,18 +603,21 @@ export class JourneysService {
   }
 
   /**
-   * Enroll customer in a journey.
-   * Adds to first step in journey.
+   * Enroll customers in a journey.
+   * Adds customer to first step in journey and adds customer to transition processor.
    * WARNING: this method does not check if the journey **should** include the customer.
+   * NOTE: this method DOES check the rate limiting for unique enrolled customers.
+   *
    */
-  async enrollCustomerInJourney(
+  async enrollCustomersInJourney(
     account: Account,
     journey: Journey,
-    customer: CustomerDocument,
+    customers: CustomerDocument[],
     session: string,
     queryRunner: QueryRunner,
     clientSession: ClientSession
   ): Promise<void> {
+    const jobs: { name: string; data: any }[] = [];
     const step = await this.stepsService.findByJourneyAndType(
       account,
       journey.id,
@@ -596,37 +625,51 @@ export class JourneysService {
       session,
       queryRunner
     );
-    await this.journeyLocationsService.createAndLock(
-      journey,
-      customer,
-      step,
-      session,
-      account,
-      queryRunner
-    );
-    await this.transitionQueue.add('start', {
-      ownerID: account.id,
-      journeyID: journey.id,
-      step: step,
-      session: session,
-      customerID: customer.id,
-    });
-
-    await this.CustomerModel.updateOne(
-      { _id: customer._id },
-      {
-        $addToSet: {
-          journeys: journey.id,
-        },
-        $set: {
-          journeyEnrollmentsDates: {
-            [journey.id]: new Date().toUTCString(),
-          },
-        },
+    for (const customer of customers) {
+      if (
+        await this.rateLimitEntryByUniqueEnrolledCustomers(
+          account,
+          journey,
+          queryRunner
+        )
+      ) {
+        this.log(
+          `Max customer limit reached on journey: ${journey.id}. Preventing customer: ${customer.id} from being enrolled.`,
+          this.enrollCustomersInJourney.name,
+          session,
+          account.id
+        );
+        continue;
       }
-    )
-      .session(clientSession)
-      .exec();
+      await this.journeyLocationsService.createAndLock(
+        journey,
+        customer,
+        step,
+        session,
+        account,
+        queryRunner
+      );
+      const job = {
+        name: 'start',
+        data: {
+          ownerID: account.id,
+          journeyID: journey.id,
+          step: step,
+          session: session,
+          customerID: customer.id,
+        },
+      };
+      jobs.push(job);
+      await this.customersService.updateJourneyList(
+        [customer],
+        journey.id,
+        session,
+        clientSession
+      );
+    }
+    if (jobs.length) {
+      await this.transitionQueue.addBulk(jobs);
+    }
   }
 
   /**
@@ -676,9 +719,13 @@ export class JourneysService {
     session: string
   ): Promise<void> {
     try {
+      const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
       const journeys = await queryRunner.manager.find(Journey, {
         where: {
-          owner: { id: account.id },
+          workspace: {
+            id: workspace.id,
+          },
           isActive: true,
           isStopped: false,
           isPaused: false,
@@ -774,13 +821,16 @@ export class JourneysService {
       const isStopped = filterStatusesParts.includes(JourneyStatus.STOPPED);
       const isDeleted = filterStatusesParts.includes(JourneyStatus.DELETED);
       const isEditable = filterStatusesParts.includes(JourneyStatus.DRAFT);
+      const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
       const whereOrParts: FindOptionsWhere<Journey>[] = [];
 
       if (isEditable) {
         whereOrParts.push({
           name: Like(`%${search}%`),
-          owner: { id: account.id },
+          workspace: {
+            id: workspace.id,
+          },
           isDeleted: false,
           isActive: false,
           isPaused: false,
@@ -800,7 +850,9 @@ export class JourneysService {
           if (value)
             whereOrParts.push({
               name: Like(`%${search}%`),
-              owner: { id: account.id },
+              workspace: {
+                id: workspace.id,
+              },
               isDeleted: In([!!showDisabled, false]),
               [key]: value,
               ...(key === 'isActive'
@@ -813,7 +865,9 @@ export class JourneysService {
       } else {
         whereOrParts.push({
           name: Like(`%${search}%`),
-          owner: { id: account.id },
+          workspace: {
+            id: workspace.id,
+          },
           isDeleted: In([!!showDisabled, false]),
         });
       }
@@ -857,9 +911,13 @@ export class JourneysService {
    *
    */
   findAllActive(account: Account): Promise<Journey[]> {
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
     return this.journeysRepository.find({
       where: {
-        owner: { id: account.id },
+        workspace: {
+          id: workspace.id,
+        },
         isActive: true,
         isStopped: false,
         isPaused: false,
@@ -882,17 +940,23 @@ export class JourneysService {
     session: string,
     queryRunner?: QueryRunner
   ) {
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
     if (queryRunner)
       return await queryRunner.manager.findOne(Journey, {
         where: {
-          owner: { id: account.id },
+          workspace: {
+            id: workspace.id,
+          },
           id,
         },
       });
     else
       return await this.journeysRepository.findOne({
         where: {
-          owner: { id: account.id },
+          workspace: {
+            id: workspace.id,
+          },
           id,
         },
       });
@@ -909,12 +973,15 @@ export class JourneysService {
    */
   async findOne(account: Account, id: string, session: string): Promise<any> {
     if (!isUUID(id)) throw new BadRequestException('Id is not valid uuid');
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
     let found: Journey;
     try {
       found = await this.journeysRepository.findOne({
         where: {
-          owner: { id: account.id },
+          workspace: {
+            id: workspace.id,
+          },
           id,
         },
       });
@@ -947,10 +1014,14 @@ export class JourneysService {
    */
 
   async markDeleted(account: Account, id: string, session: string) {
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       return await this.journeysRepository.update(
         {
-          owner: { id: account.id },
+          workspace: {
+            id: workspace.id,
+          },
           id: id,
         },
         {
@@ -981,9 +1052,13 @@ export class JourneysService {
     value: boolean,
     session: string
   ) {
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       const found: Journey = await this.journeysRepository.findOneBy({
-        owner: { id: account.id },
+        workspace: {
+          id: workspace.id,
+        },
         id,
       });
       if (found?.isStopped)
@@ -1030,10 +1105,13 @@ export class JourneysService {
 
     try {
       if (!account) throw new HttpException('User not found', 404);
+      const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
       journey = await queryRunner.manager.findOne(Journey, {
         where: {
-          owner: { id: account?.id },
+          workspace: {
+            id: workspace.id,
+          },
           id: journeyID,
         },
       });
@@ -1098,7 +1176,6 @@ export class JourneysService {
         session,
         transactionSession
       );
-
       if (
         journey.journeyEntrySettings.entryTiming.type ===
         EntryTiming.WhenPublished
@@ -1143,9 +1220,13 @@ export class JourneysService {
    * @returns
    */
   async stop(account: Account, id: string, session: string) {
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       const found: Journey = await this.journeysRepository.findOneBy({
-        owner: { id: account.id },
+        workspace: {
+          id: workspace.id,
+        },
         id,
       });
       if (!found?.isActive)
@@ -1563,11 +1644,44 @@ export class JourneysService {
               } else if (
                 relevantEdges[i].data['branch'].type === BranchType.WU_ATTRIBUTE
               ) {
+                const branch = new EventBranch();
+                branch.events = [];
+                branch.relation =
+                  relevantEdges[i].data['branch'].conditions[0].relationToNext;
+                branch.index = i;
+                branch.destination = nodes.filter((node) => {
+                  return node.id === relevantEdges[i].target;
+                })[0].data.stepId;
+                for (
+                  let eventsIndex = 0;
+                  eventsIndex <
+                  relevantEdges[i].data['branch'].conditions.length;
+                  eventsIndex++
+                ) {
+                  const event = new AttributeChangeEvent();
+                  event.attributeName =
+                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                      'attributeName'
+                    ].split(';;')[0];
+                  event.happenCondition =
+                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                      'happenCondition'
+                    ];
+                  if (event.happenCondition === 'changed to') {
+                    event.value =
+                      relevantEdges[i].data['branch'].conditions[eventsIndex][
+                        'value'
+                      ];
+                    event.valueType =
+                      relevantEdges[i].data['branch'].conditions[eventsIndex][
+                        'valueType'
+                      ];
+                  }
+
+                  branch.events.push(event);
+                }
+                metadata.branches.push(branch);
               }
-            }
-            if (nodes[i].id === '226a7112-96ec-477d-a1ac-d604b4f04301') {
-              this.logger.warn('SAVE TEST 3 After processing');
-              this.logger.warn(journey);
             }
             break;
           case NodeType.JUMP_TO:
@@ -1981,14 +2095,16 @@ export class JourneysService {
   }
 
   async getAllJourneyTags(account: Account, session: string): Promise<any> {
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       const tags = await this.dataSource.query(
         `
       SELECT DISTINCT json_array_elements_text("journeySettings"::json->'tags') as tag
       FROM journey
-      WHERE "journeySettings" is not null and "ownerId" = $1
+      WHERE "journeySettings" is not null and "workspaceId" = $1
       `,
-        [account.id]
+        [workspace.id]
       );
 
       return tags.map((el) => el.tag);
@@ -2005,6 +2121,8 @@ export class JourneysService {
     session: string
   ): Promise<any> {
     if (!isUUID(id)) throw new BadRequestException('Id is not valid uuid');
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       const data = await this.dataSource.query(
         `
@@ -2015,9 +2133,9 @@ export class JourneysService {
           AND metadata::jsonb->>'channel' = $1
           AND metadata::jsonb->>'template' is not null
           AND "journeyId" = $2
-          AND "ownerId" = $3
+          AND "workspaceId" = $3
   `,
-        [type, id, account.id]
+        [type, id, workspace.id]
       );
 
       return data;
@@ -2025,5 +2143,124 @@ export class JourneysService {
       this.error(err, this.findAllMessages.name, session, account.email);
       throw err;
     }
+  }
+
+  /**
+   * Checks if limit for unique customers on the given journey has been reached.
+   *
+   * @returns boolean
+   *    true if rate limit reached (aka new customer can not be added)
+   *    false if rate limit not yet reached (aka new customer can be added)
+   */
+  async rateLimitEntryByUniqueEnrolledCustomers(
+    owner: Account,
+    journey: Journey,
+    queryRunner?: QueryRunner
+  ) {
+    const maxEntriesSettings = journey?.journeySettings?.maxEntries;
+    if (maxEntriesSettings && maxEntriesSettings.enabled) {
+      const maxEnrollment = parseInt(maxEntriesSettings.maxEntries);
+      const currentEnrollment =
+        await this.journeyLocationsService.getNumberOfEnrolledCustomers(
+          owner,
+          journey,
+          queryRunner
+        );
+
+      if (currentEnrollment >= maxEnrollment) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Reads the settings of a journey and returns an array with two keys
+   * @returns [boolean, number | undefined] where:
+   *    first item: whether rate limit of unique customers able to receive messsages is enabled
+   *    second item: max number of unique customers able to receive messages, if enabled
+   */
+  rateLimitByCustomersMessagedEnabled(
+    journey: Journey
+  ): readonly [boolean, number | undefined] {
+    const maxMessageSends = journey?.journeySettings?.maxMessageSends;
+    if (maxMessageSends.enabled && maxMessageSends.maxUsersReceive != null) {
+      const customerLimit = parseInt(maxMessageSends.maxUsersReceive);
+      return [true, customerLimit] as const;
+    }
+    return [false, undefined] as const;
+  }
+
+  /** */
+  async rateLimitByCustomersMessaged(
+    owner: Account,
+    journey: Journey,
+    session: string,
+    queryRunner?: QueryRunner
+  ) {
+    const [enabled, customerLimit] =
+      this.rateLimitByCustomersMessagedEnabled(journey);
+    if (enabled) {
+      const currentUniqueCustomers =
+        await this.journeyLocationsService.getNumberOfUniqueCustomersMessaged(
+          owner,
+          journey,
+          queryRunner
+        );
+      if (currentUniqueCustomers >= customerLimit) {
+        this.log(
+          `Unique customers messaged limit hit. journey: ${journey.id} limit:${customerLimit} currentUniqueCustomers: ${currentUniqueCustomers}`,
+          this.rateLimitByCustomersMessaged.name,
+          session,
+          owner.id
+        );
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Reads the settings of a journey and returns an array with two keys
+   * @returns [boolean, number | undefined] where:
+   *    first item: whether rate limit messsage sends per minute is enabled
+   *    second item: max number of message sends per minute, if enabled
+   */
+  rateLimitByMinuteEnabled(
+    journey: Journey
+  ): readonly [boolean, number | undefined] {
+    const maxMessageSends = journey?.journeySettings?.maxMessageSends;
+    if (maxMessageSends.enabled && maxMessageSends.maxSendRate != null) {
+      const rateLimit = parseInt(maxMessageSends.maxSendRate);
+      return [true, rateLimit] as const;
+    }
+    return [false, undefined] as const;
+  }
+
+  async rateLimitByMinute(owner: Account, journey: Journey) {
+    const [enabled, rateLimit] = this.rateLimitByMinuteEnabled(journey);
+    if (enabled) {
+      const now = new Date();
+      const currValue = parseInt(
+        await this.redisService
+          .getClient()
+          .get(`${owner.id}:${journey.id}:${now.getUTCMinutes()}`)
+      );
+      if (!isNaN(currValue) && currValue >= rateLimit) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async rateLimitByMinuteIncrement(owner: Account, journey: Journey) {
+    const now = new Date();
+    const rateLimitKey = `${owner.id}:${journey.id}:${now.getUTCMinutes()}`;
+    await this.redisService
+      .getClient()
+      .multi()
+      .incr(rateLimitKey)
+      .expire(rateLimitKey, 59)
+      .exec();
   }
 }

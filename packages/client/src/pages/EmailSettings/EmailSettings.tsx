@@ -6,12 +6,15 @@ import React, { ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import ApiService from "services/api.service";
+import Account from "types/Account";
 import MailgunSettings from "./components/MailgunSettings";
 import SendgridSettings from "./components/SendgridSettings";
+import ResendSettings from "./components/ResendSettings";
 
 export enum EmailSendingService {
   MAILGUN = "mailgun",
   SENDGRID = "sendgrid",
+  RESEND = "resend",
 }
 
 interface EmailSettingsFormData {
@@ -23,6 +26,11 @@ interface EmailSettingsFormData {
   testSendingEmail: string;
   sendgridApiKey: string;
   sendgridFromEmail: string;
+  resendAPIKey: string;
+  resendSigningSecret: string;
+  resendSendingDomain: string;
+  resendSendingName: string;
+  resendSendingEmail: string;
 }
 
 export interface SendingServiceSettingsProps {
@@ -45,6 +53,11 @@ const EmailSettings = () => {
     testSendingEmail: "",
     sendgridApiKey: "",
     sendgridFromEmail: "",
+    resendAPIKey: "",
+    resendSendingDomain: "",
+    resendSendingName: "",
+    resendSendingEmail: "",
+    resendSigningSecret: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -57,13 +70,17 @@ const EmailSettings = () => {
     [EmailSendingService.SENDGRID]: (
       <SendgridSettings formData={formData} setFormData={setFormData} />
     ),
+    [EmailSendingService.RESEND]: (
+      <ResendSettings formData={formData} setFormData={setFormData} />
+    ),
   };
 
   useEffect(() => {
     (async () => {
       setIsLoading(true);
       try {
-        const { data } = await ApiService.get({ url: "/accounts" });
+        const { data } = await ApiService.get<Account>({ url: "/accounts" });
+        const { verified } = data;
         const {
           mailgunAPIKey,
           sendingDomain,
@@ -72,10 +89,14 @@ const EmailSettings = () => {
           testSendingEmail,
           testSendingName,
           emailProvider: provider,
-          verified,
           sendgridApiKey,
           sendgridFromEmail,
-        } = data;
+          resendAPIKey,
+          resendSendingDomain,
+          resendSendingName,
+          resendSendingEmail,
+          resendSigningSecret,
+        } = data.workspace;
         setFormData({
           mailgunAPIKey: mailgunAPIKey || "",
           sendingDomain: sendingDomain || "",
@@ -85,7 +106,13 @@ const EmailSettings = () => {
           testSendingName: testSendingName || "",
           sendgridApiKey: sendgridApiKey || "",
           sendgridFromEmail: sendgridFromEmail || "",
+          resendAPIKey: resendAPIKey || "",
+          resendSendingDomain: resendSendingDomain || "",
+          resendSendingName: resendSendingName || "",
+          resendSendingEmail: resendSendingEmail || "",
+          resendSigningSecret: resendSigningSecret || "",
         });
+        // @ts-ignore
         setSendingService(provider || sendingService);
       } catch (e) {
         toast.error("Error while loading data");
@@ -126,6 +153,12 @@ const EmailSettings = () => {
           formData.sendingName
       : sendingService === EmailSendingService.SENDGRID
       ? formData.sendgridApiKey && formData.sendgridFromEmail
+      : sendingService === EmailSendingService.RESEND
+      ? formData.resendAPIKey &&
+        formData.resendSigningSecret &&
+        formData.resendSendingDomain &&
+        formData.resendSendingEmail &&
+        formData.resendSendingName
       : false
   );
 
@@ -147,6 +180,7 @@ const EmailSettings = () => {
               options={[
                 { key: EmailSendingService.MAILGUN, title: "Mailgun" },
                 { key: EmailSendingService.SENDGRID, title: "Sendgrid" },
+                { key: EmailSendingService.RESEND, title: "Resend" },
               ]}
               value={sendingService}
               onChange={(value) => setSendingService(value)}

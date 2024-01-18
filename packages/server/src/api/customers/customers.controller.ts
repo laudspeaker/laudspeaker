@@ -32,6 +32,7 @@ import { AttributeType } from './schemas/customer-keys.schema';
 import { ImportCustomersDTO } from './dto/import-customers.dto';
 import { extname } from 'path';
 import { UpdatePK_DTO } from './dto/update-pk.dto';
+import { UpsertCustomerDto } from './dto/upsert-customer.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -239,7 +240,7 @@ export class CustomersController {
     const {
       _id,
       __v,
-      ownerId,
+      workspaceId,
       verified,
       journeys,
       journeyEnrollmentsDates,
@@ -291,12 +292,12 @@ export class CustomersController {
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async upsert(
     @Req() { user }: Request,
-    @Body() updateCustomerDto: Record<string, unknown>
+    @Body() upsertCustomerDto: UpsertCustomerDto
   ) {
     const session = randomUUID();
     return await this.customersService.upsert(
       <Account>user,
-      updateCustomerDto,
+      upsertCustomerDto,
       session
     );
   }
@@ -389,13 +390,15 @@ export class CustomersController {
     } catch (e) {
       return new HttpException(e, 500);
     }
+    account = <Account>user;
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
     //to do will eventually need to make it so it does not take the top g
     try {
       await this.customersService.ingestPosthogPersons(
-        account.posthogProjectId[0],
-        account.posthogApiKey[0],
-        account.posthogHostUrl[0],
+        workspace.posthogProjectId[0],
+        workspace.posthogApiKey[0],
+        workspace.posthogHostUrl[0],
         account,
         session
       );

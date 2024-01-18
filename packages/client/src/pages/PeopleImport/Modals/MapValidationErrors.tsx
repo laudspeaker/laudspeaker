@@ -55,7 +55,9 @@ const MapValidationErrors: FC<MapValidationErrorsProps> = ({
 
           <div className="flex flex-col gap-2">
             <div className="font-medium text-base">{title}</div>
-            <div className="font-normal text-[14px] leading-[22px]">{desc}</div>
+            <div className="font-normal text-[14px] leading-[22px] whitespace-pre-wrap">
+              {desc}
+            </div>
           </div>
         </div>
         <div className="flex justify-end items-center mt-[24px] gap-2">

@@ -35,6 +35,9 @@ import { StepType } from '../steps/types/step.interface';
 import { randomUUID } from 'crypto';
 import admin from 'firebase-admin';
 import { update } from 'lodash';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Organization } from '../organizations/entities/organization.entity';
+import { OrganizationTeam } from '../organizations/entities/organization-team.entity';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -47,6 +50,8 @@ export class AccountsService extends BaseJwtHelper {
     private dataSource: DataSource,
     @InjectRepository(Account)
     public accountsRepository: Repository<Account>,
+    @InjectRepository(Workspaces)
+    public workspacesRepository: Repository<Workspaces>,
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @Inject(forwardRef(() => AuthService)) private authService: AuthService,
@@ -128,7 +133,48 @@ export class AccountsService extends BaseJwtHelper {
   }
 
   findAll(): Promise<Account[]> {
-    return this.accountsRepository.find();
+    return this.accountsRepository.find({
+      relations: ['teams.organization.workspaces'],
+    });
+  }
+
+  async findOrganizationOwnerByWorkspaceId(
+    id: string,
+    session: string
+  ): Promise<Account> {
+    try {
+      const owner = (
+        await this.workspacesRepository.findOne({
+          where: {
+            id,
+          },
+          relations: { organization: { owner: true } },
+        })
+      ).organization.owner;
+
+      const account = await this.accountsRepository.findOne({
+        where: {
+          id: owner.id,
+        },
+        relations: ['teams.organization.workspaces'],
+      });
+
+      if (!account) {
+        const e = new NotFoundException('Account not found');
+        throw e;
+      }
+
+      this.debug(
+        `Found ${JSON.stringify(account)}`,
+        this.findOrganizationOwnerByWorkspaceId.name,
+        session,
+        id
+      );
+      return account;
+    } catch (e) {
+      this.error(e, this.findOrganizationOwnerByWorkspaceId.name, session, id);
+      throw e;
+    }
   }
 
   async findOne(
@@ -136,8 +182,9 @@ export class AccountsService extends BaseJwtHelper {
     session: string
   ): Promise<Account> {
     try {
-      const account = await this.accountsRepository.findOneBy({
-        id: (<Account>user).id,
+      const account = await this.accountsRepository.findOne({
+        where: { id: (<Account>user).id },
+        relations: ['teams.organization.workspaces'],
       });
 
       if (!account) {
@@ -158,8 +205,24 @@ export class AccountsService extends BaseJwtHelper {
     }
   }
 
-  findOneByAPIKey(apiKey: string): Promise<Account> {
-    return this.accountsRepository.findOneBy({ apiKey: apiKey });
+  async findOneByAPIKey(apiKey: string): Promise<Account | undefined> {
+    if (!apiKey) return undefined;
+
+    const workspace = await this.workspacesRepository.findOne({
+      where: {
+        apiKey,
+      },
+      relations: ['organization.owner'],
+    });
+
+    const account = await this.accountsRepository.findOne({
+      where: {
+        id: workspace.organization.owner.id,
+      },
+      relations: ['teams.organization.workspaces'],
+    });
+
+    return account;
   }
 
   async update(
@@ -185,7 +248,11 @@ export class AccountsService extends BaseJwtHelper {
       }
     }
 
-    if (updateUserDto.sendgridFromEmail && updateUserDto.sendgridApiKey) {
+    if (
+      updateUserDto.emailProvider === 'sendgrid' &&
+      updateUserDto.sendgridFromEmail &&
+      updateUserDto.sendgridApiKey
+    ) {
       try {
         this.sgMailService.setApiKey(updateUserDto.sendgridApiKey);
         await this.sgMailService.send({
@@ -277,16 +344,6 @@ export class AccountsService extends BaseJwtHelper {
       updateUserDto.email && oldUser.email !== updateUserDto.email;
     if (needEmailUpdate) {
       verified = false;
-
-      if (oldUser.customerId) {
-        const customer = await this.customersService.findById(
-          oldUser,
-          oldUser.customerId
-        );
-
-        customer.verified = false;
-        await customer.save({ session: transactionSession });
-      }
     }
 
     if (updateUserDto.firebaseCredentials) {
@@ -325,7 +382,7 @@ export class AccountsService extends BaseJwtHelper {
     await queryRunner.startTransaction();
     let err;
     try {
-      let updatedUser: Account;
+      const workspace = oldUser.teams?.[0]?.organization?.workspaces?.[0];
       for (const key of Object.keys(updateUserDto)) {
         if (key === 'pushPlatforms' && updateUserDto[key]) {
           oldUser[key] = {
@@ -338,10 +395,69 @@ export class AccountsService extends BaseJwtHelper {
 
       oldUser.password = password;
       oldUser.verified = verified;
-      oldUser.sendgridVerificationKey =
-        verificationKey || oldUser.sendgridVerificationKey;
 
-      updatedUser = await queryRunner.manager.save(oldUser);
+      const {
+        timezoneUTCOffset,
+        mailgunAPIKey,
+        sendingDomain,
+        sendingEmail,
+        sendingName,
+        slackTeamId,
+        posthogApiKey,
+        posthogProjectId,
+        posthogHostUrl,
+        posthogSmsKey,
+        posthogEmailKey,
+        posthogFirebaseDeviceTokenKey,
+        emailProvider,
+        testSendingEmail,
+        testSendingName,
+        sendgridApiKey,
+        sendgridFromEmail,
+        smsAccountSid,
+        smsAuthToken,
+        smsFrom,
+        pushPlatforms,
+        resendSendingDomain,
+        resendAPIKey,
+        resendSigningSecret,
+        resendSendingName,
+        resendSendingEmail,
+      } = updateUserDto;
+
+      const newWorkspace = {
+        id: workspace.id,
+        timezoneUTCOffset,
+        mailgunAPIKey,
+        sendingDomain,
+        sendingEmail,
+        sendingName,
+        slackTeamId,
+        posthogApiKey,
+        posthogProjectId,
+        posthogHostUrl,
+        posthogSmsKey,
+        posthogEmailKey,
+        posthogFirebaseDeviceTokenKey,
+        emailProvider,
+        testSendingEmail,
+        testSendingName,
+        sendgridApiKey,
+        sendgridFromEmail,
+        sendgridVerificationKey: verificationKey,
+        smsAccountSid,
+        smsAuthToken,
+        smsFrom,
+        pushPlatforms,
+        resendSendingDomain,
+        resendAPIKey,
+        resendSigningSecret,
+        resendSendingName,
+        resendSendingEmail,
+      };
+
+      const updatedUser = await queryRunner.manager.save(oldUser);
+      await queryRunner.manager.save(Workspaces, newWorkspace);
 
       if (needEmailUpdate)
         await this.authService.requestVerification(
@@ -362,8 +478,8 @@ export class AccountsService extends BaseJwtHelper {
     } finally {
       await queryRunner.release();
       await transactionSession.endSession();
-      if (err) throw err;
     }
+    if (err) throw err;
   }
 
   async updateApiKey(user: Express.User, session: string): Promise<string> {
@@ -402,19 +518,6 @@ export class AccountsService extends BaseJwtHelper {
     }
   }
 
-  async updateTimezone(
-    user: Express.User,
-    updateAccountDto: UpdateAccountDto,
-    session: string
-  ): Promise<string> {
-    const oldUser = await this.findOne(user, session);
-    await this.accountsRepository.save({
-      ...oldUser,
-      timezoneUTCOffset: updateAccountDto.timezoneUTCOffset,
-    });
-    return updateAccountDto.timezoneUTCOffset;
-  }
-
   async remove(
     user: Express.User,
     removeAccountDto: RemoveAccountDto,
@@ -429,6 +532,7 @@ export class AccountsService extends BaseJwtHelper {
         session,
         (<Account>user).id
       );
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
       if (!bcrypt.compareSync(removeAccountDto.password, account.password))
         throw new BadRequestException('Password is incorrect');
@@ -438,7 +542,7 @@ export class AccountsService extends BaseJwtHelper {
 
       await this.customersService.CustomerModel.deleteMany(
         {
-          ownerId: account.id,
+          workspaceId: workspace.id,
         },
         { session: transactionSession }
       )
@@ -453,7 +557,7 @@ export class AccountsService extends BaseJwtHelper {
 
       await this.customersService.CustomerKeysModel.deleteMany(
         {
-          ownerId: account.id,
+          workspaceId: workspace.id,
         },
         { session: transactionSession }
       )
@@ -486,13 +590,17 @@ export class AccountsService extends BaseJwtHelper {
 
   async createOnboadingAccount() {
     const session = 'onboarding-creation';
-    let account = await this.accountsRepository.findOneBy({
-      email: process.env.ONBOARDING_ACCOUNT_EMAIL,
-      apiKey: process.env.ONBOARDING_ACCOUNT_API_KEY,
+
+    let account = await this.accountsRepository.findOne({
+      where: {
+        email: process.env.ONBOARDING_ACCOUNT_EMAIL,
+      },
     });
 
-    if (!account)
-      account = await this.accountsRepository.save({
+    if (!account) {
+      const queryRunner = await this.dataSource.createQueryRunner();
+
+      account = await queryRunner.manager.save(Account, {
         email: process.env.ONBOARDING_ACCOUNT_EMAIL,
         apiKey: process.env.ONBOARDING_ACCOUNT_API_KEY,
         password: this.authService.helper.encodePassword(
@@ -500,6 +608,56 @@ export class AccountsService extends BaseJwtHelper {
         ),
         verified: true,
       });
+
+      try {
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+
+        const organization = await queryRunner.manager.create(Organization, {
+          companyName: 'OnboardingOrg',
+          owner: {
+            id: account.id,
+          },
+        });
+        await queryRunner.manager.save(organization);
+
+        const workspace = await queryRunner.manager.create(Workspaces, {
+          name: organization.companyName + ' workspace',
+          organization,
+          apiKey: process.env.ONBOARDING_ACCOUNT_API_KEY,
+          timezoneUTCOffset: 'UTC+00:00',
+        });
+        await queryRunner.manager.save(workspace);
+
+        const team = await queryRunner.manager.create(OrganizationTeam, {
+          teamName: 'Default team',
+          organization,
+          members: [
+            {
+              id: account.id,
+            },
+          ],
+        });
+        await queryRunner.manager.save(team);
+
+        await queryRunner.commitTransaction();
+      } catch (err) {
+        await queryRunner.rollbackTransaction();
+        this.error(err, this.update, session, account.id);
+        throw new BadRequestException(
+          'Error during onboarding account organization creation'
+        );
+      }
+    }
+
+    account = await this.accountsRepository.findOne({
+      where: {
+        email: process.env.ONBOARDING_ACCOUNT_EMAIL,
+      },
+      relations: ['teams.organization.workspaces'],
+    });
+
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     let trackerTemplate = await this.templatesService.findOne(
       account,
@@ -560,7 +718,9 @@ export class AccountsService extends BaseJwtHelper {
     }
 
     let journey = await this.journeysService.journeysRepository.findOneBy({
-      owner: { id: account.id },
+      workspace: {
+        id: workspace.id,
+      },
       name: 'onboarding',
     });
     if (!journey) {

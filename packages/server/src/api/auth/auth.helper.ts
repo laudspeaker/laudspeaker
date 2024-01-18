@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryRunner, Repository } from 'typeorm';
+import { In, QueryRunner, Repository } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { BaseJwtHelper } from '../../common/helper/base-jwt.helper';
 import { DEFAULT_TEMPLATES } from '../../fixtures/user.default.templates';
@@ -18,6 +18,8 @@ import { JourneysService } from '../journeys/journeys.service';
 import { StepsService } from '../steps/steps.service';
 import { StepType } from '../steps/types/step.interface';
 import generateName from '@good-ghosting/random-name-generator';
+import { Organization } from '../organizations/entities/organization.entity';
+import { OrganizationTeam } from '../organizations/entities/organization-team.entity';
 
 @Injectable()
 export class AuthHelper extends BaseJwtHelper {
@@ -25,6 +27,8 @@ export class AuthHelper extends BaseJwtHelper {
   @Inject(StepsService) private readonly stepsService: StepsService;
   @InjectRepository(Account)
   private readonly repository: Repository<Account>;
+  @InjectRepository(OrganizationTeam)
+  private readonly organizationTeamRepository: Repository<OrganizationTeam>;
   @Inject(WINSTON_MODULE_NEST_PROVIDER)
   private readonly logger: LoggerService;
 
@@ -42,7 +46,19 @@ export class AuthHelper extends BaseJwtHelper {
 
   // Get User by User ID we get from decode()
   public async validateUser(decoded: { id: string }): Promise<Account> {
-    return this.repository.findOne({ where: { id: decoded.id } });
+    const user = await this.repository.findOne({
+      where: { id: decoded.id },
+      relations: {
+        teams: {
+          organization: {
+            workspaces: true,
+            owner: true,
+          },
+        },
+      },
+    });
+
+    return user;
   }
 
   // Generate JWT Token
@@ -1648,12 +1664,19 @@ export class AuthHelper extends BaseJwtHelper {
     queryRunner: QueryRunner,
     session: string
   ) {
+    account = await queryRunner.manager.findOne(Account, {
+      where: { id: account.id },
+      relations: ['teams.organization.workspaces'],
+    });
+
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const templates = await queryRunner.manager.save(
       DEFAULT_TEMPLATES.map((el) => {
         const template = new Template();
         template.id = el.id;
         template.name = el.name;
-        template.owner = account;
+        template.workspace = workspace;
         template.slackMessage = el.slackMessage;
         template.smsText = el.smsText;
         template.style = el.style;

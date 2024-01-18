@@ -279,6 +279,8 @@ export class TemplatesService extends QueueEventsHost {
     createTemplateDto: CreateTemplateDto,
     session: string
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       const template = new Template();
       template.type = createTemplateDto.type;
@@ -312,7 +314,7 @@ export class TemplatesService extends QueueEventsHost {
       }
       return this.templatesRepository.save({
         ...template,
-        owner: { id: account.id },
+        workspace: { id: workspace.id },
       });
     } catch (error) {
       this.logger.error(`Api error: ${error}`);
@@ -351,9 +353,13 @@ export class TemplatesService extends QueueEventsHost {
     } catch (err) {
       return Promise.reject(err);
     }
-    const { _id, ownerId, workflows, ...tags } = customer.toObject();
+    const { _id, workspaceId, workflows, ...tags } = customer.toObject();
 
     const filteredTags = cleanTagsForSending(tags);
+
+    const { email } = account;
+
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
     const {
       mailgunAPIKey,
@@ -362,17 +368,17 @@ export class TemplatesService extends QueueEventsHost {
       testSendingName,
       sendgridApiKey,
       sendgridFromEmail,
-      email,
-    } = account;
-    let { sendingDomain, sendingEmail } = account;
+    } = workspace;
+
+    let { sendingDomain, sendingEmail } = workspace;
 
     let key = mailgunAPIKey;
     let from = sendingName;
 
     switch (template.type) {
       case TemplateType.EMAIL:
-        if (account.emailProvider === 'free3') {
-          if (account.freeEmailsCount === 0)
+        if (workspace.emailProvider === 'free3') {
+          if (workspace.freeEmailsCount === 0)
             throw new HttpException(
               'You exceeded limit of 3 emails',
               HttpStatus.PAYMENT_REQUIRED
@@ -381,10 +387,10 @@ export class TemplatesService extends QueueEventsHost {
           key = process.env.MAILGUN_API_KEY;
           from = testSendingName;
           sendingEmail = testSendingEmail;
-          account.freeEmailsCount--;
+          workspace.freeEmailsCount--;
         }
 
-        if (account.emailProvider === 'sendgrid') {
+        if (workspace.emailProvider === 'sendgrid') {
           key = sendgridApiKey;
           from = sendgridFromEmail;
         }
@@ -398,7 +404,7 @@ export class TemplatesService extends QueueEventsHost {
             customerId,
             domain: sendingDomain,
             email: sendingEmail,
-            eventProvider: account.emailProvider,
+            eventProvider: workspace.emailProvider,
             from,
             trackingEmail: email,
             key,
@@ -413,7 +419,10 @@ export class TemplatesService extends QueueEventsHost {
           },
           { attempts: Number.MAX_SAFE_INTEGER }
         );
-        if (account.emailProvider === 'free3') await account.save();
+        if (workspace.emailProvider === 'free3') {
+          await account.save();
+          await workspace.save();
+        }
         break;
       case TemplateType.SLACK:
         try {
@@ -444,13 +453,13 @@ export class TemplatesService extends QueueEventsHost {
           accountId: account.id,
           audienceId,
           customerId,
-          from: account.smsFrom,
-          sid: account.smsAccountSid,
+          from: workspace.smsFrom,
+          sid: workspace.smsAccountSid,
           tags: filteredTags,
           templateId: template.id,
           text: await this.parseApiCallTags(template.smsText, filteredTags),
           to: customer.phPhoneNumber || customer.phone,
-          token: account.smsAuthToken,
+          token: workspace.smsAuthToken,
           trackingEmail: email,
         });
         break;
@@ -518,11 +527,15 @@ export class TemplatesService extends QueueEventsHost {
     } else {
       typeConvertedCheck.type = type;
     }
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const totalPages = Math.ceil(
       (await this.templatesRepository.count({
         where: {
           name: Like(`%${search}%`),
-          owner: { id: account.id },
+          workspace: {
+            id: workspace.id,
+          },
           isDeleted: In([!!showDeleted, false]),
           ...typeConvertedCheck,
         },
@@ -535,7 +548,9 @@ export class TemplatesService extends QueueEventsHost {
     const templates = await this.templatesRepository.find({
       where: {
         name: Like(`%${search}%`),
-        owner: { id: account.id },
+        workspace: {
+          id: workspace.id,
+        },
         isDeleted: In([!!showDeleted, false]),
         ...typeConvertedCheck,
       },
@@ -547,15 +562,23 @@ export class TemplatesService extends QueueEventsHost {
   }
 
   findOne(account: Account, name: string, session: string): Promise<Template> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     return this.templatesRepository.findOneBy({
-      owner: { id: account.id },
+      workspace: {
+        id: workspace.id,
+      },
       name,
     });
   }
 
   findOneById(account: Account, id: string): Promise<Template> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     return this.templatesRepository.findOneBy({
-      owner: { id: account.id },
+      workspace: {
+        id: workspace.id,
+      },
       id: id,
     });
   }
@@ -571,8 +594,12 @@ export class TemplatesService extends QueueEventsHost {
   }
 
   findBy(account: Account, type: TemplateType): Promise<Template[]> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     return this.templatesRepository.findBy({
-      owner: { id: account.id },
+      workspace: {
+        id: workspace.id,
+      },
       type: type,
     });
   }
@@ -583,16 +610,20 @@ export class TemplatesService extends QueueEventsHost {
     updateTemplateDto: UpdateTemplateDto,
     session: string
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     return this.templatesRepository.update(
-      { owner: { id: (<Account>account).id }, id },
+      { workspace: { id: workspace.id }, id },
       { ...updateTemplateDto, updatedAt: new Date() }
     );
   }
 
   async remove(account: Account, id: string, session: string): Promise<void> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     await this.templatesRepository.update(
       {
-        owner: { id: (<Account>account).id },
+        workspace: { id: workspace.id },
         id,
       },
       { isDeleted: true, updatedAt: new Date() }
@@ -600,9 +631,13 @@ export class TemplatesService extends QueueEventsHost {
   }
 
   async duplicate(account: Account, id: string, session: string) {
+    const workspaceFromAccount =
+      account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const foundTemplate = await this.templatesRepository.findOne({
       where: {
-        owner: { id: account.id },
+        workspace: { id: workspaceFromAccount.id },
+
         id,
       },
       relations: ['owner'],
@@ -610,7 +645,7 @@ export class TemplatesService extends QueueEventsHost {
     if (!foundTemplate) throw new NotFoundException('Template not found');
 
     const {
-      owner,
+      workspace,
       slackMessage,
       style,
       subject,
@@ -624,7 +659,7 @@ export class TemplatesService extends QueueEventsHost {
       customFields,
     } = foundTemplate;
 
-    const ownerId = owner.id;
+    const workspaceId = workspace.id;
 
     let copyEraseIndex = foundTemplate.name.indexOf('-copy');
     if (copyEraseIndex === -1) copyEraseIndex = foundTemplate.name.length;
@@ -632,10 +667,13 @@ export class TemplatesService extends QueueEventsHost {
     const res = await this.templatesRepository
       .createQueryBuilder()
       .select('COUNT(*)')
-      .where('starts_with(name, :oldName) = TRUE AND "ownerId" = :ownerId', {
-        oldName: foundTemplate.name.substring(0, copyEraseIndex),
-        ownerId: account.id,
-      })
+      .where(
+        'starts_with(name, :oldName) = TRUE AND "workspaceId" = :workspaceId',
+        {
+          oldName: foundTemplate.name.substring(0, copyEraseIndex),
+          workspaceId: workspaceId,
+        }
+      )
       .execute();
 
     const newName =
@@ -645,7 +683,7 @@ export class TemplatesService extends QueueEventsHost {
 
     const tmp = await this.templatesRepository.save({
       name: newName,
-      owner: { id: ownerId },
+      workspace: { id: workspaceId },
       slackMessage,
       style,
       subject,
@@ -663,9 +701,11 @@ export class TemplatesService extends QueueEventsHost {
   }
 
   async findUsedInJourneys(account: Account, id: string, session: string) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const template = await this.templatesRepository.findOneBy({
       id,
-      owner: { id: account.id },
+      workspace: { id: workspace.id },
     });
     if (!template) throw new NotFoundException('Template not found');
 
@@ -680,7 +720,8 @@ export class TemplatesService extends QueueEventsHost {
       .leftJoin('workflow', 'workflow', 'workflow.id = audience."workflowId"')
       .where(
         `workflow."isDeleted" = false AND audience."ownerId" = :ownerId AND audience_templates_template."templateId" = :templateId`,
-        { ownerId: account.id, templateId: template.id }
+        // update if used
+        { workspaceId: account.id, templateId: template.id }
       )
       .execute();
 
@@ -793,7 +834,7 @@ export class TemplatesService extends QueueEventsHost {
 
     if (!customer) throw new NotFoundException('Customer not found');
 
-    const { _id, ownerId, workflows, ...tags } = customer.toObject();
+    const { _id, workspaceId, workflows, ...tags } = customer.toObject();
     const filteredTags = cleanTagsForSending(tags);
 
     const { method } = testWebhookDto.webhookData;

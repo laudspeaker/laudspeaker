@@ -173,3 +173,4 @@ test-firebase-credentials.json
 
 # grabage
 .DS_Store
+ormlogs.log

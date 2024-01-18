@@ -24,6 +24,7 @@ import { Audience } from '../audiences/entities/audience.entity';
 import * as __ from 'async-dash';
 import { CustomersService } from '../customers/customers.service';
 import { RavenInterceptor } from 'nest-raven';
+import { Resend } from 'resend';
 
 @Controller('email')
 export class EmailController {
@@ -41,16 +42,17 @@ export class EmailController {
   @Post('send')
   @UseGuards(JwtAuthGuard)
   async send(@Req() { user }: Request, @Body() sendEmailDto: SendEmailDto) {
-    const found: Account = await this.usersRepository.findOneBy({
-      id: (<Account>user).id,
-    });
+    const found = <Account>user;
+
+    const workspace = found.teams?.[0]?.organization?.workspaces?.[0];
+
     await this.messageQueue.add('email', {
       trackingEmail: found.email,
       accountId: found.id,
-      key: found.mailgunAPIKey,
-      from: found.sendingName,
-      domain: found.sendingDomain,
-      email: found.sendingEmail,
+      key: workspace.mailgunAPIKey,
+      from: workspace.sendingName,
+      domain: workspace.sendingDomain,
+      email: workspace.sendingEmail,
       to: sendEmailDto.to,
       subject: sendEmailDto.subject,
       text: sendEmailDto.text,
@@ -67,6 +69,17 @@ export class EmailController {
   }
 
   @UseInterceptors(new RavenInterceptor())
+  @Get('resend/domains/:key')
+  @UseGuards(JwtAuthGuard)
+  async resendDomains(@Param('key') key: string) {
+    const resend = new Resend(key);
+    const response: any = await resend.domains.list();
+    const domains = response['data']['data'];
+    const verified = _.filter(domains, ['status', 'verified']);
+    return verified;
+  }
+
+  @UseInterceptors(new RavenInterceptor())
   @Post('send/:audienceName')
   @UseGuards(JwtAuthGuard)
   async sendBatch(
@@ -74,11 +87,10 @@ export class EmailController {
     @Body() sendEmailDto: SendEmailDto,
     @Param('audienceName') name: string
   ) {
-    const found: Account = await this.usersRepository.findOneBy({
-      id: (<Account>user).id,
-    });
+    const found = <Account>user;
+    const workspace = found?.teams?.[0]?.organization?.workspaces?.[0];
     const audienceObj = await this.audienceRepository.findOneBy({
-      owner: { id: (<Account>user).id },
+      owner: { id: found.id },
       name: name,
     });
     const jobs = await Promise.all(
@@ -91,10 +103,10 @@ export class EmailController {
           name: 'email',
           data: {
             accountId: found.id,
-            key: found.mailgunAPIKey,
-            from: found.sendingName,
-            domain: found.sendingDomain,
-            email: found.sendingEmail,
+            key: workspace.mailgunAPIKey,
+            from: workspace.sendingName,
+            domain: workspace.sendingDomain,
+            email: workspace.sendingEmail,
             to: email,
             subject: sendEmailDto.subject,
             text: sendEmailDto.text,

@@ -24,20 +24,14 @@ const CustomModalSettings = () => {
 
       try {
         const {
-          data: {
-            apiKey,
-            javascriptSnippetSetupped,
-            firstName,
-            lastName,
-            email,
-          },
+          data: { workspace, firstName, lastName, email },
         } = await ApiService.get<Account>({ url: "/accounts" });
 
-        setAPIKey(apiKey);
+        setAPIKey(workspace?.apiKey);
         setFirstName(firstName || "");
         setLastName(lastName || "");
         setEmail(email);
-        setIsConnected(javascriptSnippetSetupped);
+        setIsConnected(workspace?.javascriptSnippetSetupped);
       } catch (e) {
         toast.error("Error while loading data");
       } finally {

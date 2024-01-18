@@ -17,6 +17,9 @@ import {
   WebhookMethod,
 } from '../templates/entities/template.entity';
 import { TemplatesService } from '../templates/templates.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Account } from '../accounts/entities/accounts.entity';
+import { Repository } from 'typeorm';
 
 @Processor('webhooks', { removeOnComplete: { age: 0, count: 0 } })
 @Injectable()
@@ -27,7 +30,9 @@ export class WebhooksProcessor extends WorkerHost {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
     private readonly webhooksService: WebhooksService,
-    private readonly templatesService: TemplatesService
+    private readonly templatesService: TemplatesService,
+    @InjectRepository(Account)
+    private accountRepository: Repository<Account>
   ) {
     super();
   }
@@ -135,6 +140,11 @@ export class WebhooksProcessor extends WorkerHost {
         ])
       )
     );
+    const account = await this.accountRepository.findOne({
+      where: { id: job.data.accountId },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     let retriesCount = 0;
     let success = false;
@@ -176,19 +186,22 @@ export class WebhooksProcessor extends WorkerHost {
       }
 
       try {
-        await this.webhooksService.insertMessageStatusToClickhouse([
-          {
-            event: 'error',
-            createdAt: new Date().toISOString(),
-            eventProvider: ClickHouseEventProvider.WEBHOOKS,
-            messageId: '',
-            audienceId: job.data.audienceId,
-            customerId: job.data.customerId,
-            templateId: String(job.data.template.id),
-            userId: job.data.accountId,
-            processed: false,
-          },
-        ]);
+        await this.webhooksService.insertMessageStatusToClickhouse(
+          [
+            {
+              event: 'error',
+              createdAt: new Date().toISOString(),
+              eventProvider: ClickHouseEventProvider.WEBHOOKS,
+              messageId: '',
+              audienceId: job.data.audienceId,
+              customerId: job.data.customerId,
+              templateId: String(job.data.template.id),
+              workspaceId: workspace.id,
+              processed: false,
+            },
+          ],
+          job.data.session
+        );
       } catch (e) {
         this.logger.error('Failed to insert into clickhouse: ' + e);
       }
@@ -196,19 +209,22 @@ export class WebhooksProcessor extends WorkerHost {
       throw new Error(error);
     } else {
       try {
-        await this.webhooksService.insertMessageStatusToClickhouse([
-          {
-            event: 'sent',
-            createdAt: new Date().toISOString(),
-            eventProvider: ClickHouseEventProvider.WEBHOOKS,
-            messageId: '',
-            audienceId: job.data.audienceId,
-            customerId: job.data.customerId,
-            templateId: String(job.data.template.id),
-            userId: job.data.accountId,
-            processed: false,
-          },
-        ]);
+        await this.webhooksService.insertMessageStatusToClickhouse(
+          [
+            {
+              event: 'sent',
+              createdAt: new Date().toISOString(),
+              eventProvider: ClickHouseEventProvider.WEBHOOKS,
+              messageId: '',
+              audienceId: job.data.audienceId,
+              customerId: job.data.customerId,
+              templateId: String(job.data.template.id),
+              workspaceId: workspace.id,
+              processed: false,
+            },
+          ],
+          job.data.session
+        );
       } catch (e) {
         this.logger.error('Failed to insert into clickhouse: ' + e);
       }

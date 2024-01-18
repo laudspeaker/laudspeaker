@@ -17,6 +17,9 @@ import { CustomersModule } from '../customers/customers.module';
 import { Recovery } from './entities/recovery.entity';
 import { JourneysModule } from '../journeys/journeys.module';
 import { StepsModule } from '../steps/steps.module';
+import { OrganizationTeam } from '../organizations/entities/organization-team.entity';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { OrganizationInvites } from '../organizations/entities/organization-invites.entity';
 
 @Module({
   imports: [
@@ -33,7 +36,10 @@ import { StepsModule } from '../steps/steps.module';
       Template,
       Verification,
       Workflow,
+      Workspaces,
       Recovery,
+      OrganizationTeam,
+      OrganizationInvites,
     ]),
     BullModule.registerQueue({
       name: 'message',
@@ -44,6 +50,6 @@ import { StepsModule } from '../steps/steps.module';
   ],
   controllers: [AuthController],
   providers: [AuthService, AuthHelper, JwtStrategy, ApiKeyStrategy],
-  exports: [AuthService],
+  exports: [AuthService, AuthHelper],
 })
 export class AuthModule {}

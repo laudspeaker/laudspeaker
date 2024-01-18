@@ -15,7 +15,7 @@ import { Job, Queue } from 'bullmq';
 import { cpus } from 'os';
 import { CustomComponentAction, StepType } from '../types/step.interface';
 import { Step } from '../entities/step.entity';
-import { DataSource, QueryRunner } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { Temporal } from '@js-temporal/polyfill';
@@ -39,7 +39,6 @@ import { SlackService } from '@/api/slack/slack.service';
 import { Account } from '@/api/accounts/entities/accounts.entity';
 import { RedlockService } from '@/api/redlock/redlock.service';
 import * as _ from 'lodash';
-import { Lock } from 'redlock';
 import { PostHog } from 'posthog-node';
 import * as Sentry from '@sentry/node';
 import { JourneyLocationsService } from '@/api/journeys/journey-locations.service';
@@ -48,6 +47,8 @@ import { convertTimeToUTC, isWithinInterval } from '@/common/helper/timing';
 import { JourneySettingsQuietFallbackBehavior } from '@/api/journeys/types/additional-journey-settings.interface';
 import { StepsService } from '../steps.service';
 import { Journey } from '@/api/journeys/entities/journey.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
 
 @Injectable()
 @Processor('transition', { removeOnComplete: { age: 0, count: 0 } })
@@ -63,7 +64,12 @@ export class TransitionProcessor extends WorkerHost {
     @InjectQueue('transition') private readonly transitionQueue: Queue,
     @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection,
-    @Inject(WebhooksService) private readonly webhooksService: WebhooksService,
+    @InjectRepository(Workspaces)
+    private workspacesRepository: Repository<Workspaces>,
+    @InjectRepository(Account)
+    private accountRepository: Repository<Account>,
+    @Inject(WebhooksService)
+    private readonly webhooksService: WebhooksService,
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
     @Inject(TemplatesService)
@@ -172,6 +178,7 @@ export class TransitionProcessor extends WorkerHost {
           await this.handleExit(
             job.data.ownerID,
             job.data.journeyID,
+            job.data.step.id,
             job.data.session,
             job.data.customerID,
             queryRunner
@@ -221,12 +228,7 @@ export class TransitionProcessor extends WorkerHost {
             job.data.step.id,
             job.data.session,
             job.data.customerID,
-            this.redlockService.retrieve(
-              job.data.lock.resources,
-              job.data.lock.value,
-              job.data.lock.attempts,
-              job.data.lock.expiration
-            ),
+            job.data.journeyID,
             queryRunner,
             transactionSession,
             job.data.event
@@ -282,10 +284,10 @@ export class TransitionProcessor extends WorkerHost {
       this.error(e, this.process.name, job.data.session);
       err = e;
       const lock = this.redlockService.retrieve(
-        job.data.lock.resources,
-        job.data.lock.value,
-        job.data.lock.attempts,
-        job.data.lock.expiration
+        job.data.lock?.resources,
+        job.data.lock?.value,
+        job.data.lock?.attempts,
+        job.data.lock?.expiration
       );
       await lock.release();
       this.warn(
@@ -296,8 +298,8 @@ export class TransitionProcessor extends WorkerHost {
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
-      if (err) throw err;
     }
+    if (err) throw err;
   }
 
   /**
@@ -312,7 +314,7 @@ export class TransitionProcessor extends WorkerHost {
     stepID: string,
     session: string,
     customerID: string,
-    lock: Lock,
+    journeyID: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession,
     event?: string
@@ -322,7 +324,16 @@ export class TransitionProcessor extends WorkerHost {
      */
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
+      relations: ['teams.organization.workspaces'],
     });
+    const workspace = owner.teams?.[0]?.organization?.workspaces?.[0];
+
+    const journey = await this.journeysService.findByID(
+      owner,
+      journeyID,
+      session,
+      queryRunner
+    );
 
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
@@ -332,18 +343,17 @@ export class TransitionProcessor extends WorkerHost {
       lock: { mode: 'pessimistic_write' },
     });
 
-    if (
-      !_.find(currentStep.customers, (customer) => {
-        return JSON.parse(customer).customerID === customerID;
-      })
-    ) {
-      await lock.release();
-      this.warn(
-        `${JSON.stringify({ warning: 'Releasing lock' })}`,
-        this.handleCustomComponent.name,
-        session,
-        owner.email
-      );
+    const customer = await this.customersService.findById(owner, customerID);
+
+    const location = await this.journeyLocationsService.findForWrite(
+      journey,
+      customer,
+      session,
+      owner,
+      queryRunner
+    );
+
+    if (!location) {
       this.warn(
         `${JSON.stringify({
           warning: 'Customer not in step',
@@ -377,11 +387,6 @@ export class TransitionProcessor extends WorkerHost {
       queryRunner
     );
 
-    const customer: CustomerDocument = await this.customersService.findById(
-      owner,
-      customerID
-    );
-
     if (template.type !== TemplateType.CUSTOM_COMPONENT) {
       throw new Error(
         `Cannot use ${template.type} template for a custom component step`
@@ -413,19 +418,22 @@ export class TransitionProcessor extends WorkerHost {
     };
 
     // 4. Record that the message was sent
-    await this.webhooksService.insertMessageStatusToClickhouse([
-      {
-        stepId: stepID,
-        createdAt: new Date().toISOString(),
-        customerId: customerID,
-        event: 'sent',
-        eventProvider: ClickHouseEventProvider.TRACKER,
-        messageId: humanReadableName,
-        templateId: String(templateID),
-        userId: owner.id,
-        processed: true,
-      },
-    ]);
+    await this.webhooksService.insertMessageStatusToClickhouse(
+      [
+        {
+          stepId: stepID,
+          createdAt: new Date().toISOString(),
+          customerId: customerID,
+          event: 'sent',
+          eventProvider: ClickHouseEventProvider.TRACKER,
+          messageId: humanReadableName,
+          templateId: String(templateID),
+          workspaceId: workspace.id,
+          processed: true,
+        },
+      ],
+      session
+    );
 
     // 5. Attempt delivery. If delivered, record delivery event
     const isDelivered = await this.websocketGateway.sendCustomComponentState(
@@ -439,19 +447,22 @@ export class TransitionProcessor extends WorkerHost {
       humanReadableName
     );
     if (isDelivered)
-      await this.webhooksService.insertMessageStatusToClickhouse([
-        {
-          stepId: stepID,
-          createdAt: new Date().toISOString(),
-          customerId: customerID,
-          event: 'delivered',
-          eventProvider: ClickHouseEventProvider.TRACKER,
-          messageId: humanReadableName,
-          templateId: String(templateID),
-          userId: owner.id,
-          processed: true,
-        },
-      ]);
+      await this.webhooksService.insertMessageStatusToClickhouse(
+        [
+          {
+            stepId: stepID,
+            createdAt: new Date().toISOString(),
+            customerId: customerID,
+            event: 'delivered',
+            eventProvider: ClickHouseEventProvider.TRACKER,
+            messageId: humanReadableName,
+            templateId: String(templateID),
+            workspaceId: workspace.id,
+            processed: true,
+          },
+        ],
+        session
+      );
 
     // 6. Set delivery status.
     customer.customComponents[humanReadableName].delivered = isDelivered;
@@ -511,11 +522,16 @@ export class TransitionProcessor extends WorkerHost {
           step: newNext,
           session: session,
           customerID,
-          lock,
+          journeyID,
           event,
         });
       else {
-        await lock.release();
+        await this.journeyLocationsService.unlock(
+          location,
+          session,
+          owner,
+          queryRunner
+        );
         this.warn(
           `${JSON.stringify({ warning: 'Releasing lock' })}`,
           this.handleCustomComponent.name,
@@ -526,7 +542,12 @@ export class TransitionProcessor extends WorkerHost {
     } else {
       // Destination does not exist, customer has stopped moving so
       // we can release lock
-      await lock.release();
+      await this.journeyLocationsService.unlock(
+        location,
+        session,
+        owner,
+        queryRunner
+      );
       this.warn(
         `${JSON.stringify({ warning: 'Releasing lock' })}`,
         this.handleCustomComponent.name,
@@ -558,6 +579,17 @@ export class TransitionProcessor extends WorkerHost {
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = await this.workspacesRepository.findOne({
+      where: {
+        organization: {
+          owner: {
+            id: ownerID,
+          },
+        },
+      },
+      relations: ['organization'],
     });
 
     const journey = await this.journeysService.findByID(
@@ -601,32 +633,38 @@ export class TransitionProcessor extends WorkerHost {
     }
 
     // Rate limiting and sending quiet hours will be stored here
-    let messageSendType: 'SEND' | 'QUIET_REQUEUE' | 'QUIET_ABORT' = 'SEND';
+    // Initial default is 'SEND'
+    let messageSendType:
+      | 'SEND' // should send
+      | 'QUIET_REQUEUE' // quiet hours, requeue message when quiet hours over
+      | 'QUIET_ABORT' // quiet hours, abort message, move to next step
+      | 'LIMIT_REQUEUE' // messages per minute rate limit hit, requeue for next minute
+      | 'LIMIT_HOLD' = 'SEND'; // customers messaged per journey rate limit hit, hold at current
     let requeueTime: Date;
     if (
       journey.journeySettings &&
       journey.journeySettings.quietHours &&
       journey.journeySettings.quietHours.enabled
     ) {
-      let quietHours = journey.journeySettings.quietHours!;
+      const quietHours = journey.journeySettings.quietHours!;
       // CHECK IF SENDING QUIET HOURS
-      let formatter = Intl.DateTimeFormat(undefined, {
+      const formatter = Intl.DateTimeFormat(undefined, {
         hour: '2-digit',
         minute: '2-digit',
         hourCycle: 'h24',
         timeZone: 'UTC',
       });
-      let now = new Date();
-      let utcNowString = formatter.format(now);
-      let utcStartTime = convertTimeToUTC(
+      const now = new Date();
+      const utcNowString = formatter.format(now);
+      const utcStartTime = convertTimeToUTC(
         quietHours.startTime,
-        owner.timezoneUTCOffset
+        workspace.timezoneUTCOffset
       );
-      let utcEndTime = convertTimeToUTC(
+      const utcEndTime = convertTimeToUTC(
         quietHours.endTime,
-        owner.timezoneUTCOffset
+        workspace.timezoneUTCOffset
       );
-      let isQuietHour = isWithinInterval(
+      const isQuietHour = isWithinInterval(
         utcStartTime,
         utcEndTime,
         utcNowString
@@ -661,11 +699,44 @@ export class TransitionProcessor extends WorkerHost {
           requeueTime.setDate(requeueTime.getDate() + 1);
         }
         this.log(
-          `Observing quiet hours, now ${now}, quietHours: ${quietHours.startTime}-${quietHours.endTime}, account UTC offset: ${owner.timezoneUTCOffset}, type ${messageSendType}`,
+          `Observing quiet hours, now ${now}, quietHours: ${quietHours.startTime}-${quietHours.endTime}, account UTC offset: ${workspace.timezoneUTCOffset}, type ${messageSendType}`,
           this.handleMessage.name,
           session,
           owner.email
         );
+      }
+    }
+
+    if (messageSendType === 'SEND') {
+      const [customersMessagedLimitEnabled] =
+        this.journeysService.rateLimitByCustomersMessagedEnabled(journey);
+      if (customersMessagedLimitEnabled) {
+        const doRateLimit =
+          await this.journeysService.rateLimitByCustomersMessaged(
+            owner,
+            journey,
+            session,
+            queryRunner
+          );
+        if (doRateLimit) {
+          messageSendType = 'LIMIT_HOLD';
+        }
+      }
+    }
+
+    if (messageSendType === 'SEND') {
+      const [rateLimitByMinuteEnabled] =
+        this.journeysService.rateLimitByMinuteEnabled(journey);
+      if (rateLimitByMinuteEnabled) {
+        const doRateLimit = await this.journeysService.rateLimitByMinute(
+          owner,
+          journey
+        );
+        if (doRateLimit) {
+          messageSendType = 'LIMIT_REQUEUE';
+          requeueTime = new Date();
+          requeueTime.setMinutes(requeueTime.getMinutes() + 1);
+        }
       }
     }
 
@@ -677,6 +748,8 @@ export class TransitionProcessor extends WorkerHost {
         templateID.toString(),
         queryRunner
       );
+      const { email } = owner;
+
       const {
         mailgunAPIKey,
         sendingName,
@@ -684,9 +757,13 @@ export class TransitionProcessor extends WorkerHost {
         testSendingName,
         sendgridApiKey,
         sendgridFromEmail,
-        email,
-      } = owner;
-      let { sendingDomain, sendingEmail } = owner;
+        resendSendingDomain,
+        resendAPIKey,
+        resendSendingName,
+        resendSendingEmail,
+      } = workspace;
+
+      let { sendingDomain, sendingEmail } = workspace;
 
       let key = mailgunAPIKey;
       let from = sendingName;
@@ -694,15 +771,15 @@ export class TransitionProcessor extends WorkerHost {
         owner,
         customerID
       );
-      const { _id, ownerId, workflows, journeys, ...tags } =
+      const { _id, workspaceId, workflows, journeys, ...tags } =
         customer.toObject();
       const filteredTags = cleanTagsForSending(tags);
-      const sender = new MessageSender();
+      const sender = new MessageSender(this.accountRepository);
 
       switch (template.type) {
         case TemplateType.EMAIL:
-          if (owner.emailProvider === 'free3') {
-            if (owner.freeEmailsCount === 0)
+          if (workspace.emailProvider === 'free3') {
+            if (workspace.freeEmailsCount === 0)
               throw new HttpException(
                 'You exceeded limit of 3 emails',
                 HttpStatus.PAYMENT_REQUIRED
@@ -711,9 +788,16 @@ export class TransitionProcessor extends WorkerHost {
             key = process.env.MAILGUN_API_KEY;
             from = testSendingName;
             sendingEmail = testSendingEmail;
-            owner.freeEmailsCount--;
+            workspace.freeEmailsCount--;
           }
-          if (owner.emailProvider === 'sendgrid') {
+
+          if (workspace.emailProvider === 'resend') {
+            sendingDomain = workspace.resendSendingDomain;
+            key = workspace.resendAPIKey;
+            from = workspace.resendSendingName;
+            sendingEmail = workspace.resendSendingEmail;
+          }
+          if (workspace.emailProvider === 'sendgrid') {
             key = sendgridApiKey;
             from = sendgridFromEmail;
           }
@@ -739,15 +823,21 @@ export class TransitionProcessor extends WorkerHost {
             ),
             tags: filteredTags,
             templateID: template.id,
-            eventProvider: owner.emailProvider,
+            eventProvider: workspace.emailProvider,
           });
           this.debug(
             `${JSON.stringify(ret)}`,
             this.handleMessage.name,
             session
           );
-          await this.webhooksService.insertMessageStatusToClickhouse(ret);
-          if (owner.emailProvider === 'free3') await owner.save();
+          await this.webhooksService.insertMessageStatusToClickhouse(
+            ret,
+            session
+          );
+          if (workspace.emailProvider === 'free3') {
+            await owner.save();
+            await workspace.save();
+          }
           break;
         case TemplateType.PUSH:
           switch (currentStep.metadata.selectedPlatform) {
@@ -758,14 +848,16 @@ export class TransitionProcessor extends WorkerHost {
                   accountID: owner.id,
                   stepID: currentStep.id,
                   customerID: customerID,
-                  firebaseCredentials: owner.pushPlatforms.Android.credentials,
+                  firebaseCredentials:
+                    workspace.pushPlatforms.Android.credentials,
                   deviceToken: customer.androidDeviceToken,
                   pushTitle: template.pushObject.settings.Android.title,
                   pushText: template.pushObject.settings.Android.description,
                   trackingEmail: email,
                   filteredTags: filteredTags,
                   templateID: template.id,
-                })
+                }),
+                session
               );
               await this.webhooksService.insertMessageStatusToClickhouse(
                 await sender.process({
@@ -773,14 +865,15 @@ export class TransitionProcessor extends WorkerHost {
                   accountID: owner.id,
                   stepID: currentStep.id,
                   customerID: customerID,
-                  firebaseCredentials: owner.pushPlatforms.iOS.credentials,
+                  firebaseCredentials: workspace.pushPlatforms.iOS.credentials,
                   deviceToken: customer.iosDeviceToken,
                   pushTitle: template.pushObject.settings.iOS.title,
                   pushText: template.pushObject.settings.iOS.description,
                   trackingEmail: email,
                   filteredTags: filteredTags,
                   templateID: template.id,
-                })
+                }),
+                session
               );
               break;
             case 'iOS':
@@ -790,14 +883,15 @@ export class TransitionProcessor extends WorkerHost {
                   accountID: owner.id,
                   stepID: currentStep.id,
                   customerID: customerID,
-                  firebaseCredentials: owner.pushPlatforms.iOS.credentials,
+                  firebaseCredentials: workspace.pushPlatforms.iOS.credentials,
                   deviceToken: customer.iosDeviceToken,
                   pushTitle: template.pushObject.settings.iOS.title,
                   pushText: template.pushObject.settings.iOS.description,
                   trackingEmail: email,
                   filteredTags: filteredTags,
                   templateID: template.id,
-                })
+                }),
+                session
               );
               break;
             case 'Android':
@@ -807,14 +901,16 @@ export class TransitionProcessor extends WorkerHost {
                   accountID: owner.id,
                   stepID: currentStep.id,
                   customerID: customerID,
-                  firebaseCredentials: owner.pushPlatforms.Android.credentials,
+                  firebaseCredentials:
+                    workspace.pushPlatforms.Android.credentials,
                   deviceToken: customer.androidDeviceToken,
                   pushTitle: template.pushObject.settings.Android.title,
                   pushText: template.pushObject.settings.Android.description,
                   trackingEmail: email,
                   filteredTags: filteredTags,
                   templateID: template.id,
-                })
+                }),
+                session
               );
               break;
           }
@@ -850,7 +946,8 @@ export class TransitionProcessor extends WorkerHost {
                   filteredTags
                 ),
               },
-            })
+            }),
+            session
           );
           break;
         case TemplateType.SMS:
@@ -861,17 +958,18 @@ export class TransitionProcessor extends WorkerHost {
               stepID: currentStep.id,
               customerID: customer.id,
               templateID: template.id,
-              from: owner.smsFrom,
-              sid: owner.smsAccountSid,
+              from: workspace.smsFrom,
+              sid: workspace.smsAccountSid,
               tags: filteredTags,
               text: await this.templatesService.parseApiCallTags(
                 template.smsText,
                 filteredTags
               ),
               to: customer.phPhoneNumber || customer.phone,
-              token: owner.smsAuthToken,
+              token: workspace.smsAuthToken,
               trackingEmail: email,
-            })
+            }),
+            session
           );
           break;
         case TemplateType.WEBHOOK: //TODO:remove this from queue
@@ -886,22 +984,56 @@ export class TransitionProcessor extends WorkerHost {
           }
           break;
       }
+
+      // After send, update rate limit stuff
+      await this.journeyLocationsService.setMessageSent(
+        location,
+        owner,
+        queryRunner
+      );
+      await this.journeysService.rateLimitByMinuteIncrement(owner, journey);
     } else if (messageSendType === 'QUIET_ABORT') {
       // Record that the message was aborted
-      await this.webhooksService.insertMessageStatusToClickhouse([
-        {
-          stepId: stepID,
-          createdAt: new Date().toISOString(),
-          customerId: customerID,
-          event: 'aborted',
-          eventProvider: ClickHouseEventProvider.TRACKER,
-          messageId: currentStep.metadata.humanReadableName,
-          templateId: currentStep.metadata.template,
-          userId: owner.id,
-          processed: true,
-        },
-      ]);
-    } else if (messageSendType === 'QUIET_REQUEUE') {
+      await this.webhooksService.insertMessageStatusToClickhouse(
+        [
+          {
+            stepId: stepID,
+            createdAt: new Date().toISOString(),
+            customerId: customerID,
+            event: 'aborted',
+            eventProvider: ClickHouseEventProvider.TRACKER,
+            messageId: currentStep.metadata.humanReadableName,
+            templateId: currentStep.metadata.template,
+            workspaceId: workspace.id,
+            processed: true,
+          },
+        ],
+        session
+      );
+    } else if (messageSendType === 'LIMIT_HOLD') {
+      this.log(
+        `Unique customers messaged limit hit. Holding customer:${customer.id} at message step for journey: ${journey.id}`,
+        this.handleMessage.name,
+        session,
+        owner.id
+      );
+      await this.journeyLocationsService.unlock(
+        location,
+        session,
+        owner,
+        queryRunner
+      );
+      return;
+    } else if (
+      messageSendType === 'QUIET_REQUEUE' ||
+      messageSendType === 'LIMIT_REQUEUE'
+    ) {
+      this.log(
+        `Requeuing message for customer: ${customerID}, step: ${currentStep.id} for reason: ${messageSendType}`,
+        this.handleMessage.name,
+        session,
+        owner.id
+      );
       this.stepsService.requeueMessage(
         owner,
         currentStep,
@@ -992,6 +1124,7 @@ export class TransitionProcessor extends WorkerHost {
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
+      relations: ['teams.organization.workspaces'],
     });
 
     const journey = await this.journeysService.findByID(
@@ -1096,12 +1229,21 @@ export class TransitionProcessor extends WorkerHost {
   async handleExit(
     ownerID: string,
     journeyID: string,
+    stepID: string,
     session: string,
     customerID: string,
     queryRunner: QueryRunner
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
+      relations: ['teams.organization.workspaces'],
+    });
+
+    const currentStep = await queryRunner.manager.findOne(Step, {
+      where: {
+        id: stepID,
+        type: StepType.EXIT,
+      },
     });
 
     const journey = await this.journeysService.findByID(
@@ -1113,9 +1255,30 @@ export class TransitionProcessor extends WorkerHost {
 
     const customer = await this.customersService.findById(owner, customerID);
 
-    await this.journeyLocationsService.findAndUnlock(
+    const location = await this.journeyLocationsService.findForWrite(
       journey,
       customer,
+      session,
+      owner,
+      queryRunner
+    );
+
+    if (!location) {
+      this.warn(
+        `${JSON.stringify({
+          warning: 'Customer not in step',
+          customerID,
+          currentStep,
+        })}`,
+        this.handleExit.name,
+        session,
+        owner.email
+      );
+      return;
+    }
+
+    await this.journeyLocationsService.unlock(
+      location,
       session,
       owner,
       queryRunner
@@ -1182,7 +1345,7 @@ export class TransitionProcessor extends WorkerHost {
       return;
     }
 
-    let moveCustomer: boolean = false;
+    let moveCustomer = false;
 
     if (
       Date.now() - location.stepEntry >
@@ -1315,7 +1478,7 @@ export class TransitionProcessor extends WorkerHost {
       return;
     }
 
-    let moveCustomer: boolean = false;
+    let moveCustomer = false;
 
     // Case 1: Specific days of the week
     if (currentStep.metadata.window.onDays) {
@@ -1456,6 +1619,7 @@ export class TransitionProcessor extends WorkerHost {
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
+      relations: ['teams.organization.workspaces'],
     });
 
     const journey = await this.journeysService.findByID(
@@ -1497,7 +1661,7 @@ export class TransitionProcessor extends WorkerHost {
     }
 
     let nextStep: Step,
-      moveCustomer: boolean = false;
+      moveCustomer = false;
 
     // Time branch case
     if (branch < 0 && currentStep.metadata.timeBranch) {
@@ -1765,7 +1929,7 @@ export class TransitionProcessor extends WorkerHost {
     }
 
     let nextStep: Step,
-      matches: boolean = false;
+      matches = false;
 
     for (
       let branchIndex = 0;

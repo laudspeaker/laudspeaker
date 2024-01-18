@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useDebounce } from "react-use";
 import ApiService from "services/api.service";
+import Account from "types/Account";
 
 interface TwilioFormData {
   smsAccountSid: string;
@@ -32,8 +33,8 @@ const TwilioSettings = () => {
     (async () => {
       setIsLoading(true);
       try {
-        const { data } = await ApiService.get({ url: "/accounts" });
-        const { smsAccountSid, smsAuthToken, smsFrom } = data;
+        const { data } = await ApiService.get<Account>({ url: "/accounts" });
+        const { smsAccountSid, smsAuthToken, smsFrom } = data.workspace;
         setFormData({
           smsAccountSid: smsAccountSid || "",
           smsAuthToken: smsAuthToken || "",

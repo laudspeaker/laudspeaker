@@ -11,6 +11,9 @@ import twilio from 'twilio';
 import { PostHog } from 'posthog-node';
 import * as admin from 'firebase-admin';
 import { WebClient } from '@slack/web-api';
+import { Account } from '@/api/accounts/entities/accounts.entity';
+import { Repository } from 'typeorm';
+import { Resend } from 'resend';
 
 export enum MessageType {
   SMS = 'sms',
@@ -116,7 +119,9 @@ export class MessageSender {
     },
   };
 
-  constructor() {}
+  constructor(private accountRepository: Repository<Account>) {
+    this.accountRepository = accountRepository;
+  }
 
   async process(job: any): Promise<ClickHouseMessage[]> {
     return await this.messagesMap[job.name](job);
@@ -163,6 +168,12 @@ export class MessageSender {
     }
     let textWithInsertedTags, subjectWithInsertedTags: string | undefined;
     let ret: ClickHouseMessage[];
+
+    const account = await this.accountRepository.findOne({
+      where: { id: accountID },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     try {
       if (text)
         textWithInsertedTags = await this.tagEngine.parseAndRender(
@@ -187,7 +198,7 @@ export class MessageSender {
           eventProvider: eventProvider,
           messageId: null,
           templateId: String(templateID),
-          userId: accountID,
+          workspaceId: workspace.id,
           processed: false,
         },
       ];
@@ -226,7 +237,49 @@ export class MessageSender {
             eventProvider: ClickHouseEventProvider.SENDGRID,
             messageId: sendgridMessage[0].headers['x-message-id'],
             templateId: String(templateID),
-            userId: accountID,
+            workspaceId: workspace.id,
+            processed: false,
+          },
+        ];
+        break;
+      case 'resend':
+        const resend = new Resend(key);
+        const resendMessage = await resend.emails.send({
+          from: `${from} <${email}@${domain}>`,
+          to: to,
+          cc: cc,
+          subject: subjectWithInsertedTags,
+          html: textWithInsertedTags,
+          tags: [
+            {
+              name: 'stepId',
+              value: stepID,
+            },
+            {
+              name: 'customerId',
+              value: customerID,
+            },
+            {
+              name: 'templateId',
+              value: String(templateID),
+            },
+            {
+              name: 'accountId',
+              value: accountID,
+            },
+          ],
+        });
+        msg = resendMessage;
+        ret = [
+          {
+            stepId: stepID,
+            createdAt: new Date().toISOString(),
+            customerId: customerID,
+            event: 'sent',
+            eventProvider: ClickHouseEventProvider.RESEND,
+            messageId: resendMessage.data ? resendMessage.data.id : '',
+            templateId: String(templateID),
+            workspaceId: workspace.id,
             processed: false,
           },
         ];
@@ -258,7 +311,7 @@ export class MessageSender {
               ? mailgunMessage.id.substring(1, mailgunMessage.id.length - 1)
               : '',
             templateId: String(templateID),
-            userId: accountID,
+            workspaceId: workspace.id,
             processed: false,
           },
         ];
@@ -313,7 +366,11 @@ export class MessageSender {
       return;
     }
     let textWithInsertedTags: string | undefined;
-
+    const account = await this.accountRepository.findOne({
+      where: { id: accountID },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     let ret: ClickHouseMessage[];
     try {
       if (text) {
@@ -333,7 +390,7 @@ export class MessageSender {
           eventProvider: ClickHouseEventProvider.TWILIO,
           messageId: null,
           templateId: String(templateID),
-          userId: accountID,
+          workspaceId: workspace.id,
           processed: false,
         },
       ];
@@ -354,7 +411,7 @@ export class MessageSender {
         eventProvider: ClickHouseEventProvider.TWILIO,
         messageId: message.sid,
         templateId: String(templateID),
-        userId: accountID,
+        workspaceId: workspace.id,
         processed: false,
       },
     ];
@@ -404,6 +461,13 @@ export class MessageSender {
     }
     let textWithInsertedTags, titleWithInsertedTags: string | undefined;
     let ret: ClickHouseMessage[];
+
+    const account = await this.accountRepository.findOne({
+      where: { id: accountID },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     try {
       textWithInsertedTags = await this.tagEngine.parseAndRender(
         pushText,
@@ -419,7 +483,7 @@ export class MessageSender {
     } catch (err) {
       return [
         {
-          userId: accountID,
+          workspaceId: workspace.id,
           event: 'error',
           createdAt: new Date().toISOString(),
           eventProvider: ClickHouseEventProvider.PUSH,
@@ -445,7 +509,7 @@ export class MessageSender {
       } else {
         return [
           {
-            userId: accountID,
+            workspaceId: workspace.id,
             event: 'error',
             createdAt: new Date().toISOString(),
             eventProvider: ClickHouseEventProvider.PUSH,
@@ -491,7 +555,7 @@ export class MessageSender {
         eventProvider: ClickHouseEventProvider.PUSH,
         messageId: messageId,
         templateId: String(templateID),
-        userId: accountID,
+        workspaceId: workspace.id,
         processed: false,
       },
     ];
@@ -539,6 +603,11 @@ export class MessageSender {
     if (!androidDeviceToken) {
       return;
     }
+    const account = await this.accountRepository.findOne({
+      where: { id: accountID },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     let textWithInsertedTags, titleWithInsertedTags: string | undefined;
     let ret: ClickHouseMessage[];
     try {
@@ -556,7 +625,7 @@ export class MessageSender {
     } catch (err) {
       return [
         {
-          userId: accountID,
+          workspaceId: workspace.id,
           event: 'error',
           createdAt: new Date().toISOString(),
           eventProvider: ClickHouseEventProvider.PUSH,
@@ -582,7 +651,7 @@ export class MessageSender {
       } else {
         return [
           {
-            userId: accountID,
+            workspaceId: workspace.id,
             event: 'error',
             createdAt: new Date().toISOString(),
             eventProvider: ClickHouseEventProvider.PUSH,
@@ -628,7 +697,7 @@ export class MessageSender {
         eventProvider: ClickHouseEventProvider.PUSH,
         messageId: messageId,
         templateId: String(templateID),
-        userId: accountID,
+        workspaceId: workspace.id,
         processed: false,
       },
     ];
@@ -668,6 +737,11 @@ export class MessageSender {
     customerID: string,
     trackingEmail: string
   ): Promise<ClickHouseMessage[]> {
+    const account = await this.accountRepository.findOne({
+      where: { id: accountID },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     try {
       if (args.text) {
         args.text = await this.tagEngine.parseAndRender(args.text, tags || {}, {
@@ -679,7 +753,7 @@ export class MessageSender {
       });
       return [
         {
-          userId: accountID,
+          workspaceId: workspace.id,
           event: 'sent',
           createdAt: new Date().toISOString(),
           eventProvider: ClickHouseEventProvider.SLACK,
@@ -693,7 +767,7 @@ export class MessageSender {
     } catch (e) {
       return [
         {
-          userId: accountID,
+          workspaceId: workspace.id,
           event: 'error',
           createdAt: new Date().toISOString(),
           eventProvider: ClickHouseEventProvider.SLACK,

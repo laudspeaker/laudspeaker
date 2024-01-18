@@ -22,6 +22,9 @@ import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
 import { Recovery } from './entities/recovery.entity';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { OrganizationInvites } from '../organizations/entities/organization-invites.entity';
+import { OrganizationTeam } from '../organizations/entities/organization-team.entity';
 
 @Injectable()
 export class AuthService {
@@ -36,10 +39,16 @@ export class AuthService {
     public readonly verificationRepository: Repository<Verification>,
     @InjectRepository(Recovery)
     public readonly recoveryRepository: Repository<Recovery>,
+    @InjectRepository(Workspaces)
+    public readonly workspacesRepository: Repository<Workspaces>,
+    @InjectRepository(OrganizationTeam)
+    public organizationTeamRepository: Repository<OrganizationTeam>,
     @Inject(AuthHelper)
     public readonly helper: AuthHelper,
     @Inject(CustomersService) private customersService: CustomersService,
-    @InjectConnection() private readonly connection: mongoose.Connection
+    @InjectConnection() private readonly connection: mongoose.Connection,
+    @InjectRepository(OrganizationInvites)
+    public organizationInvitesRepository: Repository<OrganizationInvites>
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -105,6 +114,16 @@ export class AuthService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
+    let invite: OrganizationInvites;
+    if (body.fromInviteId) {
+      invite = await this.organizationInvitesRepository.findOne({
+        where: { id: body.fromInviteId },
+        relations: ['team'],
+      });
+      if (!invite) {
+        throw new HttpException("Couldn't find", HttpStatus.FORBIDDEN);
+      }
+    }
     let err;
     try {
       const { firstName, lastName, email, password }: RegisterDto = body;
@@ -124,19 +143,26 @@ export class AuthService {
       user.lastName = lastName;
       user.email = email;
       user.password = this.helper.encodePassword(password);
-      user.apiKey = this.helper.generateApiKey();
       user.accountCreatedAt = new Date();
-      user.plan = PlanType.FREE;
       if (process.env.EMAIL_VERIFICATION !== 'true') {
         user.verified = true;
       }
+
       const ret = await queryRunner.manager.save(user);
-      await this.helper.generateDefaultData(ret, queryRunner, session);
 
       user.id = ret.id;
 
       if (process.env.EMAIL_VERIFICATION === 'true') {
         await this.requestVerification(ret, queryRunner, session);
+      }
+      if (body.fromInviteId && invite) {
+        const team = await this.organizationTeamRepository.findOne({
+          where: { id: invite.team.id },
+          relations: ['members'],
+        });
+        team.members.push(user);
+        await queryRunner.manager.save(OrganizationTeam, team);
+        await queryRunner.manager.remove(OrganizationInvites, invite);
       }
       await queryRunner.commitTransaction();
       return { ...ret, access_token: this.helper.generateToken(ret) };
@@ -177,11 +203,16 @@ export class AuthService {
     return { ...ret, access_token: this.helper.generateToken(user) };
   }
 
+  // For now return account from workspaces owner perspective
   public async validateAPIKey(apiKey: string): Promise<Account | never> {
-    const user: Account = await this.accountRepository.findOne({
-      where: { apiKey: apiKey },
+    const workspace = await this.workspacesRepository.findOne({
+      where: {
+        apiKey,
+      },
+      relations: ['organization.owner'],
     });
-    return user;
+
+    return workspace.organization.owner;
   }
 
   public async refresh(user: Account, session: string): Promise<string> {
@@ -266,36 +297,12 @@ export class AuthService {
     account.verified = true;
     verification.status = 'verified';
 
-    const { email, firstName, lastName, verified, customerId } = account;
+    const { email, firstName, lastName, verified } = account;
 
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
 
     try {
-      if (customerId) {
-        const foundCustomer = await this.customersService.findById(
-          account,
-          customerId
-        );
-
-        foundCustomer.verified = true;
-        foundCustomer.email = email;
-        await foundCustomer.save({ session: transactionSession });
-      } else {
-        const customer = await this.customersService.create(
-          account,
-          {
-            email,
-            firstName,
-            lastName,
-            verified,
-          },
-          session,
-          transactionSession
-        );
-        account.customerId = customer.id;
-      }
-
       await this.dataSource.transaction(async (transactionSession) => {
         await transactionSession.save(account);
         await transactionSession.save(verification);

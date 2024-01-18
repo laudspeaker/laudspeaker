@@ -44,7 +44,7 @@ export default function SettingsFirebaseBeta() {
       setIsLoading(true);
       try {
         const { data } = await ApiService.get({ url: "/accounts" });
-        const { firebaseCredentials } = data;
+        const { firebaseCredentials } = data.workspace;
         setFormData({
           firebaseCredentials: firebaseCredentials || "",
         });

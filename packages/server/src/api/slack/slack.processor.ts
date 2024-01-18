@@ -8,6 +8,9 @@ import {
   ClickHouseEventProvider,
   WebhooksService,
 } from '../webhooks/webhooks.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Account } from '../accounts/entities/accounts.entity';
 
 @Injectable()
 @Processor('slack', { removeOnComplete: { age: 0, count: 0 } })
@@ -18,7 +21,9 @@ export class SlackProcessor extends WorkerHost {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
-    private readonly webhooksService: WebhooksService
+    private readonly webhooksService: WebhooksService,
+    @InjectRepository(Account)
+    private accountRepository: Repository<Account>
   ) {
     super();
     this.client = new WebClient();
@@ -29,6 +34,11 @@ export class SlackProcessor extends WorkerHost {
     try {
       let textWithInsertedTags;
       const { tags, text, ...args } = job.data.args;
+      const account = await this.accountRepository.findOne({
+        where: { id: job.data.accountId },
+        relations: ['teams.organization.workspaces'],
+      });
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
       try {
         if (text) {
           textWithInsertedTags = await this.tagEngine.parseAndRender(
@@ -39,19 +49,22 @@ export class SlackProcessor extends WorkerHost {
         }
       } catch (error) {
         this.logger.warn("Merge tag can't be used, skipping sending...");
-        await this.webhooksService.insertMessageStatusToClickhouse([
-          {
-            userId: job.data.accountId,
-            event: 'error',
-            createdAt: new Date().toISOString(),
-            eventProvider: ClickHouseEventProvider.SLACK,
-            messageId: '',
-            audienceId: job.data.args.audienceId,
-            customerId: job.data.args.customerId,
-            templateId: String(job.data.args.templateId),
-            processed: false,
-          },
-        ]);
+        await this.webhooksService.insertMessageStatusToClickhouse(
+          [
+            {
+              workspaceId: workspace?.id,
+              event: 'error',
+              createdAt: new Date().toISOString(),
+              eventProvider: ClickHouseEventProvider.SLACK,
+              messageId: '',
+              audienceId: job.data.args.audienceId,
+              customerId: job.data.args.customerId,
+              templateId: String(job.data.args.templateId),
+              processed: false,
+            },
+          ],
+          job.data.session
+        );
         return;
       }
 

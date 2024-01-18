@@ -7,6 +7,7 @@ import {
   Inject,
   Query,
   UseInterceptors,
+  RawBodyRequest,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { WebhooksService } from './webhooks.service';
@@ -134,5 +135,15 @@ export class WebhooksController {
   public async processMailgunData(@Body() body: any) {
     const session = randomUUID();
     await this.webhooksService.processMailgunData(body, session);
+  }
+
+  @Post('resend')
+  @UseInterceptors(new RavenInterceptor())
+  public async processResendData(
+    @Req() request: RawBodyRequest<Request>,
+    @Body() body: any
+  ) {
+    const session = randomUUID();
+    await this.webhooksService.processResendData(request, body, session);
   }
 }

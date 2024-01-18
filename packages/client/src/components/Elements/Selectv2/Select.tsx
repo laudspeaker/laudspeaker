@@ -105,7 +105,7 @@ const Select = <T, U = any>({
               panelClassName ? panelClassName : ""
             }`}
           >
-            <div className="bg-white py-[4px] min-w-[200px] max-w-full">
+            <div className="bg-white py-[4px] max-w-full">
               {searchValue !== undefined && (
                 <div className="p-[10px] relative">
                   <svg

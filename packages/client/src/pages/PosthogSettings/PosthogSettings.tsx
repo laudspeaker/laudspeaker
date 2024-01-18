@@ -20,11 +20,11 @@ const PosthogSettings = () => {
 
     try {
       const {
-        data: { apiKey, posthogSetupped },
+        data: { workspace },
       } = await ApiService.get<Account>({ url: "/accounts" });
 
-      setAPIKey(apiKey);
-      setIsConnected(posthogSetupped);
+      setAPIKey(workspace?.apiKey);
+      setIsConnected(workspace?.posthogSetupped);
     } catch (e) {
       toast.error("Error while loading data");
     } finally {

@@ -45,6 +45,7 @@ const FlowViewerSidePanel: FC<FlowViewerSidePanelProps> = ({ className }) => {
     [NodeType.MULTISPLIT]: "Multisplit",
     [NodeType.PUSH]: "Push",
     [NodeType.INSERT_NODE]: "",
+    [NodeType.EXPERIMENT]: "Experiment",
   };
 
   const nodeTypeToComponentMap: Record<string, ReactNode> = {

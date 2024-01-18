@@ -57,6 +57,12 @@ import PeopleImport from "pages/PeopleImport/PeopleImport";
 import PeopleSetting from "pages/PeopleSetting/PeopleSetting";
 import SegmentEditor from "pages/SegmentCreation/SegmentEditor";
 import config, { ONBOARDING_API_KEY_KEY, WS_BASE_URL_KEY } from "config";
+import CompanySetup from "pages/CompanySetup/CompanySetup";
+import EEWrapper from "EE/EEWraper";
+import InviteMember from "pages/Settingsv2/InviteMember";
+import InviteConfirmation from "EE/InviteConfirmation";
+import ManualSegmentCreator from "pages/ManualSegmentCreator";
+import SegmentViewer from "pages/SegmentViewer";
 
 interface IProtected {
   children: ReactElement;
@@ -142,13 +148,15 @@ const VerificationProtected: FC<VerificationProtectedProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [isCompanySetuped, setIsCompanySetuped] = useState(false);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
       const { data } = await ApiService.get({ url: "/accounts" });
-      const { verified } = data;
+      const { verified, workspace } = data;
       setIsVerified(verified);
+      setIsCompanySetuped(!!workspace?.id);
       setIsLoaded(true);
     } catch (e) {
       toast.error("Error while loading data");
@@ -162,10 +170,11 @@ const VerificationProtected: FC<VerificationProtectedProps> = ({
   }, []);
 
   useEffect(() => {
+    if (isLoaded && !isCompanySetuped) navigate("/company-setup");
     if (isLoaded && !isVerified) navigate("/verification");
-  }, [isVerified, isLoaded]);
+  }, [isLoaded]);
 
-  return isVerified ? <>{children}</> : <></>;
+  return isVerified && isCompanySetuped ? <>{children}</> : <></>;
 };
 
 export interface WelcomeBannerProviderProps {
@@ -247,6 +256,7 @@ const RouteComponent: React.FC = () => {
       try {
         const { data } = await ApiService.get<Account>({ url: "/accounts" });
 
+        // Update to info from organization
         dispatch({
           type: ActionType.LOGIN_USER_SUCCESS,
           payload: {
@@ -257,8 +267,8 @@ const RouteComponent: React.FC = () => {
             email: data.email,
             expectedOnboarding: data.expectedOnboarding,
             verified: data.verified,
-            pk: data.pk,
-            pushPlatforms: data.pushPlatforms,
+            pk: data.workspace.pk,
+            pushPlatforms: data.workspace.pushPlatforms,
           },
         });
       } catch (e) {
@@ -278,6 +288,14 @@ const RouteComponent: React.FC = () => {
           path="/signup"
           element={<Signup setShowWelcomeBanner={setShowWelcomeBanner} />}
         />
+        <Route
+          path="/signup/invitation/:id"
+          element={
+            <Signup fromInvite setShowWelcomeBanner={setShowWelcomeBanner} />
+          }
+        />
+        <Route path="/confirm-invite/:id" element={<InviteConfirmation />} />
+
         <Route
           path="/"
           element={
@@ -302,6 +320,7 @@ const RouteComponent: React.FC = () => {
         />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/reset-password/:id" element={<ResetPassword />} />
+        <Route path="/company-setup" element={<CompanySetup />} />
         <Route
           path="/flow"
           element={
@@ -454,7 +473,7 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/segment/create"
+          path="/segment/create/automatic"
           element={
             <Protected>
               <VerificationProtected>
@@ -466,12 +485,29 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
+          path="/segment/create/manual"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout
+                  crumbs={[
+                    { text: "Segments", link: "/segment" },
+                    { text: "Upload CSV" },
+                  ]}
+                >
+                  <ManualSegmentCreator />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
           path="/segment/:id"
           element={
             <Protected>
               <VerificationProtected>
                 <DrawerLayout>
-                  <SegmentEditor />
+                  <SegmentViewer />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
@@ -705,6 +741,20 @@ const RouteComponent: React.FC = () => {
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
+          }
+        />
+        <Route
+          path="/settings/add-member"
+          element={
+            <EEWrapper>
+              <Protected>
+                <VerificationProtected>
+                  <DrawerLayout>
+                    <InviteMember />
+                  </DrawerLayout>
+                </VerificationProtected>
+              </Protected>
+            </EEWrapper>
           }
         />
         <Route

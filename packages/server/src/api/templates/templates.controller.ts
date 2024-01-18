@@ -14,6 +14,7 @@ import {
   Post,
   Req,
   Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -138,7 +139,10 @@ export class TemplatesController {
   @Get(':id/usedInJourneys')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  findUsedInJourneys(@Req() { user }: Request, @Param('id') id: string) {
+  findUsedInJourneys(
+    @Req() { user }: Request,
+    @Param('id', ParseIntPipe) id: string
+  ) {
     const session = randomUUID();
     return this.templatesService.findUsedInJourneys(<Account>user, id, session);
   }
@@ -146,7 +150,7 @@ export class TemplatesController {
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  findOne(@Req() { user }: Request, @Param('id') id: string) {
+  findOne(@Req() { user }: Request, @Param('id', ParseIntPipe) id: string) {
     return this.templatesService.findOneById(<Account>user, id);
   }
 
@@ -155,7 +159,7 @@ export class TemplatesController {
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   update(
     @Req() { user }: Request,
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: string,
     @Body() updateTemplateDto: UpdateTemplateDto
   ) {
     const session = randomUUID();
@@ -170,7 +174,7 @@ export class TemplatesController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  remove(@Req() { user }: Request, @Param('id') id: string) {
+  remove(@Req() { user }: Request, @Param('id', ParseIntPipe) id: string) {
     const session = randomUUID();
     return this.templatesService.remove(<Account>user, id, session);
   }
@@ -178,7 +182,7 @@ export class TemplatesController {
   @Post(':id/duplicate')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  duplicate(@Req() { user }: Request, @Param('id') id: string) {
+  duplicate(@Req() { user }: Request, @Param('id', ParseIntPipe) id: string) {
     const session = randomUUID();
     return this.templatesService.duplicate(<Account>user, id, session);
   }

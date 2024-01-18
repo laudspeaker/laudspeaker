@@ -14,12 +14,14 @@ interface ImportCompletionProps {
   preview?: PreviewImportResults;
   segment: ImportCompletionSegmentProps;
   setSegment: (val: ImportCompletionSegmentProps) => void;
+  inSegment?: boolean;
 }
 
 const ImportCompletion = ({
   preview,
   segment,
   setSegment,
+  inSegment,
 }: ImportCompletionProps) => {
   return (
     <div className="w-full flex justify-center">
@@ -52,64 +54,68 @@ const ImportCompletion = ({
             )}
           </div>
         </div>
-        <CheckBox
-          onCheck={() => {}}
-          text={
-            <span className="text-[#6B7280] text-xs font-inter">
-              agreement agreement agreement agreement agreement agreement
-              agreement
-            </span>
-          }
-        />
-        <hr className="border-[#E5E7EB] my-5" />
-        <div className="text-[#111827] text-base font-inter font-semibold mb-[10px]">
-          Segment creation
-        </div>
-        <CheckBox
-          onCheck={(checked) =>
-            setSegment({ ...segment, withSegment: checked })
-          }
-          propControl
-          initValue={segment.withSegment}
-          text={
-            <span className="text-[#6B7280] text-xs font-inter">
-              Create a Segment from this Import
-            </span>
-          }
-        />
-        {segment.withSegment && (
+        {!inSegment && (
           <>
-            <div className="mt-[10px]">
-              <div className="mb-[5px] text-sm text-[#111827] font-inter">
-                Segment name
-              </div>
-              <Input
-                value={segment.name}
-                onChange={(val) => {
-                  setSegment({ ...segment, name: val });
-                }}
-                placeholder={"Segment name"}
-                wrapperClassName="!max-w-full w-full"
-                className="w-full"
-              />
+            <CheckBox
+              onCheck={() => {}}
+              text={
+                <span className="text-[#6B7280] text-xs font-inter">
+                  agreement agreement agreement agreement agreement agreement
+                  agreement
+                </span>
+              }
+            />
+            <hr className="border-[#E5E7EB] my-5" />
+            <div className="text-[#111827] text-base font-inter font-semibold mb-[10px]">
+              Segment creation
             </div>
-            <div className="mt-[10px]">
-              <div className="mb-[5px] text-sm text-[#111827] font-inter">
-                Description (optional)
-              </div>
-              <textarea
-                value={segment.description}
-                className="resize-none w-full border border-[#E5E7EB] rounded px-[12px] py-[4px] font-roboto text-[14px] leading-[22px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#6366F1] outline-none"
-                placeholder="Segment description"
-                rows={3}
-                onChange={(ev) => {
-                  setSegment({
-                    ...segment,
-                    description: ev.target.value || "",
-                  });
-                }}
-              />
-            </div>
+            <CheckBox
+              onCheck={(checked) =>
+                setSegment({ ...segment, withSegment: checked })
+              }
+              propControl
+              initValue={segment.withSegment}
+              text={
+                <span className="text-[#6B7280] text-xs font-inter">
+                  Create a Segment from this Import
+                </span>
+              }
+            />
+            {segment.withSegment && (
+              <>
+                <div className="mt-[10px]">
+                  <div className="mb-[5px] text-sm text-[#111827] font-inter">
+                    Segment name
+                  </div>
+                  <Input
+                    value={segment.name}
+                    onChange={(val) => {
+                      setSegment({ ...segment, name: val });
+                    }}
+                    placeholder={"Segment name"}
+                    wrapperClassName="!max-w-full w-full"
+                    className="w-full"
+                  />
+                </div>
+                <div className="mt-[10px]">
+                  <div className="mb-[5px] text-sm text-[#111827] font-inter">
+                    Description (optional)
+                  </div>
+                  <textarea
+                    value={segment.description}
+                    className="resize-none w-full border border-[#E5E7EB] rounded px-[12px] py-[4px] font-roboto text-[14px] leading-[22px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#6366F1] outline-none"
+                    placeholder="Segment description"
+                    rows={3}
+                    onChange={(ev) => {
+                      setSegment({
+                        ...segment,
+                        description: ev.target.value || "",
+                      });
+                    }}
+                  />
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

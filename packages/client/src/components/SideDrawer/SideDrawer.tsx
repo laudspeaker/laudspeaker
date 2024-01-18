@@ -73,7 +73,7 @@ export default function ResponsiveDrawer(props: Props) {
   React.useLayoutEffect(() => {
     (async () => {
       const { data } = await ApiService.get({ url: "/accounts" });
-      const { slackTeamId } = data;
+      const { slackTeamId } = data.workspace;
       if (slackTeamId)
         setExpectedOnboarding((expectedOnboardingArr) => [
           "Slack",
@@ -85,7 +85,7 @@ export default function ResponsiveDrawer(props: Props) {
   React.useLayoutEffect(() => {
     (async () => {
       const { data } = await ApiService.get({ url: "/accounts" });
-      const { emailProvider } = data;
+      const { emailProvider } = data.workspace;
       if (emailProvider)
         setExpectedOnboarding((expectedOnboardingArr) => [
           "Email",
@@ -97,7 +97,7 @@ export default function ResponsiveDrawer(props: Props) {
   React.useLayoutEffect(() => {
     (async () => {
       const { data } = await ApiService.get({ url: "/accounts" });
-      const { smsAccountSid } = data;
+      const { smsAccountSid } = data.workspace;
       if (smsAccountSid)
         setExpectedOnboarding((expectedOnboardingArr) => [
           "Sms",
@@ -109,7 +109,7 @@ export default function ResponsiveDrawer(props: Props) {
   React.useLayoutEffect(() => {
     (async () => {
       const { data } = await ApiService.get({ url: "/accounts" });
-      const { firebaseCredentials } = data;
+      const { firebaseCredentials } = data.workspace;
       if (firebaseCredentials)
         setExpectedOnboarding((expectedOnboardingArr) => [
           "Firebase",

@@ -6,6 +6,7 @@ interface TableProps {
   rows?: ReactNode[][];
   isLoading?: boolean;
   className?: string;
+  headClassName?: string;
   bodyClassName?: string;
 }
 
@@ -14,12 +15,13 @@ const Table: FC<TableProps> = ({
   rows,
   isLoading,
   className = "",
+  headClassName = "",
   bodyClassName = "",
 }) => {
   return (
     <table className={`rounded ${className ? className : ""}`}>
       {headings && (
-        <thead>
+        <thead className={headClassName}>
           <tr className="border-b-[1px] border-[#E5E7EB] ">
             {headings.map((heading, i) => (
               <th className="text-left" key={i}>

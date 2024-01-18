@@ -21,6 +21,8 @@ import {
   CustomerDocument,
   CustomerSchema,
 } from './schemas/customer.schema';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class CustomersConsumerService implements OnApplicationBootstrap {
@@ -32,6 +34,8 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
     private readonly journeysService: JourneysService,
     private readonly accountsService: AccountsService,
     private readonly segmentsService: SegmentsService,
+    @InjectQueue('events_pre')
+    private readonly eventPreprocessorQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection,
     private dataSource: DataSource
   ) {}
@@ -58,7 +62,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
   private handleCustomerChangeStream(this: CustomersConsumerService) {
     return async (changeMessage: EachMessagePayload) => {
       try {
-        let messStr = changeMessage.message.value.toString();
+        const messStr = changeMessage.message.value.toString();
         let message: ChangeStreamDocument<Customer> = JSON.parse(messStr);
         if (typeof message === 'string') {
           message = JSON.parse(message); //double parse if kafka record is published as string not object
@@ -66,10 +70,10 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
         const session = randomUUID();
         let account: Account;
         let customer: CustomerDocument;
-        let queryRunner = await this.dataSource.createQueryRunner();
+        const queryRunner = await this.dataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
-        let clientSession = await this.connection.startSession();
+        const clientSession = await this.connection.startSession();
         await clientSession.startTransaction();
         try {
           switch (message.operationType) {
@@ -86,10 +90,11 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
                 );
                 break;
               }
-              account = await this.accountsService.findOne(
-                { id: customer.ownerId },
-                session
-              );
+              account =
+                await this.accountsService.findOrganizationOwnerByWorkspaceId(
+                  customer.workspaceId,
+                  session
+                );
               await this.segmentsService.updateCustomerSegments(
                 account,
                 customer.id,
@@ -104,15 +109,23 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
                 queryRunner,
                 clientSession
               );
+
+              if (message.operationType === 'update')
+                await this.eventPreprocessorQueue.add('wu_attribute', {
+                  account: account,
+                  session: session,
+                  message,
+                });
               break;
-            case 'delete':
+            case 'delete': {
               // TODO_JH: remove customerID from all steps also
-              let customerId = message.documentKey._id['$oid'];
+              const customerId = message.documentKey._id['$oid'];
               await this.segmentsService.removeCustomerFromAllSegments(
                 customerId,
                 queryRunner
               );
               break;
+            }
           }
           await clientSession.commitTransaction();
           await clientSession.endSession();

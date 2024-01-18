@@ -19,7 +19,7 @@ import sortNoneChevronsImage from "./svg/sort-none-chevrons.svg";
 import NamePersonModal from "./Modals/NamePersonModal";
 import AutoComplete from "components/AutoCompletev2";
 
-interface PeopleRowData {
+export interface PeopleRowData {
   id: string;
   email?: string;
   createdAt: string;
