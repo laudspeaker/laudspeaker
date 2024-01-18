@@ -1,7 +1,6 @@
 import { AxiosError } from "axios";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Input from "components/Elements/Inputv2";
-import SegmentEditor from "pages/SegmentCreation/SegmentEditor";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
