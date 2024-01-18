@@ -463,6 +463,8 @@ export class SegmentsService {
 
         let processedCount = 0;
         let totalDocuments = await mongoCollection.countDocuments();
+        const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
 
         //console.log("looks like top level segment is created in mongo");
         //console.log("going to save", totalDocuments);
@@ -481,7 +483,7 @@ export class SegmentsService {
               const segmentCustomer = new SegmentCustomers();
               segmentCustomer.customerId = doc._id.toString();
               segmentCustomer.segment = segmentId;
-              segmentCustomer.owner = account;
+              segmentCustomer.workspace = workspace;
               // Set other properties as needed
               return segmentCustomer;
             });
