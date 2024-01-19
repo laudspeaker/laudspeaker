@@ -601,28 +601,28 @@ export class EventsService {
               android:
                 platform === PushPlatforms.ANDROID
                   ? {
-                      notification: {
-                        sound: 'default',
-                        imageUrl: settings?.image?.imageSrc || '',
-                      },
-                    }
+                    notification: {
+                      sound: 'default',
+                      imageUrl: settings?.image?.imageSrc,
+                    },
+                  }
                   : undefined,
               apns:
                 platform === PushPlatforms.IOS
                   ? {
-                      payload: {
-                        aps: {
-                          badge: 1,
-                          sound: 'default',
-                          'content-available': 1,
-                          category: settings.clickBehavior?.type,
-                          'mutable-content': 1,
-                        },
+                    payload: {
+                      aps: {
+                        badge: 1,
+                        sound: 'default',
+                        category: settings.clickBehavior?.type,
+                        contentAvailable: true,
+                        mutableContent: true,
                       },
-                      fcmOptions: {
-                        imageUrl: settings?.image?.imageSrc || '',
-                      },
-                    }
+                    },
+                    fcmOptions: {
+                      imageUrl: settings?.image?.imageSrc,
+                    },
+                  }
                   : undefined,
               data: body.pushObject.fields.reduce((acc, field) => {
                 acc[field.key] = field.value;
