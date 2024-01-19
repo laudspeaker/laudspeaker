@@ -283,18 +283,6 @@ export class TransitionProcessor extends WorkerHost {
       await queryRunner.rollbackTransaction();
       this.error(e, this.process.name, job.data.session);
       err = e;
-      const lock = this.redlockService.retrieve(
-        job.data.lock?.resources,
-        job.data.lock?.value,
-        job.data.lock?.attempts,
-        job.data.lock?.expiration
-      );
-      await lock.release();
-      this.warn(
-        `${JSON.stringify({ warning: 'Releasing lock' })}`,
-        this.process.name,
-        job.data.session
-      );
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
