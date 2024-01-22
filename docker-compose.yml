@@ -30,11 +30,21 @@ services:
     container_name: mongo
     ports:
       - "27017:27017"
-    healthcheck:
-      test: test $$(echo "rs.initiate().ok || rs.status().ok" | mongo --quiet) -eq 1
-      interval: 10s
-      start_period: 30s
     command: "--bind_ip_all --replSet rs0"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "admin",
+          "--port",
+          "27017",
+          "--eval",
+          "db.adminCommand('ping').ok",
+        ]
+      interval: 5s
+      timeout: 2s
+      retries: 20
     networks:
       - laudspeaker_default
 
@@ -81,19 +91,19 @@ services:
     networks:
       - laudspeaker_default
 
-  kafka-gui:
-    image: provectuslabs/kafka-ui
-    hostname: kafka-gui
-    container_name: kafak-gui
-    environment:
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:29092
-      KAFKA_CLUSTERS_0_NAME: local
-    ports:
-      - "1002:8080"
-    depends_on:
-      - kafka1
-    networks:
-      - laudspeaker_default
+  # kafka-gui:
+  #   image: provectuslabs/kafka-ui
+  #   hostname: kafka-gui
+  #   container_name: kafak-gui
+  #   environment:
+  #     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:29092
+  #     KAFKA_CLUSTERS_0_NAME: local
+  #   ports:
+  #     - "1002:8080"
+  #   depends_on:
+  #     - kafka1
+  #   networks:
+  #     - laudspeaker_default
   #### END kafka related containers
 
   #### START kafka connect related containers
@@ -104,11 +114,10 @@ services:
     ports:
       - "8083:8083"
     volumes:
-      - ./kafkaconnect:/opt/bitnami/kafka-connect
+      - ./local-env/kafkaconnect:/opt/bitnami/kafka-connect
     depends_on:
       - zoo1
       - kafka1
-      # - kafka2
     networks:
       - laudspeaker_default
     command:
@@ -116,6 +125,44 @@ services:
       - -c
       - /opt/bitnami/kafka/bin/connect-distributed.sh /opt/bitnami/kafka-connect/connect.properties
   #### END kafka connect related containers
+
+  init-environment:
+    platform: linux/amd64
+    build:
+      context: ./local-env/
+      dockerfile: Dockerfile.initenv
+    container_name: init-environment
+    depends_on:
+      mongo:
+        condition: service_healthy
+      kafka1:
+        condition: service_started
+      kafka-connect1:
+        condition: service_started
+    networks:
+      - laudspeaker_default
+
+  laudspeaker:
+    profiles:
+      - "testing"
+    image: ${LAUDSPEAKER_IMAGE:-laudspeaker/laudspeaker:latest}
+    container_name: laudspeaker
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "localhost:8080"]
+      interval: 5s
+      timeout: 30s
+      retries: 20
+    depends_on:
+      init-environment:
+        condition: service_completed_successfully
+    volumes:
+      - ./local-env/1a_init_kafka_engine.sql:/app/packages/server/src/migrations/clickhouse/1_init.sql
+    env_file:
+      - ./local-env/env-docker-compose
+    networks:
+      - laudspeaker_default
 
 networks:
   laudspeaker_default:
