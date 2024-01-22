@@ -1,7 +1,7 @@
 import React from "react";
 
 const EEWrapper = ({ children }: { children: React.ReactElement }) => {
-  if (process.env.REACT_APP_EE) {
+  if (true) {
     return children;
   } else {
     return <></>;
