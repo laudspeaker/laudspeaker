@@ -301,7 +301,7 @@ const OrganizationTab = ({ setViewTeamMember }: OrganizationTabProps) => {
               Team members
             </p>
             <Button
-              disabled={!process.env.REACT_APP_EE}
+              disabled={false}
               type={ButtonType.PRIMARY}
               onClick={() => {
                 navigate("/settings/add-member");
