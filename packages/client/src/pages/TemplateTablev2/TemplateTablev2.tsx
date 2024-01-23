@@ -223,6 +223,7 @@ const TemplateTablev2 = () => {
                 ,
                 <div className="px-5 py-[10px] select-none"></div>,
               ]}
+              rowsData={rows}
               rows={rows.map((row) => [
                 <button
                   className="text-[#6366F1]"

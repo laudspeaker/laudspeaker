@@ -367,6 +367,8 @@ export class WebsocketGateway implements OnGatewayConnection {
       optionalProperties?: { [key: string]: unknown };
     }
   ) {
+    if (!uniqueProperties) throw new WsException('No uniqueProperties given');
+
     if (!socket.data?.account || !socket.data?.customerId) {
       return;
     }
@@ -738,13 +740,14 @@ export class WebsocketGateway implements OnGatewayConnection {
   public async getFCMToken(
     @ConnectedSocket() socket: Socket,
     @MessageBody()
-    payload: {
+    {
+      type,
+      token,
+    }: {
       type: PushPlatforms;
       token: string;
     }
   ) {
-    const { type, token } = payload;
-
     if (!type) throw new WsException('No type given');
     if (!token) throw new WsException('No FCM token given');
 

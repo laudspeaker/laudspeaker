@@ -108,6 +108,7 @@ const TimeDelayViewer: FC<SidePanelComponentProps<TimeDelayNodeData>> = ({
                   <div className="p-[10px]">Customer ID</div>,
                   <div className="p-[10px]">Email</div>,
                 ]}
+                rowsData={customers}
                 rows={customers.map((customer) => [
                   <div
                     className="select-none cursor-pointer text-[#6366F1]"

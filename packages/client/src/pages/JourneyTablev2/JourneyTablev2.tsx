@@ -347,6 +347,7 @@ const JourneyTablev2 = () => {
                 </div>,
                 <div className="px-5 py-[10px] select-none"></div>,
               ]}
+              rowsData={rows}
               rows={rows.map((row) => [
                 <button
                   className="text-[#6366F1]"
