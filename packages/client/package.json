@@ -139,7 +139,7 @@
     "start": "env-cmd -f .env node scripts/start.js",
     "start:ci": "node scripts/start.js",
     "build:staging": "env-cmd --silent -f .env.staging node scripts/build.js",
-    "build:prod": "env-cmd --silent -f .env.prod node scripts/build.js && npm run sentry:sourcemaps",
+    "build:prod": "env-cmd --silent -f .env.prod node scripts/build.js",
     "test": "node scripts/test.js --passWithNoTests",
     "test:e2e": "npx cypress run",
     "npm run test:components": "",

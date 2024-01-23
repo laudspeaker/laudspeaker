@@ -1,0 +1,44 @@
+name: Build, test, push, deploy staging on commit
+on:
+  push:
+    branches:
+      - staging
+jobs:
+  setup:
+    name: Setup variables
+    runs-on: ubuntu-latest
+    outputs:
+      short_sha: ${{ steps.short_sha.outputs.short_sha }}
+    steps:
+      - id: short_sha
+        run: |
+          SHA=${{ github.sha }} 
+          echo short_sha=${SHA:0:20} >> "$GITHUB_OUTPUT"
+  build-staging:
+    needs: [setup]
+    name: Build docker image
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+    with:
+      dockerfile: Dockerfile
+      output: laudspeaker
+      external_url: app-staging.laudspeaker.com
+  test-staging:
+    needs: [setup, build-staging]
+    name: Test docker image
+    uses: ./.github/workflows/test.yml
+    with:
+      image: laudspeaker
+  push-staging:
+    needs: [setup, test-staging]
+    name: Tag and push docker images
+    uses: ./.github/workflows/push.yml
+    with:
+      image: laudspeaker
+      tags: laudspeaker/laudspeaker:latest,laudspeaker/laudspeaker:${{ needs.setup.outputs.short_sha }}
+    secrets: inherit
+  deploy-staging:
+    needs: [setup, push-staging]
+    name: Redeploy staging
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit

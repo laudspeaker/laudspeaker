@@ -1,0 +1,21 @@
+name: Deploy
+on:
+  workflow_call:
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+jobs:
+  deploy:
+    name: Redeploy latest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup AWS CLI
+        run: |
+          export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region us-east-1
+      - name: Force redeploy
+        run: |
+          aws ecs update-service --cluster staging --service staging --force-new-deployment
