@@ -22,7 +22,7 @@ on:
       POSTHOG_KEY:
         required: true
       ONBOARDING_API_KEY:
-        required: true
+        required: false
 jobs:
   build:
     name: Build and save laudspeaker image
