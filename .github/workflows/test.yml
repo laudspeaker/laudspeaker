@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.image }}
           path: /tmp
@@ -42,16 +42,16 @@ jobs:
           report_paths: ./packages/tests/cypress/test-results/*.xml
           detailed_summary: true
       - name: Upload Test Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always() # always run even if the previous step fails
         with:
           name: junit-test-results
           path: ./packages/tests/cypress/test-results/*.xml
-          retention-days: 5
+          compression-level: 0
       - name: Upload Test Screen Recordings
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always() # always run even if the previous step fails
         with:
           name: cypress-videos
           path: ./packages/tests/cypress/videos/*
-          retention-days: 5
+          compression-level: 0

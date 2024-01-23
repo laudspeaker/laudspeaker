@@ -47,7 +47,8 @@ jobs:
             REACT_APP_POSTHOG_KEY=${{ secrets.POSTHOG_KEY }}
             REACT_APP_ONBOARDING_API_KEY=${{ secrets.ONBOARDING_API_KEY }}
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.output }}
           path: /tmp/${{ inputs.output }}.tar
+          compression-level: 0
