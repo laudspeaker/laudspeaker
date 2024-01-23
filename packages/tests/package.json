@@ -1,0 +1,20 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "Cypress tests",
+  "main": "index.js",
+  "scripts": {
+    "cypress:clean": "rm -f ./cypress/test-results/results*",
+    "cypress:run": "npm run cypress:clean && npx cypress run --reporter junit --reporter-options mochaFile=./cypress/test-results/results-[hash].xml,toConsole=true"
+  },
+  "keywords": [],
+  "private": true,
+  "devDependencies": {
+    "cypress": "12.9.0",
+    "dotenv": "16.0.3",
+    "typescript": "4.7.4"
+  },
+  "dependencies": {
+    "date-fns": "^2.29.3"
+  }
+}

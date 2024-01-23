@@ -1,0 +1,53 @@
+name: Build
+on:
+  workflow_call:
+    inputs:
+      dockerfile:
+        description: Path to the dockerfile to be built
+        default: Dockerfile
+        required: true
+        type: string # dockerfile name (likely Dockerfile, Dockerfile.prod.client, Dockerfile.prod.client)
+      output:
+        description: Name of the docker image that will be saved as an artifact
+        default: laudspeaker
+        required: true
+        type: string # dockerfile name (likely Dockerfile, Dockerfile.prod.client, Dockerfile.prod.client)
+      external_url:
+        default: app.laudspeaker.com
+        required: true
+        type: string
+    secrets:
+      SENTRY_AUTH_TOKEN:
+        required: true
+      POSTHOG_KEY:
+        required: true
+      ONBOARDING_API_KEY:
+        required: true
+jobs:
+  build:
+    name: Build and save laudspeaker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and export
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ inputs.dockerfile }}
+          tags: ${{ inputs.output }}
+          outputs: type=docker,dest=/tmp/${{ inputs.output }}.tar
+          build-args: |
+            EXTERNAL_URL=${{ inputs.external_url }}
+            FRONTEND_SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+            BACKEND_SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+            REACT_APP_POSTHOG_HOST=${{ env.POSTHOG_HOST }}
+            REACT_APP_POSTHOG_KEY=${{ secrets.POSTHOG_KEY }}
+            REACT_APP_ONBOARDING_API_KEY=${{ secrets.ONBOARDING_API_KEY }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ inputs.output }}
+          path: /tmp/${{ inputs.output }}.tar
