@@ -71,12 +71,17 @@ services:
       - laudspeaker_default
 
   kafka1:
-    image: bitnami/kafka:latest
+    image: bitnami/kafka:3.6.0
     hostname: kafka1
     container_name: kafka1
     ports:
       - "29092:29092"
       - "9092:9092"
+    healthcheck:
+      test: kafka-cluster.sh cluster-id --bootstrap-server kafka1:19092 || exit 1
+      interval: 1s
+      timeout: 60s
+      retries: 60
     environment:
       KAFKA_CFG_LISTENERS: INTERNAL://kafka1:19092,EXTERNAL://kafka1:29092,DEV://kafka1:9092
       KAFKA_CFG_ADVERTISED_LISTENERS: INTERNAL://kafka1:19092,EXTERNAL://host.docker.internal:29092,DEV://localhost:9092
@@ -121,8 +126,8 @@ services:
     volumes:
       - ./local-env/kafkaconnect:/opt/bitnami/kafka-connect
     depends_on:
-      - zoo1
-      - kafka1
+      kafka1:
+        condition: service_healthy
     networks:
       - laudspeaker_default
     command:
@@ -132,7 +137,6 @@ services:
   #### END kafka connect related containers
 
   init-environment:
-    platform: linux/amd64
     build:
       context: ./local-env/
       dockerfile: Dockerfile.initenv
