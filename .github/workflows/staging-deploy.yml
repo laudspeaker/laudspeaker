@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - staging
-      - jared/cypress
 jobs:
   setup:
     name: Setup variables

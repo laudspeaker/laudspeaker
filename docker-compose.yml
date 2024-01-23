@@ -111,6 +111,11 @@ services:
     image: bitnami/kafka:latest
     hostname: kafka-connect1
     container_name: kafka-connect1
+    healthcheck:
+      test: ["CMD", "curl", "localhost:8083"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
     ports:
       - "8083:8083"
     volumes:
@@ -138,7 +143,7 @@ services:
       kafka1:
         condition: service_started
       kafka-connect1:
-        condition: service_started
+        condition: service_healthy
     networks:
       - laudspeaker_default
 
