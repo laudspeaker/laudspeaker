@@ -22,6 +22,7 @@ const TrackerTemplateViewer: FC<TrackerTemplateViewerProps> = ({
               <div className="px-5 py-[10px] min-h-[22px]">Type</div>,
               <div className="px-5 py-[10px] min-h-[22px]">Value</div>,
             ]}
+            rowsData={trackerData.fields}
             rows={
               trackerData.fields.length === 0
                 ? [
@@ -51,6 +52,7 @@ const TrackerTemplateViewer: FC<TrackerTemplateViewerProps> = ({
         <div className="rounded border-t-[1px] border-x-[1px] border-[#E5E7EB]">
           <Table
             className="w-full"
+            rowsData={trackerData.events}
             rows={
               trackerData.events.length === 0
                 ? [

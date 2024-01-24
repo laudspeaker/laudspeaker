@@ -232,6 +232,7 @@ const ManualSegmentTable: FC<ManualSegmentTableProps> = ({
             </div>,
             ...(isEditing ? [<></>] : []),
           ]}
+          rowsData={rows}
           rows={rows
             .filter((row) => !customersToDeleteFromSegment.includes(row.id))
             .map((row) => [
