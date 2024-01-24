@@ -210,6 +210,7 @@ const TemplateInlineEditor = ({
               </div>,
               <div className="px-5 py-[21px] select-none bg-[#F3F4F6] h-full" />,
             ]}
+            rowsData={rows}
             rows={rows.map((row) => [
               <div className="w-[60vw]">
                 <button
