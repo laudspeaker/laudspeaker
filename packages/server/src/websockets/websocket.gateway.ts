@@ -2,7 +2,7 @@ import {
   PushPlatforms,
   Template,
 } from '../api/templates/entities/template.entity';
-import { forwardRef, Inject, UseInterceptors } from '@nestjs/common';
+import { forwardRef, Inject, LoggerService, UseInterceptors } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -33,6 +33,7 @@ import { JourneysService } from '@/api/journeys/journeys.service';
 import { DevModeService } from '@/api/dev-mode/dev-mode.service';
 import { RavenInterceptor } from 'nest-raven';
 import { AnalyticsProviderTypes } from '@/api/steps/types/step.interface';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 interface SocketData {
   account: Account & { apiKey: string };
@@ -59,6 +60,8 @@ export class WebsocketGateway implements OnGatewayConnection {
   private server: Server;
 
   constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
     @Inject(forwardRef(() => AccountsService))
     private accountsService: AccountsService,
     @Inject(forwardRef(() => CustomersService))
@@ -71,10 +74,70 @@ export class WebsocketGateway implements OnGatewayConnection {
     private devModeService: DevModeService,
     @Inject(WebhooksService) private readonly webhooksService: WebhooksService,
     @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>
-  ) {}
+  ) { }
+
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: WebsocketGateway.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: WebsocketGateway.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: WebsocketGateway.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: WebsocketGateway.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: WebsocketGateway.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
 
   public async handleConnection(socket: Socket) {
-    console.log("In handle connection socket");
+    //console.log("In handle connection socket");
+    const session = randomUUID();
     try {
       const { apiKey, customerId, userId, journeyId, development } =
         socket.handshake.auth;
@@ -82,22 +145,23 @@ export class WebsocketGateway implements OnGatewayConnection {
       const account =
         development && userId && !apiKey
           ? await this.accountsService.findOne(
-              {
-                id: userId,
-              },
-              ''
-            )
+            {
+              id: userId,
+            },
+            ''
+          )
           : await this.accountsService.findOneByAPIKey(apiKey);
 
       if (!account) {
-        console.log("no account found");
+        //console.log("no account found");
+        this.log("no account found", this.handleConnection.name, session);
         socket.emit('error', 'Bad API key');
         socket.disconnect(true);
         return;
       }
 
       socket.data.account = account;
-      socket.data.session = randomUUID();
+      socket.data.session = session;
       socket.data.development = development;
 
       let customer: CustomerDocument;
@@ -119,7 +183,7 @@ export class WebsocketGateway implements OnGatewayConnection {
             'log',
             'Customer id is not valid. Creating new anonymous customer.'
           );
-          console.log("In handle connection socket - creating customer");
+          //console.log("In handle connection socket - creating customer");
           customer = await this.customersService.CustomerModel.create({
             isAnonymous: true,
             workspaceId: workspace.id,
@@ -370,7 +434,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       optionalProperties?: { [key: string]: unknown };
     }
   ) {
-    if (!uniqueProperties) throw new WsException('No uniqueProperties given');
+if (!uniqueProperties) throw new WsException('No uniqueProperties given');
 
     if (!socket.data?.account || !socket.data?.customerId) {
       return;
@@ -751,7 +815,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       token: string;
     }
   ) {
-    if (!type) throw new WsException('No type given');
+        if (!type) throw new WsException('No type given');
     if (!token) throw new WsException('No FCM token given');
 
     const {

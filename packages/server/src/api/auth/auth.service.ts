@@ -333,7 +333,7 @@ export class AuthService {
       //to do
       switch (process.env.EMAIL_VERIFICATION_PROVIDER) {
         case "gmail":
-          console.log("sending gmail email resend");
+          //console.log("sending gmail email resend");
           await this.messageQueue.add('email', {
             eventProvider: 'gmail',
             key: process.env.GMAIL_APP_CRED,

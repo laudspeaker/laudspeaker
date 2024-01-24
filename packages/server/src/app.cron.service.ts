@@ -467,53 +467,55 @@ export class CronService {
   @Cron(CronExpression.EVERY_5_MINUTES)
   async updateStatementsWithMessageEvents() {
     const session = randomUUID();
+    let err;
     //console.log("about to run updateStatementsWithMessageEvents");
     // for each organization, get all segments
     // to do change this to organisations rather than
     const accounts = await this.accountsService.findAll();
     for (let j = 0; j < accounts.length; j++) {
-      let queryRunner = await this.dataSource.createQueryRunner();
+      let queryRunner = this.dataSource.createQueryRunner();
       await queryRunner.connect();
       await queryRunner.startTransaction();
-      let segments = await this.segmentsService.getSegments(
-        accounts[j],
-        undefined,
-        queryRunner
-      );
-      // for each segment check if it has a message component
-      for (const segment of segments) {
-        let doInclude = this.checkSegmentHasMessageFilters(
-          segment.inclusionCriteria.query,
-          accounts[j].id,
-          session
+      try {
+        let segments = await this.segmentsService.getSegments(
+          accounts[j],
+          undefined,
+          queryRunner
         );
-        this.debug(
-          `we updated doInclude: ${doInclude}`,
-          this.updateStatementsWithMessageEvents.name,
-          session,
-          accounts[j].id
-        );
-        if (doInclude) {
-          // If segment includes message filters recalculate which customers should be in the segment
-          const collectionPrefix = this.segmentsService.generateRandomString();
-          const customersInSegment =
-            await this.customersService.getSegmentCustomersFromQuery(
-              segment.inclusionCriteria.query,
-              accounts[j],
-              session,
-              true,
-              0,
-              collectionPrefix
-            );
-
+        // for each segment check if it has a message component
+        for (const segment of segments) {
+          let doInclude = this.checkSegmentHasMessageFilters(
+            segment.inclusionCriteria.query,
+            accounts[j].id,
+            session
+          );
           this.debug(
-            `we have customersInSegment: ${customersInSegment}`,
+            `we updated doInclude: ${doInclude}`,
             this.updateStatementsWithMessageEvents.name,
             session,
             accounts[j].id
           );
-          // update the segment customer table
-          try {
+          if (doInclude) {
+            // If segment includes message filters recalculate which customers should be in the segment
+            const collectionPrefix = this.segmentsService.generateRandomString();
+            const customersInSegment =
+              await this.customersService.getSegmentCustomersFromQuery(
+                segment.inclusionCriteria.query,
+                accounts[j],
+                session,
+                true,
+                0,
+                collectionPrefix
+              );
+
+            this.debug(
+              `we have customersInSegment: ${customersInSegment}`,
+              this.updateStatementsWithMessageEvents.name,
+              session,
+              accounts[j].id
+            );
+            // update the segment customer table
+            //try {
             //collectionName: string,account: Account,segmentId: string,session: string,queryRunner: QueryRunner,batchSize: number = 500 //
             await this.segmentsService.updateSegmentCustomersBatched(
               customersInSegment,
@@ -523,22 +525,35 @@ export class CronService {
               queryRunner,
               500
             );
-          } catch {
+            // } catch(error) {
+            /*
             this.debug(
               `error updating segment: ${segment.name}`,
               this.updateStatementsWithMessageEvents.name,
               session,
               accounts[j].id
             );
+            */
+
+            //}
+            // drop the collections after adding customer segments
+            await this.segmentsService.deleteCollectionsWithPrefix(collectionPrefix);
+
           }
-
-          // drop the collections after adding customer segments
-          this.segmentsService.deleteCollectionsWithPrefix(collectionPrefix);
-
         }
+        await queryRunner.commitTransaction();
+      } catch (error) {
+        this.error(
+          error,
+          this.updateStatementsWithMessageEvents.name,
+          session,
+          accounts[j].id
+        );
+        await queryRunner.rollbackTransaction();
+        err = error;
+      } finally{
+        await queryRunner.release();
       }
-      await queryRunner.commitTransaction();
-      await queryRunner.release();
     }
   }
 
