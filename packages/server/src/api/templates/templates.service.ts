@@ -640,7 +640,7 @@ export class TemplatesService extends QueueEventsHost {
 
         id,
       },
-      relations: ['owner'],
+      relations: ['workspace'],
     });
     if (!foundTemplate) throw new NotFoundException('Template not found');
 

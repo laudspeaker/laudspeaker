@@ -1,0 +1,57 @@
+name: Test
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: Name of docker image built by build job
+        default: laudspeaker
+        required: true
+        type: string
+jobs:
+  test:
+    name: Load and test docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.image }}
+          path: /tmp
+      - name: Load image
+        run: |
+          docker load --input /tmp/${{ inputs.image }}.tar
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 16
+      - name: Setup environment
+        run: |
+          LAUDSPEAKER_IMAGE=${{ inputs.image }} docker compose --profile testing up --wait --quiet-pull
+      - name: Install cypress dependencies
+        run: |
+          npm install -w packages/tests
+      - name: Run cypress tests
+        run: |
+          TESTS_BASE_URL=http://localhost:8080 TESTS_API_BASE_URL=http://localhost:8080/api npm run tests:run
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v4
+        if: always()
+        with:
+          report_paths: ./packages/tests/cypress/test-results/*.xml
+          detailed_summary: true
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v4
+        if: always() # always run even if the previous step fails
+        with:
+          name: junit-test-results
+          path: ./packages/tests/cypress/test-results/*.xml
+          compression-level: 0
+      - name: Upload Test Screen Recordings
+        uses: actions/upload-artifact@v4
+        if: always() # always run even if the previous step fails
+        with:
+          name: cypress-videos
+          path: ./packages/tests/cypress/videos/*
+          compression-level: 0
