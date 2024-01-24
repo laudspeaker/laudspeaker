@@ -84,7 +84,7 @@ export enum QueryStatementType {
   EMAIL = "Email",
   PUSH = "Push",
   SMS = "SMS",
-  InAPP = "In-app message",
+  IN_APP = "In-app message",
 }
 
 export const messageEventsCorelationWaitUntil: Record<
@@ -135,14 +135,14 @@ export const WaitUntilMessageProviderCorelation: any = {
   [ProviderType.EMAIL_MESSAGE]: QueryStatementType.EMAIL.toLowerCase(),
   [ProviderType.SMS_MESSAGE]: QueryStatementType.SMS.toLowerCase(),
   [ProviderType.PUSH_MESSAGE]: QueryStatementType.PUSH.toLowerCase(),
-  [ProviderType.IN_APP_MESSAGE]: QueryStatementType.InAPP.toLowerCase(),
+  [ProviderType.IN_APP_MESSAGE]: QueryStatementType.IN_APP.toLowerCase(),
 };
 
 export type MessageEventTypes =
   | QueryStatementType.EMAIL
   | QueryStatementType.PUSH
   | QueryStatementType.SMS
-  | QueryStatementType.InAPP;
+  | QueryStatementType.IN_APP;
 
 export interface GeneralSelectedType {
   key: string;

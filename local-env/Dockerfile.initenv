@@ -1,0 +1,15 @@
+FROM debian:latest
+
+# GET MONGOSH
+WORKDIR /root
+RUN apt-get update
+RUN apt-get install -y wget && \
+    wget -O - https://downloads.mongodb.com/compass/mongosh-2.1.0-linux-x64.tgz | tar -xzf - && \
+    mv mongosh-2.1.0-linux-x64/bin/mongosh /usr/local/bin/
+
+# GET CURL
+RUN apt-get install -y curl
+
+COPY ./initenv.sh /root/initenv.sh
+
+ENTRYPOINT [ "/root/initenv.sh" ]

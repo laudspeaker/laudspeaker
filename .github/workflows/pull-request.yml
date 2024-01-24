@@ -1,0 +1,24 @@
+name: Pull request
+on:
+  pull_request:
+    branches:
+      - staging
+      - production
+jobs:
+  build-pr:
+    name: Build docker image
+    uses: ./.github/workflows/build.yml
+    secrets:
+      SENTRY_AUTH_TOKEN: ""
+      POSTHOG_KEY: ""
+      ONBOARDING_API_KEY: ""
+    with:
+      dockerfile: Dockerfile
+      output: laudspeaker
+      external_url: app-staging.laudspeaker.com
+  test-pr:
+    needs: [build-pr]
+    name: Test docker image
+    uses: ./.github/workflows/test.yml
+    with:
+      image: laudspeaker

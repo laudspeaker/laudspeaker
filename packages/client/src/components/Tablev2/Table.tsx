@@ -1,23 +1,29 @@
 import Progress from "components/Progress";
 import React, { FC, ReactNode } from "react";
 
-interface TableProps {
+interface TableProps<T> {
   headings?: ReactNode[];
+  rowsData: T[];
   rows?: ReactNode[][];
   isLoading?: boolean;
   className?: string;
   headClassName?: string;
   bodyClassName?: string;
+  selectedRow?: number;
+  onRowClick?: (i: number) => void;
 }
 
-const Table: FC<TableProps> = ({
+const Table = <T,>({
   headings,
+  rowsData,
   rows,
   isLoading,
   className = "",
   headClassName = "",
   bodyClassName = "",
-}) => {
+  selectedRow,
+  onRowClick,
+}: TableProps<T>) => {
   return (
     <table className={`rounded ${className ? className : ""}`}>
       {headings && (
@@ -44,7 +50,10 @@ const Table: FC<TableProps> = ({
           {rows.map((row, i) => (
             <tr
               key={i}
-              className="border-b-[1px] border-[#E5E7EB] hover:bg-[#F3F4F6]"
+              className={`border-b-[1px] border-[#E5E7EB] hover:bg-[#F3F4F6] ${
+                onRowClick ? "cursor-pointer" : ""
+              } ${i === selectedRow ? "!bg-[#6366F1] !text-white" : ""}`}
+              onClick={() => onRowClick?.(i)}
             >
               {row.map((el, j) => (
                 <td className="px-5 py-[10px]" key={j}>

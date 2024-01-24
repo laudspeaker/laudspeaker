@@ -602,7 +602,7 @@ export class EventsService {
                   ? {
                     notification: {
                       sound: 'default',
-                      imageUrl: settings?.image?.imageSrc || '',
+                      imageUrl: settings?.image?.imageSrc,
                     },
                   }
                   : undefined,

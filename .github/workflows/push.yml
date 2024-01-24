@@ -1,0 +1,51 @@
+name: Push
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: Name of docker image built by build job
+        default: laudspeaker
+        required: true
+        type: string
+      tags:
+        description: Comma separated list of tags to push
+        default: laudspeaker:latest
+        required: true
+        type: string
+    secrets:
+      DOCKER_USER:
+        required: true
+      DOCKER_PASS:
+        required: true
+jobs:
+  push:
+    name: Load, tag, and push docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.image }}
+          path: /tmp
+      - name: Load image
+        run: |
+          docker load --input /tmp/${{ inputs.image }}.tar
+      - name: Tag new images
+        run: |
+          tags=${{ inputs.tags }}
+          for tag in ${tags//,/ }
+          do
+            docker image tag ${{ inputs.image }} $tag
+          done
+      - name: Login to Docker
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASS }}
+      - name: Push to Docker
+        run: |
+          tags=${{ inputs.tags }}
+          for tag in ${tags//,/ }
+          do
+            docker push $tag
+          done

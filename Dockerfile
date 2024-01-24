@@ -23,8 +23,11 @@ COPY ./package-lock.json /app/
 RUN npm install --legacy-peer-deps
 COPY . /app
 RUN npm run format:client
+RUN npm run build:client
+# Basically an if else but more readable in two lines
+RUN if [ -z "$FRONTEND_SENTRY_AUTH_TOKEN" ] ; then echo "Not building sourcemaps, FRONTEND_SENTRY_AUTH_TOKEN not provided" ; fi
 # Need to add sentry_release here because of: https://stackoverflow.com/a/41864647
-RUN REACT_APP_SENTRY_RELEASE=$(./node_modules/.bin/sentry-cli releases propose-version) npm run build:client
+RUN if [ ! -z "$FRONTEND_SENTRY_AUTH_TOKEN" ] ; then REACT_APP_SENTRY_RELEASE=$(./node_modules/.bin/sentry-cli releases propose-version) npm run build:client:sourcemaps ; fi
 
 FROM node:16 as backend_build
 ARG BACKEND_SENTRY_AUTH_TOKEN
@@ -39,6 +42,10 @@ COPY ./packages/server/package.json /app
 RUN npm install --legacy-peer-deps
 COPY . /app
 RUN npm run build:server
+# Basically an if else but more readable in two lines
+RUN if [ -z "$BACKEND_SENTRY_AUTH_TOKEN" ] ; then echo "Not building sourcemaps, BACKEND_SENTRY_AUTH_TOKEN not provided" ; fi
+RUN if [ ! -z "$BACKEND_SENTRY_AUTH_TOKEN" ] ; then npm run build:server:sourcemaps ; fi
+
 
 RUN ./node_modules/.bin/sentry-cli releases propose-version > /app/SENTRY_RELEASE
 

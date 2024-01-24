@@ -211,6 +211,7 @@ const TrackerViewer: FC<
               </div>,
               <div className="px-5 py-[10px] min-h-[22px]">Value</div>,
             ]}
+            rowsData={nodeData.tracker?.fields || []}
             rows={
               !nodeData.tracker || nodeData.tracker.fields.length === 0
                 ? [

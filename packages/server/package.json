@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "nest build && npm run sentry:sourcemaps",
+    "build": "nest build",
     "start": "nest start",
     "start:dev": "env-cmd -f .env npm run prebuild && env-cmd -f .env nest start --watch",
     "start:dev:db": "./src/common/scripts/start-db.sh",

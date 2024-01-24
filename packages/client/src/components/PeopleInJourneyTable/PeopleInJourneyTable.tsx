@@ -79,6 +79,7 @@ const PeopleInJourneyTable = () => {
                   Enrollment time
                 </div>,
               ]}
+              rowsData={journeys?.data || []}
               rows={journeys?.data?.map((row) => [
                 <button
                   className="text-[#6366F1] font-[Inter] text-[14px] leading-[22px]"
