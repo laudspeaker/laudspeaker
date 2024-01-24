@@ -439,10 +439,12 @@ export class SegmentsService {
 
         try {
           const result = await mongoCollection.insertMany(mongoDocuments);
-          console.log('Batch of documents inserted:', result);
+          //console.log('Batch of documents inserted:', result);
           mongoDocuments = []; // Reset batch after insertion
         } catch (err) {
-          console.error('Error inserting documents:', err);
+          //console.error('Error inserting documents:', err);
+          this.error(err, this.getSegmentCustomersBatched.name, session, account.email);
+          throw err;
         }
 
         // Update the count of processed customers
@@ -1079,62 +1081,54 @@ export class SegmentsService {
   }
 
   public async updateSegmentCustomersBatched(
-    collectionName: string, 
+    collectionName: string,
     account: Account,
     segmentId: string,
     session: string,
     queryRunner: QueryRunner,
     batchSize: number = 500 // default batch size
   ) {
-      // Start transaction
-      await queryRunner.startTransaction();
+    // Start transaction
+    //await queryRunner.startTransaction();
 
-      try {
-          const segment = await this.findOne(account, segmentId, session, queryRunner);
-          const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const segment = await this.findOne(account, segmentId, session, queryRunner);
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-          // Delete existing customers in the segment
-          await queryRunner.manager.getRepository(SegmentCustomers).delete({
-              segment: segmentId, // Assuming segment is identified by segmentId
-          });
+    // Delete existing customers in the segment
+    await queryRunner.manager.getRepository(SegmentCustomers).delete({
+      segment: segmentId, // Assuming segment is identified by segmentId
+    });
 
-          const mongoCollection = this.connection.db.collection(collectionName);
+    const mongoCollection = this.connection.db.collection(collectionName);
 
-          let processedCount = 0;
-          const totalDocuments = await mongoCollection.countDocuments();
+    let processedCount = 0;
+    const totalDocuments = await mongoCollection.countDocuments();
 
-          while (processedCount < totalDocuments) {
-              // Fetch a batch of documents from MongoDB
-              const mongoDocuments = await mongoCollection
-                  .find({})
-                  .skip(processedCount)
-                  .limit(batchSize)
-                  .toArray();
+    while (processedCount < totalDocuments) {
+      // Fetch a batch of documents from MongoDB
+      const mongoDocuments = await mongoCollection
+        .find({})
+        .skip(processedCount)
+        .limit(batchSize)
+        .toArray();
 
-              // Convert MongoDB documents to SegmentCustomers entities
-              const segmentCustomersArray = mongoDocuments.map(doc => ({
-                  segment: segmentId,
-                  customerId: doc._id.toString(), // Assuming _id is the ObjectId
-                  workspace,
-              }));
+      // Convert MongoDB documents to SegmentCustomers entities
+      const segmentCustomersArray = mongoDocuments.map(doc => ({
+        segment: segmentId,
+        customerId: doc._id.toString(), // Assuming _id is the ObjectId
+        workspace,
+      }));
 
-              // Batch save to segmentCustomersRepository
-              await queryRunner.manager.getRepository(SegmentCustomers).save(segmentCustomersArray);
+      // Batch save to segmentCustomersRepository
+      await queryRunner.manager.getRepository(SegmentCustomers).save(segmentCustomersArray);
 
-              // Update processed count
-              processedCount += mongoDocuments.length;
-          }
+      // Update processed count
+      processedCount += mongoDocuments.length;
+    }
 
-          // Commit transaction
-          await queryRunner.commitTransaction();
-      } catch (err) {
-          // In case of an error, rollback the transaction
-          await queryRunner.rollbackTransaction();
-          throw err; // Re-throw the error for further handling
-      } finally {
-          // Release the query runner which will return it to the pool
-          //await queryRunner.release();
-      }
+    // Commit transaction
+    //await queryRunner.commitTransaction();
+
   }
 
   public async putCustomers(
