@@ -2984,7 +2984,9 @@ export class CustomersService {
 
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     const workspaceIdCondition = `workspaceId = '${workspace.id}'`;
-    console.log('statement is', statement);
+    //to do change clickhouse?
+    //const workspaceIdCondition = `userId = '${workspace.id}'`;
+    //console.log('statement is', statement);
 
     let journeyIds = [];
 
@@ -4285,6 +4287,8 @@ export class CustomersService {
     } = statement;
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
     const workspaceIdCondition = `workspaceId = '${workspace.id}'`;
+    //to do change clickhouse?
+    //const workspaceIdCondition = `userId = '${workspace.id}'`;
     let sqlQuery = `SELECT COUNT(*) FROM message_status WHERE `;
     //let sqlQuery = `SELECT * FROM message_status WHERE `;
 

@@ -464,9 +464,10 @@ export class CronService {
    * at clickhouse unprocessed events
    *
    */
-  @Cron(CronExpression.EVERY_30_MINUTES)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async updateStatementsWithMessageEvents() {
     const session = randomUUID();
+    //console.log("about to run updateStatementsWithMessageEvents");
     // for each organization, get all segments
     // to do change this to organisations rather than
     const accounts = await this.accountsService.findAll();
@@ -531,15 +532,9 @@ export class CronService {
             );
           }
 
-          //let oldCollection = customersInSegment + "old";
-          //oldCollection = await this.segmentsService.getSegmentCustomersBatched(accounts[j], session, segment.id, oldCollection, 500);
+          // drop the collections after adding customer segments
+          this.segmentsService.deleteCollectionsWithPrefix(collectionPrefix);
 
-          // customers to remove
-          // customers to add
-          //const batchSize = 500; // Set an appropriate batch size
-          //const NewCollection = customersInSegment; // Name of the MongoDB collection
-          //async addCustomersToSegment(collectionName: string, batchSize: number, segmentId: string, account: Account, queryRunner: QueryRunner): Promise<void> {
-          //let updatedSegment = await this.segmentsService.addCustomersToSegment(NewCollection, batchSize, segment.id, accounts[j], queryRunner);
         }
       }
       await queryRunner.commitTransaction();

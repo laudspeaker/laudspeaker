@@ -1091,6 +1091,7 @@ export class SegmentsService {
 
       try {
           const segment = await this.findOne(account, segmentId, session, queryRunner);
+          const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
           // Delete existing customers in the segment
           await queryRunner.manager.getRepository(SegmentCustomers).delete({
@@ -1114,7 +1115,7 @@ export class SegmentsService {
               const segmentCustomersArray = mongoDocuments.map(doc => ({
                   segment: segmentId,
                   customerId: doc._id.toString(), // Assuming _id is the ObjectId
-                  owner: account
+                  workspace,
               }));
 
               // Batch save to segmentCustomersRepository
@@ -1132,7 +1133,7 @@ export class SegmentsService {
           throw err; // Re-throw the error for further handling
       } finally {
           // Release the query runner which will return it to the pool
-          await queryRunner.release();
+          //await queryRunner.release();
       }
   }
 
