@@ -8,6 +8,7 @@ export class UpdateMongoEvents1704217406853 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     const mg = await mongoose.connect(
       formatMongoConnectionString(process.env.MONGOOSE_URL)
+      // process.env.MONGOOSE_URL
     );
 
     await mg.connection.db.admin().command({

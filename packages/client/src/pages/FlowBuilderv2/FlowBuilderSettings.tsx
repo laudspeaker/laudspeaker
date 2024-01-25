@@ -1,9 +1,10 @@
 import { RadioGroup } from "@headlessui/react";
 import CheckBox from "components/Checkbox/Checkbox";
+import Button, { ButtonType } from "components/Elements/Buttonv2";
 import ToggleSwitch from "components/Elements/ToggleSwitch";
 import RadioOption from "components/Radio/RadioOption";
 import TagComponent from "components/TagComponent/TagComponent";
-import { useState } from "react";
+import { FC, useState } from "react";
 import { useDispatch } from "react-redux";
 import {
   JourneySettingsQuietFallbackBehavior,
@@ -15,7 +16,15 @@ import {
 } from "reducers/flow-builder.reducer";
 import { useAppSelector } from "store/hooks";
 
-const FlowBuilderSettings = () => {
+interface FlowBuilderSettingsProps {
+  onSave?: () => void;
+  onCancel?: () => void;
+}
+
+const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
+  onSave,
+  onCancel,
+}) => {
   const [searchTagsValue, setSearchTagsValue] = useState("");
   const { journeySettings, availableTags } = useAppSelector(
     (store) => store.flowBuilder
@@ -328,6 +337,24 @@ const FlowBuilderSettings = () => {
             </div>
           )}
         </div>
+
+        {(onSave || onCancel) && (
+          <>
+            <div className="w-[calc(100%+40px)] h-[1px] bg-[#E5E7EB] -translate-x-[20px]" />
+            <div className="flex gap-2.5">
+              {onCancel && (
+                <Button type={ButtonType.SECONDARY} onClick={onCancel}>
+                  Cancel
+                </Button>
+              )}
+              {onSave && (
+                <Button type={ButtonType.PRIMARY} onClick={onSave}>
+                  Save
+                </Button>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
