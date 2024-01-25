@@ -328,15 +328,33 @@ export class AuthService {
       const recovery = await transactionSession.save(Recovery, { account });
       const recoveryLink = `${process.env.FRONTEND_URL}/reset-password/${recovery.id}`;
 
-      await this.messageQueue.add('email', {
-        key: process.env.MAILGUN_API_KEY,
-        from: 'Laudspeaker',
-        domain: process.env.MAILGUN_DOMAIN,
-        email: 'noreply',
-        to: account.email,
-        subject: 'Password recovery',
-        text: `Recovery link: <a href="${recoveryLink}">${recoveryLink}</a>`,
-      });
+      //to do
+      switch (process.env.EMAIL_VERIFICATION_PROVIDER) {
+        case "gmail":
+          //console.log("sending gmail email resend");
+          await this.messageQueue.add('email', {
+            eventProvider: 'gmail',
+            key: process.env.GMAIL_APP_CRED,
+            from: 'Laudspeaker',
+            email: process.env.GMAIL_VERIFICATION_EMAIL,
+            to: account.email,
+            subject: 'Password recovery',
+            plaintext:`Recovery link: "${recoveryLink}"`,
+            text: `Recovery link: <a href="${recoveryLink}">${recoveryLink}</a>`,
+          });
+          break;
+        default:
+          await this.messageQueue.add('email', {
+            key: process.env.MAILGUN_API_KEY,
+            from: 'Laudspeaker',
+            domain: process.env.MAILGUN_DOMAIN,
+            email: 'noreply',
+            to: account.email,
+            subject: 'Password recovery',
+            text: `Recovery link: <a href="${recoveryLink}">${recoveryLink}</a>`,
+          });
+          break;
+      }
     });
   }
 

@@ -55,10 +55,11 @@ import { JourneyLocationsService } from './api/journeys/journey-locations.servic
 import { Journey } from './api/journeys/entities/journey.entity';
 import { EntryTiming } from './api/journeys/types/additional-journey-settings.interface';
 import { OrganizationInvites } from './api/organizations/entities/organization-invites.entity';
-import { CustomersService } from './api/customers/customers.service';
 import { JourneyLocation } from './api/journeys/entities/journey-location.entity';
 import { Requeue } from './api/steps/entities/requeue.entity';
 import { KEYS_TO_SKIP } from './utils/customer-key-name-validator';
+import { SegmentsService } from './api/segments/segments.service';
+import { CustomersService } from './api/customers/customers.service';
 
 const BATCH_SIZE = 500;
 
@@ -96,6 +97,8 @@ export class CronService {
     @InjectRepository(OrganizationInvites)
     public organizationInvitesRepository: Repository<OrganizationInvites>,
     @Inject(JourneysService) private journeysService: JourneysService,
+    @Inject(SegmentsService) private segmentsService: SegmentsService,
+    @Inject(CustomersService) private customersService: CustomersService,
     @Inject(IntegrationsService)
     private integrationsService: IntegrationsService,
     @Inject(WebhookJobsService) private webhookJobsService: WebhookJobsService,
@@ -106,9 +109,7 @@ export class CronService {
     private journeyLocationsService: JourneyLocationsService,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
     @Inject(RedlockService)
-    private readonly redlockService: RedlockService,
-    @Inject(CustomersService)
-    private readonly customersService: CustomersService
+    private readonly redlockService: RedlockService
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -438,6 +439,121 @@ export class CronService {
     } finally {
       await queryRunner.release();
       if (err) throw err;
+    }
+  }
+  checkSegmentHasMessageFilters(
+    segmentCriteria: any,
+    orgId: string,
+    session: string
+  ): boolean {
+    return true;
+  }
+  /*
+   *
+   * Function goes through all dyanmic segments, and finds
+   * those with message filters, and updates segment membership
+   * with users (add, remove) based on message events
+   * then updates message events to say they have been processed
+   *
+   * to do
+   *
+   *
+   * this could theoretically be optimized if we wrote a function
+   * that does incremental segment addition and removal instead of
+   * complete recalculation. ie takes segment criteria and only looks
+   * at clickhouse unprocessed events
+   *
+   */
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  async updateStatementsWithMessageEvents() {
+    const session = randomUUID();
+    let err;
+    //console.log("about to run updateStatementsWithMessageEvents");
+    // for each organization, get all segments
+    // to do change this to organisations rather than
+    const accounts = await this.accountsService.findAll();
+    for (let j = 0; j < accounts.length; j++) {
+      let queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      try {
+        let segments = await this.segmentsService.getSegments(
+          accounts[j],
+          undefined,
+          queryRunner
+        );
+        // for each segment check if it has a message component
+        for (const segment of segments) {
+          let doInclude = this.checkSegmentHasMessageFilters(
+            segment.inclusionCriteria.query,
+            accounts[j].id,
+            session
+          );
+          this.debug(
+            `we updated doInclude: ${doInclude}`,
+            this.updateStatementsWithMessageEvents.name,
+            session,
+            accounts[j].id
+          );
+          if (doInclude) {
+            // If segment includes message filters recalculate which customers should be in the segment
+            const collectionPrefix = this.segmentsService.generateRandomString();
+            const customersInSegment =
+              await this.customersService.getSegmentCustomersFromQuery(
+                segment.inclusionCriteria.query,
+                accounts[j],
+                session,
+                true,
+                0,
+                collectionPrefix
+              );
+
+            this.debug(
+              `we have customersInSegment: ${customersInSegment}`,
+              this.updateStatementsWithMessageEvents.name,
+              session,
+              accounts[j].id
+            );
+            // update the segment customer table
+            //try {
+            //collectionName: string,account: Account,segmentId: string,session: string,queryRunner: QueryRunner,batchSize: number = 500 //
+            await this.segmentsService.updateSegmentCustomersBatched(
+              customersInSegment,
+              accounts[j],
+              segment.id,
+              session,
+              queryRunner,
+              500
+            );
+            // } catch(error) {
+            /*
+            this.debug(
+              `error updating segment: ${segment.name}`,
+              this.updateStatementsWithMessageEvents.name,
+              session,
+              accounts[j].id
+            );
+            */
+
+            //}
+            // drop the collections after adding customer segments
+            await this.segmentsService.deleteCollectionsWithPrefix(collectionPrefix);
+
+          }
+        }
+        await queryRunner.commitTransaction();
+      } catch (error) {
+        this.error(
+          error,
+          this.updateStatementsWithMessageEvents.name,
+          session,
+          accounts[j].id
+        );
+        await queryRunner.rollbackTransaction();
+        err = error;
+      } finally{
+        await queryRunner.release();
+      }
     }
   }
 

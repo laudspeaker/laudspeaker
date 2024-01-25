@@ -588,7 +588,6 @@ export class EventsService {
             }
 
             const messaging = admin.messaging(firebaseApp);
-
             await messaging.send({
               token:
                 platform === PushPlatforms.ANDROID
