@@ -63,7 +63,7 @@ const Login: FC<LoginProps> = ({ setShowWelcomeBanner }) => {
         }}
       >
         <div className="font-roboto text-[30px] font-bold leading-10">
-          Log in
+          Login
         </div>
         <form className="w-full flex flex-col gap-5" action="#" method="POST">
           <div className="flex flex-col gap-2.5">
@@ -133,7 +133,7 @@ const Login: FC<LoginProps> = ({ setShowWelcomeBanner }) => {
               className="h-[44px] flex w-full justify-center items-center rounded border border-transparent bg-[#6366F1] py-[4px] px-[15px] text-sm font-semibold text-white text-[16px] leading-[24px] shadow-sm hover:bg-[#818CF8] focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
               onClick={handleSubmit}
             >
-              Log in
+              Login
             </button>
           </div>
         </form>

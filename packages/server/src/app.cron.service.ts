@@ -497,7 +497,8 @@ export class CronService {
           );
           if (doInclude) {
             // If segment includes message filters recalculate which customers should be in the segment
-            const collectionPrefix = this.segmentsService.generateRandomString();
+            const collectionPrefix =
+              this.segmentsService.generateRandomString();
             const customersInSegment =
               await this.customersService.getSegmentCustomersFromQuery(
                 segment.inclusionCriteria.query,
@@ -537,8 +538,9 @@ export class CronService {
 
             //}
             // drop the collections after adding customer segments
-            await this.segmentsService.deleteCollectionsWithPrefix(collectionPrefix);
-
+            await this.segmentsService.deleteCollectionsWithPrefix(
+              collectionPrefix
+            );
           }
         }
         await queryRunner.commitTransaction();
@@ -551,7 +553,7 @@ export class CronService {
         );
         await queryRunner.rollbackTransaction();
         err = error;
-      } finally{
+      } finally {
         await queryRunner.release();
       }
     }

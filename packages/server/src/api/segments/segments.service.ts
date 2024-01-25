@@ -399,18 +399,23 @@ export class SegmentsService {
   }
 
   /*
-   * 
-   * function to create intermediate mongo collection from segmentcustomers 
-   * 
+   *
+   * function to create intermediate mongo collection from segmentcustomers
+   *
    * batched lookup and insert
-   * 
+   *
    * we may want to add an account filter in later
    * we may use this function in the plce of @getSegmentCustomers
-   * 
+   *
    */
 
-  async getSegmentCustomersBatched(account: Account, session: string, segmentId: string, collectionName: string, batchSize: number): Promise<string> {
-
+  async getSegmentCustomersBatched(
+    account: Account,
+    session: string,
+    segmentId: string,
+    collectionName: string,
+    batchSize: number
+  ): Promise<string> {
     const mongoCollection = this.connection.db.collection(collectionName);
 
     let processedCount = 0;
@@ -418,85 +423,93 @@ export class SegmentsService {
 
     // Find the total number of customers in the segment
     //const totalCustomers = await segmentCustomersRepository.count({ where: { segment: segmentId, owner: account } });
-    const totalCustomers = await this.segmentCustomersRepository.count({ where: { segment: segmentId } });
+    const totalCustomers = await this.segmentCustomersRepository.count({
+      where: { segment: segmentId },
+    });
 
     while (processedCount < totalCustomers) {
-        // Fetch a batch of SegmentCustomers
-        const segmentCustomers = await this.segmentCustomersRepository.find({
-            where: { segment: segmentId },
-            skip: processedCount,
-            take: batchSize
-        });
+      // Fetch a batch of SegmentCustomers
+      const segmentCustomers = await this.segmentCustomersRepository.find({
+        where: { segment: segmentId },
+        skip: processedCount,
+        take: batchSize,
+      });
 
-        // Convert SegmentCustomers to MongoDB documents
-        let mongoDocuments = segmentCustomers.map(sc => {
-            return {
-              _id: new Types.ObjectId(sc.customerId)
-                //_id: new ObjectId(sc.customerId), // Assuming customerId is stored in string format
-                // Add other properties if needed
-            };
-        });
+      // Convert SegmentCustomers to MongoDB documents
+      let mongoDocuments = segmentCustomers.map((sc) => {
+        return {
+          _id: new Types.ObjectId(sc.customerId),
+          //_id: new ObjectId(sc.customerId), // Assuming customerId is stored in string format
+          // Add other properties if needed
+        };
+      });
 
-        try {
-          const result = await mongoCollection.insertMany(mongoDocuments);
-          //console.log('Batch of documents inserted:', result);
-          mongoDocuments = []; // Reset batch after insertion
-        } catch (err) {
-          //console.error('Error inserting documents:', err);
-          this.error(err, this.getSegmentCustomersBatched.name, session, account.email);
-          throw err;
-        }
+      try {
+        const result = await mongoCollection.insertMany(mongoDocuments);
+        //console.log('Batch of documents inserted:', result);
+        mongoDocuments = []; // Reset batch after insertion
+      } catch (err) {
+        //console.error('Error inserting documents:', err);
+        this.error(
+          err,
+          this.getSegmentCustomersBatched.name,
+          session,
+          account.email
+        );
+        throw err;
+      }
 
-        // Update the count of processed customers
-        processedCount += segmentCustomers.length;
+      // Update the count of processed customers
+      processedCount += segmentCustomers.length;
     }
-    
+
     return collectionName;
   }
-
 
   /*
    * function to add customers from mongo collection to segmentcustomers table
    */
 
-  async addCustomersToSegment(collectionName: string, batchSize: number, segmentId: string, account: Account, queryRunner: QueryRunner): Promise<void> {
-        
-        const mongoCollection = this.connection.db.collection(collectionName);
+  async addCustomersToSegment(
+    collectionName: string,
+    batchSize: number,
+    segmentId: string,
+    account: Account,
+    queryRunner: QueryRunner
+  ): Promise<void> {
+    const mongoCollection = this.connection.db.collection(collectionName);
 
-        let processedCount = 0;
-        let totalDocuments = await mongoCollection.countDocuments();
-        const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    let processedCount = 0;
+    let totalDocuments = await mongoCollection.countDocuments();
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
+    //console.log("looks like top level segment is created in mongo");
+    //console.log("going to save", totalDocuments);
+    //console.log("saving to", segment.id);
 
-        //console.log("looks like top level segment is created in mongo");
-        //console.log("going to save", totalDocuments);
-        //console.log("saving to", segment.id);
-
-        while (processedCount < totalDocuments) {
-          // Fetch a batch of documents
-          const customerDocuments = await mongoCollection
-            .find({})
-            .skip(processedCount)
-            .limit(batchSize)
-            .toArray();
-          // Map the MongoDB documents to SegmentCustomers entities
-          const segmentCustomersArray: SegmentCustomers[] =
-            customerDocuments.map((doc) => {
-              const segmentCustomer = new SegmentCustomers();
-              segmentCustomer.customerId = doc._id.toString();
-              segmentCustomer.segment = segmentId;
-              segmentCustomer.workspace = workspace;
-              // Set other properties as needed
-              return segmentCustomer;
-            });
-          // Batch insert into PostgreSQL database
-          await queryRunner.manager.save(
-            SegmentCustomers,
-            segmentCustomersArray
-          );
-          // Update the count of processed documents
-          processedCount += customerDocuments.length;
+    while (processedCount < totalDocuments) {
+      // Fetch a batch of documents
+      const customerDocuments = await mongoCollection
+        .find({})
+        .skip(processedCount)
+        .limit(batchSize)
+        .toArray();
+      // Map the MongoDB documents to SegmentCustomers entities
+      const segmentCustomersArray: SegmentCustomers[] = customerDocuments.map(
+        (doc) => {
+          const segmentCustomer = new SegmentCustomers();
+          segmentCustomer.customerId = doc._id.toString();
+          segmentCustomer.segment = segmentId;
+          segmentCustomer.workspace = workspace;
+          // Set other properties as needed
+          return segmentCustomer;
         }
+      );
+      // Batch insert into PostgreSQL database
+      await queryRunner.manager.save(SegmentCustomers, segmentCustomersArray);
+      // Update the count of processed documents
+      processedCount += customerDocuments.length;
+    }
   }
 
   /*
@@ -1091,7 +1104,12 @@ export class SegmentsService {
     // Start transaction
     //await queryRunner.startTransaction();
 
-    const segment = await this.findOne(account, segmentId, session, queryRunner);
+    const segment = await this.findOne(
+      account,
+      segmentId,
+      session,
+      queryRunner
+    );
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     // Delete existing customers in the segment
@@ -1113,14 +1131,16 @@ export class SegmentsService {
         .toArray();
 
       // Convert MongoDB documents to SegmentCustomers entities
-      const segmentCustomersArray = mongoDocuments.map(doc => ({
+      const segmentCustomersArray = mongoDocuments.map((doc) => ({
         segment: segmentId,
         customerId: doc._id.toString(), // Assuming _id is the ObjectId
         workspace,
       }));
 
       // Batch save to segmentCustomersRepository
-      await queryRunner.manager.getRepository(SegmentCustomers).save(segmentCustomersArray);
+      await queryRunner.manager
+        .getRepository(SegmentCustomers)
+        .save(segmentCustomersArray);
 
       // Update processed count
       processedCount += mongoDocuments.length;
@@ -1128,7 +1148,6 @@ export class SegmentsService {
 
     // Commit transaction
     //await queryRunner.commitTransaction();
-
   }
 
   public async putCustomers(

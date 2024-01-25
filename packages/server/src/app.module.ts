@@ -60,7 +60,6 @@ import { SegmentsModule } from './api/segments/segments.module';
 import { OrganizationsModule } from './api/organizations/organizations.module';
 import { OrganizationInvites } from './api/organizations/entities/organization-invites.entity';
 
-
 const sensitiveKeys = [
   /cookie/i,
   /passw(or)?d/i,

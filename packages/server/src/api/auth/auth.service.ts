@@ -330,7 +330,7 @@ export class AuthService {
 
       //to do
       switch (process.env.EMAIL_VERIFICATION_PROVIDER) {
-        case "gmail":
+        case 'gmail':
           //console.log("sending gmail email resend");
           await this.messageQueue.add('email', {
             eventProvider: 'gmail',
@@ -339,7 +339,7 @@ export class AuthService {
             email: process.env.GMAIL_VERIFICATION_EMAIL,
             to: account.email,
             subject: 'Password recovery',
-            plaintext:`Recovery link: "${recoveryLink}"`,
+            plaintext: `Recovery link: "${recoveryLink}"`,
             text: `Recovery link: <a href="${recoveryLink}">${recoveryLink}</a>`,
           });
           break;
