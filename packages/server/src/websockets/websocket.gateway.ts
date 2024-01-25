@@ -2,7 +2,12 @@ import {
   PushPlatforms,
   Template,
 } from '../api/templates/entities/template.entity';
-import { forwardRef, Inject, LoggerService, UseInterceptors } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  LoggerService,
+  UseInterceptors,
+} from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -74,7 +79,7 @@ export class WebsocketGateway implements OnGatewayConnection {
     private devModeService: DevModeService,
     @Inject(WebhooksService) private readonly webhooksService: WebhooksService,
     @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -145,16 +150,16 @@ export class WebsocketGateway implements OnGatewayConnection {
       const account =
         development && userId && !apiKey
           ? await this.accountsService.findOne(
-            {
-              id: userId,
-            },
-            ''
-          )
+              {
+                id: userId,
+              },
+              ''
+            )
           : await this.accountsService.findOneByAPIKey(apiKey);
 
       if (!account) {
         //console.log("no account found");
-        this.log("no account found", this.handleConnection.name, session);
+        this.log('no account found', this.handleConnection.name, session);
         socket.emit('error', 'Bad API key');
         socket.disconnect(true);
         return;
@@ -434,7 +439,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       optionalProperties?: { [key: string]: unknown };
     }
   ) {
-if (!uniqueProperties) throw new WsException('No uniqueProperties given');
+    if (!uniqueProperties) throw new WsException('No uniqueProperties given');
 
     if (!socket.data?.account || !socket.data?.customerId) {
       return;
@@ -815,7 +820,7 @@ if (!uniqueProperties) throw new WsException('No uniqueProperties given');
       token: string;
     }
   ) {
-        if (!type) throw new WsException('No type given');
+    if (!type) throw new WsException('No type given');
     if (!token) throw new WsException('No FCM token given');
 
     const {

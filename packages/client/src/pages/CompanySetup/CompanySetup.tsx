@@ -87,7 +87,7 @@ const CompanySetup = () => {
           <Input
             wrapperClassName="!w-full !max-w-full"
             className="!w-full !max-w-full !text-base !py-2"
-            placeholder="Example, imc."
+            placeholder="Example, Inc."
             value={name}
             onChange={setName}
           />
@@ -95,7 +95,7 @@ const CompanySetup = () => {
             Time zone
           </div>
           <div className="text-[#4B5563] font-inter text-xs my-[10px]">
-            Description description description
+            Set your company's time zone to enable time-based features
           </div>
           <Select
             className="!py-2 max-w-full w-full text-base mb-5"

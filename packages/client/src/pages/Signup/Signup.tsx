@@ -17,6 +17,7 @@ import ApiService from "services/api.service";
 import { TailSpin } from "react-loader-spinner";
 import laudspeakerHeader from "../../assets/images/laudspeaker-header.svg";
 import ShowPasswordIcon from "assets/icons/ShowPasswordIcon";
+import PasswordChecklist from "react-password-checklist";
 
 export interface SignupProps {
   fromInvite?: boolean;
@@ -108,8 +109,8 @@ const Signup: FC<SignupProps> = ({ fromInvite, setShowWelcomeBanner }) => {
     pass:
       !signUpForm.password.trim() ||
       !signUpForm.confirmPassword.trim() ||
-      signUpForm.password.trim().length <= 8 ||
-      signUpForm.confirmPassword.trim().length <= 8 ||
+      signUpForm.password.trim().length < 8 ||
+      signUpForm.confirmPassword.trim().length < 8 ||
       signUpForm.confirmPassword.trim() !== signUpForm.password.trim(),
     mail: !signUpForm.email.match(
       /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$/
@@ -336,14 +337,23 @@ const Signup: FC<SignupProps> = ({ fromInvite, setShowWelcomeBanner }) => {
                   <ShowPasswordIcon />
                 </div>
               </div>
-
-              {isInvalids.pass && checkedFields.password && (
-                <p className="mt-2 text-sm text-red-600">
-                  Password should be longer than 8 characters and passwords
-                  should be equal.
-                </p>
-              )}
             </div>
+            <PasswordChecklist
+              rules={["minLength", "specialChar", "number", "letter", "match"]}
+              messages={{
+                minLength: "Contains 8 or more characters.",
+                specialChar: "Contains at least one special character.",
+                number: "Contains at least one number.",
+                letter: "Contains at least one letter.",
+                match: "Passwords match.",
+              }}
+              className="mt-2 text-sm"
+              iconSize={16}
+              minLength={8}
+              value={signUpForm.password}
+              valueAgain={signUpForm.confirmPassword}
+              onChange={(isValid) => {}}
+            />
           </div>
 
           <div>
@@ -422,7 +432,7 @@ const Signup: FC<SignupProps> = ({ fromInvite, setShowWelcomeBanner }) => {
                 href="/login"
                 className="underline font-roboto !text-[14px] leading-[22px] text-[#6366F1] m-[0_5px]"
               >
-                Log in
+                Login
               </Link>
             </p>
           </>

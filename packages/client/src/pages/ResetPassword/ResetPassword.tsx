@@ -1,11 +1,14 @@
-import React, { useState } from "react";
-import laudspeakerLogo from "../../assets/images/laudspeaker.svg";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { GenericButton, Input } from "components/Elements";
+import { Input } from "components/Elements";
 import ApiService from "services/api.service";
 import { toast } from "react-toastify";
 import { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import laudspeakerHeader from "../../assets/images/laudspeaker-header.svg";
+import ShowPasswordIcon from "assets/icons/ShowPasswordIcon";
+import PasswordChecklist from "react-password-checklist";
 
 const ResetPassword = () => {
   const { id } = useParams();
@@ -15,6 +18,18 @@ const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState("");
   const [repeatNewPassword, setRepeatNewPassword] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const isInvalid = {
+    pass:
+      !newPassword.trim() ||
+      !repeatNewPassword.trim() ||
+      newPassword.trim().length <= 8 ||
+      repeatNewPassword.trim().length <= 8 ||
+      repeatNewPassword.trim() !== newPassword.trim(),
+    email: !email.match(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$/),
+  };
 
   const handleSendLink = async () => {
     setIsSaving(true);
@@ -25,9 +40,7 @@ const ResetPassword = () => {
           email,
         },
       });
-      toast.success(
-        "We have sent a link for password restoration to your email"
-      );
+      toast.success("We have sent a password reset link to your email.");
       navigate("/login");
     } catch (e) {
       let message = "Something went wrong while sending email";
@@ -41,11 +54,6 @@ const ResetPassword = () => {
   };
 
   const handleResetPassword = async () => {
-    if (newPassword !== repeatNewPassword) {
-      toast.error("Passwords don't match!");
-      return;
-    }
-
     setIsSaving(true);
     try {
       await ApiService.post({
@@ -72,64 +80,138 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <img
-          className="mx-auto h-12 w-auto"
-          src={laudspeakerLogo}
-          alt="Laudspeaker"
-        />
-        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-          Reset your password
-        </h2>
-      </div>
+    <div className="flex min-h-screen flex-col justify-center items-center gap-10 bg-[#F3F4F6] font-inter text-[#111827] text-[14px] leading-[22px]">
+      <img src={laudspeakerHeader} alt="Laudspeaker" />
 
-      <div className="mt-8 sm:mx-auto sm:w-full shadow-lg sm:max-w-md">
-        <div className="bg-white py-8 px-4 sm:rounded-lg sm:px-10">
-          <form className="space-y-6" action="#" method="POST">
-            <div>
-              {id ? (
-                <>
+      <div
+        className="w-[480px] bg-white p-10 rounded-xl flex flex-col items-center gap-5"
+        style={{
+          boxShadow: "0px 2px 0px 0px rgba(0, 0, 0, 0.03)",
+        }}
+      >
+        <div className="font-roboto text-[30px] font-bold leading-10">
+          {id ? "Reset Your Password" : "Recover Your Account"}
+        </div>
+        <form className="w-full flex flex-col gap-5" action="">
+          {id ? (
+            <>
+              <div className="flex flex-col gap-2.5">
+                <label
+                  htmlFor="password"
+                  className="block text-[16px] font-semibold leading-[24px]"
+                >
+                  New Password
+                </label>
+                <div className="relative">
                   <Input
-                    name="newPassword"
-                    id="newPassword"
-                    label="New password"
-                    type="password"
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    placeholder="••••••••"
+                    className="!w-full !py-2 !rounded-sm"
+                    wrapperClassName="!w-full"
                   />
+                  <div
+                    className="absolute top-1/2 -translate-y-1/2 right-3 cursor-pointer"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    <ShowPasswordIcon />
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2.5">
+                <label
+                  htmlFor="password"
+                  className="block text-[16px] font-semibold leading-[24px]"
+                >
+                  Confirm New Password
+                </label>
+                <div className="relative">
                   <Input
-                    name="repeatNewPassword"
-                    id="repeatNewPassword"
-                    label="Repeat your password"
-                    type="password"
+                    id="password"
+                    name="password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="password"
                     value={repeatNewPassword}
                     onChange={(e) => setRepeatNewPassword(e.target.value)}
+                    required
+                    placeholder="••••••••"
+                    className="!w-full !py-2 !rounded-sm"
+                    wrapperClassName="!w-full"
                   />
-                </>
-              ) : (
-                <Input
-                  name="email"
-                  id="email"
-                  label="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              )}
-            </div>
-
-            <div>
-              <GenericButton
-                id="loginIntoAccount"
-                customClasses="flex w-full justify-center rounded-md border border-transparent bg-[#6366F1] py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-[#818CF8] focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-                onClick={id ? handleResetPassword : handleSendLink}
-                loading={isSaving}
+                  <div
+                    className="absolute top-1/2 -translate-y-1/2 right-3 cursor-pointer"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    <ShowPasswordIcon />
+                  </div>
+                </div>
+              </div>
+              <PasswordChecklist
+                rules={[
+                  "minLength",
+                  "specialChar",
+                  "number",
+                  "letter",
+                  "match",
+                ]}
+                messages={{
+                  minLength: "Contains 8 or more characters.",
+                  specialChar: "Contains at least one special character.",
+                  number: "Contains at least one number.",
+                  letter: "Contains at least one letter.",
+                  match: "Passwords match.",
+                }}
+                className="mt-2 text-sm"
+                iconSize={16}
+                minLength={8}
+                value={newPassword}
+                valueAgain={repeatNewPassword}
+                onChange={(isValid) => {}}
+              />
+            </>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="email"
+                className="block text-[16px] font-semibold leading-[24px]"
               >
-                Reset password
-              </GenericButton>
+                Email Address
+              </label>
+              {/* <div className="text-[#4B5563] font-inter text-xs my-[10px]">
+                We will send a confirmation email to this address:
+              </div> */}
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="!w-full !py-2 !rounded-sm"
+                wrapperClassName="!w-full"
+                placeholder="you@example.com"
+              />
             </div>
-          </form>
-        </div>
+          )}
+          <div>
+            <button
+              id="loginIntoAccount"
+              className="flex w-full h-[44px] items-center disabled:text-white disabled:bg-[#D1D5DB] disabled:border-[#D1D5DB] justify-center rounded-md border border-transparent bg-[#6366F1] py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-[#818CF8] focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+              onClick={id ? handleResetPassword : handleSendLink}
+              disabled={
+                id ? isSaving || isInvalid.pass : isSaving || isInvalid.email
+              }
+            >
+              {id ? "Reset Password" : "Send Email"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

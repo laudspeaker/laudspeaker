@@ -98,6 +98,7 @@
     "react-login-github": "^1.0.8",
     "react-markdown": "^8.0.6",
     "react-papaparse": "^4.4.0",
+    "react-password-checklist": "^1.5.0",
     "react-popper": "^2.3.0",
     "react-querybuilder": "^6.4.1",
     "react-redux": "^8.0.2",

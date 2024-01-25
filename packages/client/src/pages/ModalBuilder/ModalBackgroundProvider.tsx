@@ -69,7 +69,7 @@ const ModalBackgroundProvider: FC<ModalBackgroundProviderProps> = ({
           </div>
           <div className="flex justify-center items-center font-normal text-[12px] leading-5 text-[#4B5563]">
             Already have an account?
-            <span className="text-[#6366F1]">Log in</span>
+            <span className="text-[#6366F1]">Login</span>
           </div>
         </div>
       </div>
