@@ -2738,6 +2738,7 @@ export class CustomersService {
       comparisonType,
       subComparisonType,
       value,
+      valueType,
       subComparisonValue,
     } = statement;
     this.debug(
@@ -3313,6 +3314,48 @@ export class CustomersService {
     //return false;
   }
 
+  correctValueType(valueType: string, value: any, account: Account,
+    session: string) {
+    switch (valueType) {
+      case 'Number':
+        // Convert to a number
+        return Number(value);
+      case 'String':
+        // Already a string, no conversion needed
+        return value;
+      case 'Boolean':
+        // Convert to boolean
+        return value.toLowerCase() === 'true';
+      case 'Date':
+        // Convert to a date
+        return new Date(value);
+      case 'Datetime':
+        // Convert to a datetime
+        return new Date(value);
+      case 'Object':
+        try {
+          // Attempt to parse as JSON object
+          return JSON.parse(value);
+        } catch (e) {
+          this.debug(
+            'Error parsing object\n',
+            this.correctValueType.name,
+            session,
+            account.id
+          );
+          return null;
+        }
+      default:
+        this.debug(
+          'unrecognised value type\n',
+          this.correctValueType.name,
+          session,
+          account.id
+        );
+        return value;
+    }
+  }
+
   /**
    * Gets set of customers from a single statement that
    * includes Attribute,
@@ -3344,6 +3387,7 @@ export class CustomersService {
       comparisonType,
       subComparisonType,
       value,
+      valueType,
       subComparisonValue,
     } = statement;
     const query: any = {
@@ -3363,14 +3407,29 @@ export class CustomersService {
       session,
       account.id
     );
+
+    this.debug(
+      `value is: ${value}`,
+      this.customersFromAttributeStatement.name,
+      session,
+      account.id
+    );
+
+    this.debug(
+      `value type is: ${(typeof value)}`,
+      this.customersFromAttributeStatement.name,
+      session,
+      account.id
+    );
+
     switch (comparisonType) {
       case 'is equal to':
         //checked
-        query[key] = value;
+        query[key] = this.correctValueType(valueType, value, account, session);
         break;
       case 'is not equal to':
         //checked
-        query[key] = { $ne: value };
+        query[key] = { $ne: this.correctValueType(valueType, value, account, session) };
         break;
       case 'contains':
         // doesnt seem to be working
@@ -3389,10 +3448,10 @@ export class CustomersService {
         query[key] = { $exists: false };
         break;
       case 'is greater than':
-        query[key] = { $gt: value };
+        query[key] = { $gt: this.correctValueType(valueType, value, account, session) };
         break;
       case 'is less than':
-        query[key] = { $lt: value };
+        query[key] = { $lt: this.correctValueType(valueType, value, account, session) };
         break;
       // nested object
       case 'key':
@@ -4674,13 +4733,27 @@ export class CustomersService {
       session
     );
 
+  
     const {
       key,
       comparisonType,
       subComparisonType,
       value,
+      valueType,
       subComparisonValue,
     } = statement;
+
+    this.debug(
+      `value is: ${value}`,
+      this.evaluateAttributeStatement.name,
+      session
+    );
+
+    this.debug(
+      `value type is: ${(typeof value)}`,
+      this.evaluateAttributeStatement.name,
+      session
+    );
 
     if (!(key in customer)) {
       /*
@@ -4738,11 +4811,13 @@ export class CustomersService {
       case 'not exist':
         return customerValue === undefined || customerValue === null;
       case 'is greater than':
+        //to do check - value methinks is now always a string
         if (typeof customerValue === 'number' && typeof value === 'number') {
           return customerValue > value;
         }
         return false;
       case 'is less than':
+        //to do check when
         if (typeof customerValue === 'number' && typeof value === 'number') {
           return customerValue < value;
         }
