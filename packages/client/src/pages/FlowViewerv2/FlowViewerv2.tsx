@@ -40,12 +40,13 @@ import FlowViewerChangeSegmentModal, {
 import FlowViewerCancelConfirmationModal from "./Modals/FlowViewerCancelConfirmationModal";
 import JourneyEntrySettingsViewer from "./JourneyEntrySettingsViewer";
 import JourneySettingsViewer from "./JourneySettingsViewer";
+import ActivityHistoryViewer from "./ActivityHistoryViewer";
 
 export enum FlowViewerTab {
   JOURNEY = "Journey",
   ENTRY = "Entry",
   SETTINGS = "Settings",
-  ACTIVITY_HISTORY = "Activity history",
+  // ACTIVITY_HISTORY = "Activity history",
 }
 
 const nodesToLoadCustomerCount: NodeType[] = [
@@ -310,7 +311,7 @@ const FlowViewerv2 = () => {
           onCancel={() => onCancel()}
         />
       ),
-    [FlowViewerTab.ACTIVITY_HISTORY]: <></>,
+    // [FlowViewerTab.ACTIVITY_HISTORY]: <ActivityHistoryViewer />,
   };
 
   useEffect(() => {

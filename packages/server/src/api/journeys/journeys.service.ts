@@ -1304,7 +1304,7 @@ export class JourneysService {
       });
 
       if (!journey) throw new NotFoundException('Journey not found');
-      if (journey.isActive || journey.isDeleted || journey.isPaused)
+      if (journey.isDeleted || journey.isStopped)
         throw new Error('Journey is no longer editable.');
 
       const {
@@ -1313,7 +1313,16 @@ export class JourneysService {
         inclusionCriteria,
         journeyEntrySettings,
         journeySettings,
+        changeSegmentOption,
       } = updateJourneyDto;
+
+      if (
+        JSON.stringify(journey.inclusionCriteria) !==
+          JSON.stringify(inclusionCriteria) &&
+        (journey.isActive || journey.isPaused)
+      ) {
+        // TODO: add logic of eligable users update on parameters change (using changeSegmentOption)
+      }
 
       return await this.journeysRepository.save({
         ...journey,
