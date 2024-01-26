@@ -32,7 +32,7 @@ const MappingTab = ({
   const [search, setSearch] = useState<
     Record<string, { search: string; isLoading: boolean }>
   >({});
-  const [isAddModalOpened, setIsAddModalOpened] = useState(false);
+  const [activeHead, setActiveHead] = useState<string>();
   const [possibleKeys, setPossibleKeys] = useState<
     { key: string; type: AttributeType }[]
   >([]);
@@ -93,7 +93,7 @@ const MappingTab = ({
 
   const handleSelectChange = (head: string) => (selectKey: string) => {
     if (selectKey === "_NEW_RECORD_;-;_NEW_RECORD_") {
-      setIsAddModalOpened(true);
+      setActiveHead(head);
       return;
     }
     const [key, type] = selectKey.split(";-;");
@@ -431,9 +431,24 @@ const MappingTab = ({
         </RadioGroup>
       </div>
       <AddAttributeModal
-        isOpen={isAddModalOpened}
-        onClose={() => setIsAddModalOpened(false)}
-        onAdded={() => loadPossibleKeys()}
+        isOpen={!!activeHead}
+        onClose={() => setActiveHead(undefined)}
+        onAdded={(keyName: string, keyType: AttributeType) => {
+          loadPossibleKeys();
+
+          if (!activeHead) return;
+          updateSettings({
+            [activeHead]: {
+              ...mappingSettings[activeHead],
+              asAttribute: {
+                key: keyName,
+                type: keyType,
+                skip: false,
+              },
+            },
+          });
+          setActiveHead(undefined);
+        }}
       />
     </div>
   );
