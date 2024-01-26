@@ -5,7 +5,13 @@ import {
   IsString,
   IsBoolean,
   IsObject,
+  IsEnum,
 } from 'class-validator';
+
+export enum ChangeSegmentOption {
+  CONTINUE_JOURNEY = 'continue',
+  REMOVE_USERS = 'remove-user',
+}
 
 export class UpdateJourneyDto {
   @IsString()
@@ -34,4 +40,8 @@ export class UpdateJourneyDto {
   @IsBoolean()
   @IsOptional()
   public isDynamic?: boolean;
+
+  @IsEnum(ChangeSegmentOption)
+  @IsOptional()
+  changeSegmentOption?: ChangeSegmentOption;
 }
