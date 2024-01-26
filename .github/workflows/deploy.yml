@@ -1,6 +1,27 @@
 name: Deploy
 on:
   workflow_call:
+    inputs:
+      image-repository:
+        description: Docker image to deploy
+        default: laudspeaker/laudspeaker
+        required: false
+        type: string
+      image-tag:
+        description: Tag of docker image to deploy.
+        default: latest
+        required: true
+        type: string
+      cluster:
+        description: Name of EKS cluster to deploy to
+        default: laudspeaker-staging
+        required: true
+        type: string
+      env:
+        description: Environment to deploy docker. Should match values file in infrastructure repo such that <env>.yaml is a file in deploys/ folder
+        default: staging
+        required: true
+        type: string
     secrets:
       AWS_ACCESS_KEY_ID:
         required: true
@@ -15,6 +36,16 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: us-east-1
     steps:
-      - name: Force redeploy
+      - name: Checkout infra repo
+        uses: actions/checkout@v4
+        with:
+          repository: laudspeaker/infrastructure
+      - name: Setup helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.13.2
+      - name: Build chart and deploy
         run: |
-          aws ecs update-service --cluster staging --service staging --force-new-deployment
+          aws eks update-kubeconfig --name ${{ inputs.cluster }}
+          helm dependency update deploys/charts/laudspeaker/
+          helm upgrade --install -f deploys/values/${{ inputs.env }}.yaml laudspeaker-${{ inputs.env }} deploys/charts/laudspeaker/ --namespace laudspeaker --create-namespace --set image.tag=${{ inputs.image-tag }},image.repository=${{ inputs.image-repository }}
