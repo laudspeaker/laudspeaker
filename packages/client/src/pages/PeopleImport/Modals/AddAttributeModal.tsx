@@ -2,15 +2,16 @@ import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Input from "components/Elements/Inputv2";
 import Select from "components/Elements/Selectv2";
 import FlowBuilderModal from "pages/FlowBuilderv2/Elements/FlowBuilderModal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { StatementValueType } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
+import { AttributeType } from "../PeopleImport";
 
 interface AddAttributeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdded: () => void;
+  onAdded: (keyName: string, keyType: AttributeType) => void;
 }
 
 const AddAttributeModal = ({
@@ -21,6 +22,13 @@ const AddAttributeModal = ({
   const [newName, setNewName] = useState("");
   const [type, setType] = useState<StatementValueType>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (isOpen) return;
+
+    setNewName("");
+    setType(undefined);
+  }, [isOpen]);
 
   const handleSave = async () => {
     if (!type || !newName || isLoading) return;
@@ -34,8 +42,7 @@ const AddAttributeModal = ({
           type,
         },
       });
-      onAdded();
-      onClose();
+      onAdded(newName, type);
     } catch (error) {
       toast.error("Apply another type or name.");
     }
