@@ -9,7 +9,8 @@ on:
         type: string
 jobs:
   deploy-staging:
-    uses: ./.github/workflows/deploy.yaml
+    name: Redeploy staging
+    uses: ./.github/workflows/deploy.yml
     with:
       image-repository: laudspeaker/laudspeaker
       image-tag: ${{ inputs.tag }}
