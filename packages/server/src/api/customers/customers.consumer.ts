@@ -40,6 +40,65 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
     private dataSource: DataSource
   ) {}
 
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: CustomersConsumerService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: CustomersConsumerService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: CustomersConsumerService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: CustomersConsumerService.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: CustomersService.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+
   private MONGO_DB_NAME = process.env.MONGO_DB_NAME ?? 'nest'; // Confluent cluster API secret
   private MONGO_CUSTOMERS_TABLE_NAME = 'customers'; // no other way to configure since hardcoded, make sure it matches in CustomersService.constructor
   private MONGO_CHANGE_STREAM_CONSUMER_GROUP = 'laudspeaker-customers-change';
@@ -61,13 +120,14 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
 
   private handleCustomerChangeStream(this: CustomersConsumerService) {
     return async (changeMessage: EachMessagePayload) => {
+      const session = randomUUID();
       try {
         const messStr = changeMessage.message.value.toString();
         let message: ChangeStreamDocument<Customer> = JSON.parse(messStr);
         if (typeof message === 'string') {
           message = JSON.parse(message); //double parse if kafka record is published as string not object
         }
-        const session = randomUUID();
+        //const session = randomUUID();
         let account: Account;
         let customer: CustomerDocument;
         const queryRunner = await this.dataSource.createQueryRunner();
@@ -95,6 +155,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
                   customer.workspaceId,
                   session
                 );
+              //console.log("in change stream",message);
               await this.segmentsService.updateCustomerSegments(
                 account,
                 customer.id,
@@ -143,10 +204,13 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
           throw e;
         }
       } catch (e) {
-        this.logger.error(
+        this.error(e, this.handleCustomerChangeStream.name, session);
+        /*
+        this.error(
           `Something went wrong processing mongo change stream message ${changeMessage.message.value.toString()}.`,
           e
         );
+        */
       }
     };
   }
