@@ -40,6 +40,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: laudspeaker/infrastructure
+          token: ${{ secret.CI_PAT }}
       - name: Setup helm
         uses: azure/setup-helm@v3
         with:
