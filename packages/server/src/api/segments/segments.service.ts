@@ -908,9 +908,12 @@ export class SegmentsService {
   }
 
   /**
-   * Goes through all account segments and updates membership of the segment
+   * Goes through all account segments and updates membership of the DYNAMIC segments
    * based on the customer's attributes.
    * @returns object with two arrays of segments indicating where the customer was added/removed
+   * 
+   * skips manual segments
+   * 
    */
   public async updateCustomerSegments(
     account: Account,
@@ -922,51 +925,88 @@ export class SegmentsService {
     const removedFromSegments: Segment[] = [];
     const segments = await this.getSegments(account, undefined, queryRunner);
     for (const segment of segments) {
-      // TODO_JH: implement the following
-      const doInclude = await this.customersService.checkCustomerMatchesQuery(
-        segment.inclusionCriteria.query,
-        account,
-        session,
-        undefined,
-        customerId
-      );
-      this.debug(
-        `we updated doInclude: ${doInclude}`,
-        this.updateCustomerSegments.name,
-        session,
-        account.id
-      );
-      //let doInclude = true;
-      //console.log("before isMemberOf");
-      const isMemberOf = await this.isCustomerMemberOf(
-        account,
-        segment.id,
-        customerId,
-        queryRunner
-      );
-      if (doInclude && !isMemberOf) {
-        // If should include but not a member of, then add
-        //console.log("before addCustomerToSe");
-        await this.addCustomerToSegment(
+      
+      try{
+        // We skip manual segments and empty inclusion criteria
+        if(segment.type && segment.type === "manual"){
+          continue;
+        }
+        if(segment.inclusionCriteria && Object.keys(segment.inclusionCriteria).length === 0){
+          //to do check
+          this.debug(
+            `inclusion empty`,
+            this.updateCustomerSegments.name,
+            session,
+            account.id
+          );
+        }
+
+        console.log("segment is", JSON.stringify(segment, null, 2));
+        const doInclude = await this.customersService.checkCustomerMatchesQuery(
+          segment.inclusionCriteria.query,
+          account,
+          session,
+          undefined,
+          customerId
+        );
+        this.debug(
+          `we updated doInclude: ${doInclude}`,
+          this.updateCustomerSegments.name,
+          session,
+          account.id
+        );
+        //let doInclude = true;
+        //console.log("before isMemberOf");
+        const isMemberOf = await this.isCustomerMemberOf(
           account,
           segment.id,
           customerId,
+          queryRunner
+        );
+        if (doInclude && !isMemberOf) {
+          // If should include but not a member of, then add
+          //console.log("before addCustomerToSe");
+          await this.addCustomerToSegment(
+            account,
+            segment.id,
+            customerId,
+            session,
+            queryRunner
+          );
+          addedToSegments.push(segment);
+        } else if (!doInclude && isMemberOf) {
+          // If should not include but is a member of, then remove
+          //console.log("before removeCustomerFromSegment");
+          await this.removeCustomerFromSegment(
+            segment.id,
+            customerId,
+            queryRunner
+          );
+          removedFromSegments.push(segment);
+        }
+      } catch(e){
+        //to do should do something else with the error as well
+        this.debug(
+          `segment issue is on: ${JSON.stringify(segment, null, 2)}`,
+          this.updateCustomerSegments.name,
           session,
-          queryRunner
+          account.id
         );
-        addedToSegments.push(segment);
-      } else if (!doInclude && isMemberOf) {
-        // If should not include but is a member of, then remove
-        //console.log("before removeCustomerFromSegment");
-        await this.removeCustomerFromSegment(
-          segment.id,
-          customerId,
-          queryRunner
+        this.debug(
+          `customer issue is with: ${customerId}`,
+          this.updateCustomerSegments.name,
+          session,
+          account.id
         );
-        removedFromSegments.push(segment);
+        this.error(e, this.updateCustomerSegments.name, session);
       }
     }
-    //console.log("before return");
+    this.debug(
+      `updated all segments with: ${customerId}`,
+      this.updateCustomerSegments.name,
+      session,
+      account.id
+    );
     return { added: addedToSegments, removed: removedFromSegments };
   }
 
