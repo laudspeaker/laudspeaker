@@ -95,7 +95,8 @@ const CompanySetup = () => {
             Time zone
           </div>
           <div className="text-[#4B5563] font-inter text-xs my-[10px]">
-            Set your company's time zone to enable time-based features
+            Set your organization's time zone to ensure accuracy of time-based
+            features.
           </div>
           <Select
             className="!py-2 max-w-full w-full text-base mb-5"

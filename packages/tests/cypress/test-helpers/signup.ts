@@ -2,8 +2,8 @@ import "@4tw/cypress-drag-drop";
 export default (
   email: string,
   password: string,
-  firstName = "John",
-  lastName = "Smith"
+  firstName: string,
+  lastName: string
 ) => {
   cy.visit("/");
   cy.clearCookies();

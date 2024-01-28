@@ -148,10 +148,10 @@ const SegmentTablev2 = () => {
               if (value === SegmentType.AUTOMATIC)
                 navigate("/segment/create/automatic");
             }}
-            placeholder="Create segment"
+            placeholder="Create Segment"
             customBTN={
               <Button type={ButtonType.PRIMARY} onClick={() => {}}>
-                Create segment
+                Create Segment
               </Button>
             }
             panelClassName="!max-w-[130px]"
