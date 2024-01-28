@@ -107,6 +107,11 @@ export interface QueryObject {
   value: any;
 }
 
+const acceptableBooleanConvertable = {
+  true: ['TRUE', 'true', 'T', 't'],
+  false: ['FALSE', 'false', 'F', 'f'],
+};
+
 @Injectable()
 export class CustomersService {
   private clickhouseClient = createClient({
@@ -4920,15 +4925,23 @@ export class CustomersService {
     let isError = false;
     let converted;
     if (convertTo === AttributeType.STRING) {
-      converted = String(value);
+      converted = value ? String(value) : null;
     } else if (convertTo === AttributeType.NUMBER) {
-      converted = Number(value);
-      if (isNaN(converted)) {
-        converted = 0;
-        isError = true;
+      if (!value) {
+        converted = null;
+      } else {
+        converted = Number(value);
+        if (isNaN(converted)) {
+          converted = null;
+          isError = true;
+        }
       }
     } else if (convertTo === AttributeType.BOOLEAN) {
-      converted = Boolean(value);
+      converted = acceptableBooleanConvertable.true.includes(value)
+        ? true
+        : acceptableBooleanConvertable.false.includes(value)
+        ? false
+        : null;
     } else if (convertTo === AttributeType.DATE) {
       if (isValid(new Date(value))) converted = new Date(value).getTime();
       else isError = true;
@@ -4936,7 +4949,7 @@ export class CustomersService {
       if (isEmail(value)) {
         converted = String(value);
       } else {
-        converted = '';
+        converted = null;
         isError = true;
       }
     }

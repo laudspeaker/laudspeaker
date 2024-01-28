@@ -14,6 +14,7 @@ export class UpdateMongoCustomers1704191596312 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     const mg = await mongoose.connect(
       formatMongoConnectionString(process.env.MONGOOSE_URL)
+      // process.env.MONGOOSE_URL
     );
 
     await mg.connection.db.admin().command({
