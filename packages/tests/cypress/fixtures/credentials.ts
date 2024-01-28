@@ -1,8 +1,12 @@
 const { TESTS_SMS_TO } = Cypress.env();
 
 export default {
-  email: "john.smith@gmail.com",
-  password: "john.smith007",
+  email: "james@bond.com",
+  password: "JamesBond007",
+  firstName: "James",
+  lastName: "Bond",
+  organizationName: "MI6",
+  timeZone: "0 UTC",
   MessageHitUser: {
     email: "testmail@gmail.com",
     password: "00000000",

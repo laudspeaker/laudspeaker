@@ -262,7 +262,8 @@ const OrganizationTab = ({ setViewTeamMember }: OrganizationTabProps) => {
             Time zone
           </p>
           <div className="text-xs mb-[5px] mt-[10px] font-inter text-[#4B5563]">
-            Description description description
+            Set your organization's time zone to ensure accuracy of time-based
+            features.
           </div>
           <Select
             className="max-w-[300px]"
