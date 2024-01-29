@@ -163,7 +163,7 @@ const PeopleTablev2 = () => {
               navigate("/people/setting");
             }}
           >
-            Setting
+            Settings
           </Button>
           <Button
             type={ButtonType.SECONDARY}
@@ -171,14 +171,14 @@ const PeopleTablev2 = () => {
               navigate("/people/import");
             }}
           >
-            Import Customer
+            Import Customers via CSV
           </Button>
           <Button
             type={ButtonType.PRIMARY}
             onClick={() => setIsNamePersonModalOpen(true)}
             id="create-customer-button"
           >
-            Create customer
+            Create New Customer
           </Button>
         </div>
       </div>

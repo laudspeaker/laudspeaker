@@ -4951,7 +4951,6 @@ export class CustomersService {
       convertTo === AttributeType.DATE ||
       convertTo === AttributeType.DATE_TIME
     ) {
-      console.log(value, dateFormat);
       const parsedDate = dateFormat
         ? datefns.parse(value, dateFormat, new Date())
         : new Date(value);
