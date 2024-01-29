@@ -203,6 +203,7 @@ export enum StatementValueType {
   BOOLEAN = "Boolean",
   EMAIL = "Email",
   DATE = "Date",
+  DATE_TIME = "DateTime",
   ARRAY = "Array",
   OBJECT = "Object",
 }
@@ -242,6 +243,13 @@ export const valueTypeToComparisonTypesMap: Record<
     ComparisonType.NOT_EXIST,
   ],
   [StatementValueType.DATE]: [
+    ComparisonType.BEFORE,
+    ComparisonType.AFTER,
+    ComparisonType.DURING,
+    ComparisonType.EXIST,
+    ComparisonType.NOT_EXIST,
+  ],
+  [StatementValueType.DATE_TIME]: [
     ComparisonType.BEFORE,
     ComparisonType.AFTER,
     ComparisonType.DURING,

@@ -30,7 +30,7 @@ const PeopleSetting = () => {
 
   const loadPossibleKeys = async () => {
     const { data } = await ApiService.get<any[]>({
-      url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Email&type=Date&isArray=false`,
+      url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Email&type=Date&type=DateTime&isArray=false`,
     });
 
     setPossibleAttributes(data);

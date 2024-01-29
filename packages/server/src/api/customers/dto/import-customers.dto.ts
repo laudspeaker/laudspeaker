@@ -35,6 +35,10 @@ class ImportAttribute {
   type: AttributeType;
 
   @IsOptional()
+  @IsString()
+  dateFormat?: string;
+
+  @IsOptional()
   @IsBoolean()
   skip?: boolean;
 }

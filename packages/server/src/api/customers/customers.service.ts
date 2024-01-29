@@ -37,6 +37,7 @@ import { attributeConditions } from '../../fixtures/attributeConditions';
 import { getType } from 'tst-reflect';
 import { isDateString, isEmail } from 'class-validator';
 import { parse } from 'csv-parse';
+import * as datefns from 'date-fns';
 import { SegmentsService } from '../segments/segments.service';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
@@ -1958,6 +1959,7 @@ export class CustomersService {
         .map((el) => ({
           key: el.key,
           type: el.type,
+          dateFormat: el.dateFormat,
           isArray: el.isArray,
           isPrimary: el.isPrimary,
         }))
@@ -4872,6 +4874,7 @@ export class CustomersService {
     account: Account,
     key: string,
     type: AttributeType,
+    dateFormat: unknown,
     session: string
   ) {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
@@ -4894,7 +4897,7 @@ export class CustomersService {
 
       if (previousKey) {
         throw new HttpException(
-          'Similar key already exist,please use different name or type',
+          'Similar key already exist, please use different name or type',
           503
         );
       }
@@ -4902,6 +4905,7 @@ export class CustomersService {
       const newKey = await this.CustomerKeysModel.create({
         key: key.trim(),
         type,
+        dateFormat,
         isArray: false,
         workspaceId: workspace.id,
       });
@@ -4919,7 +4923,8 @@ export class CustomersService {
   convertForImport(
     value: string,
     convertTo: AttributeType,
-    columnName: string
+    columnName: string,
+    dateFormat?: string
   ) {
     let error = '';
     let isError = false;
@@ -4942,8 +4947,16 @@ export class CustomersService {
         : acceptableBooleanConvertable.false.includes(value)
         ? false
         : null;
-    } else if (convertTo === AttributeType.DATE) {
-      if (isValid(new Date(value))) converted = new Date(value).getTime();
+    } else if (
+      convertTo === AttributeType.DATE ||
+      convertTo === AttributeType.DATE_TIME
+    ) {
+      console.log(value, dateFormat);
+      const parsedDate = dateFormat
+        ? datefns.parse(value, dateFormat, new Date())
+        : new Date(value);
+
+      if (isValid(parsedDate)) converted = parsedDate;
       else isError = true;
     } else if (convertTo === AttributeType.EMAIL) {
       if (isEmail(value)) {
@@ -5106,7 +5119,8 @@ export class CustomersService {
               const convertResult = this.convertForImport(
                 data[el],
                 clearedMapping[el].asAttribute.type,
-                el
+                el,
+                clearedMapping[el].asAttribute.dateFormat
               );
 
               if (convertResult.error) {

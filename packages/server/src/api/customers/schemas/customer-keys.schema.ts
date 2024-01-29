@@ -9,6 +9,7 @@ export enum AttributeType {
   BOOLEAN = 'Boolean',
   EMAIL = 'Email',
   DATE = 'Date',
+  DATE_TIME = 'DateTime',
   ARRAY = 'Array',
   OBJECT = 'Object',
 }
@@ -29,6 +30,9 @@ export class CustomerKeys {
 
   @Prop()
   workspaceId: string;
+
+  @Prop()
+  dateFormat?: string;
 }
 
 export const CustomerKeysSchema = SchemaFactory.createForClass(CustomerKeys);

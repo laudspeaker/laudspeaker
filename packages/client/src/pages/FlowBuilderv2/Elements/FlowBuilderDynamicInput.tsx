@@ -99,6 +99,7 @@ const FlowBuilderDynamicInput: FC<FlowBuilderDynamicInputProps> = ({
   const defaultValuesMap: Record<StatementValueType, string> = {
     [StatementValueType.BOOLEAN]: "true",
     [StatementValueType.DATE]: new Date().toUTCString(),
+    [StatementValueType.DATE_TIME]: new Date().toUTCString(),
     [StatementValueType.EMAIL]: "email@gmail.com",
     [StatementValueType.NUMBER]: "0",
     [StatementValueType.STRING]: "",
@@ -111,6 +112,9 @@ const FlowBuilderDynamicInput: FC<FlowBuilderDynamicInputProps> = ({
       <BooleanComponent value={value} onChange={onChange} />
     ),
     [StatementValueType.DATE]: (
+      <DateComponent value={value} onChange={onChange} />
+    ),
+    [StatementValueType.DATE_TIME]: (
       <DateComponent value={value} onChange={onChange} />
     ),
     [StatementValueType.EMAIL]: (
