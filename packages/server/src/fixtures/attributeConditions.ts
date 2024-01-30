@@ -50,5 +50,14 @@ export const attributeConditions = (
         },
         { label: 'after', id: 'isTimestampAfter', where: '' },
       ];
+    case 'DateTime':
+      return [
+        {
+          label: 'before',
+          id: 'isTimestampBefore',
+          where: '',
+        },
+        { label: 'after', id: 'isTimestampAfter', where: '' },
+      ];
   }
 };
