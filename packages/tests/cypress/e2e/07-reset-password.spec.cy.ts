@@ -11,7 +11,7 @@ describe("signup", () => {
     cy.clearAllCookies()
     cy.clearAllLocalStorage()
     cy.clearAllSessionStorage()
-    sendPassword(email)
+    // sendPassword(email)
   });
 
   it("passes", () => {
