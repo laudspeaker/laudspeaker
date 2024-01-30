@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import ApiService from "services/api.service";
 import UserIcon from "./icons/UserIcon";
 import Input from "components/Elements/Inputv2";
-import TrashIcon from "./icons/TrashIcon";
+import TrashIcon from "../../assets/icons/TrashIcon";
 import Progress from "components/Progress";
 import { AxiosError } from "axios";
 import { toast } from "react-toastify";
@@ -16,6 +16,8 @@ import Scrollbars from "react-custom-scrollbars-2";
 import { format } from "date-fns";
 import { capitalize } from "lodash";
 import { ChevronDoubleDownIcon } from "@heroicons/react/20/solid";
+import { Attribute } from "pages/PeopleSettings/PeopleSettings";
+import Select from "components/Elements/Selectv2";
 
 export interface EventObject {
   event: string;
@@ -50,9 +52,6 @@ const Personv2 = () => {
   const [editingPersonInfo, setEditingPersonInfo] = useState<
     Record<string, any>
   >({});
-  const [isAddingAttribute, setIsAddingAttribute] = useState(false);
-  const [newAttributeKey, setNewAttributeKey] = useState("");
-  const [newAttributeValue, setNewAttributeValue] = useState("");
   const [timeLine, setTimeLine] = useState<CustomerEventsResponse | undefined>(
     undefined
   );
@@ -66,6 +65,17 @@ const Personv2 = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const [currentTab, setCurrentTab] = useState(PersonTab.OVERVIEW);
+
+  const [possibleAttributes, setPossibleAttributes] = useState<Attribute[]>([]);
+  const [attributeSearch, setAttributeSearch] = useState("");
+
+  const loadPossibleKeys = async () => {
+    const { data } = await ApiService.get<any[]>({
+      url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Email&type=Date&type=DateTime&isArray=false`,
+    });
+
+    setPossibleAttributes(data);
+  };
 
   const uploadEvents = async () => {
     setIsLoadingEvents(true);
@@ -91,6 +101,7 @@ const Personv2 = () => {
   useEffect(() => {
     (async () => {
       try {
+        await loadPossibleKeys();
         const { data: personData } = await ApiService.get({
           url: "/customers/" + id,
         });
@@ -108,11 +119,6 @@ const Personv2 = () => {
   useEffect(() => {
     setEditingPersonInfo(personInfo);
   }, [isEditing]);
-
-  useEffect(() => {
-    setNewAttributeKey("");
-    setNewAttributeValue("");
-  }, [isAddingAttribute]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -175,13 +181,21 @@ const Personv2 = () => {
     <div className="w-full font-inter font-normal text-[14px] text-[#111827] leading-[22px]">
       <div className="h-[96px] w-full bg-white border-t-[1px] border-[#E5E7EB] px-5 flex justify-between items-center">
         <div className="flex items-center gap-[10px]">
-          <UserIcon />
-          <div className="flex flex-col gap-[5px]">
+          {isEditing ? (
             <div className="text-[20px] font-semibold leading-[28px]">
-              {personInfo.email}
+              Edit attributes
             </div>
-            <div className="text-[#4B5563] font-roboto">Id: {id}</div>
-          </div>
+          ) : (
+            <>
+              <UserIcon />
+              <div className="flex flex-col gap-[5px]">
+                <div className="text-[20px] font-semibold leading-[28px]">
+                  {personInfo.email}
+                </div>
+                <div className="text-[#4B5563] font-roboto">Id: {id}</div>
+              </div>
+            </>
+          )}
         </div>
         <Button type={ButtonType.DANGEROUS} onClick={handleDeletePerson}>
           Delete
@@ -210,9 +224,12 @@ const Personv2 = () => {
           <>
             <div className="w-full h-fit bg-white rounded-lg p-5 flex flex-col gap-5">
               <div className="w-full flex justify-between">
-                <div className="text-[20px] font-semibold leading-[28px]">
-                  {isEditing ? "Edit attributes" : "Attributes"}
-                </div>
+                {!isEditing && (
+                  <div className="text-[20px] font-semibold leading-[28px]">
+                    Attributes
+                  </div>
+                )}
+
                 {!isEditing && (
                   <Button
                     type={ButtonType.SECONDARY}
@@ -230,7 +247,14 @@ const Personv2 = () => {
                 {Object.keys(personInfoToShow).map((key) =>
                   isEditing ? (
                     <div className="flex flex-col gap-[10px]" key={key}>
-                      <div className="text-[#4B5563]">{key}</div>
+                      <div className="text-[#18181B]">
+                        {key} (
+                        {
+                          possibleAttributes.find((attr) => attr.key === key)
+                            ?.type
+                        }
+                        )
+                      </div>
                       <div className="flex gap-4 items-center">
                         <Input
                           className="w-full"
@@ -242,6 +266,7 @@ const Personv2 = () => {
                               [key]: val,
                             })
                           }
+                          placeholder="Input value"
                         />
                         <button
                           onClick={() => {
@@ -258,7 +283,14 @@ const Personv2 = () => {
                     </div>
                   ) : (
                     <div className="" key={key}>
-                      <div>{key}</div>
+                      <div className="text-[#6B7280] text-[12px] leading-[20px]">
+                        {key} (
+                        {
+                          possibleAttributes.find((attr) => attr.key === key)
+                            ?.type
+                        }
+                        )
+                      </div>
                       <div>
                         {["object", "boolean"].includes(
                           typeof personInfoToShow[key]
@@ -269,57 +301,40 @@ const Personv2 = () => {
                     </div>
                   )
                 )}
-
-                {isEditing &&
-                  (isAddingAttribute ? (
-                    <div className="px-5 py-[14px] flex flex-col gap-5 bg-[#F3F4F6] rounded w-full">
-                      <div className="flex gap-5">
-                        <Input
-                          className="w-full"
-                          wrapperClassName="w-full"
-                          value={newAttributeKey}
-                          onChange={(val) => setNewAttributeKey(val)}
-                          placeholder="Attribute"
-                        />
-                        <Input
-                          className="w-full"
-                          wrapperClassName="w-full"
-                          value={newAttributeValue}
-                          onChange={(val) => setNewAttributeValue(val)}
-                          placeholder="value"
-                        />
-                      </div>
-                      <div className="flex gap-[10px]">
-                        <Button
-                          type={ButtonType.PRIMARY}
-                          onClick={() => {
-                            setEditingPersonInfo({
-                              ...editingPersonInfo,
-                              [newAttributeKey]: newAttributeValue,
-                            });
-                            setIsAddingAttribute(false);
-                          }}
-                        >
-                          Save
-                        </Button>
-                        <Button
-                          type={ButtonType.SECONDARY}
-                          onClick={() => setIsAddingAttribute(false)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <Button
-                      className="w-fit h-fit"
-                      type={ButtonType.SECONDARY}
-                      onClick={() => setIsAddingAttribute(true)}
-                    >
-                      Add an attribute
-                    </Button>
-                  ))}
               </div>
+
+              {isEditing && (
+                <Select<Attribute | undefined>
+                  buttonClassName="!w-fit"
+                  value={undefined}
+                  onChange={(attr) => {
+                    if (!attr) return;
+                    setEditingPersonInfo({
+                      ...editingPersonInfo,
+                      [attr.key]: "",
+                    });
+                  }}
+                  options={possibleAttributes
+                    .filter(
+                      (attr) =>
+                        !Object.keys(editingPersonInfo).includes(attr.key) &&
+                        attr.key.includes(attributeSearch)
+                    )
+                    .map((attr) => ({
+                      key: attr,
+                      title: attr.key,
+                    }))}
+                  customBTN={
+                    <Button type={ButtonType.SECONDARY} onClick={() => {}}>
+                      Add attribute
+                    </Button>
+                  }
+                  searchPlaceholder="Find an attribute"
+                  searchValue={attributeSearch}
+                  onSearchValueChange={setAttributeSearch}
+                  placeholder="Add attribute"
+                />
+              )}
 
               {isEditing && (
                 <>
