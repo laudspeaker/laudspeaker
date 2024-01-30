@@ -1,0 +1,19 @@
+name: Trigger staging deploy
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag of laudspeaker/laudspeaker image to deploy
+        required: false
+        default: latest
+        type: string
+jobs:
+  deploy-staging:
+    name: Redeploy staging
+    uses: ./.github/workflows/deploy.yml
+    with:
+      image-repository: laudspeaker/laudspeaker
+      image-tag: ${{ inputs.tag }}
+      cluster: laudspeaker-staging
+      env: staging
+    secrets: inherit
