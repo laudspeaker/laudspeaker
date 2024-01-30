@@ -948,7 +948,7 @@ export class SegmentsService {
           );
         }
 
-        console.log("segment is", JSON.stringify(segment, null, 2));
+        //console.log("segment is", JSON.stringify(segment, null, 2));
         const doInclude = await this.customersService.checkCustomerMatchesQuery(
           segment.inclusionCriteria.query,
           account,
