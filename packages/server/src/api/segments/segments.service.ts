@@ -543,13 +543,6 @@ export class SegmentsService {
       });
 
       this.debug(
-        `clicked save segment\n`,
-        this.create.name,
-        session,
-        account.id
-      );
-
-      this.debug(
         `SegmentDTO is: ${createSegmentDTO}`,
         this.create.name,
         session,
@@ -630,6 +623,12 @@ export class SegmentsService {
         }
       }
       await queryRunner.commitTransaction();
+      this.debug(
+        `we have created segment successfully`,
+        this.create.name,
+        session,
+        account.id
+      );
 
       return segment;
     } catch (e) {
@@ -907,6 +906,8 @@ export class SegmentsService {
     };
   }
 
+  
+
   /**
    * Goes through all account segments and updates membership of the DYNAMIC segments
    * based on the customer's attributes.
@@ -924,6 +925,12 @@ export class SegmentsService {
     const addedToSegments: Segment[] = [];
     const removedFromSegments: Segment[] = [];
     const segments = await this.getSegments(account, undefined, queryRunner);
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    
+    //if we need to optimize later make call once here
+    //const allCustomerKeys = await this.customersService.getKeysAndTypes(workspace.id)
+    
+    
     for (const segment of segments) {
       
       try{
@@ -947,7 +954,7 @@ export class SegmentsService {
           account,
           session,
           undefined,
-          customerId
+          customerId,
         );
         this.debug(
           `we updated doInclude: ${doInclude}`,
