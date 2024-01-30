@@ -32,9 +32,9 @@ const MappingTab = ({
   const [search, setSearch] = useState<
     Record<string, { search: string; isLoading: boolean }>
   >({});
-  const [isAddModalOpened, setIsAddModalOpened] = useState(false);
+  const [activeHead, setActiveHead] = useState<string>();
   const [possibleKeys, setPossibleKeys] = useState<
-    { key: string; type: AttributeType }[]
+    { key: string; type: AttributeType; dateFormat?: string }[]
   >([]);
 
   const handleSearchUpdate = (head: string) => (value: string) => {
@@ -57,7 +57,7 @@ const MappingTab = ({
 
   const loadPossibleKeys = async () => {
     const { data } = await ApiService.get<any[]>({
-      url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Boolean&type=Email&type=Date&isArray=false`,
+      url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Boolean&type=Email&type=Date&type=DateTime&isArray=false`,
     });
 
     if (
@@ -79,6 +79,7 @@ const MappingTab = ({
               asAttribute: {
                 key: pk.key,
                 type: pk.type,
+                dateFormat: pk.dateFormat,
                 skip: false,
               },
               isPrimary: true,
@@ -93,10 +94,11 @@ const MappingTab = ({
 
   const handleSelectChange = (head: string) => (selectKey: string) => {
     if (selectKey === "_NEW_RECORD_;-;_NEW_RECORD_") {
-      setIsAddModalOpened(true);
+      setActiveHead(head);
       return;
     }
-    const [key, type] = selectKey.split(";-;");
+
+    const [key, type, dateFormat] = selectKey.split(";-;");
 
     if (!key || !type) return;
 
@@ -116,6 +118,7 @@ const MappingTab = ({
         asAttribute: {
           key: key,
           type: type as AttributeType,
+          dateFormat,
           skip: selectKey === "_SKIP_RECORD_;-;_SKIP_RECORD_",
         },
         isPrimary:
@@ -284,6 +287,8 @@ const MappingTab = ({
                             mappingSettings[head]?.asAttribute
                               ? `${mappingSettings[head].asAttribute!.key};-;${
                                   mappingSettings[head].asAttribute!.type
+                                };-;${
+                                  mappingSettings[head].asAttribute?.dateFormat
                                 }`
                               : ""
                           }
@@ -367,7 +372,7 @@ const MappingTab = ({
                                 el.key.includes(search[head]?.search || "")
                               )
                               .map((el) => ({
-                                key: `${el.key};-;${el.type}`,
+                                key: `${el.key};-;${el.type};-;${el.dateFormat}`,
                                 title: el.key,
                               })),
                           ]}
@@ -431,9 +436,29 @@ const MappingTab = ({
         </RadioGroup>
       </div>
       <AddAttributeModal
-        isOpen={isAddModalOpened}
-        onClose={() => setIsAddModalOpened(false)}
-        onAdded={() => loadPossibleKeys()}
+        isOpen={!!activeHead}
+        onClose={() => setActiveHead(undefined)}
+        onAdded={(
+          keyName: string,
+          keyType: AttributeType,
+          dateFormat?: string
+        ) => {
+          loadPossibleKeys();
+
+          if (!activeHead) return;
+          updateSettings({
+            [activeHead]: {
+              ...mappingSettings[activeHead],
+              asAttribute: {
+                key: keyName,
+                type: keyType,
+                dateFormat,
+                skip: false,
+              },
+            },
+          });
+          setActiveHead(undefined);
+        }}
       />
     </div>
   );

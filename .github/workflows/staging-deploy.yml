@@ -41,4 +41,9 @@ jobs:
     needs: [setup, push-staging]
     name: Redeploy staging
     uses: ./.github/workflows/deploy.yml
+    with:
+      image-repository: laudspeaker/laudspeaker
+      image-tag: ${{ needs.setup.outputs.short_sha }}
+      cluster: laudspeaker-staging
+      env: staging
     secrets: inherit

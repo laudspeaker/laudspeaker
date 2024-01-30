@@ -23,7 +23,7 @@ import {
   ObjectKeyComparisonType,
   QueryStatementType,
   QueryType,
-  RecurrenceEndsOptions,
+  RecurrenceEndsOption,
   SegmentsSettingsType,
   setJourneyEntryEnrollmentType,
   setJourneyEntryTimingTime,
@@ -35,6 +35,8 @@ import {
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import { DateComponent } from "./Elements/FlowBuilderDynamicInput";
 import FilterBuilder from "./FilterBuilder/FilterBuilder";
+import { FC } from "react";
+import Button, { ButtonType } from "components/Elements/Buttonv2";
 
 const enrollmentTypes = [
   {
@@ -62,7 +64,15 @@ const enrollmentTypes = [
   },
 ];
 
-const FlowBuilderSegmentEditor = () => {
+interface FlowBuilderSegmentEditorProps {
+  onSave?: () => void;
+  onCancel?: () => void;
+}
+
+const FlowBuilderSegmentEditor: FC<FlowBuilderSegmentEditorProps> = ({
+  onCancel,
+  onSave,
+}) => {
   const {
     segments: segmentsSettings,
     journeyType,
@@ -348,25 +358,25 @@ const FlowBuilderSegmentEditor = () => {
                                   ...journeyEntrySettings.entryTiming.time!
                                     .recurrence,
                                   endsOn: ev.target
-                                    .value as RecurrenceEndsOptions,
+                                    .value as RecurrenceEndsOption,
                                 },
                               })
                             )
                           }
                           className="w-[180px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
                         >
-                          <option value={RecurrenceEndsOptions.Never}>
+                          <option value={RecurrenceEndsOption.Never}>
                             Never
                           </option>
-                          <option value={RecurrenceEndsOptions.After}>
+                          <option value={RecurrenceEndsOption.After}>
                             After
                           </option>
-                          <option value={RecurrenceEndsOptions.SpecificDate}>
+                          <option value={RecurrenceEndsOption.SpecificDate}>
                             On a specific date
                           </option>
                         </select>
                         {journeyEntrySettings.entryTiming.time.recurrence
-                          .endsOn === RecurrenceEndsOptions.After ? (
+                          .endsOn === RecurrenceEndsOption.After ? (
                           <>
                             <input
                               type="number"
@@ -398,7 +408,7 @@ const FlowBuilderSegmentEditor = () => {
                           </>
                         ) : (
                           journeyEntrySettings.entryTiming.time.recurrence
-                            .endsOn === RecurrenceEndsOptions.SpecificDate && (
+                            .endsOn === RecurrenceEndsOption.SpecificDate && (
                             <>
                               <DateComponent
                                 value={
@@ -547,37 +557,23 @@ const FlowBuilderSegmentEditor = () => {
           </div>
         )}
 
-        {/* <div className="flex flex-col gap-[10px]">
-          <div className="font-semibold text-base">
-            Journey type
-          </div>
-          <div className="font-normal text-[14px] leading-[22px] text-[#4B5563]">
-            Dynamic journeys enroll new customers who meet conditions, while
-            static journeys only enroll customers who meet conditions at start.
-          </div>
-          <div className="flex font-roboto font-normal text-base">
-            <div
-              className={`px-[16px] py-2 select-none cursor-pointer rounded-l-[2px] ${
-                journeyType === JourneyType.DYNAMIC
-                  ? "bg-[#6366F1] text-white"
-                  : "border border-[#9CA3AF]"
-              }`}
-              onClick={() => dispatch(setJourneyType(JourneyType.DYNAMIC))}
-            >
-              Dynamic journey
+        {(onSave || onCancel) && (
+          <>
+            <div className="w-[calc(100%+40px)] h-[1px] bg-[#E5E7EB] -translate-x-[20px]" />
+            <div className="flex gap-2.5">
+              {onCancel && (
+                <Button type={ButtonType.SECONDARY} onClick={onCancel}>
+                  Cancel
+                </Button>
+              )}
+              {onSave && (
+                <Button type={ButtonType.PRIMARY} onClick={onSave}>
+                  Save
+                </Button>
+              )}
             </div>
-            <div
-              className={`px-[16px] py-2 select-none cursor-pointer rounded-r-[2px] ${
-                journeyType === JourneyType.STATIC
-                  ? "bg-[#6366F1] text-white"
-                  : "border border-[#9CA3AF]"
-              }`}
-              onClick={() => dispatch(setJourneyType(JourneyType.STATIC))}
-            >
-              Static journey
-            </div>
-          </div>
-        </div> */}
+          </>
+        )}
       </div>
     </div>
   );

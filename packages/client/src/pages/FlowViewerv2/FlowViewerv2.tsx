@@ -9,6 +9,8 @@ import { useLocation } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import { applyNodeChanges, Edge, Node, NodeChange } from "reactflow";
 import {
+  JourneyEntrySettings,
+  JourneySettings,
   JourneyType,
   loadVisualLayout,
   QueryStatementType,
@@ -20,6 +22,8 @@ import {
   setFlowName,
   setFlowStatus,
   setIsViewMode,
+  setJourneyEntrySettings,
+  setJourneySettings,
   setJourneyType,
   setNodes,
   setSegmentsSettings,
@@ -28,10 +32,21 @@ import ApiService from "services/api.service";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import FlowViewerHeader from "./Header/FlowViewerHeader";
 import FlowViewerSidePanel from "./SidePanel/FlowViewerSidePanel";
+import FlowBuilderSegmentEditor from "pages/FlowBuilderv2/FlowBuilderSegmentEditor";
+import FlowBuilderSettings from "pages/FlowBuilderv2/FlowBuilderSettings";
+import FlowViewerChangeSegmentModal, {
+  ChangeSegmentOption,
+} from "./Modals/FlowViewerChangeSegmentModal";
+import FlowViewerCancelConfirmationModal from "./Modals/FlowViewerCancelConfirmationModal";
+import JourneyEntrySettingsViewer from "./JourneyEntrySettingsViewer";
+import JourneySettingsViewer from "./JourneySettingsViewer";
+import ActivityHistoryViewer from "./ActivityHistoryViewer";
 
 export enum FlowViewerTab {
   JOURNEY = "Journey",
-  CUSTOMER_SEGMENT = "Customer segment",
+  ENTRY = "Entry",
+  SETTINGS = "Settings",
+  // ACTIVITY_HISTORY = "Activity history",
 }
 
 const nodesToLoadCustomerCount: NodeType[] = [
@@ -45,14 +60,34 @@ const FlowViewerv2 = () => {
   const { state: locationState } = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const [currentTab, setCurrentTab] = useState(FlowViewerTab.JOURNEY);
+  const [onConfirmNextTab, setOnConfirmNextTab] = useState<FlowViewerTab>();
 
   const dispatch = useAppDispatch();
 
   const {
     journeyType,
     segments: segmentsSettings,
+    journeyEntrySettings,
+    journeySettings,
     nodes,
+    flowStatus,
   } = useAppSelector((state) => state.flowBuilder);
+
+  const [initialSegmentSettings, setInitialSegmentSettings] =
+    useState<SegmentsSettings>();
+  const [initialJourneyEntrySettings, setInitialJourneyEntrySettings] =
+    useState<JourneyEntrySettings>();
+  const [initialJourneySettings, setInitialJourneySettings] =
+    useState<JourneySettings>();
+
+  const [
+    flowViewerChangeSegmentModalOpened,
+    setFlowViewerChangeSegmentModalOpened,
+  ] = useState(false);
+  const [
+    flowViewerCancelConfirmationModalOpened,
+    setFlowViewerCancelConfirmationModalOpened,
+  ] = useState(false);
 
   useEffect(() => {
     if (locationState?.stepId && nodes.length > 0) {
@@ -73,57 +108,6 @@ const FlowViewerv2 = () => {
     }
   }, [nodes]);
 
-  const tabs: Record<FlowViewerTab, ReactNode> = {
-    [FlowViewerTab.JOURNEY]: (
-      <div className="w-full h-full flex">
-        <FlowEditor isViewMode={true} className="bg-[#F9FAFB]" />
-        <FlowViewerSidePanel />
-      </div>
-    ),
-    [FlowViewerTab.CUSTOMER_SEGMENT]: (
-      <div className="w-full m-5 bg-white overflow-y-scroll">
-        {/* <div className="bg-white p-5 flex flex-col gap-[10px]">
-          <div className="font-inter font-semibold text-[20px] leading-[28px]">
-            Journey type
-          </div>
-          <div className="font-inter font-normal text-[14px] leading-[22px] flex items-center gap-[10px]">
-            <span>This Journey is a</span>
-            <span className="px-2 py-[10px] bg-[#F3F4F6] border border-[#E5E7EB] font-semibold">
-              {journeyType === JourneyType.DYNAMIC
-                ? "Dynamic"
-                : journeyType === JourneyType.STATIC
-                ? "Static"
-                : "Unspecified"}{" "}
-              journey
-            </span>
-            <span>When new customers meet conditions will be enrolled.</span>
-          </div>
-        </div> */}
-        <div className="bg-white p-5 flex flex-col gap-[10px]">
-          <div className="font-inter font-semibold text-[20px] leading-[28px]">
-            Condition
-          </div>
-          <div className="font-inter font-normal text-[14px] leading-[22px]">
-            {segmentsSettings.type === SegmentsSettingsType.ALL_CUSTOMERS ? (
-              <>
-                <span className="font-bold">All customers</span> will enter this
-                journey
-              </>
-            ) : (
-              <>
-                Customers will enter this journey when they meets the following
-                conditions:
-              </>
-            )}
-          </div>
-          {segmentsSettings.type === SegmentsSettingsType.CONDITIONAL && (
-            <FilterViewer settingsQuery={segmentsSettings.query} />
-          )}
-        </div>
-      </div>
-    ),
-  };
-
   const loadJourney = async () => {
     setIsLoading(true);
     try {
@@ -137,6 +121,8 @@ const FlowViewerv2 = () => {
         isPaused?: boolean;
         isStopped?: boolean;
         isDeleted?: boolean;
+        journeyEntrySettings: JourneyEntrySettings;
+        journeySettings: JourneySettings;
       }>({
         url: "/journeys/" + id,
       });
@@ -212,11 +198,16 @@ const FlowViewerv2 = () => {
       }
 
       dispatch(setSegmentsSettings(data.segments));
+      setInitialSegmentSettings(data.segments);
       dispatch(
         setJourneyType(
           data.isDynamic ? JourneyType.DYNAMIC : JourneyType.STATIC
         )
       );
+      dispatch(setJourneyEntrySettings(data.journeyEntrySettings));
+      setInitialJourneyEntrySettings(data.journeyEntrySettings);
+      dispatch(setJourneySettings(data.journeySettings));
+      setInitialJourneySettings(data.journeySettings);
       dispatch(setFlowId(id));
 
       let status: JourneyStatus = JourneyStatus.DRAFT;
@@ -233,9 +224,115 @@ const FlowViewerv2 = () => {
     }
   };
 
+  const onSave = async (changeSegmentOption?: ChangeSegmentOption) => {
+    if (
+      JSON.stringify(segmentsSettings) !==
+        JSON.stringify(initialSegmentSettings) &&
+      !changeSegmentOption
+    ) {
+      setFlowViewerChangeSegmentModalOpened(true);
+      return;
+    }
+
+    setFlowViewerChangeSegmentModalOpened(false);
+    setFlowViewerCancelConfirmationModalOpened(false);
+    setOnConfirmNextTab(undefined);
+
+    await ApiService.patch({
+      url: "/journeys",
+      options: {
+        id,
+        inclusionCriteria: segmentsSettings,
+        changeSegmentOption,
+        journeyEntrySettings: journeyEntrySettings,
+        journeySettings: journeySettings,
+      },
+    });
+
+    await loadJourney();
+  };
+
+  const onCancel = async (confirmed = false) => {
+    if (
+      !confirmed &&
+      (JSON.stringify(initialSegmentSettings) !==
+        JSON.stringify(segmentsSettings) ||
+        JSON.stringify(initialJourneyEntrySettings) !==
+          JSON.stringify(journeyEntrySettings) ||
+        JSON.stringify(initialJourneySettings) !==
+          JSON.stringify(journeySettings))
+    ) {
+      setFlowViewerCancelConfirmationModalOpened(true);
+      return;
+    }
+
+    setFlowViewerCancelConfirmationModalOpened(false);
+    if (onConfirmNextTab) {
+      setCurrentTab(onConfirmNextTab);
+      setOnConfirmNextTab(undefined);
+    }
+    await loadJourney();
+  };
+
+  const tabs: Record<FlowViewerTab, ReactNode> = {
+    [FlowViewerTab.JOURNEY]: (
+      <div className="w-full h-full flex">
+        <FlowEditor isViewMode={true} className="bg-[#F9FAFB]" />
+        <FlowViewerSidePanel />
+      </div>
+    ),
+    [FlowViewerTab.ENTRY]:
+      flowStatus === JourneyStatus.STOPPED ||
+      flowStatus === JourneyStatus.DELETED ? (
+        <JourneyEntrySettingsViewer
+          journeyEntrySettings={journeyEntrySettings}
+          segmentsSettings={segmentsSettings}
+        />
+      ) : (
+        <>
+          <FlowBuilderSegmentEditor
+            onSave={() => onSave()}
+            onCancel={() => onCancel()}
+          />
+          <FlowViewerChangeSegmentModal
+            isOpen={flowViewerChangeSegmentModalOpened}
+            onClose={() => setFlowViewerChangeSegmentModalOpened(false)}
+            onSave={onSave}
+          />
+        </>
+      ),
+    [FlowViewerTab.SETTINGS]:
+      flowStatus === JourneyStatus.STOPPED ||
+      flowStatus === JourneyStatus.DELETED ? (
+        <JourneySettingsViewer journeySettings={journeySettings} />
+      ) : (
+        <FlowBuilderSettings
+          onSave={() => onSave()}
+          onCancel={() => onCancel()}
+        />
+      ),
+    // [FlowViewerTab.ACTIVITY_HISTORY]: <ActivityHistoryViewer />,
+  };
+
   useEffect(() => {
     loadJourney();
-  }, []);
+  }, [currentTab]);
+
+  const handleChangeCurrentTab = (newTab: FlowViewerTab) => {
+    if (
+      JSON.stringify(initialSegmentSettings) !==
+        JSON.stringify(segmentsSettings) ||
+      JSON.stringify(initialJourneyEntrySettings) !==
+        JSON.stringify(journeyEntrySettings) ||
+      JSON.stringify(initialJourneySettings) !== JSON.stringify(journeySettings)
+    ) {
+      setOnConfirmNextTab(newTab);
+      onCancel();
+      return;
+    }
+
+    setCurrentTab(newTab);
+  };
 
   return (
     <div className="relative w-full h-full text-[#111827] font-inter font-normal text-[14px] leading-[22px]">
@@ -247,11 +344,16 @@ const FlowViewerv2 = () => {
       <FlowViewerHeader
         tabs={tabs}
         currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
+        setCurrentTab={handleChangeCurrentTab}
       />
       <div className="relative flex w-full h-full max-h-[calc(100%-140px)]">
         {tabs[currentTab]}
       </div>
+      <FlowViewerCancelConfirmationModal
+        isOpen={flowViewerCancelConfirmationModalOpened}
+        onDiscard={() => onCancel(true)}
+        onSave={() => onSave()}
+      />
     </div>
   );
 };

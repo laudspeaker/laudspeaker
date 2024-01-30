@@ -322,13 +322,19 @@ export class CustomersController {
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async createAttribute(
     @Req() { user }: Request,
-    @Body() { name, type }: { name: string; type: AttributeType }
+    @Body()
+    {
+      name,
+      type,
+      dateFormat,
+    }: { name: string; type: AttributeType; dateFormat: unknown }
   ) {
     const session = randomUUID();
     return this.customersService.createAttribute(
       <Account>user,
       name,
       type,
+      dateFormat,
       session
     );
   }

@@ -25,6 +25,7 @@ import { Installation } from '../slack/entities/installation.entity';
 import { Template } from '../templates/entities/template.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { isThursday } from 'date-fns';
 
 @Injectable()
 export class TestsService {
@@ -134,6 +135,25 @@ export class TestsService {
     await queryRunner.startTransaction();
 
     try {
+      const testAccount = await queryRunner.manager.findOne(Account, {
+        where: { email: process.env.TEST_USER_EMAIL },
+      });
+      if (testAccount) {
+        const removeResult = await queryRunner.manager.remove(
+          Account,
+          testAccount
+        );
+
+        this.debug(
+          JSON.stringify({
+            message: `Removed test user from db`,
+            removeResult,
+          }),
+          this.resetTestData.name,
+          session
+        );
+      }
+
       // TODO:  Require full rework to new structure
       // await this.authService.verificationRepository.delete({
       //   email: 'john.smith@gmail.com',
@@ -236,9 +256,10 @@ export class TestsService {
       //       installation: JSON.parse(installationJson),
       //     });
       // }
+      await queryRunner.commitTransaction();
     } catch (error) {
       queryRunner.rollbackTransaction();
-      console.error('Error generating test users:', error);
+      this.error(error, this.resetTestData.name, session);
     } finally {
       queryRunner.release();
     }

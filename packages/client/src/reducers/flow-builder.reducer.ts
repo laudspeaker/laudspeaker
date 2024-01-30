@@ -203,6 +203,7 @@ export enum StatementValueType {
   BOOLEAN = "Boolean",
   EMAIL = "Email",
   DATE = "Date",
+  DATE_TIME = "DateTime",
   ARRAY = "Array",
   OBJECT = "Object",
 }
@@ -242,6 +243,13 @@ export const valueTypeToComparisonTypesMap: Record<
     ComparisonType.NOT_EXIST,
   ],
   [StatementValueType.DATE]: [
+    ComparisonType.BEFORE,
+    ComparisonType.AFTER,
+    ComparisonType.DURING,
+    ComparisonType.EXIST,
+    ComparisonType.NOT_EXIST,
+  ],
+  [StatementValueType.DATE_TIME]: [
     ComparisonType.BEFORE,
     ComparisonType.AFTER,
     ComparisonType.DURING,
@@ -393,7 +401,7 @@ export enum EntryTimingFrequency {
   Monthly = "Monthly",
 }
 
-export enum RecurrenceEndsOptions {
+export enum RecurrenceEndsOption {
   Never = "Never",
   After = "After",
   SpecificDate = "SpecificDate",
@@ -401,7 +409,7 @@ export enum RecurrenceEndsOptions {
 
 export interface EntryTimingRecurrence {
   repeatEvery: number;
-  endsOn: RecurrenceEndsOptions;
+  endsOn: RecurrenceEndsOption;
   endAdditionalValue?: number | string; // string as Date (Ends after number occurnecs or on Specific string Date )
   weeklyOn: number[]; // Day of week number
   continueOccurence: boolean;
@@ -421,11 +429,13 @@ export enum JourneyEnrollmentType {
   OnlyFuture = "OnlyFuture",
 }
 
+export interface EntryTimingSettings {
+  type: EntryTiming;
+  time?: EntryTimingSpecificTime;
+}
+
 export interface JourneyEntrySettings {
-  entryTiming: {
-    type: EntryTiming;
-    time?: EntryTimingSpecificTime;
-  };
+  entryTiming: EntryTimingSettings;
   enrollmentType: JourneyEnrollmentType;
 }
 
@@ -434,7 +444,7 @@ export enum JourneySettingsQuietFallbackBehavior {
   Abort = "Abort",
 }
 
-interface JourneySettingsQuietHours {
+export interface JourneySettingsQuietHours {
   enabled: boolean;
   startTime: string;
   endTime: string;
@@ -456,13 +466,13 @@ export enum MaxOptions {
   FiveHundredThousand = "500000",
 }
 
-interface JourneySettingsMaxUserEntries {
+export interface JourneySettingsMaxUserEntries {
   enabled: boolean;
   maxEntries: MaxOptions;
   limitOnEverySchedule: boolean;
 }
 
-interface JourneySettingsMaxMessageSends {
+export interface JourneySettingsMaxMessageSends {
   enabled: boolean;
   maxUsersReceive?: MaxOptions;
   maxSendRate?: MaxOptions;
@@ -1353,7 +1363,7 @@ const flowBuilderSlice = createSlice({
           frequency: EntryTimingFrequency.Once,
           startDate: new Date().toISOString(),
           recurrence: {
-            endsOn: RecurrenceEndsOptions.Never,
+            endsOn: RecurrenceEndsOption.Never,
             repeatEvery: 1,
             weeklyOn: [...new Array(7)].map(() => 0),
             endAdditionalValue: undefined,
@@ -1384,11 +1394,11 @@ const flowBuilderSlice = createSlice({
           state.journeyEntrySettings.entryTiming?.time.recurrence.endsOn !==
           action.payload.recurrence.endsOn
         ) {
-          if (action.payload.recurrence.endsOn === RecurrenceEndsOptions.After)
+          if (action.payload.recurrence.endsOn === RecurrenceEndsOption.After)
             defaultAdditionalValue = 1;
           else if (
             action.payload.recurrence.endsOn ===
-            RecurrenceEndsOptions.SpecificDate
+            RecurrenceEndsOption.SpecificDate
           )
             defaultAdditionalValue = addDays(new Date(), 5).toISOString();
           else defaultAdditionalValue = undefined;

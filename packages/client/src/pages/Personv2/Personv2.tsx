@@ -260,7 +260,9 @@ const Personv2 = () => {
                     <div className="" key={key}>
                       <div>{key}</div>
                       <div>
-                        {typeof personInfoToShow[key] === "object"
+                        {["object", "boolean"].includes(
+                          typeof personInfoToShow[key]
+                        )
                           ? JSON.stringify(personInfoToShow[key])
                           : personInfoToShow[key]}
                       </div>

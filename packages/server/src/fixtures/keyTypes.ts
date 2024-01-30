@@ -1,1 +1,1 @@
-export default ['Email', 'String', 'Boolean', 'Number', 'Date'];
+export default ['Email', 'String', 'Boolean', 'Number', 'Date', 'DateTime'];
