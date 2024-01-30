@@ -1,5 +1,5 @@
 PORT=8080
-NODE_ENV=production
+NODE_ENV=development
 API_BASE_URL=http://localhost:8080/api
 FRONTEND_URL=http://localhost:8080
 DATABASE_HOST=postgres
@@ -36,5 +36,5 @@ MAILGUN_TEST_DOMAIN=
 MAILGUN_API_KEY=
 SENDGRID_WEBHOOK_ENDPOINT=/webhooks/sendgrid
 TWILIO_WEBHOOK_ENDPOINT=/webhooks/twilio
-
+TEST_USER_EMAIL=james@bond.com
 SENTRY_ENVIRONMENT_TAG=cypress-test
