@@ -118,6 +118,11 @@ const acceptableBooleanConvertable = {
   false: ['FALSE', 'false', 'F', 'f'],
 };
 
+export interface QueryOptions {
+  // ... other properties ...
+  customerKeys?: { key: string, type: AttributeType }[];
+}
+
 @Injectable()
 export class CustomersService {
   private clickhouseClient = createClient({
@@ -2294,7 +2299,7 @@ export class CustomersService {
   ): Promise<string> {
     this.debug(
       'Creating segment from query',
-      this.getSegmentCustomersFromQuery.name,
+      this.CountCustomersFromAndQuery.name,
       session
     );
 
@@ -2966,6 +2971,15 @@ export class CustomersService {
       // Release the query runner which will return it to the connection pool
       await queryRunner.release();
     }
+  }
+
+  /*
+   * get all the keys for specific workspace
+   */
+
+  async getKeysAndTypes(workspaceId: string): Promise<{ key: string, type: AttributeType }[]> {
+    const customerKeys = await this.CustomerKeysModel.find({ workspaceId }).exec();
+    return customerKeys.map(({ key, type }) => ({ key, type }));
   }
 
   /*
@@ -4022,6 +4036,9 @@ export class CustomersService {
     //return false;
   }
 
+
+  
+
   /*
    * Checks if a given customer should be in a segment
    * returns a boolean
@@ -4103,7 +4120,9 @@ export class CustomersService {
     account: Account,
     session: string,
     customer?: CustomerDocument,
-    customerId?: string
+    customerId?: string,
+    options?: QueryOptions
+    //customerKeys?: { key: string, type: AttributeType }[]
   ) {
     this.debug(
       'in checkCustomerMatchesQuery',
@@ -4205,7 +4224,8 @@ export class CustomersService {
     customer: CustomerDocument,
     statement: any,
     account: Account,
-    session: string
+    session: string,
+    options?: QueryOptions
   ): Promise<boolean> {
     if (statement.statements && statement.statements.length > 0) {
       // Statement has a subquery, recursively evaluate the subquery
@@ -4298,7 +4318,7 @@ export class CustomersService {
 
     switch (type) {
       case 'Attribute':
-        return this.evaluateAttributeStatement(customer, statement, session);
+        return this.evaluateAttributeStatement(customer, statement, account, session);
       case 'Event':
         return await this.evaluateEventStatement(
           customer,
@@ -4723,6 +4743,7 @@ export class CustomersService {
   evaluateAttributeStatement(
     customer: CustomerDocument,
     statement: any,
+    account: Account,
     session: string
   ): boolean {
     //console.log('In evaluateAttributeStatement/n\n');
@@ -4733,7 +4754,6 @@ export class CustomersService {
       session
     );
 
-  
     const {
       key,
       comparisonType,
@@ -4742,6 +4762,12 @@ export class CustomersService {
       valueType,
       subComparisonValue,
     } = statement;
+
+    this.debug(
+      JSON.stringify(statement, null, 2),
+      this.evaluateAttributeStatement.name,
+      session
+    );
 
     this.debug(
       `value is: ${value}`,
@@ -4783,6 +4809,12 @@ export class CustomersService {
       session
     );
 
+    this.debug(
+      `the customerValue type is: ${(typeof customerValue)}`,
+      this.evaluateAttributeStatement.name,
+      session
+    );
+
     // Perform comparison based on comparisonType
     //console.log('comparison type is', comparisonType);
     this.debug(
@@ -4790,12 +4822,13 @@ export class CustomersService {
       this.evaluateAttributeStatement.name,
       session
     );
+    // to do correctValueType - we need customer values to be updated first
     switch (comparisonType) {
       case 'is equal to':
         //not checked
-        return customerValue === value;
+        return customerValue === this.correctValueType(valueType, value, account, session);//value;
       case 'is not equal to':
-        return customerValue !== value;
+        return customerValue !== this.correctValueType(valueType, value, account, session);//value;
       case 'contains':
         if (typeof customerValue === 'string' && typeof value === 'string') {
           return customerValue.includes(value);
@@ -4813,13 +4846,13 @@ export class CustomersService {
       case 'is greater than':
         //to do check - value methinks is now always a string
         if (typeof customerValue === 'number' && typeof value === 'number') {
-          return customerValue > value;
+          return customerValue > this.correctValueType(valueType, value, account, session);//value;;
         }
         return false;
       case 'is less than':
         //to do check when
         if (typeof customerValue === 'number' && typeof value === 'number') {
-          return customerValue < value;
+          return customerValue < this.correctValueType(valueType, value, account, session);//value;;
         }
         return false;
       //not checked

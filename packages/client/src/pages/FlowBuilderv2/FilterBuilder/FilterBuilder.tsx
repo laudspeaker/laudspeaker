@@ -453,7 +453,8 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
       sizeCountCancelToken[index] = axios.CancelToken.source();
 
       const newQuery = deepCopy(settings.query);
-      newQuery.statements = [newQuery.statements[Number(index)]];
+      newQuery.statements = newQuery.statements.slice(0, Number(index) + 1);
+      //newQuery.statements = [newQuery.statements[Number(index)]];
       try {
         const { data } = await ApiService.post({
           url: "/segments/size",

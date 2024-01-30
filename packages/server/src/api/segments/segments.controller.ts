@@ -148,6 +148,12 @@ export class SegmentsController {
     );
     */
 
+    this.debug(
+      `post saving segment`,
+      this.create.name,
+      session,
+    );
+   
     return await this.segmentsService.create(
       <Account>user,
       createSegmentDTO,
@@ -165,6 +171,16 @@ export class SegmentsController {
     const session = randomUUID();
     //console.log("**** in save segment /n\n");
     //console.log("the segmentDTO is", JSON.stringify(createSegmentDTO, null, 2) );
+
+    this.debug(
+      ` post size ${JSON.stringify(
+        countSegmentUsersSizeDTO,
+        null,
+        2
+      )}`,
+      this.create.name,
+      session,
+    );
 
     return await this.segmentsService.size(
       <Account>user,
@@ -306,6 +322,7 @@ export class SegmentsController {
     @Param('customerId') customerId: string
   ) {
     const session = randomUUID();
+
 
     return this.segmentsService.deleteCustomer(
       <Account>user,
