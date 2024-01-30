@@ -32,6 +32,7 @@ export type AttributeType = Exclude<
 export interface ImportAttribute {
   key: string;
   type: AttributeType;
+  dateFormat?: string;
   skip?: boolean;
 }
 

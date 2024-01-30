@@ -124,7 +124,8 @@ export class ImportProcessor extends WorkerHost {
               const convertResult = this.customersService.convertForImport(
                 data[el],
                 clearedMapping[el].asAttribute.type,
-                el
+                el,
+                clearedMapping[el].asAttribute.dateFormat
               );
               if (convertResult.error) {
                 isSkipped = true;
