@@ -20,6 +20,7 @@ const SegmentViewer = () => {
   const [description, setDescription] = useState("");
   const [segmentType, setSegmentType] = useState(SegmentType.MANUAL);
   const [query, setQuery] = useState<Query>();
+  const [customersCount, setCustomersCount] = useState(0);
   const [isLoadingSegment, setIsLoadingSegment] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -38,6 +39,11 @@ const SegmentViewer = () => {
       setName(data.name);
       setDescription(data.description);
       setQuery(data.inclusionCriteria?.query);
+
+      const { data: dataCustomersCount } = await ApiService.get<number>({
+        url: `/segments/${id}/customers/count`,
+      });
+      setCustomersCount(dataCustomersCount);
     } catch (error) {
       if (error instanceof AxiosError) {
         toast.error(
@@ -150,7 +156,7 @@ const SegmentViewer = () => {
             }`}
           >
             <div className="text-[16px] leading-[24px] font-semibold">
-              Eligible users
+              Eligible users: {customersCount} Users
             </div>
             {segmentType === SegmentType.MANUAL ? (
               <ManualSegmentTable

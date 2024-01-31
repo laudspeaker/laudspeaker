@@ -129,6 +129,11 @@ export class TestsService {
   async resetTestData(session: string) {
     if (process.env.NODE_ENV !== 'development')
       throw new HttpException('Not found', HttpStatus.NOT_FOUND);
+    if (!process.env.TEST_USER_EMAIL)
+      throw new HttpException(
+        'Test user email not specified',
+        HttpStatus.NOT_FOUND
+      );
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();

@@ -318,6 +318,7 @@ export class EventsService {
     }).exec();
 
     return attributes.map((el) => ({
+      id: el.id,
       key: el.key,
       type: el.type,
       isArray: el.isArray,

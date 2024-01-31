@@ -33,6 +33,7 @@ import { ImportCustomersDTO } from './dto/import-customers.dto';
 import { extname } from 'path';
 import { UpdatePK_DTO } from './dto/update-pk.dto';
 import { UpsertCustomerDto } from './dto/upsert-customer.dto';
+import { ModifyAttributesDto } from './dto/modify-attributes.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -336,6 +337,19 @@ export class CustomersController {
       type,
       dateFormat,
       session
+    );
+  }
+
+  @Post('/attributes/modify')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async modifyAttributes(
+    @Req() { user }: Request,
+    @Body() modifyAttributes: ModifyAttributesDto
+  ) {
+    return this.customersService.modifyAttributes(
+      <Account>user,
+      modifyAttributes
     );
   }
 

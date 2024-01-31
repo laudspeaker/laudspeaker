@@ -54,7 +54,7 @@ import SegmentCreation from "pages/SegmentCreation/index";
 import PushBuilder from "pages/PushBuilder/PushBuilder";
 import PushSettings from "pages/PushSettings";
 import PeopleImport from "pages/PeopleImport/PeopleImport";
-import PeopleSetting from "pages/PeopleSetting/PeopleSetting";
+import PeopleSettings from "pages/PeopleSettings/PeopleSettings";
 import config, { ONBOARDING_API_KEY_KEY, WS_BASE_URL_KEY } from "config";
 import CompanySetup from "pages/CompanySetup/CompanySetup";
 import EEWrapper from "EE/EEWraper";
@@ -440,7 +440,7 @@ const RouteComponent: React.FC = () => {
                     { text: "Setting" },
                   ]}
                 >
-                  <PeopleSetting />
+                  <PeopleSettings />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
