@@ -32,7 +32,6 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createClient, Row } from '@clickhouse/client';
-import { Workflow } from '../workflows/entities/workflow.entity';
 import { attributeConditions } from '../../fixtures/attributeConditions';
 import { getType } from 'tst-reflect';
 import { isDateString, isEmail } from 'class-validator';
@@ -47,10 +46,8 @@ import { EventsService } from '../events/events.service';
 import * as _ from 'lodash';
 import { randomUUID } from 'crypto';
 import { StepsService } from '../steps/steps.service';
-import { JourneysService } from '../journeys/journeys.service';
 import { S3Service } from '../s3/s3.service';
 import { Imports } from './entities/imports.entity';
-import { thrift } from '@databricks/sql';
 import { ImportCustomersDTO, MappingParam } from './dto/import-customers.dto';
 import * as fastcsv from 'fast-csv';
 import * as fs from 'fs';
@@ -66,6 +63,11 @@ import {
   validateKeyForMutations,
 } from '@/utils/customer-key-name-validator';
 import { UpsertCustomerDto } from './dto/upsert-customer.dto';
+import {
+  DeleteAttributeDto,
+  ModifyAttributesDto,
+  UpdateAttributeDto,
+} from './dto/modify-attributes.dto';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -110,7 +112,7 @@ export interface QueryObject {
 
 export interface QueryOptions {
   // ... other properties ...
-  customerKeys?: { key: string, type: AttributeType }[];
+  customerKeys?: { key: string; type: AttributeType }[];
 }
 
 const acceptableBooleanConvertable = {
@@ -1962,6 +1964,7 @@ export class CustomersService {
     return (
       attributes
         .map((el) => ({
+          id: el.id,
           key: el.key,
           type: el.type,
           dateFormat: el.dateFormat,
@@ -2902,8 +2905,12 @@ export class CustomersService {
    * get all the keys for specific workspace
    */
 
-  async getKeysAndTypes(workspaceId: string): Promise<{ key: string, type: AttributeType }[]> {
-    const customerKeys = await this.CustomerKeysModel.find({ workspaceId }).exec();
+  async getKeysAndTypes(
+    workspaceId: string
+  ): Promise<{ key: string; type: AttributeType }[]> {
+    const customerKeys = await this.CustomerKeysModel.find({
+      workspaceId,
+    }).exec();
     return customerKeys.map(({ key, type }) => ({ key, type }));
   }
 
@@ -3253,8 +3260,12 @@ export class CustomersService {
     //return false;
   }
 
-  correctValueType(valueType: string, value: any, account: Account,
-    session: string) {
+  correctValueType(
+    valueType: string,
+    value: any,
+    account: Account,
+    session: string
+  ) {
     switch (valueType) {
       case 'Number':
         // Convert to a number
@@ -3355,7 +3366,7 @@ export class CustomersService {
     );
 
     this.debug(
-      `value type is: ${(typeof value)}`,
+      `value type is: ${typeof value}`,
       this.customersFromAttributeStatement.name,
       session,
       account.id
@@ -3368,7 +3379,9 @@ export class CustomersService {
         break;
       case 'is not equal to':
         //checked
-        query[key] = { $ne: this.correctValueType(valueType, value, account, session) };
+        query[key] = {
+          $ne: this.correctValueType(valueType, value, account, session),
+        };
         break;
       case 'contains':
         // doesnt seem to be working
@@ -3387,10 +3400,14 @@ export class CustomersService {
         query[key] = { $exists: false };
         break;
       case 'is greater than':
-        query[key] = { $gt: this.correctValueType(valueType, value, account, session) };
+        query[key] = {
+          $gt: this.correctValueType(valueType, value, account, session),
+        };
         break;
       case 'is less than':
-        query[key] = { $lt: this.correctValueType(valueType, value, account, session) };
+        query[key] = {
+          $lt: this.correctValueType(valueType, value, account, session),
+        };
         break;
       // nested object
       case 'key':
@@ -3961,9 +3978,6 @@ export class CustomersService {
     //return false;
   }
 
-
-  
-
   /*
    * Checks if a given customer should be in a segment
    * returns a boolean
@@ -4243,7 +4257,12 @@ export class CustomersService {
 
     switch (type) {
       case 'Attribute':
-        return this.evaluateAttributeStatement(customer, statement, account, session);
+        return this.evaluateAttributeStatement(
+          customer,
+          statement,
+          account,
+          session
+        );
       case 'Event':
         return await this.evaluateEventStatement(
           customer,
@@ -4701,7 +4720,7 @@ export class CustomersService {
     );
 
     this.debug(
-      `value type is: ${(typeof value)}`,
+      `value type is: ${typeof value}`,
       this.evaluateAttributeStatement.name,
       session
     );
@@ -4735,7 +4754,7 @@ export class CustomersService {
     );
 
     this.debug(
-      `the customerValue type is: ${(typeof customerValue)}`,
+      `the customerValue type is: ${typeof customerValue}`,
       this.evaluateAttributeStatement.name,
       session
     );
@@ -4751,9 +4770,15 @@ export class CustomersService {
     switch (comparisonType) {
       case 'is equal to':
         //not checked
-        return customerValue === this.correctValueType(valueType, value, account, session);//value;
+        return (
+          customerValue ===
+          this.correctValueType(valueType, value, account, session)
+        ); //value;
       case 'is not equal to':
-        return customerValue !== this.correctValueType(valueType, value, account, session);//value;
+        return (
+          customerValue !==
+          this.correctValueType(valueType, value, account, session)
+        ); //value;
       case 'contains':
         if (typeof customerValue === 'string' && typeof value === 'string') {
           return customerValue.includes(value);
@@ -4771,13 +4796,19 @@ export class CustomersService {
       case 'is greater than':
         //to do check - value methinks is now always a string
         if (typeof customerValue === 'number' && typeof value === 'number') {
-          return customerValue > this.correctValueType(valueType, value, account, session);//value;;
+          return (
+            customerValue >
+            this.correctValueType(valueType, value, account, session)
+          ); //value;;
         }
         return false;
       case 'is less than':
         //to do check when
         if (typeof customerValue === 'number' && typeof value === 'number') {
-          return customerValue < this.correctValueType(valueType, value, account, session);//value;;
+          return (
+            customerValue <
+            this.correctValueType(valueType, value, account, session)
+          ); //value;;
         }
         return false;
       //not checked
@@ -4983,7 +5014,7 @@ export class CustomersService {
     key: string,
     type: AttributeType,
     dateFormat: unknown,
-    session: string
+    session?: string
   ) {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -5021,6 +5052,101 @@ export class CustomersService {
     } catch (error) {
       this.error(error, this.createAttribute.name, session);
       throw error;
+    }
+  }
+
+  async updateAttribute(
+    account: Account,
+    updateAttributeDto: UpdateAttributeDto
+  ) {
+    validateKeyForMutations(updateAttributeDto.key);
+
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    const attributeInDb = await this.CustomerKeysModel.findOne({
+      _id: updateAttributeDto.id,
+      workspaceId: workspace.id,
+    }).exec();
+
+    if (!attributeInDb) {
+      throw new HttpException('Attribute not found', 404);
+    }
+
+    const { key } = updateAttributeDto;
+
+    await this.CustomerModel.updateMany(
+      {
+        workspaceId: workspace.id,
+      },
+      {
+        $rename: {
+          [attributeInDb.key]: key.trim(),
+        },
+      }
+    );
+
+    await attributeInDb.updateOne({
+      $set: {
+        key,
+      },
+    });
+  }
+
+  async deleteAttribute(account: Account, id: string) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    const attributeInDb = await this.CustomerKeysModel.findOne({
+      _id: id,
+      workspaceId: workspace.id,
+    }).exec();
+
+    if (!attributeInDb) {
+      throw new HttpException('Attribute not found', 404);
+    }
+
+    await this.CustomerModel.updateMany(
+      {
+        workspaceId: workspace.id,
+      },
+      {
+        $unset: {
+          [attributeInDb.key]: '',
+        },
+      }
+    );
+    await attributeInDb.deleteOne();
+  }
+
+  async modifyAttributes(
+    account: Account,
+    modifyAttributes: ModifyAttributesDto
+  ) {
+    const { created, updated, deleted } = modifyAttributes;
+
+    for (const createdAttribute of created) {
+      try {
+        const { key, type, isArray, dateFormat } = createdAttribute; // TODO: arrays handling
+
+        await this.createAttribute(account, key, type, dateFormat);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    for (const updateAttributeDto of updated) {
+      try {
+        await this.updateAttribute(account, updateAttributeDto);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    for (const deleteAttirubuteDto of deleted) {
+      try {
+        await this.deleteAttribute(account, deleteAttirubuteDto.id);
+      } catch (e) {
+        console.error(e);
+      }
     }
   }
 

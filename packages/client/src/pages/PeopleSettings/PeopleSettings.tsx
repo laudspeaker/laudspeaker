@@ -14,13 +14,22 @@ import { StatementValueType } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import { useAppSelector } from "store/hooks";
 import Account, { UserPK } from "types/Account";
+import { v4 as uuid, validate as validateUUID } from "uuid";
 
 export interface Attribute {
-  // id: string;
+  id: string;
   key: string;
   type: AttributeType;
   dateFormat?: string;
   isArray: false;
+  isPrimary?: boolean;
+  isPosthog?: boolean;
+}
+
+interface AttributeChanges {
+  created: Attribute[];
+  updated: Attribute[];
+  deleted: Attribute[];
 }
 
 const PeopleSettings = () => {
@@ -34,25 +43,13 @@ const PeopleSettings = () => {
   const [createdAttributes, setCreatedAttributes] = useState<Attribute[]>([]);
   const [updatedAttributes, setUpdatedAttributes] = useState<Attribute[]>([]);
   const [deletedAttributes, setDeletedAttributes] = useState<Attribute[]>([]);
-
-  (() => {
-    const changes = {
-      created: createdAttributes.filter(
-        (createdAttr) =>
-          !initialAttributes
-            .map((attr) => `${attr.key}:${attr.type}`)
-            .includes(`${createdAttr.key}:${createdAttr.type}`)
-      ),
-      updated: updatedAttributes,
-      deleted: deletedAttributes.filter(
-        (deletedAttr) =>
-          !createdAttributes
-            .map((createdAttr) => `${createdAttr.key}:${createdAttr.type}`)
-            .includes(`${deletedAttr.key}:${deletedAttr.type}`)
-      ),
-    };
-    console.log(changes);
-  })();
+  const [attributeChanges, setAttributeChanges] = useState<AttributeChanges>({
+    created: [],
+    deleted: [],
+    updated: [],
+  });
+  const [isDuplicationDetected, setIsDuplicationDetected] = useState(false);
+  const [isAttributeKeysDefined, setIsAttributeKeysDefined] = useState(false);
 
   const [search, setSearch] = useState("");
   const dispatch = useDispatch();
@@ -95,42 +92,113 @@ const PeopleSettings = () => {
   };
 
   const handleSave = async () => {
-    if (!newPK || isSaving) {
+    console.log(attributeChanges);
+
+    if (
+      (!newPK &&
+        [
+          ...attributeChanges.created,
+          ...attributeChanges.updated,
+          ...attributeChanges.deleted,
+        ].length === 0) ||
+      isSaving ||
+      isDuplicationDetected ||
+      !isAttributeKeysDefined
+    ) {
       return;
     }
     setIsSaving(true);
-    try {
-      await ApiService.put({
-        url: "/customers/primary-key",
-        options: {
-          ...newPK,
-        },
-      });
-      const { data } = await ApiService.get<Account>({ url: "/accounts" });
 
-      dispatch({
-        type: ActionType.LOGIN_USER_SUCCESS,
-        payload: {
-          ...userData,
-          pk: data.workspace.pk,
-        },
-      });
-
-      toast.success("Primary Key Updated!");
-      navigate("/people");
-    } catch (error) {
-      if (error instanceof AxiosError)
-        toast.error(
-          error.response?.data?.message || "Unexpected error during PK update."
-        );
+    if (
+      [
+        ...attributeChanges.created,
+        ...attributeChanges.updated,
+        ...attributeChanges.deleted,
+      ].length > 0
+    ) {
+      try {
+        await ApiService.post({
+          url: "/customers/attributes/modify",
+          options: attributeChanges,
+        });
+        toast.success("Attributes successfully modified!");
+      } catch (e) {
+        if (e instanceof AxiosError)
+          toast.error(
+            e.response?.data?.message ||
+              "Unexpected error during attribute modification."
+          );
+      }
     }
+
+    if (newPK) {
+      try {
+        await ApiService.put({
+          url: "/customers/primary-key",
+          options: {
+            ...newPK,
+          },
+        });
+        const { data } = await ApiService.get<Account>({ url: "/accounts" });
+
+        dispatch({
+          type: ActionType.LOGIN_USER_SUCCESS,
+          payload: {
+            ...userData,
+            pk: data.workspace.pk,
+          },
+        });
+
+        toast.success("Primary Key Updated!");
+      } catch (error) {
+        if (error instanceof AxiosError)
+          toast.error(
+            error.response?.data?.message ||
+              "Unexpected error during PK update."
+          );
+      }
+    }
+
     setIsSaving(false);
+    navigate("/people");
   };
 
   useEffect(() => {
     loadPK();
     loadPossibleKeys();
   }, []);
+
+  useEffect(() => {
+    const changes: AttributeChanges = {
+      created: createdAttributes.filter(
+        (createdAttr) =>
+          !initialAttributes
+            .map((attr) => `${attr.key}:${attr.type}`)
+            .includes(`${createdAttr.key}:${createdAttr.type}`)
+      ),
+      updated: updatedAttributes,
+      deleted: deletedAttributes.filter(
+        (deletedAttr) =>
+          !createdAttributes
+            .map((createdAttr) => `${createdAttr.key}:${createdAttr.type}`)
+            .includes(`${deletedAttr.key}:${deletedAttr.type}`)
+      ),
+    };
+    console.log(changes);
+    setAttributeChanges(changes);
+  }, [createdAttributes, updatedAttributes, deletedAttributes]);
+
+  useEffect(() => {
+    setIsDuplicationDetected(
+      possibleAttributes.some(
+        (attr1) =>
+          possibleAttributes.filter(
+            (attr2) => attr1.key === attr2.key && attr1.type === attr2.type
+          ).length > 1
+      )
+    );
+    setIsAttributeKeysDefined(possibleAttributes.every((attr) => !!attr.key));
+  }, [possibleAttributes]);
 
   const handleTrackAttributeCreate = (attribute: Attribute) => {
     const newCreatedAttributes = [...createdAttributes];
@@ -172,6 +240,10 @@ const PeopleSettings = () => {
 
     const indexOfCreated = newCreatedAttributes.indexOf(attribute);
     if (indexOfCreated >= 0) {
+      setCreatedAttributes(newCreatedAttributes);
+      setUpdatedAttributes(newUpdatedAttributes);
+      setDeletedAttributes(newDeletedAttributes);
+
       return;
     }
 
@@ -212,7 +284,7 @@ const PeopleSettings = () => {
       newDeletedAttributes.splice(indexOfDeleted, 1);
     }
 
-    newDeletedAttributes.push(attribute);
+    if (!validateUUID(attribute.id)) newDeletedAttributes.push(attribute);
 
     setCreatedAttributes(newCreatedAttributes);
     setUpdatedAttributes(newUpdatedAttributes);
@@ -290,6 +362,7 @@ const PeopleSettings = () => {
                       options={Object.values(StatementValueType).map(
                         (type) => ({ key: type, title: type })
                       )}
+                      disabled={!validateUUID(attr.id)}
                     />
                     {(attr.type === StatementValueType.DATE ||
                       attr.type === StatementValueType.DATE_TIME) && (
@@ -301,9 +374,25 @@ const PeopleSettings = () => {
                           handleTrackAttributeUpdate(possibleAttributes[i]);
                           setPossibleAttributes([...possibleAttributes]);
                         }}
+                        disabled={!validateUUID(attr.id)}
                       />
                     )}
                   </div>
+                  {possibleAttributes.filter(
+                    (attr2) =>
+                      attr2.key === attr.key && attr2.type === attr.type
+                  ).length > 1 && (
+                    <div className="text-red-500">
+                      Attribute duplication is not allowed!
+                    </div>
+                  )}
+
+                  {!attr.key && (
+                    <div className="text-red-500">
+                      Attribute key must be defined!
+                    </div>
+                  )}
+
                   <div
                     className="cursor-pointer"
                     onClick={() => {
@@ -321,6 +410,7 @@ const PeopleSettings = () => {
                 type={ButtonType.SECONDARY}
                 onClick={() => {
                   const newAttribute: Attribute = {
+                    id: uuid(),
                     key: "",
                     type: StatementValueType.STRING,
                     isArray: false,
@@ -337,7 +427,17 @@ const PeopleSettings = () => {
             <div className="flex gap-[10px] px-5">
               <Button
                 type={ButtonType.PRIMARY}
-                disabled={!newPK || isSaving}
+                disabled={
+                  (!newPK &&
+                    [
+                      ...attributeChanges.created,
+                      ...attributeChanges.updated,
+                      ...attributeChanges.deleted,
+                    ].length === 0) ||
+                  isSaving ||
+                  isDuplicationDetected ||
+                  !isAttributeKeysDefined
+                }
                 onClick={handleSave}
               >
                 Save

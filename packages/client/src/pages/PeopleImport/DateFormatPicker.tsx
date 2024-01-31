@@ -97,12 +97,14 @@ interface DateFormatPickerProps {
   value: string;
   type: StatementValueType.DATE | StatementValueType.DATE_TIME;
   onChange: (value: string) => void;
+  disabled?: boolean;
 }
 
 const DateFormatPicker: FC<DateFormatPickerProps> = ({
   value,
   type,
   onChange,
+  disabled,
 }) => {
   return (
     <Select
@@ -118,6 +120,7 @@ const DateFormatPicker: FC<DateFormatPickerProps> = ({
         title: `${el.title} (${el.example})`,
       }))}
       onChange={onChange}
+      disabled={disabled}
     />
   );
 };

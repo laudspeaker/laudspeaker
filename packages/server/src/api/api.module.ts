@@ -64,7 +64,7 @@ import { DevModeModule } from './dev-mode/dev-mode.module';
 })
 export class ApiModule {
   constructor(private readonly testsService: TestsService) {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development' && process.env.TEST_USER_EMAIL) {
       this.testsService.resetTestData(randomUUID());
     }
   }
