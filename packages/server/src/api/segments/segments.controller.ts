@@ -148,12 +148,8 @@ export class SegmentsController {
     );
     */
 
-    this.debug(
-      `post saving segment`,
-      this.create.name,
-      session,
-    );
-   
+    this.debug(`post saving segment`, this.create.name, session);
+
     return await this.segmentsService.create(
       <Account>user,
       createSegmentDTO,
@@ -173,13 +169,9 @@ export class SegmentsController {
     //console.log("the segmentDTO is", JSON.stringify(createSegmentDTO, null, 2) );
 
     this.debug(
-      ` post size ${JSON.stringify(
-        countSegmentUsersSizeDTO,
-        null,
-        2
-      )}`,
+      ` post size ${JSON.stringify(countSegmentUsersSizeDTO, null, 2)}`,
       this.create.name,
-      session,
+      session
     );
 
     return await this.segmentsService.size(
@@ -245,6 +237,18 @@ export class SegmentsController {
       orderType,
       session
     );
+  }
+
+  @Get('/:id/customers/count')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  public async countSegmentCustomers(
+    @Req() { user }: Request,
+    @Param('id') id: string
+  ) {
+    const session = randomUUID();
+
+    return this.segmentsService.countSegmentCustomers(<Account>user, id);
   }
 
   @Post('/:id/customers')
@@ -322,7 +326,6 @@ export class SegmentsController {
     @Param('customerId') customerId: string
   ) {
     const session = randomUUID();
-
 
     return this.segmentsService.deleteCustomer(
       <Account>user,

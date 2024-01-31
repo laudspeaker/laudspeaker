@@ -36,6 +36,7 @@ import { UpsertCustomerDto } from './dto/upsert-customer.dto';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { DeleteCustomerDto } from './dto/delete-customer.dto';
 import { ReadCustomerDto } from './dto/read-customer.dto';
+import { ModifyAttributesDto } from './dto/modify-attributes.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -369,6 +370,19 @@ export class CustomersController {
       type,
       dateFormat,
       session
+    );
+  }
+
+  @Post('/attributes/modify')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async modifyAttributes(
+    @Req() { user }: Request,
+    @Body() modifyAttributes: ModifyAttributesDto
+  ) {
+    return this.customersService.modifyAttributes(
+      <Account>user,
+      modifyAttributes
     );
   }
 

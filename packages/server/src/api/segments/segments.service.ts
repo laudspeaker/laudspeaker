@@ -349,6 +349,25 @@ export class SegmentsService {
     return collectionName;
   }
 
+  async countSegmentCustomers(account: Account, id: string) {
+    account = await this.customersService.accountsRepository.findOne({
+      where: {
+        id: account.id,
+      },
+      relations: ['teams.organization.workspaces'],
+    });
+
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    const segment = await this.segmentRepository.findOneBy({
+      id,
+      workspace: { id: workspace.id },
+    });
+    if (!segment) throw new NotFoundException('Segment not found');
+
+    return this.segmentCustomersRepository.countBy({ segment: segment.id });
+  }
+
   generateRandomString(length = 4): string {
     const characters =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -906,15 +925,13 @@ export class SegmentsService {
     };
   }
 
-  
-
   /**
    * Goes through all account segments and updates membership of the DYNAMIC segments
    * based on the customer's attributes.
    * @returns object with two arrays of segments indicating where the customer was added/removed
-   * 
+   *
    * skips manual segments
-   * 
+   *
    */
   public async updateCustomerSegments(
     account: Account,
@@ -926,19 +943,20 @@ export class SegmentsService {
     const removedFromSegments: Segment[] = [];
     const segments = await this.getSegments(account, undefined, queryRunner);
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-    
+
     //if we need to optimize later make call once here
     //const allCustomerKeys = await this.customersService.getKeysAndTypes(workspace.id)
-    
-    
+
     for (const segment of segments) {
-      
-      try{
+      try {
         // We skip manual segments and empty inclusion criteria
-        if(segment.type && segment.type === "manual"){
+        if (segment.type && segment.type === 'manual') {
           continue;
         }
-        if(segment.inclusionCriteria && Object.keys(segment.inclusionCriteria).length === 0){
+        if (
+          segment.inclusionCriteria &&
+          Object.keys(segment.inclusionCriteria).length === 0
+        ) {
           //to do check
           this.debug(
             `inclusion empty`,
@@ -954,7 +972,7 @@ export class SegmentsService {
           account,
           session,
           undefined,
-          customerId,
+          customerId
         );
         this.debug(
           `we updated doInclude: ${doInclude}`,
@@ -991,7 +1009,7 @@ export class SegmentsService {
           );
           removedFromSegments.push(segment);
         }
-      } catch(e){
+      } catch (e) {
         //to do should do something else with the error as well
         this.debug(
           `segment issue is on: ${JSON.stringify(segment, null, 2)}`,

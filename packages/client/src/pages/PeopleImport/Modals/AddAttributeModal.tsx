@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { StatementValueType } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import { AttributeType } from "../PeopleImport";
+import DateFormatPicker from "../DateFormatPicker";
 
 interface FormatData {
   key: string;
@@ -204,40 +205,21 @@ const AddAttributeModal = ({
                 onChange={setType}
               />
             </div>
-            {type === StatementValueType.DATE && (
-              <div className="flex justify-between items-center mt-3">
-                <span className="text-sm text-[#111827] font-inter">
-                  Date format
-                </span>
-                <Select
-                  value={dateFormat}
-                  placeholder="Select date format"
-                  className="max-w-[300px] w-full"
-                  options={Object.values(dateFormats).map((el) => ({
-                    key: el.key,
-                    title: `${el.title}(${el.example})`,
-                  }))}
-                  onChange={setDateFormat}
-                />
-              </div>
-            )}
-            {type === StatementValueType.DATE_TIME && (
-              <div className="flex justify-between items-center mt-3">
-                <span className="text-sm text-[#111827] font-inter">
-                  Date-time format
-                </span>
-                <Select
-                  value={dateFormat}
-                  placeholder="Select date format"
-                  className="max-w-[300px] w-full"
-                  options={Object.values(dateTimeFormats).map((el) => ({
-                    key: el.key,
-                    title: `${el.title} (${el.example})`,
-                  }))}
-                  onChange={setDateFormat}
-                />
-              </div>
-            )}
+            {type &&
+              (type === StatementValueType.DATE ||
+                type === StatementValueType.DATE_TIME) && (
+                <div className="flex justify-between items-center mt-3">
+                  <span className="text-sm text-[#111827] font-inter">
+                    {type === StatementValueType.DATE ? "Date" : "Date-time"}{" "}
+                    format
+                  </span>
+                  <DateFormatPicker
+                    value={dateFormat || ""}
+                    type={type}
+                    onChange={setDateFormat}
+                  />
+                </div>
+              )}
           </div>
           <div className="flex justify-end items-center mt-6 gap-2">
             <Button

@@ -5,7 +5,6 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   Body,
-  Headers,
   HttpException,
   UseGuards,
   Param,
@@ -14,13 +13,10 @@ import {
   Req,
   Logger,
 } from '@nestjs/common';
-import { StatusJobDto } from './dto/status-event.dto';
 import { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
 import { EventDto } from './dto/event.dto';
-import { WorkflowTick } from '../workflows/interfaces/workflow-tick.interface';
 import { EventsService } from './events.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { JobTypes } from './interfaces/event.interface';
 import { ApiKeyAuthGuard } from '../auth/guards/apikey-auth.guard';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Request } from 'express';
