@@ -272,6 +272,11 @@ export const valueTypeToComparisonTypesMap: Record<
   ],
 };
 
+export enum DateComparisonType {
+  ABSOLUTE = "absolute",
+  RELATIVE = "relative",
+}
+
 export interface AttributeQueryStatement {
   type: QueryStatementType.ATTRIBUTE;
   key: string;
@@ -280,6 +285,7 @@ export interface AttributeQueryStatement {
   subComparisonType: ObjectKeyComparisonType;
   subComparisonValue: string;
   value: string;
+  dateComparisonType: DateComparisonType;
 }
 
 export enum PerformedType {

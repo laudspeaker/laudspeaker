@@ -5,6 +5,7 @@ import {
   AttributeQueryStatement,
   ComparisonType,
   ConditionalSegmentsSettings,
+  DateComparisonType,
   EventQueryAdditionalProperty,
   EventQueryStatement,
   MessageEmailEventCondition,
@@ -112,6 +113,7 @@ const corelationTypeToDefaultSettings: {
     subComparisonValue: "",
     valueType: StatementValueType.STRING,
     value: "",
+    dateComparisonType: DateComparisonType.ABSOLUTE,
   },
   [QueryStatementType.SEGMENT]: {
     type: QueryStatementType.SEGMENT,
@@ -531,6 +533,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
             subComparisonValue: "",
             valueType: StatementValueType.STRING,
             value: "",
+            dateComparisonType: DateComparisonType.ABSOLUTE,
           },
         ],
       },
@@ -1054,6 +1057,41 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         )}
                       </select>
                     </div>
+
+                    {[
+                      ComparisonType.AFTER,
+                      ComparisonType.BEFORE,
+                      ComparisonType.DURING,
+                    ].includes(statement.comparisonType) && (
+                      <>
+                        <Select
+                          buttonClassName="!w-fit"
+                          className="!w-fit"
+                          value={statement.dateComparisonType}
+                          onChange={(value) =>
+                            handleChangeStatement(i, {
+                              ...statement,
+                              dateComparisonType: value,
+                              value:
+                                value === DateComparisonType.ABSOLUTE
+                                  ? ""
+                                  : "1 days ago",
+                            })
+                          }
+                          options={[
+                            {
+                              key: DateComparisonType.ABSOLUTE,
+                              title: "absolute date",
+                            },
+                            {
+                              key: DateComparisonType.RELATIVE,
+                              title: "relative date",
+                            },
+                          ]}
+                        />
+                      </>
+                    )}
+
                     <div>
                       {statement.valueType === StatementValueType.ARRAY &&
                       [
@@ -1079,6 +1117,10 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           <FilterBuilderDynamicInput
                             type={statement.valueType}
                             value={statement.value}
+                            isRelativeDate={
+                              statement.dateComparisonType ===
+                              DateComparisonType.RELATIVE
+                            }
                             onChange={(value) =>
                               handleChangeStatement(i, {
                                 ...statement,
@@ -1089,13 +1131,19 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         )
                       )}
                     </div>
-                    {statement.valueType === StatementValueType.DATE &&
+
+                    {(statement.valueType === StatementValueType.DATE ||
+                      statement.valueType === StatementValueType.DATE_TIME) &&
                       statement.comparisonType === ComparisonType.DURING && (
                         <>
                           -
                           <div>
                             <FilterBuilderDynamicInput
                               type={StatementValueType.DATE}
+                              isRelativeDate={
+                                statement.dateComparisonType ===
+                                DateComparisonType.RELATIVE
+                              }
                               value={statement.subComparisonValue || ""}
                               onChange={(value) => {
                                 handleChangeStatement(i, {

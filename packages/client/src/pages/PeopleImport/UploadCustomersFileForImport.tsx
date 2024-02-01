@@ -126,7 +126,7 @@ const UploadCustomersFileForImport = ({
           encoding: "UTF-8",
           header: true,
           delimiter: ",",
-          worker: true,
+          // worker: true,
           complete(results) {
             handleUploadFile(results, file);
           },

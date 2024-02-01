@@ -6,22 +6,23 @@ import ApiService from "services/api.service";
 import { ApiConfig } from "../../../constants";
 
 export interface INameSegmentForm {
-  name: string;
+  pkValue: string;
   isPrimary: boolean;
 }
 
 interface INameSegment {
   isPrimary: boolean;
+  pkKey: string;
 }
 
-const NamePerson = ({ isPrimary }: INameSegment) => {
+const NamePerson = ({ isPrimary, pkKey }: INameSegment) => {
   // A Segment initally has three Properties:
   //      1. Dynamic: whether new customers are added
   //         after a workflow is live
   //      2. Name, the name of the segment
   //      3. Description, the segment description
   const [segmentForm, setSegmentForm] = useState<INameSegmentForm>({
-    name: "",
+    pkValue: "",
     isPrimary: isPrimary,
   });
 
@@ -29,8 +30,8 @@ const NamePerson = ({ isPrimary }: INameSegment) => {
 
   // Handling Name and Description Fields
   const handleSegmentFormChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.name === "name") {
-      setSegmentForm({ ...segmentForm, name: e.target.value });
+    if (e.target.name === "pkValue") {
+      setSegmentForm({ ...segmentForm, pkValue: e.target.value });
     }
   };
 
@@ -38,7 +39,7 @@ const NamePerson = ({ isPrimary }: INameSegment) => {
     const { data } = await ApiService.post({
       url: `${ApiConfig.customerCreate}`,
       options: {
-        name: segmentForm.name,
+        [pkKey]: segmentForm.pkValue,
       },
     });
     if (data) navigate(`/person/${data}`);
@@ -48,15 +49,15 @@ const NamePerson = ({ isPrimary }: INameSegment) => {
     <div>
       <div className="flex items-start justify-center pt-[18px]">
         <div className="bg-white rounded-3xl w-full max-w-[1138px]">
-          <h3>Name your Person</h3>
+          <h3>Enter customer's primary value ({pkKey})</h3>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
               <Input
                 isRequired
-                value={segmentForm.name}
-                placeholder={"Enter name"}
-                name="name"
-                id="name"
+                value={segmentForm.pkValue}
+                placeholder={`Enter primary key value (${pkKey})`}
+                name="pkValue"
+                id="pkValue"
                 style={{
                   width: "100%",
                   padding: "15px 16px",
@@ -76,7 +77,7 @@ const NamePerson = ({ isPrimary }: INameSegment) => {
               style={{
                 maxWidth: "200px",
               }}
-              disabled={!segmentForm?.name?.trim()}
+              disabled={!segmentForm?.pkValue?.trim()}
               id="create-person-modal-button"
             >
               Create Person
