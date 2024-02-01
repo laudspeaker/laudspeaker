@@ -135,23 +135,24 @@ export class TestsService {
     await queryRunner.startTransaction();
 
     try {
-      const testAccount = await queryRunner.manager.findOne(Account, {
-        where: { email: process.env.TEST_USER_EMAIL },
-      });
-      if (testAccount) {
-        const removeResult = await queryRunner.manager.remove(
-          Account,
-          testAccount
-        );
-
-        this.debug(
-          JSON.stringify({
-            message: `Removed test user from db`,
-            removeResult,
-          }),
-          this.resetTestData.name,
-          session
-        );
+      if (process.env.TEST_USER_EMAIL) {
+        const testAccount = await queryRunner.manager.findOne(Account, {
+          where: { email: process.env.TEST_USER_EMAIL },
+        });
+        if (testAccount) {
+          const removeResult = await queryRunner.manager.remove(
+            Account,
+            testAccount
+          );
+          this.debug(
+            JSON.stringify({
+              message: `Removed test user from db`,
+              removeResult,
+            }),
+            this.resetTestData.name,
+            session
+          );
+        }
       }
 
       // TODO:  Require full rework to new structure
