@@ -1,3 +1,4 @@
+import Input from "components/Elements/Inputv2";
 import Select from "components/Elements/Selectv2";
 import React, { FC, ReactNode, useEffect, useState } from "react";
 import { StatementValueType } from "reducers/flow-builder.reducer";
@@ -6,10 +7,6 @@ interface ValueChanger {
   value: string;
   placeholder?: string;
   onChange: (value: string) => void;
-}
-
-interface FlowBuilderDynamicInputProps extends ValueChanger {
-  type: StatementValueType;
 }
 
 const BooleanComponent: FC<ValueChanger> = ({ value, onChange }) => {
@@ -26,25 +23,104 @@ const BooleanComponent: FC<ValueChanger> = ({ value, onChange }) => {
   );
 };
 
-export const DateComponent: FC<ValueChanger> = ({ value, onChange }) => {
-  let relativeValue = "";
+export enum DateRelativeUnit {
+  DAYS = "days",
+  WEEKS = "weeks",
+}
 
-  try {
-    relativeValue = new Date(
-      new Date(value).getTime() - new Date().getTimezoneOffset() * 60 * 1000
+export enum DateRelativePoint {
+  FROM_NOW = "from-now",
+  AGO = "ago",
+}
+
+export const DateComponent: FC<ValueChanger & { isRelativeDate?: boolean }> = ({
+  value,
+  onChange,
+  isRelativeDate,
+}) => {
+  const [relativeCount, setRelativeCount] = useState(0);
+  const [relativeUnit, setRelativeUnit] = useState<DateRelativeUnit>(
+    DateRelativeUnit.DAYS
+  );
+  const [relativePoint, setRelativePoint] = useState<DateRelativePoint>(
+    DateRelativePoint.FROM_NOW
+  );
+
+  useEffect(() => {
+    if (!isRelativeDate) return;
+
+    const [newRelativeCount, newRelativeUnit, newRelativePoint] =
+      value.split(" ");
+
+    if (!isNaN(+newRelativeCount)) setRelativeCount(+newRelativeCount);
+    if (
+      newRelativeUnit === DateRelativeUnit.DAYS ||
+      newRelativeUnit === DateRelativeUnit.WEEKS
     )
-      .toISOString()
-      .slice(0, 16);
-  } catch (e) {}
+      setRelativeUnit(newRelativeUnit);
+
+    if (
+      newRelativePoint === DateRelativePoint.AGO ||
+      newRelativePoint === DateRelativePoint.FROM_NOW
+    )
+      setRelativePoint(newRelativePoint);
+  }, [value]);
+
+  useEffect(() => {
+    onChange(`${relativeCount} ${relativeUnit} ${relativePoint}`);
+  }, [relativeCount, relativeUnit, relativePoint]);
+
+  if (!isRelativeDate) {
+    let relativeValue = "";
+
+    try {
+      relativeValue = new Date(
+        new Date(value).getTime() - new Date().getTimezoneOffset() * 60 * 1000
+      )
+        .toISOString()
+        .slice(0, 16);
+    } catch (e) {}
+
+    return (
+      <input
+        value={relativeValue}
+        onChange={(e) => onChange(new Date(e.target.value).toUTCString())}
+        type="datetime-local"
+        className="w-[200px] h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
+        placeholder="Select time"
+      />
+    );
+  }
 
   return (
-    <input
-      value={relativeValue}
-      onChange={(e) => onChange(new Date(e.target.value).toUTCString())}
-      type="datetime-local"
-      className="w-[200px] h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
-      placeholder="Select time"
-    />
+    <div className="flex gap-2.5">
+      <Input
+        value={String(relativeCount)}
+        onChange={(numString) => {
+          const num = +numString;
+          if (isNaN(num) || num < 0) return;
+
+          setRelativeCount(num);
+        }}
+        type="number"
+      />
+      <Select
+        value={relativeUnit}
+        onChange={(relativeUn) => setRelativeUnit(relativeUn)}
+        options={Object.values(DateRelativeUnit).map((relativeUn) => ({
+          key: relativeUn,
+          title: relativeUn,
+        }))}
+      />
+      <Select
+        value={relativePoint}
+        onChange={(val) => setRelativePoint(val)}
+        options={[
+          { key: DateRelativePoint.FROM_NOW, title: "from now" },
+          { key: DateRelativePoint.AGO, title: "ago" },
+        ]}
+      />
+    </div>
   );
 };
 
@@ -88,11 +164,17 @@ const StringComponent: FC<ValueChanger> = ({
   );
 };
 
+interface FlowBuilderDynamicInputProps extends ValueChanger {
+  type: StatementValueType;
+  isRelativeDate?: boolean;
+}
+
 const FlowBuilderDynamicInput: FC<FlowBuilderDynamicInputProps> = ({
   type,
   value,
   placeholder,
   onChange,
+  isRelativeDate,
 }) => {
   const [isFirstRender, setIsFirstRender] = useState(true);
 
@@ -112,10 +194,18 @@ const FlowBuilderDynamicInput: FC<FlowBuilderDynamicInputProps> = ({
       <BooleanComponent value={value} onChange={onChange} />
     ),
     [StatementValueType.DATE]: (
-      <DateComponent value={value} onChange={onChange} />
+      <DateComponent
+        value={value}
+        onChange={onChange}
+        isRelativeDate={isRelativeDate}
+      />
     ),
     [StatementValueType.DATE_TIME]: (
-      <DateComponent value={value} onChange={onChange} />
+      <DateComponent
+        value={value}
+        onChange={onChange}
+        isRelativeDate={isRelativeDate}
+      />
     ),
     [StatementValueType.EMAIL]: (
       <EmailComponent value={value} onChange={onChange} />
