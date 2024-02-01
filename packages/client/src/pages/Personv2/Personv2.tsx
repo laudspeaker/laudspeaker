@@ -64,7 +64,6 @@ const Personv2 = () => {
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [isFirstRenderSave, setIsFirstRenderSave] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-
   const [currentTab, setCurrentTab] = useState(PersonTab.OVERVIEW);
 
   const [possibleAttributes, setPossibleAttributes] = useState<Attribute[]>([]);
