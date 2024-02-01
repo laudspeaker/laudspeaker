@@ -16,6 +16,7 @@ import {
 import {
   ComparisonType,
   ConditionalSegmentsSettings,
+  DateComparisonType,
   EntryTiming,
   EntryTimingFrequency,
   JourneyEnrollmentType,
@@ -526,6 +527,7 @@ const FlowBuilderSegmentEditor: FC<FlowBuilderSegmentEditorProps> = ({
                           subComparisonType: ObjectKeyComparisonType.KEY_EXIST,
                           subComparisonValue: "",
                           value: "",
+                          dateComparisonType: DateComparisonType.ABSOLUTE,
                         },
                       ],
                     },

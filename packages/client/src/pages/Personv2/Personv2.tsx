@@ -18,6 +18,7 @@ import { capitalize } from "lodash";
 import { ChevronDoubleDownIcon } from "@heroicons/react/20/solid";
 import { Attribute } from "pages/PeopleSettings/PeopleSettings";
 import Select from "components/Elements/Selectv2";
+import { StatementValueType } from "reducers/flow-builder.reducer";
 
 export interface EventObject {
   event: string;
@@ -252,63 +253,72 @@ const Personv2 = () => {
                   isEditing ? "gap-y-[20px] gap-x-[60px]" : "gap-y-[10px]"
                 }`}
               >
-                {notPosthogKeys.map((key) =>
-                  isEditing ? (
-                    <div className="flex flex-col gap-[10px]" key={key}>
-                      <div className="text-[#18181B]">
-                        {key} (
-                        {
-                          possibleAttributes.find((attr) => attr.key === key)
-                            ?.type
-                        }
-                        )
+                {notPosthogKeys
+                  .map((key) => {
+                    const foundAttribute = possibleAttributes.find(
+                      (attr) => attr.key === key
+                    );
+
+                    return {
+                      key,
+                      type: foundAttribute?.type,
+                      dateFormat: [
+                        StatementValueType.DATE,
+                        StatementValueType.DATE_TIME,
+                      ].includes(foundAttribute?.type as StatementValueType)
+                        ? foundAttribute?.dateFormat
+                        : undefined,
+                    };
+                  })
+                  .map(({ key, type, dateFormat }) =>
+                    isEditing ? (
+                      <div className="flex flex-col gap-[10px]" key={key}>
+                        <div className="text-[#18181B]">
+                          {key} ({type}){" "}
+                          {dateFormat ? <>[{dateFormat}]</> : <></>}
+                        </div>
+                        <div className="flex gap-4 items-center">
+                          <Input
+                            className="w-full"
+                            wrapperClassName="w-full"
+                            value={personInfoToShow[key]}
+                            onChange={(val) =>
+                              setEditingPersonInfo({
+                                ...editingPersonInfo,
+                                [key]: val,
+                              })
+                            }
+                            placeholder="Input value"
+                          />
+                          <button
+                            onClick={() => {
+                              const newEditingPersonInfo = {
+                                ...editingPersonInfo,
+                              };
+                              delete newEditingPersonInfo[key];
+                              setEditingPersonInfo(newEditingPersonInfo);
+                            }}
+                          >
+                            <TrashIcon />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex gap-4 items-center">
-                        <Input
-                          className="w-full"
-                          wrapperClassName="w-full"
-                          value={personInfoToShow[key]}
-                          onChange={(val) =>
-                            setEditingPersonInfo({
-                              ...editingPersonInfo,
-                              [key]: val,
-                            })
-                          }
-                          placeholder="Input value"
-                        />
-                        <button
-                          onClick={() => {
-                            const newEditingPersonInfo = {
-                              ...editingPersonInfo,
-                            };
-                            delete newEditingPersonInfo[key];
-                            setEditingPersonInfo(newEditingPersonInfo);
-                          }}
-                        >
-                          <TrashIcon />
-                        </button>
+                    ) : (
+                      <div className="" key={key}>
+                        <div className="text-[#6B7280] text-[12px] leading-[20px]">
+                          {key} ({type}){" "}
+                          {dateFormat ? <>[{dateFormat}]</> : <></>}
+                        </div>
+                        <div>
+                          {["object", "boolean"].includes(
+                            typeof personInfoToShow[key]
+                          )
+                            ? JSON.stringify(personInfoToShow[key])
+                            : personInfoToShow[key]}
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="" key={key}>
-                      <div className="text-[#6B7280] text-[12px] leading-[20px]">
-                        {key} (
-                        {
-                          possibleAttributes.find((attr) => attr.key === key)
-                            ?.type
-                        }
-                        )
-                      </div>
-                      <div>
-                        {["object", "boolean"].includes(
-                          typeof personInfoToShow[key]
-                        )
-                          ? JSON.stringify(personInfoToShow[key])
-                          : personInfoToShow[key]}
-                      </div>
-                    </div>
-                  )
-                )}
+                    )
+                  )}
               </div>
               {isEditing && (
                 <Select<Attribute | undefined>
@@ -408,54 +418,63 @@ const Personv2 = () => {
                         From Posthog
                       </div>
 
-                      {posthogKeys.map((key) =>
-                        isEditing ? (
-                          <div className="flex flex-col gap-[10px]" key={key}>
-                            <div className="text-[#18181B]">
-                              {key} (
-                              {
-                                possibleAttributes.find(
-                                  (attr) => attr.key === key
-                                )?.type
-                              }
-                              )
+                      {posthogKeys
+                        .map((key) => {
+                          const foundAttribute = possibleAttributes.find(
+                            (attr) => attr.key === key
+                          );
+
+                          return {
+                            key,
+                            type: foundAttribute?.type,
+                            dateFormat: [
+                              StatementValueType.DATE,
+                              StatementValueType.DATE_TIME,
+                            ].includes(
+                              foundAttribute?.type as StatementValueType
+                            )
+                              ? foundAttribute?.dateFormat
+                              : undefined,
+                          };
+                        })
+                        .map(({ key, type, dateFormat }) =>
+                          isEditing ? (
+                            <div className="flex flex-col gap-[10px]" key={key}>
+                              <div className="text-[#18181B]">
+                                {key} ({type}){" "}
+                                {dateFormat ? <>[{dateFormat}]</> : <></>}
+                              </div>
+                              <div className="flex gap-4 items-center">
+                                <Input
+                                  className="w-full"
+                                  wrapperClassName="w-full"
+                                  value={personInfoToShow[key]}
+                                  onChange={(val) =>
+                                    setEditingPersonInfo({
+                                      ...editingPersonInfo,
+                                      [key]: val,
+                                    })
+                                  }
+                                  placeholder="Input value"
+                                />
+                              </div>
                             </div>
-                            <div className="flex gap-4 items-center">
-                              <Input
-                                className="w-full"
-                                wrapperClassName="w-full"
-                                value={personInfoToShow[key]}
-                                onChange={(val) =>
-                                  setEditingPersonInfo({
-                                    ...editingPersonInfo,
-                                    [key]: val,
-                                  })
-                                }
-                                placeholder="Input value"
-                              />
+                          ) : (
+                            <div className="" key={key}>
+                              <div className="text-[#6B7280] text-[12px] leading-[20px]">
+                                {key} ({type}){" "}
+                                {dateFormat ? <>[{dateFormat}]</> : <></>}
+                              </div>
+                              <div>
+                                {["object", "boolean"].includes(
+                                  typeof personInfoToShow[key]
+                                )
+                                  ? JSON.stringify(personInfoToShow[key])
+                                  : personInfoToShow[key]}
+                              </div>
                             </div>
-                          </div>
-                        ) : (
-                          <div className="" key={key}>
-                            <div className="text-[#6B7280] text-[12px] leading-[20px]">
-                              {key} (
-                              {
-                                possibleAttributes.find(
-                                  (attr) => attr.key === key
-                                )?.type
-                              }
-                              )
-                            </div>
-                            <div>
-                              {["object", "boolean"].includes(
-                                typeof personInfoToShow[key]
-                              )
-                                ? JSON.stringify(personInfoToShow[key])
-                                : personInfoToShow[key]}
-                            </div>
-                          </div>
-                        )
-                      )}
+                          )
+                        )}
                     </div>
                   </div>
                 </>

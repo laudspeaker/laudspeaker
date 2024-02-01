@@ -177,6 +177,7 @@ const PeopleTablev2 = () => {
             type={ButtonType.PRIMARY}
             onClick={() => setIsNamePersonModalOpen(true)}
             id="create-customer-button"
+            disabled={!pkKeyName}
           >
             Create New Customer
           </Button>
@@ -360,6 +361,7 @@ const PeopleTablev2 = () => {
       <NamePersonModal
         isOpen={isNamePersonModalOpen}
         onClose={() => setIsNamePersonModalOpen(false)}
+        pkKey={pkKeyName || "email"}
       />
     </div>
   );
