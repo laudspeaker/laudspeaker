@@ -676,6 +676,7 @@ const handleRemoveNode = (state: FlowBuilderState, nodeId: string) => {
 
   if (
     nodeIn.type === NodeType.WAIT_UNTIL ||
+    nodeIn.type === NodeType.MULTISPLIT ||
     nodeIn.type === NodeType.USER_ATTRIBUTE ||
     nodeIn.type === NodeType.EXPERIMENT
   ) {
