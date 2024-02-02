@@ -1,7 +1,7 @@
 import Table from "components/Tablev2";
 import { format } from "date-fns";
 import { capitalize } from "lodash";
-import React, { useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import {
   EntryTiming,
   EntryTimingSettings,
@@ -13,6 +13,7 @@ import {
   SegmentsSettings,
   SegmentsSettingsType,
 } from "reducers/flow-builder.reducer";
+import ApiService from "services/api.service";
 
 enum ActivityEventType {
   JOURNEY = "journey",
@@ -257,7 +258,11 @@ const generateDetails = (change: Change) => {
   }
 };
 
-const ActivityHistoryViewer = () => {
+interface ActivityHistoryViewerProps {
+  id: string;
+}
+
+const ActivityHistoryViewer: FC<ActivityHistoryViewerProps> = ({ id }) => {
   const [activityEvents, setActivityEvents] = useState<ActivityEvent[]>([
     {
       date: new Date().toUTCString(),
@@ -287,6 +292,14 @@ const ActivityHistoryViewer = () => {
       ],
     },
   ]);
+
+  const loadChanges = async () => {
+    await ApiService.get({ url: `/journeys/${id}/changes` });
+  };
+
+  useEffect(() => {
+    loadChanges();
+  }, [id]);
 
   return (
     <div className="p-5 w-full">

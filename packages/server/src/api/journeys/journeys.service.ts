@@ -77,6 +77,7 @@ import { JourneyLocationsService } from './journey-locations.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { RedisService } from '@liaoliaots/nestjs-redis';
+import { JourneyChange } from './entities/journey-change.entity';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -109,6 +110,8 @@ export class JourneysService {
     private readonly logger: Logger,
     @InjectRepository(Journey)
     public journeysRepository: Repository<Journey>,
+    @InjectRepository(JourneyChange)
+    public journeyChangesRepository: Repository<JourneyChange>,
     @Inject(StepsService) private stepsService: StepsService,
     @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @Inject(forwardRef(() => CustomersService))
@@ -904,6 +907,45 @@ export class JourneysService {
     }
   }
 
+  async getJourneyChanges(account: Account, id: string, take = 100, skip = 0) {
+    if (take > 100) take = 100;
+
+    const journey = await this.findByID(account, id, '');
+    if (!journey) throw new NotFoundException('Journey not found');
+
+    const changes = await this.journeyChangesRepository.find({
+      where: { journey: { id: journey.id } },
+      order: {
+        createdAt: 'desc',
+      },
+      take,
+      skip,
+      relations: ['previousChange'],
+    });
+
+    return changes.map((change) => this.retrieveHumanReadableChanges(change));
+  }
+
+  private retrieveHumanReadableChanges(change2: JourneyChange) {
+    const change1 = change2.previousChange;
+
+    if (!change1) return ['Journey started'];
+
+    const humanReadableChanges: string[] = [];
+
+    const state1 = change1.changedState;
+    const state2 = change2.changedState;
+
+    for (const key of Object.keys(state1)) {
+      if (state1[key] !== state2[key]) {
+        console.log(key, state1[key], state2[key]);
+        humanReadableChanges.push(`${key} has been changed`);
+      }
+    }
+
+    return humanReadableChanges;
+  }
+
   /**
    * Finds all active journeys
    *
@@ -998,6 +1040,7 @@ export class JourneysService {
         isDeleted: found.isDeleted,
         journeyEntrySettings: found.journeyEntrySettings,
         journeySettings: found.journeySettings,
+        latestSave: found.latestSave,
       });
     } catch (err) {
       this.error(err, this.findOne.name, session, account.email);
@@ -1072,10 +1115,14 @@ export class JourneysService {
       } else {
         found.latestPause = null;
       }
-      return await this.journeysRepository.save({
+      const journeyResult = await this.journeysRepository.save({
         ...found,
         isPaused: value,
       });
+
+      await this.trackChange(account, journeyResult.id);
+
+      return journeyResult;
     } catch (error) {
       this.error(error, this.setPaused.name, session, account.email);
       throw error;
@@ -1199,6 +1246,8 @@ export class JourneysService {
         startedAt: new Date(Date.now()),
       });
 
+      await this.trackChange(account, journeyID, queryRunner);
+
       await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
     } catch (err) {
@@ -1231,12 +1280,14 @@ export class JourneysService {
       });
       if (!found?.isActive)
         throw new HttpException('The workflow was not activated', 400);
-      await this.journeysRepository.save({
+      const journeyResult = await this.journeysRepository.save({
         ...found,
         isStopped: true,
         isActive: false,
         isPaused: true,
       });
+
+      await this.trackChange(account, journeyResult.id);
     } catch (err) {
       this.error(err, this.stop.name, session, account.email);
       throw err;
@@ -1324,14 +1375,25 @@ export class JourneysService {
         // TODO: add logic of eligable users update on parameters change (using changeSegmentOption)
       }
 
-      return await this.journeysRepository.save({
+      const journeyResult = await this.journeysRepository.save({
         ...journey,
         isDynamic,
         name,
         inclusionCriteria,
         journeyEntrySettings,
         journeySettings,
+        latestSave: new Date(),
       });
+
+      if (
+        [journey.isActive, journey.isPaused, journey.isStopped].some(
+          (bool) => bool
+        )
+      ) {
+        await this.trackChange(account, journey.id);
+      }
+
+      return journeyResult;
     } catch (e) {
       this.error(e, this.update.name, session, account.email);
       throw e;
@@ -1796,6 +1858,7 @@ export class JourneysService {
 
       journey = await queryRunner.manager.save(Journey, {
         ...journey,
+        latestSave: new Date(),
         visualLayout: {
           nodes,
           edges,
@@ -2102,6 +2165,7 @@ export class JourneysService {
 
     journey = await queryRunner.manager.save(Journey, {
       ...journey,
+      latestSave: new Date(),
       visualLayout: {
         nodes,
         edges,
@@ -2278,5 +2342,38 @@ export class JourneysService {
       .incr(rateLimitKey)
       .expire(rateLimitKey, 59)
       .exec();
+  }
+
+  public async trackChange(
+    changer: Account,
+    journeyId: string,
+    queryRunner?: QueryRunner
+  ) {
+    const journey = queryRunner
+      ? await queryRunner.manager.findOneBy(Journey, { id: journeyId })
+      : await this.findByID(changer, journeyId, '');
+    if (!journey) throw new NotFoundException('Journey not found');
+
+    const previousChange = await this.journeyChangesRepository.findOne({
+      where: {
+        journey: { id: journey.id },
+      },
+      order: {
+        createdAt: 'desc',
+      },
+    });
+
+    delete journey.visualLayout;
+    delete journey.latestSave;
+    delete journey.createdAt;
+    delete journey.latestPause;
+    delete journey.workspace;
+
+    await this.journeyChangesRepository.save({
+      journey: { id: journey.id },
+      changer: { id: changer.id },
+      changedState: journey,
+      previousChange: previousChange ? { id: previousChange.id } : undefined,
+    });
   }
 }
