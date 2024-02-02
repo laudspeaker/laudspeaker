@@ -492,7 +492,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       await this.syncCustomData(socket, account, identifiedCustomer);
     } else {
       await this.customersService.CustomerModel.findByIdAndUpdate(customer.id, {
-        ...customer,
+        ...customer.toObject(),
         ...optionalProperties,
         ...uniqueProperties,
         workspaceId: workspace.id,

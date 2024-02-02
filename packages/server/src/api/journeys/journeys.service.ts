@@ -2079,12 +2079,19 @@ export class JourneysService {
             return node.id === relevantEdges[0].target;
           })[0].data.stepId;
           metadata.window = new TimeWindow();
-          metadata.window.from = Temporal.Instant.from(
-            new Date(nodes[i].data['from']).toISOString()
-          );
-          metadata.window.to = Temporal.Instant.from(
-            new Date(nodes[i].data['to']).toISOString()
-          );
+          if (nodes[i].data?.windowType === 'SpecDates') {
+            metadata.window.from = Temporal.Instant.from(
+              new Date(nodes[i].data['from']).toISOString()
+            );
+            metadata.window.to = Temporal.Instant.from(
+              new Date(nodes[i].data['to']).toISOString()
+            );
+          } else {
+            metadata.window.fromTime = nodes[i].data.fromTime;
+            metadata.window.toTime = nodes[i].data.toTime;
+            metadata.window.onDays = nodes[i].data.onDays;
+          }
+
           break;
       }
       await queryRunner.manager.save(Step, {
