@@ -89,6 +89,7 @@ const CompanySetup = () => {
             className="!w-full !max-w-full !text-base !py-2"
             placeholder="Example, Inc."
             value={name}
+            id="organizationName"
             onChange={setName}
           />
           <div className="text-[#111827] text-base font-inter font-semibold mt-5">
@@ -106,6 +107,7 @@ const CompanySetup = () => {
               key: el.timezone,
               title: el.timezone,
             }))}
+            id="timezone"
             onChange={setSelectedTimeZone}
           />
           <Button
@@ -113,6 +115,7 @@ const CompanySetup = () => {
             type={ButtonType.PRIMARY}
             disabled={!name || !selectedTimeZone || isCreating}
             onClick={handleCreate}
+            id="submit"
           >
             Let’s start
           </Button>

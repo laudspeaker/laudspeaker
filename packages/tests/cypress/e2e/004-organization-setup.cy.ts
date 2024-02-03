@@ -18,7 +18,9 @@ describe("company-setup", () => {
   });
 
   it("passes", () => {
-    // setupOrganization(organizationName, timeZone);
-    // cy.url().should("include", "/home");
+    setupOrganization(organizationName, timeZone);
+    cy.wait(10000);
+    cy.visit("/home");
+    cy.url().should("include", "/home");
   });
 });
