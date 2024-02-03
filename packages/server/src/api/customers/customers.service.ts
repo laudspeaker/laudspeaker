@@ -68,6 +68,7 @@ import {
   ModifyAttributesDto,
   UpdateAttributeDto,
 } from './dto/modify-attributes.dto';
+import { parseISO, add, sub, formatISO } from 'date-fns';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -3306,6 +3307,28 @@ export class CustomersService {
     }
   }
 
+// Helper function to parse relative dates
+ parseRelativeDate(value: string): Date {
+  const parts = value.split(' ');
+  let date = new Date();
+  const number = parseInt(parts[0], 10);
+  const unit = parts[1] as 'days' | 'weeks' | 'months' | 'years';
+  const direction = parts[2];
+
+  if (direction === 'ago') {
+    date = sub(date, { [unit]: number });
+  } else if (direction === 'from-now') {
+    date = add(date, { [unit]: number });
+  }
+
+  return date;
+}
+
+// Convert to MongoDB date format
+toMongoDate(date: Date): string {
+  return formatISO(date, { representation: 'date' });
+}
+
   /**
    * Gets set of customers from a single statement that
    * includes Attribute,
@@ -3339,6 +3362,7 @@ export class CustomersService {
       value,
       valueType,
       subComparisonValue,
+      dateComparisonType,
     } = statement;
     const query: any = {
       workspaceId: workspace.id,
@@ -3423,6 +3447,27 @@ export class CustomersService {
           throw new Error('Invalid sub-comparison type for nested property');
         }
         break;
+        case 'after':
+          const afterDate = valueType === 'Date' && dateComparisonType === 'relative'
+            ? this.parseRelativeDate(value)
+            : parseISO(value);
+          query[key] = { $gt: this.toMongoDate(afterDate) };
+          break;
+        case 'before':
+          const beforeDate = valueType === 'Date' && dateComparisonType === 'relative'
+            ? this.parseRelativeDate(value)
+            : parseISO(value);
+          query[key] = { $lt: this.toMongoDate(beforeDate) };
+          break;
+        case 'during':
+          const startDate = valueType === 'Date' && dateComparisonType === 'relative'
+            ? this.parseRelativeDate(value)
+            : parseISO(value);
+          const endDate = valueType === 'Date' && dateComparisonType === 'relative'
+            ? this.parseRelativeDate(subComparisonValue)
+            : parseISO(subComparisonValue);
+          query[key] = { $gte: this.toMongoDate(startDate), $lte: this.toMongoDate(endDate) };
+          break;
       // Add more cases for other comparison types as needed
       default:
         throw new Error('Invalid comparison type');
