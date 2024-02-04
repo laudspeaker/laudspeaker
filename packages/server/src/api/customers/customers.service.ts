@@ -65,6 +65,9 @@ import {
   validateKeyForMutations,
 } from '@/utils/customer-key-name-validator';
 import { UpsertCustomerDto } from './dto/upsert-customer.dto';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -148,7 +151,8 @@ export class CustomersService {
     private readonly connection: mongoose.Connection,
     private readonly s3Service: S3Service,
     @Inject(JourneyLocationsService)
-    private readonly journeyLocationsService: JourneyLocationsService
+    private readonly journeyLocationsService: JourneyLocationsService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {
     const session = randomUUID();
     (async () => {
@@ -164,6 +168,11 @@ export class CustomersService {
             },
           }
         );
+        const keyCollection = this.connection.db.collection('customerkeys');
+        const primaryKeyDocs = keyCollection.find({ isPrimary: true });
+        for await (const primaryKey of primaryKeyDocs) {
+          await collection.createIndex({ [primaryKey.key]: 1, workspaceId: 1 });
+        }
       } catch (e) {
         this.error(e, CustomersService.name, session);
       }
@@ -1422,30 +1431,24 @@ export class CustomersService {
    */
 
   async upsert(
-    account: Account,
+    auth: { account: Account; workspace: Workspaces },
     upsertCustomerDto: UpsertCustomerDto,
     session: string
   ): Promise<{ id: string }> {
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
     try {
-      const accountWithWorkspace = await queryRunner.manager.findOne(Account, {
-        where: { id: account.id },
-        relations: ['teams.organization.workspaces'],
-      });
-      const workspace =
-        accountWithWorkspace?.teams?.[0]?.organization?.workspaces?.[0];
-
-      const primaryKey = await this.CustomerKeysModel.findOne({
-        workspaceId: workspace.id,
-        isPrimary: true,
-      })
-        .session(transactionSession)
-        .exec();
+      let primaryKey: CustomerKeysDocument = await this.cacheManager.get(
+        `${auth.workspace.id}-primary-key`
+      );
+      if (!primaryKey) {
+        primaryKey = await this.CustomerKeysModel.findOne({
+          workspaceId: auth.workspace.id,
+          isPrimary: true,
+        });
+        await this.cacheManager.set(
+          `${auth.workspace.id}-primary-key`,
+          primaryKey
+        );
+      }
 
       if (!primaryKey)
         throw new HttpException(
@@ -1453,55 +1456,18 @@ export class CustomersService {
           HttpStatus.BAD_REQUEST
         );
 
-      const existingCustomer = await this.CustomerModel.findOne({
-        workspaceId: workspace.id,
-        [primaryKey.key]: upsertCustomerDto.primary_key,
-      })
-        .session(transactionSession)
-        .exec();
+      let ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
+        {
+          workspaceId: auth.workspace.id,
+          [primaryKey.key]: upsertCustomerDto.primary_key,
+        },
+        { ...upsertCustomerDto.properties },
+        { upsert: true, new: true, projection: { _id: 1 } }
+      );
 
-      let returnID: string;
-
-      if (existingCustomer) {
-        await this.CustomerModel.updateOne(
-          {
-            workspaceId: workspace.id,
-            [primaryKey.key]: upsertCustomerDto.primary_key,
-          },
-          {
-            $set: {
-              ...upsertCustomerDto.properties,
-            },
-          }
-        )
-          .session(transactionSession)
-          .exec();
-        returnID = existingCustomer.id;
-      } else {
-        const res = await this.CustomerModel.create(
-          [
-            {
-              workspaceId: workspace.id,
-              [primaryKey.key]: upsertCustomerDto.primary_key,
-              ...upsertCustomerDto.properties,
-            },
-          ],
-          { session: transactionSession }
-        );
-        returnID = res[0].id;
-      }
-
-      await transactionSession.commitTransaction();
-      await queryRunner.commitTransaction();
-      await transactionSession.endSession();
-      await queryRunner.release();
-      return Promise.resolve({ id: returnID });
+      return Promise.resolve({ id: ret._id });
     } catch (err) {
-      await transactionSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
-      await transactionSession.endSession();
-      await queryRunner.release();
-      this.error(err, this.upsert.name, session, account.email);
+      this.error(err, this.upsert.name, session, auth.account.email);
       throw err;
     }
   }

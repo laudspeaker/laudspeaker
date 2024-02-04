@@ -204,7 +204,9 @@ export class AuthService {
   }
 
   // For now return account from workspaces owner perspective
-  public async validateAPIKey(apiKey: string): Promise<Account | never> {
+  public async validateAPIKey(
+    apiKey: string
+  ): Promise<{ account: Account; workspace: Workspaces } | never> {
     const workspace = await this.workspacesRepository.findOne({
       where: {
         apiKey,
@@ -212,7 +214,7 @@ export class AuthService {
       relations: ['organization.owner'],
     });
 
-    return workspace.organization.owner;
+    return { account: workspace.organization.owner, workspace: workspace };
   }
 
   public async refresh(user: Account, session: string): Promise<string> {

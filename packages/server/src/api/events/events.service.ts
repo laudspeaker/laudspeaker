@@ -54,6 +54,7 @@ import {
   PlatformSettings,
   PushPlatforms,
 } from '../templates/entities/template.entity';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
 
 @Injectable()
 export class EventsService {
@@ -259,9 +260,13 @@ export class EventsService {
     }
   }
 
-  async customPayload(account: Account, eventDto: EventDto, session: string) {
+  async customPayload(
+    auth: { account: Account; workspace: Workspaces },
+    eventDto: EventDto,
+    session: string
+  ) {
     await this.eventPreprocessorQueue.add('laudspeaker', {
-      account: account,
+      account: auth.account,
       event: eventDto,
       session: session,
     });

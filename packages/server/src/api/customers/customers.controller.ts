@@ -33,6 +33,7 @@ import { ImportCustomersDTO } from './dto/import-customers.dto';
 import { extname } from 'path';
 import { UpdatePK_DTO } from './dto/update-pk.dto';
 import { UpsertCustomerDto } from './dto/upsert-customer.dto';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
 
 @Controller('customers')
 export class CustomersController {
@@ -296,7 +297,7 @@ export class CustomersController {
   ) {
     const session = randomUUID();
     return await this.customersService.upsert(
-      <Account>user,
+      <{ account: Account; workspace: Workspaces }>user,
       upsertCustomerDto,
       session
     );
