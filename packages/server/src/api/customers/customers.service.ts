@@ -3309,6 +3309,7 @@ export class CustomersService {
 
 // Helper function to parse relative dates
  parseRelativeDate(value: string): Date {
+  console.log("in parseRelativeDate");
   const parts = value.split(' ');
   let date = new Date();
   const number = parseInt(parts[0], 10);
@@ -3447,27 +3448,66 @@ toMongoDate(date: Date): string {
           throw new Error('Invalid sub-comparison type for nested property');
         }
         break;
-        case 'after':
-          const afterDate = valueType === 'Date' && dateComparisonType === 'relative'
-            ? this.parseRelativeDate(value)
-            : parseISO(value);
-          query[key] = { $gt: this.toMongoDate(afterDate) };
-          break;
-        case 'before':
-          const beforeDate = valueType === 'Date' && dateComparisonType === 'relative'
-            ? this.parseRelativeDate(value)
-            : parseISO(value);
-          query[key] = { $lt: this.toMongoDate(beforeDate) };
-          break;
-        case 'during':
-          const startDate = valueType === 'Date' && dateComparisonType === 'relative'
-            ? this.parseRelativeDate(value)
-            : parseISO(value);
-          const endDate = valueType === 'Date' && dateComparisonType === 'relative'
-            ? this.parseRelativeDate(subComparisonValue)
-            : parseISO(subComparisonValue);
-          query[key] = { $gte: this.toMongoDate(startDate), $lte: this.toMongoDate(endDate) };
-          break;
+      case 'after':
+        console.log("value type is", typeof value);
+        console.log("value is", value);
+        let afterDate: Date;
+        if (valueType === 'Date' && dateComparisonType === 'relative') {
+          afterDate = this.parseRelativeDate(value);
+        } else {
+          // Use the Date constructor for parsing RFC 2822 formatted dates
+          afterDate = new Date(value);
+        }
+        console.log("afterDate type is", typeof afterDate);
+        console.log("after date is", afterDate);
+        // Check if afterDate is valid
+        if (isNaN(afterDate.getTime())) {
+          throw new Error('Invalid date format');
+        }
+        query[key] = { $gt: afterDate };
+        break;
+      case 'before':
+        console.log("value type is", typeof value);
+        console.log("value is", value);
+        let beforeDate: Date;
+        if (valueType === 'Date' && dateComparisonType === 'relative') {
+          beforeDate = this.parseRelativeDate(value);
+        } else {
+          // Directly use the Date constructor for parsing RFC 2822 formatted dates
+          beforeDate = new Date(value);
+        }
+        console.log("beforeDate type is", typeof beforeDate);
+        console.log("before date is", beforeDate);
+        // Check if beforeDate is valid
+        if (isNaN(beforeDate.getTime())) {
+          throw new Error('Invalid date format');
+        }
+        //query[key] = { $lt: this.toMongoDate(beforeDate) };
+        query[key] = { $lt: beforeDate };
+        break;
+      case 'during':
+        console.log("value type is", typeof value);
+        console.log("value is", value);
+        console.log("subComparisonValue is", subComparisonValue);
+        let startDate: Date, endDate: Date;
+        if (valueType === 'Date' && dateComparisonType === 'relative') {
+          startDate = this.parseRelativeDate(value);
+          endDate = this.parseRelativeDate(subComparisonValue);
+        } else {
+          // Use the Date constructor for parsing RFC 2822 formatted dates
+          startDate = new Date(value);
+          endDate = new Date(subComparisonValue);
+        }
+        console.log("startDate type is", typeof startDate);
+        console.log("startDate is", startDate);
+        console.log("endDate type is", typeof endDate);
+        console.log("endDate is", endDate);
+        // Check if dates are valid
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          throw new Error('Invalid date format');
+        }
+        query[key] = { $gte: startDate, $lte: endDate };
+        break;
       // Add more cases for other comparison types as needed
       default:
         throw new Error('Invalid comparison type');
