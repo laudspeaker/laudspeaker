@@ -34,6 +34,7 @@ import { extname } from 'path';
 import { UpdatePK_DTO } from './dto/update-pk.dto';
 import { UpsertCustomerDto } from './dto/upsert-customer.dto';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { DeleteCustomerDto } from './dto/delete-customer.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -299,6 +300,21 @@ export class CustomersController {
     return await this.customersService.upsert(
       <{ account: Account; workspace: Workspaces }>user,
       upsertCustomerDto,
+      session
+    );
+  }
+
+  @Post('/delete/')
+  @UseGuards(ApiKeyAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async delete(
+    @Req() { user }: Request,
+    @Body() deleteCustomerDto: DeleteCustomerDto
+  ) {
+    const session = randomUUID();
+    return await this.customersService.delete(
+      <{ account: Account; workspace: Workspaces }>user,
+      deleteCustomerDto,
       session
     );
   }

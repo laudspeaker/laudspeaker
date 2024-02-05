@@ -68,6 +68,7 @@ import { UpsertCustomerDto } from './dto/upsert-customer.dto';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { DeleteCustomerDto } from './dto/delete-customer.dto';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -1465,11 +1466,62 @@ export class CustomersService {
         { upsert: true, new: true, projection: { _id: 1 } }
       );
 
-      return Promise.resolve({ id: ret._id });
+      return Promise.resolve({ id: ret.id });
     } catch (err) {
       this.error(err, this.upsert.name, session, auth.account.email);
       throw err;
     }
+  }
+
+  /**
+   * Delete a customer via API. Requires a primary key
+   * to have been set.
+   * @param account
+   * @param deleteCustomerDto
+   * @param session
+   * @returns
+   */
+
+  async delete(
+    auth: { account: Account; workspace: Workspaces },
+    deleteCustomerDto: DeleteCustomerDto,
+    session: string
+  ): Promise<{ primary_key: any }> {
+    let primaryKey: CustomerKeysDocument = await this.cacheManager.get(
+      `${auth.workspace.id}-primary-key`
+    );
+    if (!primaryKey) {
+      primaryKey = await this.CustomerKeysModel.findOne({
+        workspaceId: auth.workspace.id,
+        isPrimary: true,
+      });
+      await this.cacheManager.set(
+        `${auth.workspace.id}-primary-key`,
+        primaryKey
+      );
+    }
+
+    if (!primaryKey)
+      throw new HttpException(
+        'Primary key has not been set: see https://laudspeaker.com/docs/developer/api/users/delete for more details.',
+        HttpStatus.BAD_REQUEST
+      );
+
+    let ret: CustomerDocument = await this.CustomerModel.findOneAndDelete(
+      {
+        workspaceId: auth.workspace.id,
+        [primaryKey.key]: deleteCustomerDto.primary_key,
+      },
+      { projection: { [primaryKey.key]: 1 } }
+    );
+
+    if (!ret)
+      throw new HttpException(
+        `Customer specified by primary key ${deleteCustomerDto.primary_key} does not exist!`,
+        HttpStatus.NOT_FOUND
+      );
+
+    return Promise.resolve({ primary_key: ret[primaryKey.key] });
   }
 
   async mergeCustomers(
