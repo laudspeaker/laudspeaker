@@ -7,15 +7,17 @@ import {
   RecurrenceEndsOption,
 } from "reducers/flow-builder.reducer";
 
-const entryTimingFrequencyToTimeUnitMap: Record<EntryTimingFrequency, string> =
-  {
-    [EntryTimingFrequency.Once]: "",
-    [EntryTimingFrequency.Daily]: "day",
-    [EntryTimingFrequency.Weekly]: "week",
-    [EntryTimingFrequency.Monthly]: "month",
-  };
+export const entryTimingFrequencyToTimeUnitMap: Record<
+  EntryTimingFrequency,
+  string
+> = {
+  [EntryTimingFrequency.Once]: "",
+  [EntryTimingFrequency.Daily]: "day",
+  [EntryTimingFrequency.Weekly]: "week",
+  [EntryTimingFrequency.Monthly]: "month",
+};
 
-const weekDays = [
+export const weekDays = [
   "Monday",
   "Tuesday",
   "Wednesday",

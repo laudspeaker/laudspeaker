@@ -1,15 +1,25 @@
+import { AxiosError } from "axios";
+import Pagination from "components/Pagination";
 import Table from "components/Tablev2";
 import { format } from "date-fns";
 import { capitalize } from "lodash";
+import {
+  entryTimingFrequencyToTimeUnitMap,
+  weekDays,
+} from "pages/FlowBuilderv2/EntryTimingViewer";
 import React, { FC, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import {
   EntryTiming,
+  EntryTimingFrequency,
   EntryTimingSettings,
   JourneyEnrollmentType,
+  JourneyEntrySettings,
   JourneySettingsMaxMessageSends,
   JourneySettingsMaxUserEntries,
   JourneySettingsQuietFallbackBehavior,
   JourneySettingsQuietHours,
+  RecurrenceEndsOption,
   SegmentsSettings,
   SegmentsSettingsType,
 } from "reducers/flow-builder.reducer";
@@ -21,9 +31,10 @@ enum ActivityEventType {
   SETTINGS = "settings",
 }
 
-enum JourneyChange {
+enum JourneyChangeType {
   PUBLISH = "publish",
   PAUSE = "pause",
+  RESUME = "resume",
   STOP = "stop",
   DELETE = "delete",
   RESTORE = "restore",
@@ -31,13 +42,13 @@ enum JourneyChange {
   EDIT_PUBLISH = "edit-publish",
 }
 
-enum EntryChange {
+enum EntryChangeType {
   ENTRY_TIMING = "entry-timing",
   ENTRY_TYPE = "entry-type",
   ELIGIBLE_USERS = "eligible-users",
 }
 
-enum SettingsChange {
+enum SettingsChangeType {
   ADD_TAG = "add-tag",
   DELETE_TAG = "delete-tag",
   ENABLE_QUIETE_HOURS = "enable-qh",
@@ -51,68 +62,71 @@ enum SettingsChange {
   DISABLE_MAX_MESSAGE_SENDS = "disable-max-message",
 }
 
-type ChangeType = JourneyChange | EntryChange | SettingsChange;
+type ChangeType = JourneyChangeType | EntryChangeType | SettingsChangeType;
 
 type UndetailedChangeType =
-  | JourneyChange.PAUSE
-  | JourneyChange.STOP
-  | JourneyChange.DELETE
-  | JourneyChange.EDIT_SAVE
-  | SettingsChange.DISABLE_QUIETE_HOURS
-  | SettingsChange.DISABLE_MAX_USER_ENTRIES
-  | SettingsChange.DISABLE_MAX_MESSAGE_SENDS;
+  | JourneyChangeType.PAUSE
+  | JourneyChangeType.RESUME
+  | JourneyChangeType.STOP
+  | JourneyChangeType.DELETE
+  | JourneyChangeType.EDIT_SAVE
+  | SettingsChangeType.DISABLE_QUIETE_HOURS
+  | SettingsChangeType.DISABLE_MAX_USER_ENTRIES
+  | SettingsChangeType.DISABLE_MAX_MESSAGE_SENDS;
 
 interface UndetailedChange {
   type: UndetailedChangeType;
 }
 
 interface NameDetailedChange {
-  type: JourneyChange.PUBLISH | JourneyChange.EDIT_PUBLISH;
+  type: JourneyChangeType.PUBLISH | JourneyChangeType.EDIT_PUBLISH;
   name: string;
 }
 
 interface RestoreChange {
-  type: JourneyChange.RESTORE;
+  type: JourneyChangeType.RESTORE;
   name1: string;
   name2: string;
 }
 
 interface EntryTimingChange {
-  type: EntryChange.ENTRY_TIMING;
+  type: EntryChangeType.ENTRY_TIMING;
   entryTiming: EntryTimingSettings;
 }
 
 interface EntryTypeChange {
-  type: EntryChange.ENTRY_TYPE;
+  type: EntryChangeType.ENTRY_TYPE;
   entryType: JourneyEnrollmentType;
 }
 
 interface EligibleUsersChange {
-  type: EntryChange.ELIGIBLE_USERS;
+  type: EntryChangeType.ELIGIBLE_USERS;
   inclusionCriteria: SegmentsSettings;
 }
 
 interface TagChange {
-  type: SettingsChange.ADD_TAG | SettingsChange.DELETE_TAG;
+  type: SettingsChangeType.ADD_TAG | SettingsChangeType.DELETE_TAG;
   tag: string;
 }
 
 interface QuietHoursChange {
-  type: SettingsChange.ENABLE_QUIETE_HOURS | SettingsChange.CHANGE_QUIETE_HOURS;
+  type:
+    | SettingsChangeType.ENABLE_QUIETE_HOURS
+    | SettingsChangeType.CHANGE_QUIETE_HOURS;
   quietHours: JourneySettingsQuietHours;
 }
 
 interface MaxUserEntriesChange {
   type:
-    | SettingsChange.ENABLE_MAX_USER_ENTRIES
-    | SettingsChange.CHANGE_MAX_USER_ENTRIES;
+    | SettingsChangeType.ENABLE_MAX_USER_ENTRIES
+    | SettingsChangeType.CHANGE_MAX_USER_ENTRIES;
   maxUserEntries: JourneySettingsMaxUserEntries;
 }
 
 interface MaxMessageSendsChange {
   type:
-    | SettingsChange.ENABLE_MAX_MESSAGE_SENDS
-    | SettingsChange.CHANGE_MAX_MESSAGE_SENDS;
+    | SettingsChangeType.ENABLE_MAX_MESSAGE_SENDS
+    | SettingsChangeType.CHANGE_MAX_MESSAGE_SENDS;
   maxMessageSends: JourneySettingsMaxMessageSends;
 }
 
@@ -130,51 +144,184 @@ type Change =
 
 interface ActivityEvent {
   date: string;
+  changerEmail: string;
   type: ActivityEventType;
   changes: Change[];
 }
 
+const generateQuietHoursHumanReadableDetails = (
+  quietHoursSettings: JourneySettingsQuietHours
+) => (
+  <>
+    {quietHoursSettings.startTime} - {quietHoursSettings.endTime},{" "}
+    {quietHoursSettings.fallbackBehavior ===
+    JourneySettingsQuietFallbackBehavior.NextAvailableTime
+      ? "send at next available time"
+      : "abort message"}
+  </>
+);
+
+const generateMaxUserEntriesHumanReadableDetails = (
+  maxEntriesSettings: JourneySettingsMaxUserEntries
+) => (
+  <>
+    {maxEntriesSettings.maxEntries}{" "}
+    {maxEntriesSettings.limitOnEverySchedule
+      ? ", limit every time the journey is scheduled"
+      : ""}
+  </>
+);
+
+const generateMaxMessageSendsHumanReadableDetails = (
+  maxMessageSendsSettings: JourneySettingsMaxMessageSends
+) => (
+  <>
+    Limit max users who will receive messages,{" "}
+    {maxMessageSendsSettings.maxUsersReceive || "unlimited"} users. Limit the
+    sending rate, {maxMessageSendsSettings.maxSendRate || "unlimited"} messages
+    per minute
+  </>
+);
+
+const generateEnrollmentTypeHumanReadableDetails = (
+  enrollmentType: JourneyEnrollmentType
+) => (
+  <>
+    {enrollmentType === JourneyEnrollmentType.OnlyCurrent ? (
+      <>
+        Only enroll <b>current</b> users
+      </>
+    ) : enrollmentType === JourneyEnrollmentType.OnlyFuture ? (
+      <>
+        Only enroll <b>future</b> matching users
+      </>
+    ) : (
+      <>Enroll current users and future matching users</>
+    )}
+  </>
+);
+
+const generateEntryTimingHumanReadableDetails = (
+  entryTimingSettings: EntryTimingSettings
+) => (
+  <>
+    {entryTimingSettings.type === EntryTiming.WhenPublished ||
+    !entryTimingSettings.time ? (
+      <>Enter users as soon as this journey published</>
+    ) : (
+      <>
+        Enter users at specific time,{" "}
+        {format(
+          new Date(entryTimingSettings.time.startDate),
+          "MM/dd/yyyy HH:mm"
+        )}
+        , {entryTimingSettings.time.frequency.toLowerCase()}
+        {entryTimingSettings.time.frequency !== EntryTimingFrequency.Once && (
+          <>
+            , repeat every {entryTimingSettings.time.recurrence.repeatEvery}{" "}
+            {
+              entryTimingFrequencyToTimeUnitMap[
+                entryTimingSettings.time.frequency
+              ]
+            }
+            (s)
+            {entryTimingSettings.time.frequency ===
+            EntryTimingFrequency.Weekly ? (
+              <>
+                {" "}
+                on{" "}
+                {entryTimingSettings.time.recurrence.weeklyOn
+                  .map((weekDaySignal, i) =>
+                    weekDaySignal === 1 ? weekDays[i] : ""
+                  )
+                  .filter((item) => !!item)
+                  .join(", ")}
+              </>
+            ) : (
+              <></>
+            )}
+            {entryTimingSettings.time.recurrence.endsOn ===
+            RecurrenceEndsOption.Never ? (
+              <></>
+            ) : entryTimingSettings.time.recurrence.endsOn ===
+              RecurrenceEndsOption.After ? (
+              <>
+                , ends after{" "}
+                <b>{entryTimingSettings.time.recurrence.endAdditionalValue}</b>{" "}
+                occurence(s)
+              </>
+            ) : entryTimingSettings.time.recurrence.endsOn ===
+              RecurrenceEndsOption.SpecificDate ? (
+              <>
+                , ends at{" "}
+                <b>
+                  {format(
+                    new Date(
+                      entryTimingSettings.time.recurrence
+                        .endAdditionalValue as string
+                    ),
+                    "MM/dd/yyyy HH:mm"
+                  )}
+                </b>
+              </>
+            ) : (
+              <></>
+            )}
+          </>
+        )}
+        {entryTimingSettings.time.userLocalTimeZone
+          ? ",enter users in their local time zone"
+          : ""}
+      </>
+    )}
+  </>
+);
+
 const generateDetails = (change: Change) => {
   switch (change.type) {
-    case JourneyChange.PUBLISH:
+    case JourneyChangeType.PUBLISH:
       return (
         <>
           Published journey as <b>{change.name}</b>
         </>
       );
-    case JourneyChange.PAUSE:
+    case JourneyChangeType.PAUSE:
       return <>Paused Journey</>;
-    case JourneyChange.STOP:
+    case JourneyChangeType.RESUME:
+      return <>Resumed journey</>;
+    case JourneyChangeType.STOP:
       return <>Stopped journey</>;
-    case JourneyChange.DELETE:
+    case JourneyChangeType.DELETE:
       return <>Deleted journey</>;
-    case JourneyChange.RESTORE:
+    case JourneyChangeType.RESTORE:
       return (
         <>
           Restore <b>{change.name1}</b>, and published as <b>{change.name2}</b>
         </>
       );
-    case JourneyChange.EDIT_SAVE:
+    case JourneyChangeType.EDIT_SAVE:
       return <>Edit journey, and save as draft</>;
-    case JourneyChange.EDIT_PUBLISH:
+    case JourneyChangeType.EDIT_PUBLISH:
       return (
         <>
           Edit journey, and published as <b>{change.name}</b>
         </>
       );
-    case EntryChange.ENTRY_TIMING:
+    case EntryChangeType.ENTRY_TIMING:
       return (
         <>
-          Change <b>Entry timing</b>: {JSON.stringify(change.entryTiming)}
+          Change <b>Entry timing</b>:{" "}
+          {generateEntryTimingHumanReadableDetails(change.entryTiming)}
         </>
       );
-    case EntryChange.ENTRY_TYPE:
+    case EntryChangeType.ENTRY_TYPE:
       return (
         <>
-          Change <b>Entry type</b>: {JSON.stringify(change.entryType)}
+          Change <b>Entry type</b>:{" "}
+          {generateEnrollmentTypeHumanReadableDetails(change.entryType)}
         </>
       );
-    case EntryChange.ELIGIBLE_USERS:
+    case EntryChangeType.ELIGIBLE_USERS:
       return (
         <>
           Change <b>Eligible users</b>:{" "}
@@ -183,71 +330,73 @@ const generateDetails = (change: Change) => {
             : "when customer meets conditions, change the conditions"}
         </>
       );
-    case SettingsChange.ADD_TAG:
+    case SettingsChangeType.ADD_TAG:
       return (
         <>
           Add tag: <b>{change.tag}</b>
         </>
       );
-    case SettingsChange.DELETE_TAG:
+    case SettingsChangeType.DELETE_TAG:
       return (
         <>
           Delete tag: <b>{change.tag}</b>
         </>
       );
-    case SettingsChange.ENABLE_QUIETE_HOURS:
+    case SettingsChangeType.ENABLE_QUIETE_HOURS:
       return (
         <>
-          Enable <b>Quiet hours</b>: {JSON.stringify(change.quietHours)}
+          Enable <b>Quiet hours</b>:{" "}
+          {generateQuietHoursHumanReadableDetails(change.quietHours)}
         </>
       );
-    case SettingsChange.CHANGE_QUIETE_HOURS:
+    case SettingsChangeType.CHANGE_QUIETE_HOURS:
       return (
         <>
-          Change <b>Quiet hours</b>: {JSON.stringify(change.quietHours)}
+          Change <b>Quiet hours</b>:{" "}
+          {generateQuietHoursHumanReadableDetails(change.quietHours)}
         </>
       );
-    case SettingsChange.DISABLE_QUIETE_HOURS:
+    case SettingsChangeType.DISABLE_QUIETE_HOURS:
       return (
         <>
           Disable <b>Quiet hours</b>
         </>
       );
-    case SettingsChange.ENABLE_MAX_USER_ENTRIES:
+    case SettingsChangeType.ENABLE_MAX_USER_ENTRIES:
       return (
         <>
           Enable <b>Max user entries</b>:{" "}
-          {JSON.stringify(change.maxUserEntries)}
+          {generateMaxUserEntriesHumanReadableDetails(change.maxUserEntries)}
         </>
       );
-    case SettingsChange.CHANGE_MAX_USER_ENTRIES:
+    case SettingsChangeType.CHANGE_MAX_USER_ENTRIES:
       return (
         <>
           Change <b>Max user entries</b>:{" "}
-          {JSON.stringify(change.maxUserEntries)}
+          {generateMaxUserEntriesHumanReadableDetails(change.maxUserEntries)}
         </>
       );
-    case SettingsChange.DISABLE_MAX_USER_ENTRIES:
+    case SettingsChangeType.DISABLE_MAX_USER_ENTRIES:
       return (
         <>
           Disable <b>Max user entries</b>
         </>
       );
-    case SettingsChange.ENABLE_MAX_MESSAGE_SENDS:
+    case SettingsChangeType.ENABLE_MAX_MESSAGE_SENDS:
       return (
         <>
           Enable <b>Max message sends</b>:{" "}
-          {JSON.stringify(change.maxMessageSends)}
+          {generateMaxMessageSendsHumanReadableDetails(change.maxMessageSends)}
         </>
       );
-    case SettingsChange.CHANGE_MAX_MESSAGE_SENDS:
+    case SettingsChangeType.CHANGE_MAX_MESSAGE_SENDS:
       return (
         <>
           Change <b>Max message sends</b>:{" "}
-          {JSON.stringify(change.maxMessageSends)}
+          {generateMaxMessageSendsHumanReadableDetails(change.maxMessageSends)}
         </>
       );
-    case SettingsChange.DISABLE_MAX_MESSAGE_SENDS:
+    case SettingsChangeType.DISABLE_MAX_MESSAGE_SENDS:
       return (
         <>
           Disable <b>Max message sends</b>
@@ -258,48 +407,47 @@ const generateDetails = (change: Change) => {
   }
 };
 
+const ITEMS_PER_PAGE = 10;
+
 interface ActivityHistoryViewerProps {
   id: string;
 }
 
 const ActivityHistoryViewer: FC<ActivityHistoryViewerProps> = ({ id }) => {
-  const [activityEvents, setActivityEvents] = useState<ActivityEvent[]>([
-    {
-      date: new Date().toUTCString(),
-      type: ActivityEventType.JOURNEY,
-      changes: [
-        { type: JourneyChange.PUBLISH, name: "Version 1" },
-        {
-          type: EntryChange.ENTRY_TYPE,
-          entryType: JourneyEnrollmentType.OnlyCurrent,
-        },
-        {
-          type: EntryChange.ELIGIBLE_USERS,
-          inclusionCriteria: { type: SegmentsSettingsType.ALL_CUSTOMERS },
-        },
-        { type: SettingsChange.ADD_TAG, tag: "tagtagtag" },
-        { type: SettingsChange.DISABLE_QUIETE_HOURS },
-        {
-          type: SettingsChange.CHANGE_QUIETE_HOURS,
-          quietHours: {
-            enabled: true,
-            startTime: "time",
-            endTime: "time",
-            fallbackBehavior:
-              JourneySettingsQuietFallbackBehavior.NextAvailableTime,
-          },
-        },
-      ],
-    },
-  ]);
+  const [activityEvents, setActivityEvents] = useState<ActivityEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const loadChanges = async () => {
-    await ApiService.get({ url: `/journeys/${id}/changes` });
+    setIsLoading(true);
+    try {
+      const { data } = await ApiService.get<{
+        activityEvents: ActivityEvent[];
+        totalPages: number;
+      }>({
+        url: `/journeys/${id}/changes?take=${ITEMS_PER_PAGE}&skip=${
+          (currentPage - 1) * ITEMS_PER_PAGE
+        }`,
+      });
+
+      setActivityEvents(data.activityEvents);
+      setTotalPages(data.totalPages);
+    } catch (e) {
+      if (e instanceof AxiosError) {
+        toast.error(
+          e.response?.data?.message?.[0] || e.response?.data?.message
+        );
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
     loadChanges();
-  }, [id]);
+  }, [id, ITEMS_PER_PAGE, currentPage]);
 
   return (
     <div className="p-5 w-full">
@@ -307,9 +455,11 @@ const ActivityHistoryViewer: FC<ActivityHistoryViewerProps> = ({ id }) => {
         <Table
           className="w-full"
           headClassName="bg-[#F3F4F6]"
+          isLoading={isLoading}
           rowsData={activityEvents}
           headings={[
             <div className="px-5 py-2.5">Date</div>,
+            <div className="px-5 py-2.5">Changer</div>,
             <div className="px-5 py-2.5">Type</div>,
             <div className="px-5 py-2.5 w-full">Details</div>,
           ]}
@@ -317,6 +467,7 @@ const ActivityHistoryViewer: FC<ActivityHistoryViewerProps> = ({ id }) => {
             <div>
               {format(new Date(activityEvent.date), "MM/dd/yyyy HH:mm")}
             </div>,
+            <div>{activityEvent.changerEmail}</div>,
             <div>{capitalize(activityEvent.type)}</div>,
             <div>
               {activityEvent.changes.map((change, i) => (
@@ -325,6 +476,15 @@ const ActivityHistoryViewer: FC<ActivityHistoryViewerProps> = ({ id }) => {
             </div>,
           ])}
         />
+        {totalPages > 1 && (
+          <div className="mt-2.5 flex items-center justify-center">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              setCurrentPage={setCurrentPage}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
