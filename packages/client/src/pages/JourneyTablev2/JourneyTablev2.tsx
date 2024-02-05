@@ -52,6 +52,7 @@ interface JourneyRowData {
   name: string;
   status: JourneyStatus;
   enrolledCount: number;
+  latestChangerEmail?: string;
   lastUpdate: string;
 }
 
@@ -157,6 +158,7 @@ const JourneyTablev2 = () => {
             status,
             enrolledCount: workflow.enrolledCustomers || 0,
             lastUpdate: workflow.latestSave,
+            latestChangerEmail: workflow.latestChangerEmail,
           };
         })
       );
@@ -305,6 +307,9 @@ const JourneyTablev2 = () => {
                 <div className="px-5 py-[10px] select-none">
                   Enrolled customer
                 </div>,
+                <div className="px-5 py-[10px] select-none">
+                  Last updated by
+                </div>,
                 <div
                   className="px-5 py-[10px] select-none flex gap-[2px] items-center cursor-pointer"
                   onClick={() => {
@@ -369,6 +374,7 @@ const JourneyTablev2 = () => {
                     <>{row.enrolledCount} persons</>
                   )}
                 </div>,
+                <div>{row.latestChangerEmail || "-"}</div>,
                 <div>
                   {format(new Date(row.lastUpdate), "MM/dd/yyyy HH:mm")}
                 </div>,
