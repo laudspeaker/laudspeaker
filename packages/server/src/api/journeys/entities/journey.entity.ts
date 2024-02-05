@@ -11,6 +11,7 @@ import {
   JourneySettings,
 } from '../types/additional-journey-settings.interface';
 import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
+import { Account } from '@/api/accounts/entities/accounts.entity';
 
 @Entity()
 export class Journey {
@@ -55,6 +56,14 @@ export class Journey {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   latestSave?: Date;
+
+  @JoinColumn()
+  @ManyToOne(() => Account, (account) => account.id, {
+    nullable: true,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
+  latestChanger?: Account;
 
   // {"nodes":[...list of nodes], "edges": [...list of edges]}
   @Column('jsonb', { default: { nodes: [], edges: [] } })

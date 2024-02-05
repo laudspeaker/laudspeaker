@@ -128,5 +128,6 @@ export interface Workflow {
   isDynamic: boolean;
   filter?: { id: string };
   latestSave: string;
+  latestChangerEmail?: string;
   enrolledCustomers?: number;
 }

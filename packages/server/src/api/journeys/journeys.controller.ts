@@ -91,6 +91,23 @@ export class JourneysController {
     return await this.journeysService.findOne(<Account>user, id, session);
   }
 
+  @Get(':id/changes')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getJourneyChanges(
+    @Req() { user }: Request,
+    @Param('id') id: string,
+    @Query('take') take?: string,
+    @Query('skip') skip?: string
+  ) {
+    return this.journeysService.getJourneyChanges(
+      <Account>user,
+      id,
+      take && +take,
+      skip && +skip
+    );
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
