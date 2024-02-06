@@ -277,7 +277,7 @@ const PushSettings = () => {
                     "Unknown name"}
                 </div>
               </div>
-              <div className=" font-inter text-[#111827] text-sm font-semibold">
+              <div className="font-inter text-[#111827] text-sm font-semibold">
                 URL
               </div>
               <div className="w-full flex text-[#111827] px-3 py-[5px] border border-[#E5E7EB] bg-[#F9FAFB] ">
