@@ -1293,6 +1293,7 @@ export class TransitionProcessor extends WorkerHost {
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
+      relations: ['teams.organization.workspaces'],
     });
 
     const journey = await this.journeysService.findByID(
@@ -1426,6 +1427,7 @@ export class TransitionProcessor extends WorkerHost {
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
+      relations: ['teams.organization.workspaces'],
     });
 
     const journey = await this.journeysService.findByID(
@@ -1871,6 +1873,7 @@ export class TransitionProcessor extends WorkerHost {
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
+      relations: ['teams.organization.workspaces'],
     });
     this.warn(
       JSON.stringify({ warning: `Inside multisplit` }),

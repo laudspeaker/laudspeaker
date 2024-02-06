@@ -48,14 +48,7 @@ export class AuthHelper extends BaseJwtHelper {
   public async validateUser(decoded: { id: string }): Promise<Account> {
     const user = await this.repository.findOne({
       where: { id: decoded.id },
-      relations: {
-        teams: {
-          organization: {
-            workspaces: true,
-            owner: true,
-          },
-        },
-      },
+      relations: ['teams.organization.workspaces', 'teams.organization.owner'],
     });
 
     return user;

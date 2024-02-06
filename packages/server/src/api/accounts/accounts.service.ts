@@ -384,15 +384,6 @@ export class AccountsService extends BaseJwtHelper {
     let err;
     try {
       const workspace = oldUser.teams?.[0]?.organization?.workspaces?.[0];
-      for (const key of Object.keys(updateUserDto)) {
-        if (key === 'pushPlatforms' && updateUserDto[key]) {
-          oldUser[key] = {
-            Android:
-              updateUserDto.pushPlatforms?.Android || oldUser[key]?.Android,
-            iOS: updateUserDto.pushPlatforms?.iOS || oldUser[key]?.iOS,
-          };
-        } else oldUser[key] = updateUserDto[key];
-      }
 
       oldUser.password = password;
       oldUser.verified = verified;
@@ -426,6 +417,15 @@ export class AccountsService extends BaseJwtHelper {
         resendSendingEmail,
       } = updateUserDto;
 
+      const newPushPlatforms = {
+        [PushPlatforms.IOS]:
+          pushPlatforms[PushPlatforms.IOS] ||
+          workspace.pushPlatforms[PushPlatforms.IOS],
+        [PushPlatforms.ANDROID]:
+          pushPlatforms[PushPlatforms.ANDROID] ||
+          workspace.pushPlatforms[PushPlatforms.ANDROID],
+      };
+
       const newWorkspace = {
         id: workspace.id,
         timezoneUTCOffset,
@@ -449,7 +449,7 @@ export class AccountsService extends BaseJwtHelper {
         smsAccountSid,
         smsAuthToken,
         smsFrom,
-        pushPlatforms,
+        pushPlatforms: newPushPlatforms,
         resendSendingDomain,
         resendAPIKey,
         resendSigningSecret,
