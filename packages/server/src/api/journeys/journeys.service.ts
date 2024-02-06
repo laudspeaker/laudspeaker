@@ -1310,6 +1310,11 @@ export class JourneysService {
     session: string,
     queryRunner?: QueryRunner
   ) {
+    account = await this.customersService.accountsRepository.findOne({
+      where: { id: account.id },
+      relations: ['teams.organization.workspaces'],
+    });
+
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
     if (queryRunner)
