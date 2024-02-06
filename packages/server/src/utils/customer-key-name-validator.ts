@@ -13,6 +13,10 @@ export const KEYS_TO_SKIP = [
   'isAnonymous',
   'isFreezed',
   'customComponents',
+  'createdAt',
+  'workflows',
+  'posthogId',
+  'slackTeamId',
 ];
 
 export const validateKeyForMutations = (val: any) => {

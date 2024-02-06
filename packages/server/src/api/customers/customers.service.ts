@@ -69,6 +69,7 @@ import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { DeleteCustomerDto } from './dto/delete-customer.dto';
+import { ReadCustomerDto } from './dto/read-customer.dto';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -1522,6 +1523,62 @@ export class CustomersService {
       );
 
     return Promise.resolve({ primary_key: ret[primaryKey.key] });
+  }
+
+  /**
+   * Retreive a customer via API. Requires a primary key
+   * to have been set.
+   * @param account
+   * @param readCustomerDto
+   * @param session
+   * @returns
+   */
+
+  async read(
+    auth: { account: Account; workspace: Workspaces },
+    readCustomerDto: ReadCustomerDto,
+    session: string
+  ): Promise<CustomerDocument> {
+    let primaryKey: CustomerKeysDocument = await this.cacheManager.get(
+      `${auth.workspace.id}-primary-key`
+    );
+    if (!primaryKey) {
+      primaryKey = await this.CustomerKeysModel.findOne({
+        workspaceId: auth.workspace.id,
+        isPrimary: true,
+      });
+      await this.cacheManager.set(
+        `${auth.workspace.id}-primary-key`,
+        primaryKey
+      );
+    }
+
+    if (!primaryKey)
+      throw new HttpException(
+        'Primary key has not been set: see https://laudspeaker.com/docs/developer/api/users/read for more details.',
+        HttpStatus.BAD_REQUEST
+      );
+
+    const projection = KEYS_TO_SKIP.reduce((acc, key) => {
+      acc[key] = 0;
+      return acc;
+    }, {});
+
+    const ret: CustomerDocument = await this.CustomerModel.findOne(
+      {
+        workspaceId: auth.workspace.id,
+        [primaryKey.key]: readCustomerDto.primary_key,
+      },
+      projection
+    ).lean();
+
+    if (!ret)
+      throw new HttpException(
+        `Customer specified by primary key ${readCustomerDto.primary_key} does not exist!`,
+        HttpStatus.NOT_FOUND
+      );
+
+    return Promise.resolve(ret);
   }
 
   async mergeCustomers(

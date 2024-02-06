@@ -35,6 +35,7 @@ import { UpdatePK_DTO } from './dto/update-pk.dto';
 import { UpsertCustomerDto } from './dto/upsert-customer.dto';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { DeleteCustomerDto } from './dto/delete-customer.dto';
+import { ReadCustomerDto } from './dto/read-customer.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -315,6 +316,21 @@ export class CustomersController {
     return await this.customersService.delete(
       <{ account: Account; workspace: Workspaces }>user,
       deleteCustomerDto,
+      session
+    );
+  }
+
+  @Post('/read/')
+  @UseGuards(ApiKeyAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async read(
+    @Req() { user }: Request,
+    @Body() readCustomerDto: ReadCustomerDto
+  ) {
+    const session = randomUUID();
+    return await this.customersService.read(
+      <{ account: Account; workspace: Workspaces }>user,
+      readCustomerDto,
       session
     );
   }
