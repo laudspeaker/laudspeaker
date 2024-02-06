@@ -11,6 +11,7 @@ import { Queue, tryCatch } from 'bullmq';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { DataSource, Repository } from 'typeorm';
 import { Logger } from 'winston';
+import { DisconnectFirebaseDTO } from '../accounts/dto/disconnect-firebase.dto';
 import { Account } from '../accounts/entities/accounts.entity';
 import { AuthHelper } from '../auth/auth.helper';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
@@ -319,6 +320,28 @@ export class OrganizationService {
 
       this.error(error, this.create, session, account.id);
 
+      throw error;
+    }
+  }
+
+  public async disconnectFirebase(
+    account: Account,
+    body: DisconnectFirebaseDTO,
+    session: string
+  ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    if (!workspace) {
+      throw new BadRequestException(
+        "You don't have access to discconnect credentials."
+      );
+    }
+    try {
+      workspace.pushPlatforms[body.platform] = undefined;
+      await workspace.save();
+      return;
+    } catch (error) {
+      this.error(error, this.disconnectFirebase.name, session, account.email);
       throw error;
     }
   }
