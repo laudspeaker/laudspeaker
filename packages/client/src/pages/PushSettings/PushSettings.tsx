@@ -242,6 +242,8 @@ const PushSettings = () => {
       <MapValidationErrors
         title="Confirm platform disconnection?"
         desc="This action can't be undo, and you will have to add credantials once more."
+        confirmButtonType={ButtonType.DANGEROUS}
+        confirmTextClassName="!bg-[#F43F5E]  hover:!bg-[#FB7185] !text-white transition-all"
         confirmText="Disconnect"
         cancelText="Cancel"
         isOpen={!!disconnectPlarform}
@@ -268,14 +270,6 @@ const PushSettings = () => {
                 <div className="font-inter text-[#111827] text-base font-semibold">
                   Server key (.JSON)
                 </div>
-                <Button
-                  type={ButtonType.DANGEROUS}
-                  onClick={() => {
-                    setDisconnectPlarform(viewConnected);
-                  }}
-                >
-                  Disconnect
-                </Button>
               </div>
               <div className="w-full flex text-[#6366F1] p-[10px] border font-semibold border-[#E5E7EB] bg-[#F9FAFB] ">
                 <div className="whitespace-nowrap overflow-hidden max-w-full text-ellipsis text-sm font-inter">
@@ -283,7 +277,7 @@ const PushSettings = () => {
                     "Unknown name"}
                 </div>
               </div>
-              <div className=" font-inter text-[#111827] text-sm font-semibold">
+              <div className="font-inter text-[#111827] text-sm font-semibold">
                 URL
               </div>
               <div className="w-full flex text-[#111827] px-3 py-[5px] border border-[#E5E7EB] bg-[#F9FAFB] ">
@@ -409,13 +403,6 @@ const PushSettings = () => {
                                 wrapperClass="!bg-[#DCFCE7] !py-[2px] mr-[10px]"
                                 textClass="!text-sm !font-inter !font-normal !text-[#14532D]"
                               />
-                              <TrashIcon
-                                className="mr-2 min-w-[22px] min-h-[22px] hover:text-red-400 transition-all"
-                                onClick={(ev) => {
-                                  ev.stopPropagation();
-                                  setDisconnectPlarform(el as PushPlatforms);
-                                }}
-                              />
                               <ArrowRightIcon className="min-w-[24px] min-h-[24px] text-[#111827]" />
                             </div>
                           </div>
@@ -517,6 +504,18 @@ const PushSettings = () => {
             </>
           )}
         </div>
+        {viewConnected && (
+          <div>
+            <Button
+              type={ButtonType.DANGEROUS}
+              onClick={() => {
+                setDisconnectPlarform(viewConnected);
+              }}
+            >
+              Disconnect
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
