@@ -44,7 +44,7 @@ const EventTracker = () => {
   const [selectedCustomEvent, setSelectedCustomEvent] = useState<string>("{}");
 
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [pagesCount, setPagesCount] = useState(1);
 
   const [searchName, setSearchName] = useState("");
@@ -70,7 +70,7 @@ const EventTracker = () => {
 
       const { data } = await ApiService.get({
         url: `/events/custom-events?take=${itemsPerPage}&skip=${
-          itemsPerPage * currentPage
+          itemsPerPage * (currentPage - 1)
         }&search=${searchName}`,
       });
       const {
