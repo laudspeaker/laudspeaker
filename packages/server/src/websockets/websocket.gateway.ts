@@ -170,6 +170,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       socket.data.development = development;
 
       let customer: CustomerDocument;
+      //console.log("socket looking for customer");
       const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
       // Check if given customer ID is a valid format.

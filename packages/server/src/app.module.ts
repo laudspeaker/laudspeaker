@@ -56,6 +56,7 @@ import { RavenModule } from 'nest-raven';
 import { KafkaModule } from './api/kafka/kafka.module';
 import { JourneyLocation } from './api/journeys/entities/journey-location.entity';
 import { JourneyLocationsService } from './api/journeys/journey-locations.service';
+import { SegmentsModule } from './api/segments/segments.module';
 import { OrganizationsModule } from './api/organizations/organizations.module';
 import { OrganizationInvites } from './api/organizations/entities/organization-invites.entity';
 import { redisStore } from 'cache-manager-redis-yet';
