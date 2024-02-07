@@ -3309,7 +3309,7 @@ export class CustomersService {
 
 // Helper function to parse relative dates
  parseRelativeDate(value: string): Date {
-  console.log("in parseRelativeDate");
+  //console.log("in parseRelativeDate");
   const parts = value.split(' ');
   let date = new Date();
   const number = parseInt(parts[0], 10);
@@ -3321,6 +3321,8 @@ export class CustomersService {
   } else if (direction === 'from-now') {
     date = add(date, { [unit]: number });
   }
+
+  //console.log("parsed date is", JSON.stringify(date, null, 2));
 
   return date;
 }
@@ -3449,19 +3451,20 @@ toMongoDate(date: Date): string {
         }
         break;
       case 'after':
-        console.log("value type is", typeof value);
-        console.log("value is", value);
+        //console.log("value type is", typeof value);
+        //console.log("value is", value);
         let afterDate: Date;
         let isoDateStringAfter: string;
         if (valueType === 'Date' && dateComparisonType === 'relative') {
           afterDate = this.parseRelativeDate(value);
+          isoDateStringAfter = afterDate.toISOString();
         } else {
           // Use the Date constructor for parsing RFC 2822 formatted dates
           afterDate = new Date(value);
           isoDateStringAfter = afterDate.toISOString();
         }
-        console.log("afterDate type is", typeof afterDate);
-        console.log("after date is", afterDate);
+        //console.log("afterDate type is", typeof afterDate);
+        //console.log("after date is", afterDate);
         // Check if afterDate is valid
         if (isNaN(afterDate.getTime())) {
           throw new Error('Invalid date format');
@@ -3470,20 +3473,21 @@ toMongoDate(date: Date): string {
         query[key] = { $gt: isoDateStringAfter };
         break;
       case 'before':
-        console.log("value type is", typeof value);
-        console.log("value is", value);
+        //console.log("value type is", typeof value);
+        //console.log("value is", value);
         let beforeDate: Date;
         let isoDateStringBefore: string;
         if (valueType === 'Date' && dateComparisonType === 'relative') {
           beforeDate = this.parseRelativeDate(value);
+          isoDateStringBefore = beforeDate.toISOString();
         } else {
           // Directly use the Date constructor for parsing RFC 2822 formatted dates
           beforeDate = new Date(value);
           isoDateStringBefore = beforeDate.toISOString();
 
         }
-        console.log("beforeDate type is", typeof beforeDate);
-        console.log("before date is", beforeDate);
+        //console.log("beforeDate type is", typeof beforeDate);
+        //console.log("before date is", beforeDate);
         // Check if beforeDate is valid
         if (isNaN(beforeDate.getTime())) {
           throw new Error('Invalid date format');
@@ -3493,14 +3497,16 @@ toMongoDate(date: Date): string {
         query[key] = { $lt: isoDateStringBefore };
         break;
       case 'during':
-        console.log("value type is", typeof value);
-        console.log("value is", value);
-        console.log("subComparisonValue is", subComparisonValue);
+        //console.log("value type is", typeof value);
+        //console.log("value is", value);
+        //console.log("subComparisonValue is", subComparisonValue);
         let startDate: Date, endDate: Date;
         let isoStart: string, isoEnd: string;
         if (valueType === 'Date' && dateComparisonType === 'relative') {
           startDate = this.parseRelativeDate(value);
           endDate = this.parseRelativeDate(subComparisonValue);
+          isoStart = startDate.toISOString();
+          isoEnd = endDate.toISOString();
         } else {
           // Use the Date constructor for parsing RFC 2822 formatted dates
           startDate = new Date(value);
@@ -3508,10 +3514,10 @@ toMongoDate(date: Date): string {
           isoStart = startDate.toISOString();
           isoEnd = endDate.toISOString();
         }
-        console.log("startDate type is", typeof startDate);
-        console.log("startDate is", startDate);
-        console.log("endDate type is", typeof endDate);
-        console.log("endDate is", endDate);
+        //console.log("startDate type is", typeof startDate);
+        //console.log("startDate is", startDate);
+        //console.log("endDate type is", typeof endDate);
+        //console.log("endDate is", endDate);
         // Check if dates are valid
         if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
           throw new Error('Invalid date format');
