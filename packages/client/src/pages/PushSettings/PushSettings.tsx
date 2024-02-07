@@ -5,6 +5,7 @@ import { PushPlatforms } from "pages/PushBuilder/PushBuilderContent";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PushSettingsAddUsers from "./PushSettingsAddUsers";
+import TrashIcon from "@heroicons/react/24/outline/TrashIcon";
 import ArrowRightIcon from "@heroicons/react/24/outline/ArrowRightIcon";
 import PushSettingsFirebaseConfiguration from "./PushSettingsFirebaseConfiguration";
 import Input from "components/Elements/Inputv2";
@@ -13,6 +14,7 @@ import { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import CheckBox from "components/Checkbox/Checkbox";
 import Account from "types/Account";
+import MapValidationErrors from "pages/PeopleImport/Modals/MapValidationErrors";
 
 export type ConnectedPushFirebasePlatforms = Record<
   PushPlatforms,
@@ -86,6 +88,7 @@ const PushSettings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isTestLoading, setIsTestLoading] = useState(false);
+  const [disconnectPlarform, setDisconnectPlarform] = useState<PushPlatforms>();
   const [config, setConfig] = useState<PushSettingsConfiguration>({
     configFile: {
       Android: undefined,
@@ -127,6 +130,26 @@ const PushSettings = () => {
       });
     } catch (error) {}
     setIsLoadingSettings(false);
+  };
+
+  const handleDisconnectFirebase = async () => {
+    setIsSaving(true);
+    setDisconnectPlarform(undefined);
+    try {
+      await ApiService.delete({
+        url: "organizations/disconnect-push-chanel",
+        options: {
+          data: {
+            platform: disconnectPlarform,
+          },
+        },
+      });
+      setViewConnected(undefined);
+      clarifyData();
+    } catch (error) {
+      toast.error(`Error disconnecting ${disconnectPlarform} platform`);
+    }
+    setIsSaving(false);
   };
 
   useEffect(() => {
@@ -216,6 +239,17 @@ const PushSettings = () => {
 
   return (
     <div className="p-5 flex justify-center font-inter text-[14px] font-normal leading-[22px] text-[#111827]">
+      <MapValidationErrors
+        title="Confirm platform disconnection?"
+        desc="This action can't be undo, and you will have to add credantials once more."
+        confirmButtonType={ButtonType.DANGEROUS}
+        confirmTextClassName="!bg-[#F43F5E]  hover:!bg-[#FB7185] !text-white transition-all"
+        confirmText="Disconnect"
+        cancelText="Cancel"
+        isOpen={!!disconnectPlarform}
+        onClose={() => setDisconnectPlarform(undefined)}
+        onConfirm={handleDisconnectFirebase}
+      />
       <div className="max-w-[970px] w-full flex flex-col gap-5">
         <div className="flex gap-[15px] items-center">
           <BackButton
@@ -232,8 +266,10 @@ const PushSettings = () => {
         <div className="bg-white p-5 flex flex-col gap-5">
           {viewConnected ? (
             <>
-              <div className=" font-inter text-[#111827] text-base font-semibold">
-                Server key (.JSON)
+              <div className="flex w-full justify-between items-center">
+                <div className="font-inter text-[#111827] text-base font-semibold">
+                  Server key (.JSON)
+                </div>
               </div>
               <div className="w-full flex text-[#6366F1] p-[10px] border font-semibold border-[#E5E7EB] bg-[#F9FAFB] ">
                 <div className="whitespace-nowrap overflow-hidden max-w-full text-ellipsis text-sm font-inter">
@@ -241,7 +277,7 @@ const PushSettings = () => {
                     "Unknown name"}
                 </div>
               </div>
-              <div className=" font-inter text-[#111827] text-sm font-semibold">
+              <div className="font-inter text-[#111827] text-sm font-semibold">
                 URL
               </div>
               <div className="w-full flex text-[#111827] px-3 py-[5px] border border-[#E5E7EB] bg-[#F9FAFB] ">
@@ -367,7 +403,7 @@ const PushSettings = () => {
                                 wrapperClass="!bg-[#DCFCE7] !py-[2px] mr-[10px]"
                                 textClass="!text-sm !font-inter !font-normal !text-[#14532D]"
                               />
-                              <ArrowRightIcon className="w-6 h-6 text-[#111827]" />
+                              <ArrowRightIcon className="min-w-[24px] min-h-[24px] text-[#111827]" />
                             </div>
                           </div>
                         ))}
@@ -468,6 +504,18 @@ const PushSettings = () => {
             </>
           )}
         </div>
+        {viewConnected && (
+          <div>
+            <Button
+              type={ButtonType.DANGEROUS}
+              onClick={() => {
+                setDisconnectPlarform(viewConnected);
+              }}
+            >
+              Disconnect
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

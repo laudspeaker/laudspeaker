@@ -77,6 +77,8 @@ import { JourneyLocationsService } from './journey-locations.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { RedisService } from '@liaoliaots/nestjs-redis';
+import { JourneyChange } from './entities/journey-change.entity';
+import isObjectDeepEqual from '@/utils/isObjectDeepEqual';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -86,8 +88,128 @@ export enum JourneyStatus {
   DRAFT = 'Draft',
 }
 
-function isObjKey<T extends object>(key: PropertyKey, obj: T): key is keyof T {
-  return key in obj;
+enum ActivityEventType {
+  JOURNEY = 'journey',
+  ENTRY = 'entry',
+  SETTINGS = 'settings',
+}
+
+enum JourneyChangeType {
+  PUBLISH = 'publish',
+  PAUSE = 'pause',
+  RESUME = 'resume',
+  STOP = 'stop',
+  DELETE = 'delete',
+  RESTORE = 'restore',
+  EDIT_SAVE = 'edit-save',
+  EDIT_PUBLISH = 'edit-publish',
+}
+
+enum EntryChangeType {
+  ENTRY_TIMING = 'entry-timing',
+  ENTRY_TYPE = 'entry-type',
+  ELIGIBLE_USERS = 'eligible-users',
+}
+
+enum SettingsChangeType {
+  ADD_TAG = 'add-tag',
+  DELETE_TAG = 'delete-tag',
+  ENABLE_QUIETE_HOURS = 'enable-qh',
+  CHANGE_QUIETE_HOURS = 'change-qh',
+  DISABLE_QUIETE_HOURS = 'disable-qh',
+  ENABLE_MAX_USER_ENTRIES = 'enable-max-user',
+  CHANGE_MAX_USER_ENTRIES = 'change-max-user',
+  DISABLE_MAX_USER_ENTRIES = 'disable-max-user',
+  ENABLE_MAX_MESSAGE_SENDS = 'enable-max-message',
+  CHANGE_MAX_MESSAGE_SENDS = 'change-max-message',
+  DISABLE_MAX_MESSAGE_SENDS = 'disable-max-message',
+}
+
+type ChangeType = JourneyChangeType | EntryChangeType | SettingsChangeType;
+
+type UndetailedChangeType =
+  | JourneyChangeType.PAUSE
+  | JourneyChangeType.RESUME
+  | JourneyChangeType.STOP
+  | JourneyChangeType.DELETE
+  | JourneyChangeType.EDIT_SAVE
+  | SettingsChangeType.DISABLE_QUIETE_HOURS
+  | SettingsChangeType.DISABLE_MAX_USER_ENTRIES
+  | SettingsChangeType.DISABLE_MAX_MESSAGE_SENDS;
+
+interface UndetailedChange {
+  type: UndetailedChangeType;
+}
+
+interface NameDetailedChange {
+  type: JourneyChangeType.PUBLISH | JourneyChangeType.EDIT_PUBLISH;
+  name: string;
+}
+
+interface RestoreChange {
+  type: JourneyChangeType.RESTORE;
+  name1: string;
+  name2: string;
+}
+
+interface EntryTimingChange {
+  type: EntryChangeType.ENTRY_TIMING;
+  entryTiming: any;
+}
+
+interface EntryTypeChange {
+  type: EntryChangeType.ENTRY_TYPE;
+  entryType: JourneyEnrollmentType;
+}
+
+interface EligibleUsersChange {
+  type: EntryChangeType.ELIGIBLE_USERS;
+  inclusionCriteria: any;
+}
+
+interface TagChange {
+  type: SettingsChangeType.ADD_TAG | SettingsChangeType.DELETE_TAG;
+  tag: string;
+}
+
+interface QuietHoursChange {
+  type:
+    | SettingsChangeType.ENABLE_QUIETE_HOURS
+    | SettingsChangeType.CHANGE_QUIETE_HOURS;
+  quietHours: any;
+}
+
+interface MaxUserEntriesChange {
+  type:
+    | SettingsChangeType.ENABLE_MAX_USER_ENTRIES
+    | SettingsChangeType.CHANGE_MAX_USER_ENTRIES;
+  maxUserEntries: any;
+}
+
+interface MaxMessageSendsChange {
+  type:
+    | SettingsChangeType.ENABLE_MAX_MESSAGE_SENDS
+    | SettingsChangeType.CHANGE_MAX_MESSAGE_SENDS;
+  maxMessageSends: any;
+}
+
+type Change =
+  | UndetailedChange
+  | NameDetailedChange
+  | RestoreChange
+  | EntryTimingChange
+  | EntryTypeChange
+  | EligibleUsersChange
+  | TagChange
+  | QuietHoursChange
+  | MaxUserEntriesChange
+  | MaxMessageSendsChange;
+
+export interface ActivityEvent {
+  date: string;
+  type: ActivityEventType;
+  changerEmail: string;
+  changes: Change[];
 }
 
 @Injectable()
@@ -109,6 +231,8 @@ export class JourneysService {
     private readonly logger: Logger,
     @InjectRepository(Journey)
     public journeysRepository: Repository<Journey>,
+    @InjectRepository(JourneyChange)
+    public journeyChangesRepository: Repository<JourneyChange>,
     @Inject(StepsService) private stepsService: StepsService,
     @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @Inject(forwardRef(() => CustomersService))
@@ -886,11 +1010,14 @@ export class JourneysService {
         order: orderOptions,
         take: take < 100 ? take : 100,
         skip,
+        relations: ['latestChanger'],
       });
 
       const journeysWithEnrolledCustomersCount = await Promise.all(
         journeys.map(async (journey) => ({
           ...journey,
+          latestChanger: null,
+          latestChangerEmail: journey.latestChanger?.email,
           enrolledCustomers: await this.CustomerModel.count({
             journeys: journey.id,
           }),
@@ -902,6 +1029,249 @@ export class JourneysService {
       this.error(err, this.findAll.name, session, account.email);
       throw err;
     }
+  }
+
+  async getJourneyChanges(
+    account: Account,
+    id: string,
+    take = 100,
+    skip = 0
+  ): Promise<{ activityEvents: ActivityEvent[]; totalPages: number }> {
+    if (take > 100) take = 100;
+
+    const journey = await this.findByID(account, id, '');
+    if (!journey) throw new NotFoundException('Journey not found');
+
+    const [changes, count] = await this.journeyChangesRepository.findAndCount({
+      where: { journey: { id: journey.id } },
+      order: {
+        createdAt: 'desc',
+      },
+      take,
+      skip,
+      relations: ['previousChange', 'changer'],
+    });
+
+    const activityEvents = changes.map((change) => ({
+      ...this.retrieveJourneyChanges(change),
+      changerEmail: change.changer.email,
+      date: change.createdAt.toUTCString(),
+    }));
+
+    const totalPages = Math.ceil(count / take) || 1;
+
+    return {
+      activityEvents,
+      totalPages,
+    };
+  }
+
+  private retrieveJourneyChanges(change2: JourneyChange): {
+    type: ActivityEventType;
+    changes: Change[];
+  } {
+    const change1 = change2.previousChange;
+
+    if (!change1)
+      return {
+        type: ActivityEventType.JOURNEY,
+        changes: [
+          { type: JourneyChangeType.PUBLISH, name: change2.changedState.name },
+        ],
+      };
+
+    const state1 = change1.changedState;
+    const state2 = change2.changedState;
+
+    const changedKeys: string[] = [];
+
+    for (const key of Object.keys(state1)) {
+      if (
+        !(typeof state1[key] === 'object' && typeof state2[key] === 'object'
+          ? isObjectDeepEqual(state1[key], state2[key])
+          : state1[key] === state2[key])
+      ) {
+        changedKeys.push(key);
+      }
+    }
+
+    const type = changedKeys.includes('journeySettings')
+      ? ActivityEventType.SETTINGS
+      : changedKeys.includes('journeyEntrySettings') ||
+        changedKeys.includes('inclusionCriteria')
+      ? ActivityEventType.ENTRY
+      : ActivityEventType.JOURNEY;
+
+    const changes: Change[] = [];
+
+    switch (type) {
+      case ActivityEventType.JOURNEY:
+        if (!state1.isPaused && state2.isPaused) {
+          changes.push({ type: JourneyChangeType.PAUSE });
+        }
+
+        if (
+          state1.isPaused &&
+          !state2.isPaused &&
+          state2.isActive &&
+          !state2.isStopped &&
+          !state2.isDeleted
+        ) {
+          changes.push({ type: JourneyChangeType.RESUME });
+        }
+
+        if (!state1.isStopped && state2.isStopped) {
+          changes.push({ type: JourneyChangeType.STOP });
+        }
+
+        if (!state1.isDeleted && state2.isDeleted) {
+          changes.push({ type: JourneyChangeType.DELETE });
+        }
+        break;
+      case ActivityEventType.ENTRY:
+        if (
+          !isObjectDeepEqual(state1.inclusionCriteria, state2.inclusionCriteria)
+        ) {
+          changes.push({
+            type: EntryChangeType.ELIGIBLE_USERS,
+            inclusionCriteria: state2.inclusionCriteria,
+          });
+        }
+
+        if (
+          !isObjectDeepEqual(
+            state1.journeyEntrySettings.entryTiming,
+            state2.journeyEntrySettings.entryTiming
+          )
+        ) {
+          changes.push({
+            type: EntryChangeType.ENTRY_TIMING,
+            entryTiming: state2.journeyEntrySettings.entryTiming,
+          });
+        }
+
+        if (
+          state1.journeyEntrySettings.enrollmentType !==
+          state2.journeyEntrySettings.enrollmentType
+        ) {
+          changes.push({
+            type: EntryChangeType.ENTRY_TYPE,
+            entryType: state2.journeyEntrySettings.enrollmentType,
+          });
+        }
+        break;
+      case ActivityEventType.SETTINGS:
+        if (
+          !state1.journeySettings.quietHours.enabled &&
+          state2.journeySettings.quietHours.enabled
+        ) {
+          changes.push({
+            type: SettingsChangeType.ENABLE_QUIETE_HOURS,
+            quietHours: state2.journeySettings.quietHours,
+          });
+        } else if (
+          state1.journeySettings.quietHours.enabled &&
+          !state2.journeySettings.quietHours.enabled
+        ) {
+          changes.push({
+            type: SettingsChangeType.DISABLE_QUIETE_HOURS,
+          });
+        } else if (
+          !isObjectDeepEqual(
+            state1.journeySettings.quietHours,
+            state2.journeySettings.quietHours
+          )
+        ) {
+          changes.push({
+            type: SettingsChangeType.CHANGE_QUIETE_HOURS,
+            quietHours: state2.journeySettings.quietHours,
+          });
+        }
+
+        if (
+          !state1.journeySettings.maxEntries.enabled &&
+          state2.journeySettings.maxEntries.enabled
+        ) {
+          changes.push({
+            type: SettingsChangeType.ENABLE_MAX_USER_ENTRIES,
+            maxUserEntries: state2.journeySettings.maxEntries,
+          });
+        } else if (
+          state1.journeySettings.maxEntries.enabled &&
+          !state2.journeySettings.maxEntries.enabled
+        ) {
+          changes.push({
+            type: SettingsChangeType.DISABLE_MAX_USER_ENTRIES,
+          });
+        } else if (
+          !isObjectDeepEqual(
+            state1.journeySettings.maxEntries,
+            state2.journeySettings.maxEntries
+          )
+        ) {
+          changes.push({
+            type: SettingsChangeType.CHANGE_MAX_USER_ENTRIES,
+            maxUserEntries: state2.journeySettings.maxEntries,
+          });
+        }
+
+        if (
+          !state1.journeySettings.maxMessageSends.enabled &&
+          state2.journeySettings.maxMessageSends.enabled
+        ) {
+          changes.push({
+            type: SettingsChangeType.ENABLE_MAX_MESSAGE_SENDS,
+            maxMessageSends: state2.journeySettings.maxMessageSends,
+          });
+        } else if (
+          state1.journeySettings.maxMessageSends.enabled &&
+          !state2.journeySettings.maxMessageSends.enabled
+        ) {
+          changes.push({
+            type: SettingsChangeType.DISABLE_MAX_MESSAGE_SENDS,
+          });
+        } else if (
+          !isObjectDeepEqual(
+            state1.journeySettings.maxMessageSends,
+            state2.journeySettings.maxMessageSends
+          )
+        ) {
+          changes.push({
+            type: SettingsChangeType.CHANGE_MAX_MESSAGE_SENDS,
+            maxMessageSends: state2.journeySettings.maxMessageSends,
+          });
+        }
+
+        // eslint-disable-next-line no-case-declarations
+        const addedTags = state2.journeySettings.tags.filter(
+          (tag) => !state1.journeySettings.tags.includes(tag)
+        );
+
+        for (const addedTag of addedTags) {
+          changes.push({ type: SettingsChangeType.ADD_TAG, tag: addedTag });
+        }
+
+        // eslint-disable-next-line no-case-declarations
+        const deletedTags = state1.journeySettings.tags.filter(
+          (tag) => !state2.journeySettings.tags.includes(tag)
+        );
+
+        for (const deletedTag of deletedTags) {
+          changes.push({
+            type: SettingsChangeType.DELETE_TAG,
+            tag: deletedTag,
+          });
+        }
+
+        break;
+      default:
+        break;
+    }
+
+    return {
+      type,
+      changes,
+    };
   }
 
   /**
@@ -940,6 +1310,11 @@ export class JourneysService {
     session: string,
     queryRunner?: QueryRunner
   ) {
+    account = await this.customersService.accountsRepository.findOne({
+      where: { id: account.id },
+      relations: ['teams.organization.workspaces'],
+    });
+
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
     if (queryRunner)
@@ -984,6 +1359,7 @@ export class JourneysService {
           },
           id,
         },
+        relations: ['latestChanger'],
       });
 
       return Promise.resolve({
@@ -998,6 +1374,8 @@ export class JourneysService {
         isDeleted: found.isDeleted,
         journeyEntrySettings: found.journeyEntrySettings,
         journeySettings: found.journeySettings,
+        latestSave: found.latestSave,
+        latestChangerEmail: found.latestChanger?.email,
       });
     } catch (err) {
       this.error(err, this.findOne.name, session, account.email);
@@ -1017,7 +1395,7 @@ export class JourneysService {
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
     try {
-      return await this.journeysRepository.update(
+      const result = await this.journeysRepository.update(
         {
           workspace: {
             id: workspace.id,
@@ -1031,6 +1409,8 @@ export class JourneysService {
           isStopped: true,
         }
       );
+      await this.trackChange(account, id);
+      return result;
     } catch (err) {
       this.error(err, this.markDeleted.name, session, account.email);
       throw err;
@@ -1072,10 +1452,14 @@ export class JourneysService {
       } else {
         found.latestPause = null;
       }
-      return await this.journeysRepository.save({
+      const journeyResult = await this.journeysRepository.save({
         ...found,
         isPaused: value,
       });
+
+      await this.trackChange(account, journeyResult.id);
+
+      return journeyResult;
     } catch (error) {
       this.error(error, this.setPaused.name, session, account.email);
       throw error;
@@ -1199,6 +1583,8 @@ export class JourneysService {
         startedAt: new Date(Date.now()),
       });
 
+      await this.trackChange(account, journeyID, queryRunner);
+
       await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
     } catch (err) {
@@ -1231,12 +1617,14 @@ export class JourneysService {
       });
       if (!found?.isActive)
         throw new HttpException('The workflow was not activated', 400);
-      await this.journeysRepository.save({
+      const journeyResult = await this.journeysRepository.save({
         ...found,
         isStopped: true,
         isActive: false,
         isPaused: true,
       });
+
+      await this.trackChange(account, journeyResult.id);
     } catch (err) {
       this.error(err, this.stop.name, session, account.email);
       throw err;
@@ -1324,14 +1712,26 @@ export class JourneysService {
         // TODO: add logic of eligable users update on parameters change (using changeSegmentOption)
       }
 
-      return await this.journeysRepository.save({
+      const journeyResult = await this.journeysRepository.save({
         ...journey,
         isDynamic,
         name,
         inclusionCriteria,
         journeyEntrySettings,
         journeySettings,
+        latestSave: new Date(),
+        latestChanger: { id: account.id },
       });
+
+      if (
+        [journey.isActive, journey.isPaused, journey.isStopped].some(
+          (bool) => bool
+        )
+      ) {
+        await this.trackChange(account, journey.id);
+      }
+
+      return journeyResult;
     } catch (e) {
       this.error(e, this.update.name, session, account.email);
       throw e;
@@ -1796,6 +2196,8 @@ export class JourneysService {
 
       journey = await queryRunner.manager.save(Journey, {
         ...journey,
+        latestSave: new Date(),
+        latestChanger: { id: account.id },
         visualLayout: {
           nodes,
           edges,
@@ -2102,6 +2504,8 @@ export class JourneysService {
 
     journey = await queryRunner.manager.save(Journey, {
       ...journey,
+      latestChanger: { id: account.id },
+      latestSave: new Date(),
       visualLayout: {
         nodes,
         edges,
@@ -2278,5 +2682,39 @@ export class JourneysService {
       .incr(rateLimitKey)
       .expire(rateLimitKey, 59)
       .exec();
+  }
+
+  public async trackChange(
+    changer: Account,
+    journeyId: string,
+    queryRunner?: QueryRunner
+  ) {
+    const journey = queryRunner
+      ? await queryRunner.manager.findOneBy(Journey, { id: journeyId })
+      : await this.findByID(changer, journeyId, '');
+    if (!journey) throw new NotFoundException('Journey not found');
+
+    const previousChange = await this.journeyChangesRepository.findOne({
+      where: {
+        journey: { id: journey.id },
+      },
+      order: {
+        createdAt: 'desc',
+      },
+    });
+
+    delete journey.visualLayout;
+    delete journey.latestSave;
+    delete journey.latestChanger;
+    delete journey.createdAt;
+    delete journey.latestPause;
+    delete journey.workspace;
+
+    await this.journeyChangesRepository.save({
+      journey: { id: journey.id },
+      changer: { id: changer.id },
+      changedState: journey,
+      previousChange: previousChange ? { id: previousChange.id } : undefined,
+    });
   }
 }

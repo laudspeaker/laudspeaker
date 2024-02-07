@@ -39,13 +39,15 @@ const EventTracker = () => {
   const [posthogEvents, setPosthogEvents] = useState<PosthogEvent[]>([]);
   const [selectedPosthogEvent, setSelectedPosthogEvent] =
     useState<PosthogEvent>();
-  
+
   const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
-  const [selectedCustomEvent, setSelectedCustomEvent] =
-    useState<string>("{}");
+  const [selectedCustomEvent, setSelectedCustomEvent] = useState<string>("{}");
+
+  const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
+  const [selectedCustomEvent, setSelectedCustomEvent] = useState<string>("{}");
 
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [pagesCount, setPagesCount] = useState(1);
 
   const [searchName, setSearchName] = useState("");
@@ -68,17 +70,16 @@ const EventTracker = () => {
       }: { data: PosthogEvent[]; totalPages: number } = data;
 
       */
-      
+
       const { data } = await ApiService.get({
         url: `/events/custom-events?take=${itemsPerPage}&skip=${
-          itemsPerPage * currentPage
+          itemsPerPage * (currentPage - 1)
         }&search=${searchName}`,
       });
       const {
         data: fetchedCustomEvents,
         totalPages,
       }: { data: CustomEvent[]; totalPages: number } = data;
-      
       setPagesCount(totalPages);
       setCustomEvents(fetchedCustomEvents);
       setPossibleNames(
@@ -89,7 +90,6 @@ const EventTracker = () => {
             [] as string[]
           )
       );
-      
       /*
       setPagesCount(totalPages);
       setPosthogEvents(fetchedPosthogEvents);
@@ -167,21 +167,27 @@ const EventTracker = () => {
                 <div
                   className="flex items-center h-[56px]"
                   //onClick={() => handleSelectPosthogEvent(posthogEvent)}
-                  onClick={() => handleSelectCustomEvent(JSON.stringify(customEvent))}
+                  onClick={() =>
+                    handleSelectCustomEvent(JSON.stringify(customEvent))
+                  }
                 >
                   {customEvent.event}
                 </div>,
                 <div
                   className="flex items-center h-[56px] text-[#F43F5E]"
                   //onClick={() => handleSelectPosthogEvent(posthogEvent)}
-                  onClick={() => handleSelectCustomEvent(JSON.stringify(customEvent))}
+                  onClick={() =>
+                    handleSelectCustomEvent(JSON.stringify(customEvent))
+                  }
                 >
                   {customEvent.errorMessage}
                 </div>,
                 <div
                   className="flex items-center h-[56px]"
                   //onClick={() => handleSelectPosthogEvent(posthogEvent)}
-                  onClick={() => handleSelectCustomEvent(JSON.stringify(customEvent))}
+                  onClick={() =>
+                    handleSelectCustomEvent(JSON.stringify(customEvent))
+                  }
                 >
                   {format(new Date(customEvent.createdAt), "MM/dd/yyyy HH:mm")}
                 </div>,
@@ -199,11 +205,9 @@ const EventTracker = () => {
                   : -1
               }
               //onRowClick={(i) => setSelectedPosthogEvent(posthogEvents[i])}
-              onRowClick={
-                (i) => {
-                  setSelectedCustomEvent(JSON.stringify(customEvents[i]))
-                }
-              }
+              onRowClick={(i) => {
+                setSelectedCustomEvent(JSON.stringify(customEvents[i]));
+              }}
             />
           </div>
 
@@ -226,7 +230,9 @@ const EventTracker = () => {
                   if (!JSON.parse(selectedCustomEvent)?.payload) return;
 
                   //navigator.clipboard.writeText(selectedPosthogEvent.payload);
-                  navigator.clipboard.writeText(JSON.parse(selectedCustomEvent).payload);
+                  navigator.clipboard.writeText(
+                    JSON.parse(selectedCustomEvent).payload
+                  );
                 }}
               >
                 <CopyIcon />

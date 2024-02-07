@@ -396,7 +396,7 @@ export class EventsService {
   }
 
   /*
-   * 
+   *
    * Retrieves a number of events for the user to see in the event tracker
    * uses mongo aggregation
    */
@@ -407,7 +407,6 @@ export class EventsService {
     skip = 0,
     search = ''
   ) {
-
     this.debug(
       ` in customEvents`,
       this.getCustomEvents.name,
@@ -427,8 +426,8 @@ export class EventsService {
         }).exec()) / take
       ) || 1;
 
-      //console.log("regex", searchRegExp );
-      //console.log("ownderId", (<Account>account).id );
+    //console.log("regex", searchRegExp );
+    //console.log("ownderId", (<Account>account).id );
 
     /*
     const customEvents = await this.EventModel.find({
@@ -443,30 +442,30 @@ export class EventsService {
       .limit(take > 100 ? 100 : take)
       .exec();
     */
-      const customEvents = await this.EventModel.aggregate([
-        {
-          $match: {
-            event: searchRegExp,
-            ownerId: (<Account>account).id,
-          }
+    const customEvents = await this.EventModel.aggregate([
+      {
+        $match: {
+          event: searchRegExp,
+          ownerId: (<Account>account).id,
         },
-        {
-          $addFields: {
-            createdAt: { $toDate: "$_id" } // Convert _id to a date and assign to createdAt
-          }
+      },
+      {
+        $addFields: {
+          createdAt: { $toDate: '$_id' }, // Convert _id to a date and assign to createdAt
         },
-        {
-          $project: {
-            _id: 0, // Exclude the _id field
-            ownerId: 0, // Exclude the ownerId field
-            __v: 0, // Exclude the __v field
-            // Note: No need to explicitly include other fields; they are included by default
-          }
+      },
+      {
+        $project: {
+          _id: 0, // Exclude the _id field
+          ownerId: 0, // Exclude the ownerId field
+          __v: 0, // Exclude the __v field
+          // Note: No need to explicitly include other fields; they are included by default
         },
-        { $sort: { createdAt: -1 } },
-        { $skip: skip },
-        { $limit: take > 100 ? 100 : take }
-      ]).exec();
+      },
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: take > 100 ? 100 : take },
+    ]).exec();
 
     return {
       /*

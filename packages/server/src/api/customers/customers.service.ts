@@ -4880,7 +4880,7 @@ toMongoDate(date: Date): string {
         return customerValue === undefined || customerValue === null;
       case 'is greater than':
         //to do check - value methinks is now always a string
-        if (typeof customerValue === 'number' && typeof value === 'number') {
+        if (typeof customerValue === 'number' && !isNaN(+value)) {
           return (
             customerValue >
             this.correctValueType(valueType, value, account, session)
@@ -4889,7 +4889,7 @@ toMongoDate(date: Date): string {
         return false;
       case 'is less than':
         //to do check when
-        if (typeof customerValue === 'number' && typeof value === 'number') {
+        if (typeof customerValue === 'number' && !isNaN(+value)) {
           return (
             customerValue <
             this.correctValueType(valueType, value, account, session)

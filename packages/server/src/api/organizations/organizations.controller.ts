@@ -20,6 +20,7 @@ import { Model } from 'mongoose';
 import { RavenInterceptor } from 'nest-raven';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import { DisconnectFirebaseDTO } from '../accounts/dto/disconnect-firebase.dto';
 import { Account } from '../accounts/entities/accounts.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
@@ -129,6 +130,34 @@ export class OrganizationsController {
       return await this.organizationService.checkInviteStatus(id, session);
     } catch (error) {
       throw error;
+    }
+  }
+
+  @Delete('/disconnect-push-chanel')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  disconnectFirebase(
+    @Req() { user }: Request,
+    @Body() disconnectFirebaseDTO: DisconnectFirebaseDTO
+  ) {
+    const session = randomUUID();
+    this.debug(
+      `Disconnecting firebase platform: ${disconnectFirebaseDTO} by user ${JSON.stringify(
+        { id: (<Account>user).id }
+      )}`,
+      this.disconnectFirebase.name,
+      session,
+      (<Account>user).id
+    );
+    try {
+      return this.organizationService.disconnectFirebase(
+        <Account>user,
+        disconnectFirebaseDTO,
+        session
+      );
+    } catch (e) {
+      this.error(e, this.disconnectFirebase.name, session, (<Account>user).id);
+      throw e;
     }
   }
 

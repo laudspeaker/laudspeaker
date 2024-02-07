@@ -5,7 +5,7 @@ export const setupOrganization = (
 ) => {
   cy.visit("/");
   cy.url().should("include", "/company-setup");
-  cy.get("#name").click().type(name);
-  cy.get("#timezone").type(timezone);
-  cy.get(":nth-child(5) > div > .flex").click();
+  cy.get("#organizationName").click().type(name);
+  cy.get("#timezone").click().get(`[data-option="${timezone}"]`).click();
+  cy.get('#submit').click()
 };

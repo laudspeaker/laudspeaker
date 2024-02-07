@@ -10,6 +10,8 @@ interface MapValidationErrorsProps {
   desc: string;
   cancelText?: string;
   confirmText?: string;
+  confirmTextClassName?: string;
+  confirmButtonType?: ButtonType;
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -22,6 +24,8 @@ const MapValidationErrors: FC<MapValidationErrorsProps> = ({
   confirmText,
   onClose,
   onConfirm,
+  confirmTextClassName = "",
+  confirmButtonType = ButtonType.PRIMARY,
 }) => {
   return (
     <FlowBuilderModal isOpen={isOpen}>
@@ -66,7 +70,11 @@ const MapValidationErrors: FC<MapValidationErrorsProps> = ({
               {cancelText}
             </Button>
           )}
-          <Button type={ButtonType.PRIMARY} onClick={onConfirm}>
+          <Button
+            type={confirmButtonType}
+            className={confirmTextClassName}
+            onClick={onConfirm}
+          >
             {confirmText}
           </Button>
         </div>

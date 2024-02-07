@@ -27,6 +27,7 @@ import { Journey } from './entities/journey.entity';
 import { StepsModule } from '../steps/steps.module';
 import { JourneyLocation } from './entities/journey-location.entity';
 import { JourneyLocationsService } from './journey-locations.service';
+import { JourneyChange } from './entities/journey-change.entity';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { JourneyLocationsService } from './journey-locations.service';
       Template,
       Journey,
       JourneyLocation,
+      JourneyChange,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
