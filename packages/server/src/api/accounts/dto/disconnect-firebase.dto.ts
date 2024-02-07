@@ -6,4 +6,3 @@ export class DisconnectFirebaseDTO {
   @IsNotEmpty()
   public platform: PushPlatforms;
 }
-
