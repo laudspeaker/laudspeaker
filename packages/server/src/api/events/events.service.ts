@@ -395,6 +395,98 @@ export class EventsService {
     };
   }
 
+  /*
+   *
+   * Retrieves a number of events for the user to see in the event tracker
+   * uses mongo aggregation
+   */
+  async getCustomEvents(
+    account: Account,
+    session: string,
+    take = 100,
+    skip = 0,
+    search = ''
+  ) {
+    this.debug(
+      ` in customEvents`,
+      this.getCustomEvents.name,
+      session,
+      account.id
+    );
+
+    //console.log("in customEvents")
+    const searchRegExp = new RegExp(`.*${search}.*`, 'i');
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    const totalPages =
+      Math.ceil(
+        (await this.EventModel.count({
+          event: searchRegExp,
+          ownerId: (<Account>account).id,
+        }).exec()) / take
+      ) || 1;
+
+    //console.log("regex", searchRegExp );
+    //console.log("ownderId", (<Account>account).id );
+
+    /*
+    const customEvents = await this.EventModel.find({
+      event: searchRegExp,
+      ownerId: (<Account>account).id,
+    }, {
+      ownerId: 0, // Exclude the ownerId field
+      __v: 0 // Exclude the __v (version key) field
+    })
+      .sort({ createdAt: 'desc' })
+      .skip(skip)
+      .limit(take > 100 ? 100 : take)
+      .exec();
+    */
+    const customEvents = await this.EventModel.aggregate([
+      {
+        $match: {
+          event: searchRegExp,
+          ownerId: (<Account>account).id,
+        },
+      },
+      {
+        $addFields: {
+          createdAt: { $toDate: '$_id' }, // Convert _id to a date and assign to createdAt
+        },
+      },
+      {
+        $project: {
+          _id: 0, // Exclude the _id field
+          ownerId: 0, // Exclude the ownerId field
+          __v: 0, // Exclude the __v field
+          // Note: No need to explicitly include other fields; they are included by default
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: take > 100 ? 100 : take },
+    ]).exec();
+
+    return {
+      /*
+      data: customEvents.map((customEvent) => ({
+        ...customEvent.toObject(),
+        //createdAt: customEvent._id.getTimestamp(),
+        createdAt: customEvent._id.getTimestamp(),
+        
+      })),
+      */
+      data: customEvents.map((customEvent) => {
+        const cleanedEvent = {
+          ...customEvent,
+          // Perform any additional transformations here if necessary
+        };
+        return cleanedEvent;
+      }),
+      totalPages,
+    };
+  }
+
   //to do need to specify how this is
   async getEventsByMongo(mongoQuery: any, customer: CustomerDocument) {
     //console.log("In getEvents by mongo");

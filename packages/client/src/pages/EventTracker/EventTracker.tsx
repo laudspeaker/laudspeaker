@@ -23,12 +23,26 @@ interface PosthogEvent {
   errorMessage?: string;
 }
 
+interface CustomEvent {
+  event: string;
+  source: string;
+  correlationKey: string;
+  correlationValue: string;
+  payload: string;
+  createdAt: string;
+  errorMessage?: string;
+}
+
 const EventTracker = () => {
   const [loading, setLoading] = useState(false);
 
   const [posthogEvents, setPosthogEvents] = useState<PosthogEvent[]>([]);
   const [selectedPosthogEvent, setSelectedPosthogEvent] =
     useState<PosthogEvent>();
+
+  const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
+  const [selectedCustomEvent, setSelectedCustomEvent] =
+    useState<string>("{}");
 
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(0);
@@ -39,8 +53,10 @@ const EventTracker = () => {
 
   const loadData = async () => {
     setSelectedPosthogEvent(undefined);
+    setSelectedCustomEvent("{}");
     setLoading(true);
     try {
+      /*
       const { data } = await ApiService.get({
         url: `/events/posthog-events?take=${itemsPerPage}&skip=${
           itemsPerPage * currentPage
@@ -50,6 +66,30 @@ const EventTracker = () => {
         data: fetchedPosthogEvents,
         totalPages,
       }: { data: PosthogEvent[]; totalPages: number } = data;
+
+      */
+
+      const { data } = await ApiService.get({
+        url: `/events/custom-events?take=${itemsPerPage}&skip=${itemsPerPage * currentPage
+          }&search=${searchName}`,
+      });
+      const {
+        data: fetchedCustomEvents,
+        totalPages,
+      }: { data: CustomEvent[]; totalPages: number } = data;
+
+      setPagesCount(totalPages);
+      setCustomEvents(fetchedCustomEvents);
+      setPossibleNames(
+        fetchedCustomEvents
+          .map((customEvent) => customEvent.event)
+          .reduce(
+            (acc, el) => (acc.includes(el) ? acc : acc.concat([el])),
+            [] as string[]
+          )
+      );
+
+      /*
       setPagesCount(totalPages);
       setPosthogEvents(fetchedPosthogEvents);
       setPossibleNames(
@@ -60,6 +100,7 @@ const EventTracker = () => {
             [] as string[]
           )
       );
+      */
     } catch (err) {
       toast.error("Failed to load events");
     } finally {
@@ -81,6 +122,10 @@ const EventTracker = () => {
 
   const handleSelectPosthogEvent = (posthogEvent: PosthogEvent) => {
     setSelectedPosthogEvent(posthogEvent);
+  };
+
+  const handleSelectCustomEvent = (customEvent: string) => {
+    setSelectedCustomEvent(customEvent);
   };
 
   if (loading) return <Progress />;
@@ -114,35 +159,50 @@ const EventTracker = () => {
                   Last update
                 </div>,
               ]}
-              rowsData={posthogEvents}
-              rows={posthogEvents.map((posthogEvent) => [
+              //rowsData={posthogEvents}
+              //rows={posthogEvents.map((posthogEvent) => [
+              rowsData={customEvents}
+              rows={customEvents.map((customEvent) => [
                 <div
                   className="flex items-center h-[56px]"
-                  onClick={() => handleSelectPosthogEvent(posthogEvent)}
+                  //onClick={() => handleSelectPosthogEvent(posthogEvent)}
+                  onClick={() => handleSelectCustomEvent(JSON.stringify(customEvent))}
                 >
-                  {posthogEvent.name}
+                  {customEvent.event}
                 </div>,
                 <div
                   className="flex items-center h-[56px] text-[#F43F5E]"
-                  onClick={() => handleSelectPosthogEvent(posthogEvent)}
+                  //onClick={() => handleSelectPosthogEvent(posthogEvent)}
+                  onClick={() => handleSelectCustomEvent(JSON.stringify(customEvent))}
                 >
-                  {posthogEvent.errorMessage}
+                  {customEvent.errorMessage}
                 </div>,
                 <div
                   className="flex items-center h-[56px]"
-                  onClick={() => handleSelectPosthogEvent(posthogEvent)}
+                  //onClick={() => handleSelectPosthogEvent(posthogEvent)}
+                  onClick={() => handleSelectCustomEvent(JSON.stringify(customEvent))}
                 >
-                  {format(new Date(posthogEvent.createdAt), "MM/dd/yyyy HH:mm")}
+                  {format(new Date(customEvent.createdAt), "MM/dd/yyyy HH:mm")}
                 </div>,
               ])}
               className="w-full"
               headClassName="bg-[#F3F4F6]"
+              //selectedRow={
+              //  selectedPosthogEvent
+              //    ? posthogEvents.indexOf(selectedPosthogEvent)
+              //    : -1
+              //}
               selectedRow={
-                selectedPosthogEvent
-                  ? posthogEvents.indexOf(selectedPosthogEvent)
+                selectedCustomEvent
+                  ? customEvents.indexOf(JSON.parse(selectedCustomEvent))
                   : -1
               }
-              onRowClick={(i) => setSelectedPosthogEvent(posthogEvents[i])}
+              //onRowClick={(i) => setSelectedPosthogEvent(posthogEvents[i])}
+              onRowClick={
+                (i) => {
+                  setSelectedCustomEvent(JSON.stringify(customEvents[i]))
+                }
+              }
             />
           </div>
 
@@ -161,9 +221,11 @@ const EventTracker = () => {
               <div
                 className="cursor-pointer"
                 onClick={() => {
-                  if (!selectedPosthogEvent?.payload) return;
+                  ///if (!selectedPosthogEvent?.payload) return;
+                  if (!JSON.parse(selectedCustomEvent)?.payload) return;
 
-                  navigator.clipboard.writeText(selectedPosthogEvent.payload);
+                  //navigator.clipboard.writeText(selectedPosthogEvent.payload);
+                  navigator.clipboard.writeText(JSON.parse(selectedCustomEvent).payload);
                 }}
               >
                 <CopyIcon />
@@ -186,8 +248,9 @@ const EventTracker = () => {
                 enableLiveAutocompletion: true,
                 enableSnippets: true,
               }}
-              value={selectedPosthogEvent?.payload}
-              onChange={() => {}}
+              //value={selectedPosthogEvent?.payload}
+              value={JSON.stringify(JSON.parse(selectedCustomEvent), null, 2)}
+              onChange={() => { }}
             />
           </div>
         </div>

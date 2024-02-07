@@ -210,6 +210,25 @@ export class EventsController {
     );
   }
 
+  @Get('/custom-events')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getCustomEvents(
+    @Req() { user }: Request,
+    @Query('take') take?: string,
+    @Query('skip') skip?: string,
+    @Query('search') search?: string
+  ) {
+    const session = randomUUID();
+    return this.eventsService.getCustomEvents(
+      <Account>user,
+      session,
+      take && +take,
+      skip && +skip,
+      search
+    );
+  }
+
   @Get('/posthog-events')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
