@@ -395,6 +395,59 @@ export class EventsService {
     };
   }
 
+  //to do
+  async getCustomEvents(
+    account: Account,
+    session: string,
+    take = 100,
+    skip = 0,
+    search = ''
+  ) {
+
+    this.debug(
+      ` in customEvents`,
+      this.getCustomEvents.name,
+      session,
+      account.id
+    );
+
+    //console.log("in customEvents")
+    const searchRegExp = new RegExp(`.*${search}.*`, 'i');
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    const totalPages =
+      Math.ceil(
+        (await this.EventModel.count({
+          event: searchRegExp,
+          ownerId: (<Account>account).id,
+        }).exec()) / take
+      ) || 1;
+
+      //console.log("regex", searchRegExp );
+      //console.log("ownderId", (<Account>account).id );
+
+
+    const customEvents = await this.EventModel.find({
+      event: searchRegExp,
+      ownerId: (<Account>account).id,
+    })
+      .sort({ createdAt: 'desc' })
+      .skip(skip)
+      .limit(take > 100 ? 100 : take)
+      .exec();
+
+      //console.log("custom events are");
+      //console.log(customEvents);
+
+    return {
+      data: customEvents.map((customEvent) => ({
+        ...customEvent.toObject(),
+        createdAt: customEvent._id.getTimestamp(),
+      })),
+      totalPages,
+    };
+  }
+
   //to do need to specify how this is
   async getEventsByMongo(mongoQuery: any, customer: CustomerDocument) {
     //console.log("In getEvents by mongo");
