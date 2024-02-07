@@ -41,8 +41,7 @@ const EventTracker = () => {
     useState<PosthogEvent>();
 
   const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
-  const [selectedCustomEvent, setSelectedCustomEvent] =
-    useState<string>("{}");
+  const [selectedCustomEvent, setSelectedCustomEvent] = useState<string>("{}");
 
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(0);
@@ -70,8 +69,9 @@ const EventTracker = () => {
       */
 
       const { data } = await ApiService.get({
-        url: `/events/custom-events?take=${itemsPerPage}&skip=${itemsPerPage * currentPage
-          }&search=${searchName}`,
+        url: `/events/custom-events?take=${itemsPerPage}&skip=${
+          itemsPerPage * currentPage
+        }&search=${searchName}`,
       });
       const {
         data: fetchedCustomEvents,
@@ -166,21 +166,27 @@ const EventTracker = () => {
                 <div
                   className="flex items-center h-[56px]"
                   //onClick={() => handleSelectPosthogEvent(posthogEvent)}
-                  onClick={() => handleSelectCustomEvent(JSON.stringify(customEvent))}
+                  onClick={() =>
+                    handleSelectCustomEvent(JSON.stringify(customEvent))
+                  }
                 >
                   {customEvent.event}
                 </div>,
                 <div
                   className="flex items-center h-[56px] text-[#F43F5E]"
                   //onClick={() => handleSelectPosthogEvent(posthogEvent)}
-                  onClick={() => handleSelectCustomEvent(JSON.stringify(customEvent))}
+                  onClick={() =>
+                    handleSelectCustomEvent(JSON.stringify(customEvent))
+                  }
                 >
                   {customEvent.errorMessage}
                 </div>,
                 <div
                   className="flex items-center h-[56px]"
                   //onClick={() => handleSelectPosthogEvent(posthogEvent)}
-                  onClick={() => handleSelectCustomEvent(JSON.stringify(customEvent))}
+                  onClick={() =>
+                    handleSelectCustomEvent(JSON.stringify(customEvent))
+                  }
                 >
                   {format(new Date(customEvent.createdAt), "MM/dd/yyyy HH:mm")}
                 </div>,
@@ -198,11 +204,9 @@ const EventTracker = () => {
                   : -1
               }
               //onRowClick={(i) => setSelectedPosthogEvent(posthogEvents[i])}
-              onRowClick={
-                (i) => {
-                  setSelectedCustomEvent(JSON.stringify(customEvents[i]))
-                }
-              }
+              onRowClick={(i) => {
+                setSelectedCustomEvent(JSON.stringify(customEvents[i]));
+              }}
             />
           </div>
 
@@ -225,7 +229,9 @@ const EventTracker = () => {
                   if (!JSON.parse(selectedCustomEvent)?.payload) return;
 
                   //navigator.clipboard.writeText(selectedPosthogEvent.payload);
-                  navigator.clipboard.writeText(JSON.parse(selectedCustomEvent).payload);
+                  navigator.clipboard.writeText(
+                    JSON.parse(selectedCustomEvent).payload
+                  );
                 }}
               >
                 <CopyIcon />
@@ -250,7 +256,7 @@ const EventTracker = () => {
               }}
               //value={selectedPosthogEvent?.payload}
               value={JSON.stringify(JSON.parse(selectedCustomEvent), null, 2)}
-              onChange={() => { }}
+              onChange={() => {}}
             />
           </div>
         </div>
