@@ -122,7 +122,7 @@ const acceptableBooleanConvertable = {
 
 export interface QueryOptions {
   // ... other properties ...
-  customerKeys?: { key: string, type: AttributeType }[];
+  customerKeys?: { key: string; type: AttributeType }[];
 }
 
 @Injectable()
