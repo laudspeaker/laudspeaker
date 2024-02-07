@@ -2319,7 +2319,7 @@ export class CustomersService {
               session,
               account.id
             );
-            //toggle this line for testing
+            //toggle for testing segments
             await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
@@ -2487,8 +2487,8 @@ export class CustomersService {
               session,
               account.id
             );
-            //toggle for testing to do
-            await this.connection.db.collection(collection).drop();
+            //toggle for testing segments
+            //await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
               this.getSegmentCustomersFromQuery.name,
@@ -2580,8 +2580,8 @@ export class CustomersService {
               session,
               account.id
             );
-            //toggle to do
-            await this.connection.db.collection(collection).drop();
+            //toggle for testing segments
+            //await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
               this.getSegmentCustomersFromQuery.name,
@@ -3452,11 +3452,13 @@ toMongoDate(date: Date): string {
         console.log("value type is", typeof value);
         console.log("value is", value);
         let afterDate: Date;
+        let isoDateStringAfter: string;
         if (valueType === 'Date' && dateComparisonType === 'relative') {
           afterDate = this.parseRelativeDate(value);
         } else {
           // Use the Date constructor for parsing RFC 2822 formatted dates
           afterDate = new Date(value);
+          isoDateStringAfter = afterDate.toISOString();
         }
         console.log("afterDate type is", typeof afterDate);
         console.log("after date is", afterDate);
@@ -3464,17 +3466,21 @@ toMongoDate(date: Date): string {
         if (isNaN(afterDate.getTime())) {
           throw new Error('Invalid date format');
         }
-        query[key] = { $gt: afterDate };
+        //query[key] = { $gt: afterDate };
+        query[key] = { $gt: isoDateStringAfter };
         break;
       case 'before':
         console.log("value type is", typeof value);
         console.log("value is", value);
         let beforeDate: Date;
+        let isoDateStringBefore: string;
         if (valueType === 'Date' && dateComparisonType === 'relative') {
           beforeDate = this.parseRelativeDate(value);
         } else {
           // Directly use the Date constructor for parsing RFC 2822 formatted dates
           beforeDate = new Date(value);
+          isoDateStringBefore = beforeDate.toISOString();
+
         }
         console.log("beforeDate type is", typeof beforeDate);
         console.log("before date is", beforeDate);
@@ -3483,13 +3489,15 @@ toMongoDate(date: Date): string {
           throw new Error('Invalid date format');
         }
         //query[key] = { $lt: this.toMongoDate(beforeDate) };
-        query[key] = { $lt: beforeDate };
+        //query[key] = { $lt: beforeDate };
+        query[key] = { $lt: isoDateStringBefore };
         break;
       case 'during':
         console.log("value type is", typeof value);
         console.log("value is", value);
         console.log("subComparisonValue is", subComparisonValue);
         let startDate: Date, endDate: Date;
+        let isoStart: string, isoEnd: string;
         if (valueType === 'Date' && dateComparisonType === 'relative') {
           startDate = this.parseRelativeDate(value);
           endDate = this.parseRelativeDate(subComparisonValue);
@@ -3497,6 +3505,8 @@ toMongoDate(date: Date): string {
           // Use the Date constructor for parsing RFC 2822 formatted dates
           startDate = new Date(value);
           endDate = new Date(subComparisonValue);
+          isoStart = startDate.toISOString();
+          isoEnd = endDate.toISOString();
         }
         console.log("startDate type is", typeof startDate);
         console.log("startDate is", startDate);
@@ -3506,7 +3516,8 @@ toMongoDate(date: Date): string {
         if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
           throw new Error('Invalid date format');
         }
-        query[key] = { $gte: startDate, $lte: endDate };
+        //query[key] = { $gte: startDate, $lte: endDate };
+        query[key] = { $gte: isoStart, $lte: isoEnd };
         break;
       // Add more cases for other comparison types as needed
       default:

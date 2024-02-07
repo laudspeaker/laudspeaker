@@ -43,9 +43,6 @@ const EventTracker = () => {
   const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
   const [selectedCustomEvent, setSelectedCustomEvent] = useState<string>("{}");
 
-  const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
-  const [selectedCustomEvent, setSelectedCustomEvent] = useState<string>("{}");
-
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [pagesCount, setPagesCount] = useState(1);
