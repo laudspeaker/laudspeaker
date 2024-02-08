@@ -419,11 +419,11 @@ export class AccountsService extends BaseJwtHelper {
 
       const newPushPlatforms = {
         [PushPlatforms.IOS]:
-          pushPlatforms[PushPlatforms.IOS] ||
-          workspace.pushPlatforms[PushPlatforms.IOS],
+          pushPlatforms?.[PushPlatforms.IOS] ||
+          workspace.pushPlatforms?.[PushPlatforms.IOS],
         [PushPlatforms.ANDROID]:
-          pushPlatforms[PushPlatforms.ANDROID] ||
-          workspace.pushPlatforms[PushPlatforms.ANDROID],
+          pushPlatforms?.[PushPlatforms.ANDROID] ||
+          workspace.pushPlatforms?.[PushPlatforms.ANDROID],
       };
 
       const newWorkspace = {
