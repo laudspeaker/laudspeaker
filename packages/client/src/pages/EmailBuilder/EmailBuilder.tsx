@@ -111,7 +111,7 @@ const EmailBuilder = () => {
   useLayoutEffect(() => {
     const populateEmailBuilder = async () => {
       const { data } = await getTemplate(id);
-      setTitle(data.subject);
+      setTitle(data.subject || "");
       if (data?.cc) setCC(data.cc.join());
       setTemplateName(data.name);
       setEmailTemplateId(data.id);
