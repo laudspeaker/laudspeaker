@@ -3,6 +3,7 @@ import { capitalize } from "lodash";
 import { FC } from "react";
 import {
   ComparisonType,
+  DateComparisonType,
   ObjectKeyComparisonType,
   Query,
   QueryStatementType,
@@ -57,7 +58,9 @@ const FilterViewer: FC<FilterViewerProps> = ({
                 {statement.comparisonType !== ComparisonType.EXIST &&
                   statement.comparisonType !== ComparisonType.NOT_EXIST && (
                     <div className="px-[12px] py-[5px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
-                      {statement.valueType === StatementValueType.DATE
+                      {statement.valueType === StatementValueType.DATE &&
+                      statement.dateComparisonType ===
+                        DateComparisonType.ABSOLUTE
                         ? format(new Date(statement.value), "MM/dd/yyyy HH:mm")
                         : statement.value}
                     </div>
@@ -68,10 +71,13 @@ const FilterViewer: FC<FilterViewerProps> = ({
                     <>
                       <div>-</div>
                       <div className="px-[12px] py-[5px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
-                        {format(
-                          new Date(statement.subComparisonValue),
-                          "MM/dd/yyyy HH:mm"
-                        )}
+                        {statement.dateComparisonType ===
+                        DateComparisonType.ABSOLUTE
+                          ? format(
+                              new Date(statement.subComparisonValue),
+                              "MM/dd/yyyy HH:mm"
+                            )
+                          : statement.subComparisonValue}
                       </div>
                     </>
                   )}
