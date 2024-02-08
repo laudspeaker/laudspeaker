@@ -36,6 +36,7 @@ const DataTransfer = () => {
   });
   const [attributes, setAttributes] = useState<Attribute[]>([]);
   const [primaryAttribute, setPrimatyAttribute] = useState<Attribute>();
+  const [isError, setIsError] = useState(false);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -67,32 +68,50 @@ const DataTransfer = () => {
     });
   };
 
+  const handleCreate = async () => {};
+
+  const handleUpdate = async () => {};
+
+  const handleSave = async () => {
+    const save = isCreating ? handleCreate : handleUpdate;
+
+    await save();
+  };
+
+  const handleCancel = async () => {
+    await loadData();
+  };
+
   return (
     <div className="flex flex-col text-[#111827] text-[14px] font-inter font-normal leading-[22px] h-full">
       <div className="bg-white h-[100px] border-y border-[#E5E7EB] rounded flex items-center justify-between px-5">
         <div className="flex gap-2.5 items-center">
           <div className="text-[20px] font-semibold leading-[28px]">
-            {dataSource.name}
+            {isCreating ? "Add data transformation" : dataSource.name}
           </div>
-          <div
-            className={`rounded-[14px] w-fit px-2.5 py-[2px] ${
-              dataSourceStatusBadgeStyles[dataSource.status]
-            }`}
-          >
-            {capitalize(dataSource.status)}
+          {!isCreating && (
+            <div
+              className={`rounded-[14px] w-fit px-2.5 py-[2px] ${
+                dataSourceStatusBadgeStyles[dataSource.status]
+              }`}
+            >
+              {capitalize(dataSource.status)}
+            </div>
+          )}
+        </div>
+        {!isCreating && (
+          <div className="flex gap-2.5 items-center">
+            <Button type={ButtonType.SECONDARY} onClick={() => {}}>
+              Pause
+            </Button>
+            <Button type={ButtonType.DANGEROUS} onClick={() => {}}>
+              Delete
+            </Button>
           </div>
-        </div>
-        <div className="flex gap-2.5 items-center">
-          <Button type={ButtonType.SECONDARY} onClick={() => {}}>
-            Pause
-          </Button>
-          <Button type={ButtonType.DANGEROUS} onClick={() => {}}>
-            Delete
-          </Button>
-        </div>
+        )}
       </div>
       <div className="flex h-full">
-        <div className="flex flex-col h-full bg-white">
+        <div className="flex flex-col h-full w-full bg-white">
           <div className="border-b border-[#E5E7EB] bg-white p-5 flex flex-col gap-2.5">
             <div>
               Description Description Description Description Description
@@ -111,8 +130,10 @@ const DataTransfer = () => {
                 <Input
                   wrapperClassName="!w-full"
                   className="!w-full"
-                  value=""
-                  onChange={() => {}}
+                  value={dataSource.name}
+                  onChange={(value) => {
+                    setDataSource({ ...dataSource, name: value });
+                  }}
                   placeholder="Name this record based on its data source, e.g., Stripe Payments"
                 />
                 <Input
@@ -172,17 +193,27 @@ const DataTransfer = () => {
             </Button>
           </div>
           <div className="bg-white p-5 flex gap-2.5 items-center">
-            <Button onClick={() => {}} type={ButtonType.PRIMARY} disabled>
+            <Button
+              onClick={handleSave}
+              type={ButtonType.PRIMARY}
+              disabled={!primaryAttribute || isLoading || isError}
+            >
               Save
             </Button>
-            <Button onClick={() => {}} type={ButtonType.SECONDARY} disabled>
-              Cancel
-            </Button>
+            {!isCreating && (
+              <Button
+                onClick={handleCancel}
+                type={ButtonType.SECONDARY}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+            )}
           </div>
         </div>
         <div className="p-5 h-full">
           <div className="w-[540px] h-full flex justify-center">
-            <div className="w-full h-fit bg-white border border-[#E5E7EB] rounded-lg overflow-hidden flex flex-col">
+            <div className="w-full h-full bg-white border border-[#E5E7EB] rounded-lg overflow-hidden flex flex-col">
               <div className="px-5 py-2.5 font-semibold">
                 Paste example for reference
               </div>
@@ -191,11 +222,11 @@ const DataTransfer = () => {
                 <AceEditor
                   aria-label="editor"
                   mode="json"
-                  theme="github"
+                  theme="monokai"
                   name="editor"
                   fontSize={12}
-                  // minLines={15}
-                  maxLines={40}
+                  // minLines={100}
+                  // maxLines={40}
                   width="100%"
                   height="100%"
                   showPrintMargin={false}

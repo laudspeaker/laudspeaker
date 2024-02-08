@@ -1,5 +1,6 @@
 import { Menu, Transition } from "@headlessui/react";
 import DotsIcon from "assets/icons/DotsIcon";
+import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Table from "components/Tablev2";
 import { format } from "date-fns";
 import { capitalize } from "lodash";
@@ -42,8 +43,16 @@ const DataTransferTable = () => {
 
   return (
     <div className="p-5 flex flex-col gap-5 text-[#111827] text-[14px] font-inter font-normal leading-[22px]">
-      <div className="text-black font-semibold text-[20px] leading-[28px]">
-        Data transfer
+      <div className="flex items-center justify-between">
+        <div className="text-black font-semibold text-[20px] leading-[28px]">
+          Data transfer
+        </div>
+        <Button
+          type={ButtonType.PRIMARY}
+          onClick={() => navigate("/data-transfer/create")}
+        >
+          Add data
+        </Button>
       </div>
       <div className="bg-white p-5 rounded-lg">
         <Table
