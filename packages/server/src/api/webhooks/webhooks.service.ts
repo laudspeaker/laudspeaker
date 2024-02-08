@@ -441,9 +441,7 @@ export class WebhooksService {
       }
       return Promise.resolve();
     } catch (err) {
-      this.logger.error(
-        `webhooks.service.ts:WebhooksService.setupMailgunWebhook: Error: ${err}`
-      );
+      this.error(err,this.setupMailgunWebhook.name,randomUUID());
       return Promise.reject(err);
     }
   }
