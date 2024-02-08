@@ -87,7 +87,7 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
           onChange={(value) =>
             setFormData({ ...formData, sendingEmail: value })
           }
-          placeholder="sender@example.com"
+          placeholder="sender"
         />
       </div>
     </>
