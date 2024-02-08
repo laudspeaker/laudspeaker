@@ -73,6 +73,7 @@ import {
   ModifyAttributesDto,
   UpdateAttributeDto,
 } from './dto/modify-attributes.dto';
+import { parseISO, add, sub, formatISO } from 'date-fns';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -2393,7 +2394,7 @@ export class CustomersService {
               session,
               account.id
             );
-            //toggle this line for testing
+            //toggle for testing segments
             await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
@@ -2561,7 +2562,7 @@ export class CustomersService {
               session,
               account.id
             );
-            //toggle for testing to do
+            //toggle for testing segments
             await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
@@ -2654,7 +2655,7 @@ export class CustomersService {
               session,
               account.id
             );
-            //toggle to do
+            //toggle for testing segments
             await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
@@ -3381,6 +3382,31 @@ export class CustomersService {
     }
   }
 
+// Helper function to parse relative dates
+ parseRelativeDate(value: string): Date {
+  //console.log("in parseRelativeDate");
+  const parts = value.split(' ');
+  let date = new Date();
+  const number = parseInt(parts[0], 10);
+  const unit = parts[1] as 'days' | 'weeks' | 'months' | 'years';
+  const direction = parts[2];
+
+  if (direction === 'ago') {
+    date = sub(date, { [unit]: number });
+  } else if (direction === 'from-now') {
+    date = add(date, { [unit]: number });
+  }
+
+  //console.log("parsed date is", JSON.stringify(date, null, 2));
+
+  return date;
+}
+
+// Convert to MongoDB date format
+toMongoDate(date: Date): string {
+  return formatISO(date, { representation: 'date' });
+}
+
   /**
    * Gets set of customers from a single statement that
    * includes Attribute,
@@ -3414,6 +3440,7 @@ export class CustomersService {
       value,
       valueType,
       subComparisonValue,
+      dateComparisonType,
     } = statement;
     const query: any = {
       workspaceId: workspace.id,
@@ -3497,6 +3524,81 @@ export class CustomersService {
         } else {
           throw new Error('Invalid sub-comparison type for nested property');
         }
+        break;
+      case 'after':
+        //console.log("value type is", typeof value);
+        //console.log("value is", value);
+        let afterDate: Date;
+        let isoDateStringAfter: string;
+        if (valueType === 'Date' && dateComparisonType === 'relative') {
+          afterDate = this.parseRelativeDate(value);
+          isoDateStringAfter = afterDate.toISOString();
+        } else {
+          // Use the Date constructor for parsing RFC 2822 formatted dates
+          afterDate = new Date(value);
+          isoDateStringAfter = afterDate.toISOString();
+        }
+        //console.log("afterDate type is", typeof afterDate);
+        //console.log("after date is", afterDate);
+        // Check if afterDate is valid
+        if (isNaN(afterDate.getTime())) {
+          throw new Error('Invalid date format');
+        }
+        //query[key] = { $gt: afterDate };
+        query[key] = { $gt: isoDateStringAfter };
+        break;
+      case 'before':
+        //console.log("value type is", typeof value);
+        //console.log("value is", value);
+        let beforeDate: Date;
+        let isoDateStringBefore: string;
+        if (valueType === 'Date' && dateComparisonType === 'relative') {
+          beforeDate = this.parseRelativeDate(value);
+          isoDateStringBefore = beforeDate.toISOString();
+        } else {
+          // Directly use the Date constructor for parsing RFC 2822 formatted dates
+          beforeDate = new Date(value);
+          isoDateStringBefore = beforeDate.toISOString();
+
+        }
+        //console.log("beforeDate type is", typeof beforeDate);
+        //console.log("before date is", beforeDate);
+        // Check if beforeDate is valid
+        if (isNaN(beforeDate.getTime())) {
+          throw new Error('Invalid date format');
+        }
+        //query[key] = { $lt: this.toMongoDate(beforeDate) };
+        //query[key] = { $lt: beforeDate };
+        query[key] = { $lt: isoDateStringBefore };
+        break;
+      case 'during':
+        //console.log("value type is", typeof value);
+        //console.log("value is", value);
+        //console.log("subComparisonValue is", subComparisonValue);
+        let startDate: Date, endDate: Date;
+        let isoStart: string, isoEnd: string;
+        if (valueType === 'Date' && dateComparisonType === 'relative') {
+          startDate = this.parseRelativeDate(value);
+          endDate = this.parseRelativeDate(subComparisonValue);
+          isoStart = startDate.toISOString();
+          isoEnd = endDate.toISOString();
+        } else {
+          // Use the Date constructor for parsing RFC 2822 formatted dates
+          startDate = new Date(value);
+          endDate = new Date(subComparisonValue);
+          isoStart = startDate.toISOString();
+          isoEnd = endDate.toISOString();
+        }
+        //console.log("startDate type is", typeof startDate);
+        //console.log("startDate is", startDate);
+        //console.log("endDate type is", typeof endDate);
+        //console.log("endDate is", endDate);
+        // Check if dates are valid
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          throw new Error('Invalid date format');
+        }
+        //query[key] = { $gte: startDate, $lte: endDate };
+        query[key] = { $gte: isoStart, $lte: isoEnd };
         break;
       // Add more cases for other comparison types as needed
       default:
