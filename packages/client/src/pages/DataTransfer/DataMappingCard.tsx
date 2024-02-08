@@ -1,3 +1,4 @@
+import HelpIcon from "assets/icons/HelpIcon";
 import TrashIcon from "assets/icons/TrashIcon";
 import Input from "components/Elements/Inputv2";
 import Select from "components/Elements/Selectv2";
@@ -42,16 +43,26 @@ const DataMappingCard: FC<DataMappingCardProps> = ({
           placeholder="imported field"
         />
         <div className="whitespace-nowrap">maps to</div>
-        {mappingKey === "event::String" ? (
-          <Input
-            value={`event (String)`}
-            onChange={(value) =>
-              onChange({ field: value, attribute: "event::String" })
-            }
-            disabled
-            className="bg-[#F3F4F6] !w-[200px] !h-[32px]"
-            wrapperClassName="bg-[#F3F4F6] !w-[200px] !h-[32px]"
-          />
+        {mappingKey === "event::String" ||
+        currentMappingAttribute?.isPrimary ? (
+          <div className="relative">
+            <Input
+              value={
+                currentMappingAttribute
+                  ? `${currentMappingAttribute.key} (${currentMappingAttribute.type})`
+                  : mappingKey.split("::").join(" (") + ")"
+              }
+              onChange={(value) =>
+                onChange({ field: value, attribute: mappingKey })
+              }
+              disabled
+              className="bg-[#F3F4F6] !w-[200px] !h-[32px]"
+              wrapperClassName="bg-[#F3F4F6] !w-[200px] !h-[32px]"
+            />
+            <div className="absolute top-1/2 right-[12px] -translate-y-1/2">
+              <HelpIcon />
+            </div>
+          </div>
         ) : (
           <Select
             className="!w-[200px] !h-[32px]"

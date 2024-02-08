@@ -17,6 +17,7 @@ import "ace-builds/webpack-resolver";
 import "ace-builds/src-noconflict/ext-language_tools";
 import "ace-builds/src-noconflict/mode-json";
 import { v4 as uuid } from "uuid";
+import CopyIcon from "assets/icons/CopyIcon";
 
 const DataTransfer = () => {
   const { id } = useParams();
@@ -32,6 +33,7 @@ const DataTransfer = () => {
       "email::Email": "",
       "event::String": "",
     },
+    transferAddress: "111",
     createdAt: new Date().toUTCString(),
   });
   const [attributes, setAttributes] = useState<Attribute[]>([]);
@@ -60,6 +62,20 @@ const DataTransfer = () => {
   useEffect(() => {
     setPrimatyAttribute(attributes.find((attribute) => attribute.isPrimary));
   }, [attributes]);
+
+  useEffect(() => {
+    if (
+      !dataSource.name ||
+      !dataSource.mapping["event::String"] ||
+      !primaryAttribute ||
+      !dataSource.mapping[`${primaryAttribute.key}::${primaryAttribute.type}`]
+    ) {
+      setIsError(true);
+      return;
+    }
+
+    setIsError(false);
+  }, [dataSource]);
 
   const handleAddField = () => {
     setDataSource({
@@ -136,13 +152,23 @@ const DataTransfer = () => {
                   }}
                   placeholder="Name this record based on its data source, e.g., Stripe Payments"
                 />
-                <Input
-                  wrapperClassName="!w-full"
-                  className="!w-full bg-[#F3F4F6]"
-                  value="111111"
-                  onChange={() => {}}
-                  disabled
-                />
+                <div className="w-full relative">
+                  <Input
+                    wrapperClassName="!w-full"
+                    className="!w-full bg-[#F3F4F6]"
+                    value={dataSource.transferAddress}
+                    onChange={() => {}}
+                    disabled
+                  />
+                  <div
+                    className="absolute top-1/2 right-[12px] -translate-y-1/2 cursor-pointer"
+                    onClick={() => {
+                      navigator.clipboard.writeText(dataSource.transferAddress);
+                    }}
+                  >
+                    <CopyIcon />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

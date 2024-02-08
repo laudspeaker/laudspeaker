@@ -23,6 +23,7 @@ export interface DataSource {
   name: string;
   status: DataSourceStatus;
   mapping: { "event::String": string } & Record<string, string>;
+  transferAddress: string;
   createdAt: string;
 }
 
@@ -37,6 +38,7 @@ const DataTransferTable = () => {
       mapping: {
         "event::String": "",
       },
+      transferAddress: "1111",
       createdAt: new Date().toUTCString(),
     },
   ]);
