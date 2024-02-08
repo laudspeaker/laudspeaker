@@ -39,6 +39,7 @@ import { DevModeService } from '@/api/dev-mode/dev-mode.service';
 import { RavenInterceptor } from 'nest-raven';
 import { AnalyticsProviderTypes } from '@/api/steps/types/step.interface';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { CustomerKeys, CustomerKeysDocument } from '@/api/customers/schemas/customer-keys.schema';
 
 interface SocketData {
   account: Account & { apiKey: string };
@@ -78,7 +79,9 @@ export class WebsocketGateway implements OnGatewayConnection {
     @Inject(forwardRef(() => DevModeService))
     private devModeService: DevModeService,
     @Inject(WebhooksService) private readonly webhooksService: WebhooksService,
-    @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>
+    @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>,
+    @InjectModel(CustomerKeys.name)
+    public CustomerKeysModel: Model<CustomerKeysDocument>,
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -428,19 +431,60 @@ export class WebsocketGateway implements OnGatewayConnection {
     socket.emit('log', 'pong');
   }
 
+  @SubscribeMessage('set')
+  public async set(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody()
+    {
+      optionalProperties,
+    }: {
+      optionalProperties?: { [key: string]: unknown };
+    }
+  ) {
+    if (!socket.data?.account || !socket.data?.customerId) {
+      return;
+    }
+    const { account, customerId } = socket.data as SocketData;
+
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    let customer = await this.customersService.CustomerModel.findOne({
+      _id: customerId,
+      workspaceId: workspace.id,
+    });
+
+    if (!customer || customer.isFreezed || customer.isAnonymous) {
+      socket.emit(
+        'error',
+        'Invalid customer id. Please call identify first'
+      );
+      return;
+    }
+
+    await this.customersService.CustomerModel.findByIdAndUpdate(customer.id, {
+      ...customer.toObject(),
+      ...optionalProperties,
+      workspaceId: workspace.id,
+    });
+
+  }
+
   @SubscribeMessage('identify')
   public async handleIdentify(
     @ConnectedSocket() socket: Socket,
     @MessageBody()
     {
-      uniqueProperties,
+      //uniqueProperties,
+      __PrimaryKey,
       optionalProperties,
     }: {
-      uniqueProperties: { [key: string]: unknown };
+      //uniqueProperties: { [key: string]: unknown };
+      __PrimaryKey: string ;
       optionalProperties?: { [key: string]: unknown };
     }
   ) {
-    if (!uniqueProperties) throw new WsException('No uniqueProperties given');
+    //if (!uniqueProperties) throw new WsException('No uniqueProperties given');
+    if (!__PrimaryKey) throw new WsException('No Primary Key given');
 
     if (!socket.data?.account || !socket.data?.customerId) {
       return;
@@ -473,10 +517,16 @@ export class WebsocketGateway implements OnGatewayConnection {
       return;
     }
 
+    const primaryKey = await this.CustomerKeysModel.findOne({
+      workspaceId: workspace.id,
+      isPrimary: true,
+    });
+
     const identifiedCustomer =
       await this.customersService.CustomerModel.findOne({
-        ...uniqueProperties,
+        //...uniqueProperties,
         workspaceId: workspace.id,
+        [primaryKey.key]: __PrimaryKey,
       });
 
     if (identifiedCustomer) {
@@ -494,7 +544,8 @@ export class WebsocketGateway implements OnGatewayConnection {
       await this.customersService.CustomerModel.findByIdAndUpdate(customer.id, {
         ...customer.toObject(),
         ...optionalProperties,
-        ...uniqueProperties,
+        //...uniqueProperties,
+        [primaryKey.key]: __PrimaryKey,
         workspaceId: workspace.id,
         isAnonymous: false,
       });
