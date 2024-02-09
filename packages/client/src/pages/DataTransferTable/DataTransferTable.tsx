@@ -7,6 +7,7 @@ import { capitalize } from "lodash";
 import { Attribute } from "pages/PeopleSettings/PeopleSettings";
 import React, { Fragment, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { StatementValueType } from "reducers/flow-builder.reducer";
 
 export enum DataSourceStatus {
   ACTIVE = "active",
@@ -18,14 +19,52 @@ export const dataSourceStatusBadgeStyles: Record<DataSourceStatus, string> = {
   [DataSourceStatus.PAUSED]: "bg-[#FEF9C3] text-[#713F12]",
 };
 
-export interface DataSource {
+export enum DataSourceType {
+  CREATE_EVENT = "create-event",
+  UPDATE_ATTRIBUTES = "update-attributes",
+}
+
+export interface CommonDataSource {
   id: string;
   name: string;
   status: DataSourceStatus;
-  mapping: { "event::String": string } & Record<string, string>;
   transferAddress: string;
   createdAt: string;
 }
+
+export enum DataSourceMappingType {
+  USER_ATTRIBUTE = "user-attribute",
+  EVENT_PROPERTY = "event-property",
+}
+
+export interface UserAttributeMapping {
+  type: DataSourceMappingType.USER_ATTRIBUTE;
+  attributeKey: string;
+  attributeType: StatementValueType;
+  importedValue: string;
+  updateSystemAttribute: boolean;
+}
+
+export interface EventPropertyMapping {
+  type: DataSourceMappingType.EVENT_PROPERTY;
+  propertyName: string;
+  importedProperty: string;
+}
+
+export type DataSourceMapping = UserAttributeMapping | EventPropertyMapping;
+
+export interface CreateEventDataSource extends CommonDataSource {
+  type: DataSourceType.CREATE_EVENT;
+  eventName: string;
+  mappings: DataSourceMapping[];
+}
+
+export interface UpdateAttributesDataSource extends CommonDataSource {
+  type: DataSourceType.UPDATE_ATTRIBUTES;
+  mappings: UserAttributeMapping[];
+}
+
+export type DataSource = CreateEventDataSource | UpdateAttributesDataSource;
 
 const DataTransferTable = () => {
   const navigate = useNavigate();
@@ -35,9 +74,22 @@ const DataTransferTable = () => {
       id: "1",
       name: "name1",
       status: DataSourceStatus.ACTIVE,
-      mapping: {
-        "event::String": "",
-      },
+      type: DataSourceType.CREATE_EVENT,
+      eventName: "event1",
+      mappings: [
+        {
+          type: DataSourceMappingType.USER_ATTRIBUTE,
+          attributeKey: "email",
+          attributeType: StatementValueType.EMAIL,
+          importedValue: "agag",
+          updateSystemAttribute: true,
+        },
+        {
+          type: DataSourceMappingType.EVENT_PROPERTY,
+          propertyName: "a",
+          importedProperty: "b",
+        },
+      ],
       transferAddress: "1111",
       createdAt: new Date().toUTCString(),
     },
