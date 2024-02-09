@@ -25,6 +25,7 @@ import { InjectConnection } from '@nestjs/mongoose';
 import mongoose, { Types } from 'mongoose';
 import e, { query } from 'express';
 import { CountSegmentUsersSizeDTO } from './dto/size-count.dto';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class SegmentsService {
@@ -413,10 +414,11 @@ export class SegmentsService {
         //console.log(`Deleted collection: ${collectionName}`);
       }
     } catch (error) {
+      const session = randomUUID();
       this.debug(
         `could not drop: ${prefix}`,
         this.create.name,
-        "fill_session_id_later"
+        session
       );
       //console.error('Error deleting collections:', error);
       //throw error; // Rethrow the error for further handling if necessary
