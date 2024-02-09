@@ -413,6 +413,11 @@ export class SegmentsService {
         //console.log(`Deleted collection: ${collectionName}`);
       }
     } catch (error) {
+      this.debug(
+        `could not drop: ${prefix}`,
+        this.create.name,
+        "fill_session_id_later"
+      );
       //console.error('Error deleting collections:', error);
       //throw error; // Rethrow the error for further handling if necessary
     }
@@ -683,7 +688,7 @@ export class SegmentsService {
         null,
         2
       )}`,
-      this.create.name,
+      this.size.name,
       session,
       account.id
     );
@@ -718,6 +723,18 @@ export class SegmentsService {
         //await this.connection.db.collection(customersInSegment).drop();
         //console.log('Collection dropped successfully');
       } catch (e) {
+        this.debug(
+          `could not drop: ${collectionPrefix}`,
+          this.size.name,
+          session,
+          account.id
+        );
+        this.error(
+          e,
+          this.size.name,
+          session,
+          account.id
+        )
         //console.error('Error dropping collection:', e);
       }
       return { size: segmentDocuments, total: totalCount };
@@ -751,6 +768,12 @@ export class SegmentsService {
         //await this.connection.db.collection(customersInSegment).drop();
         //console.log('Collection dropped successfully');
       } catch (e) {
+        this.debug(
+          `could not drop: ${collectionPrefix}`,
+          this.size.name,
+          session,
+          account.id
+        );
         //console.error('Error dropping collection:', e);
       }
       return { size: segmentDocuments, total: totalCount };
