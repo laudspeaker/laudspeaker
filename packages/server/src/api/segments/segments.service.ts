@@ -420,6 +420,11 @@ export class SegmentsService {
         this.create.name,
         session
       );
+      this.error(
+        error,
+        this.create.name,
+        session
+      );
       //console.error('Error deleting collections:', error);
       //throw error; // Rethrow the error for further handling if necessary
     }
@@ -776,7 +781,11 @@ export class SegmentsService {
           session,
           account.id
         );
-        //console.error('Error dropping collection:', e);
+        this.error(
+          e,
+          this.size.name,
+          session
+        );
       }
       return { size: segmentDocuments, total: totalCount };
     } else {
