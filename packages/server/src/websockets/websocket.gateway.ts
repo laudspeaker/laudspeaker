@@ -39,7 +39,10 @@ import { DevModeService } from '@/api/dev-mode/dev-mode.service';
 import { RavenInterceptor } from 'nest-raven';
 import { AnalyticsProviderTypes } from '@/api/steps/types/step.interface';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { CustomerKeys, CustomerKeysDocument } from '@/api/customers/schemas/customer-keys.schema';
+import {
+  CustomerKeys,
+  CustomerKeysDocument,
+} from '@/api/customers/schemas/customer-keys.schema';
 
 interface SocketData {
   account: Account & { apiKey: string };
@@ -81,7 +84,7 @@ export class WebsocketGateway implements OnGatewayConnection {
     @Inject(WebhooksService) private readonly webhooksService: WebhooksService,
     @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>,
     @InjectModel(CustomerKeys.name)
-    public CustomerKeysModel: Model<CustomerKeysDocument>,
+    public CustomerKeysModel: Model<CustomerKeysDocument>
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -454,10 +457,7 @@ export class WebsocketGateway implements OnGatewayConnection {
     });
 
     if (!customer || customer.isFreezed || customer.isAnonymous) {
-      socket.emit(
-        'error',
-        'Invalid customer id. Please call identify first'
-      );
+      socket.emit('error', 'Invalid customer id. Please call identify first');
       return;
     }
 
@@ -466,7 +466,6 @@ export class WebsocketGateway implements OnGatewayConnection {
       ...optionalProperties,
       workspaceId: workspace.id,
     });
-
   }
 
   @SubscribeMessage('identify')
@@ -479,7 +478,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       optionalProperties,
     }: {
       //uniqueProperties: { [key: string]: unknown };
-      __PrimaryKey: string ;
+      __PrimaryKey: string;
       optionalProperties?: { [key: string]: unknown };
     }
   ) {

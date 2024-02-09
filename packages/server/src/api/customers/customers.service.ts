@@ -3382,30 +3382,30 @@ export class CustomersService {
     }
   }
 
-// Helper function to parse relative dates
- parseRelativeDate(value: string): Date {
-  //console.log("in parseRelativeDate");
-  const parts = value.split(' ');
-  let date = new Date();
-  const number = parseInt(parts[0], 10);
-  const unit = parts[1] as 'days' | 'weeks' | 'months' | 'years';
-  const direction = parts[2];
+  // Helper function to parse relative dates
+  parseRelativeDate(value: string): Date {
+    //console.log("in parseRelativeDate");
+    const parts = value.split(' ');
+    let date = new Date();
+    const number = parseInt(parts[0], 10);
+    const unit = parts[1] as 'days' | 'weeks' | 'months' | 'years';
+    const direction = parts[2];
 
-  if (direction === 'ago') {
-    date = sub(date, { [unit]: number });
-  } else if (direction === 'from-now') {
-    date = add(date, { [unit]: number });
+    if (direction === 'ago') {
+      date = sub(date, { [unit]: number });
+    } else if (direction === 'from-now') {
+      date = add(date, { [unit]: number });
+    }
+
+    //console.log("parsed date is", JSON.stringify(date, null, 2));
+
+    return date;
   }
 
-  //console.log("parsed date is", JSON.stringify(date, null, 2));
-
-  return date;
-}
-
-// Convert to MongoDB date format
-toMongoDate(date: Date): string {
-  return formatISO(date, { representation: 'date' });
-}
+  // Convert to MongoDB date format
+  toMongoDate(date: Date): string {
+    return formatISO(date, { representation: 'date' });
+  }
 
   /**
    * Gets set of customers from a single statement that
@@ -3559,7 +3559,6 @@ toMongoDate(date: Date): string {
           // Directly use the Date constructor for parsing RFC 2822 formatted dates
           beforeDate = new Date(value);
           isoDateStringBefore = beforeDate.toISOString();
-
         }
         //console.log("beforeDate type is", typeof beforeDate);
         //console.log("before date is", beforeDate);

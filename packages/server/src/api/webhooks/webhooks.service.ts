@@ -24,6 +24,7 @@ import { EventWebhook } from '@sendgrid/eventwebhook';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Webhook } from 'svix';
+import fetch from 'node-fetch'; // Ensure you have node-fetch if you're using Node.js
 
 export enum ClickHouseEventProvider {
   MAILGUN = 'mailgun',
@@ -386,64 +387,55 @@ export class WebhooksService {
     mailgunAPIKey: string,
     sendingDomain: string
   ) {
-    const mailgun = new Mailgun(formData);
-    const mg = mailgun.client({
-      username: 'api',
-      key: mailgunAPIKey,
-    });
-    try {
-      let installedWebhooks = await mg.webhooks.list(sendingDomain, {});
-      this.logger.log(JSON.stringify(installedWebhooks));
+    const base64ApiKey = Buffer.from(`api:${mailgunAPIKey}`).toString('base64');
+    const headers = {
+      Authorization: `Basic ${base64ApiKey}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    };
 
-      for (const webhookToInstall of this.MAILGUN_HOOKS_TO_INSTALL) {
-        //Webhook does not exist on domain
-        if (!installedWebhooks?.[webhookToInstall]) {
-          await mg.webhooks.create(
-            sendingDomain,
-            webhookToInstall,
-            process.env.MAILGUN_WEBHOOK_ENDPOINT
-          );
-          installedWebhooks = await mg.webhooks.list(sendingDomain, {});
-        }
-
-        // Webhook exists on domain and is set to current endpoint
-        if (
-          installedWebhooks?.[webhookToInstall]?.urls &&
-          installedWebhooks[webhookToInstall].urls.includes(
-            process.env.MAILGUN_WEBHOOK_ENDPOINT
-          )
+    const updateWebhook = (type) => {
+      const url = `https://api.mailgun.net/v3/domains/${sendingDomain}/webhooks/${type}`;
+      return fetch(url, {
+        method: 'PUT',
+        headers: headers,
+        body: new URLSearchParams({
+          url: process.env.MAILGUN_WEBHOOK_ENDPOINT,
+        }),
+      })
+        .then((response) =>
+          response
+            .json()
+            .then((data) => ({ status: response.status, body: data }))
         )
-          continue;
-        else {
-          // Webhooks exist on domain but are not set to current endpoint:
-          // truncate webhooks to two and add third
-          const urls = new FormData();
-          urls.append('url', process.env.MAILGUN_WEBHOOK_ENDPOINT);
-          urls.append('url', installedWebhooks?.[webhookToInstall]?.urls[0]);
-          if (installedWebhooks?.[webhookToInstall]?.urls?.length > 1)
-            urls.append('url', installedWebhooks?.[webhookToInstall]?.urls[1]);
+        .catch((error) => ({ error }));
+    };
 
-          const r = axios.create({});
-          await r({
-            method: 'put',
-            url: `https://api.mailgun.net/v3/domains/${sendingDomain}/webhooks/${webhookToInstall}`,
-            data: urls,
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-            auth: {
-              username: 'api',
-              password: mailgunAPIKey,
-            },
-          });
-          installedWebhooks = await mg.webhooks.list(sendingDomain, {});
-        }
-      }
-      return Promise.resolve();
-    } catch (err) {
-      this.error(err, this.setupMailgunWebhook.name, randomUUID());
-      return Promise.reject(err);
-    }
+    const updateAllWebhooks = () => {
+      const updatePromises = this.MAILGUN_HOOKS_TO_INSTALL.map((type) =>
+        updateWebhook(type)
+      );
+      Promise.allSettled(updatePromises).then((results) => {
+        results.forEach((result, index) => {
+          if (result.status === 'fulfilled' && result.value.status === 200) {
+            this.log(
+              `Webhook ${this.MAILGUN_HOOKS_TO_INSTALL[index]} updated successfully`,
+              this.setupMailgunWebhook.name,
+              randomUUID()
+            );
+          } else {
+            this.error(
+              `Failed to update webhook ${
+                this.MAILGUN_HOOKS_TO_INSTALL[index]
+              }:${JSON.stringify(result)}`,
+              this.setupMailgunWebhook.name,
+              randomUUID()
+            );
+          }
+        });
+      });
+    };
+
+    updateAllWebhooks();
   }
 
   /**

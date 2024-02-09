@@ -11,7 +11,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { WebhooksModule } from '@/api/webhooks/webhooks.module';
 import { JourneysModule } from '@/api/journeys/journeys.module';
 import { DevModeModule } from '@/api/dev-mode/dev-mode.module';
-import { CustomerKeys, CustomerKeysSchema } from '@/api/customers/schemas/customer-keys.schema';
+import {
+  CustomerKeys,
+  CustomerKeysSchema,
+} from '@/api/customers/schemas/customer-keys.schema';
 
 @Module({
   imports: [

@@ -253,6 +253,3 @@ export class EventsController {
     );
   }
 }
-
-
-
