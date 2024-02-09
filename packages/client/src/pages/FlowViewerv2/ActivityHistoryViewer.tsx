@@ -459,7 +459,7 @@ const ActivityHistoryViewer: FC<ActivityHistoryViewerProps> = ({ id }) => {
           rowsData={activityEvents}
           headings={[
             <div className="px-5 py-2.5">Date</div>,
-            <div className="px-5 py-2.5">Changer</div>,
+            <div className="px-5 py-2.5">User</div>,
             <div className="px-5 py-2.5">Type</div>,
             <div className="px-5 py-2.5 w-full">Details</div>,
           ]}
