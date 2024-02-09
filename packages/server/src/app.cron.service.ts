@@ -499,6 +499,11 @@ export class CronService {
         );
         // for each segment check if it has a message component
         for (const segment of segments) {
+
+          if (!segment.inclusionCriteria || !segment.inclusionCriteria.query) {
+            continue; // Skip to the next iteration of the loop
+          }
+          
           let doInclude = this.checkSegmentHasMessageFilters(
             segment.inclusionCriteria.query,
             accounts[j].id,
