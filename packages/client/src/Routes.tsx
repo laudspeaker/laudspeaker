@@ -62,6 +62,8 @@ import InviteMember from "pages/Settingsv2/InviteMember";
 import InviteConfirmation from "EE/InviteConfirmation";
 import ManualSegmentCreator from "pages/ManualSegmentCreator";
 import SegmentViewer from "pages/SegmentViewer";
+import DataTransferTable from "pages/DataTransferTable";
+import DataTransfer from "pages/DataTransfer";
 
 interface IProtected {
   children: ReactElement;
@@ -294,7 +296,6 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route path="/confirm-invite/:id" element={<InviteConfirmation />} />
-
         <Route
           path="/"
           element={
@@ -458,7 +459,6 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
-
         <Route
           path="/segment"
           element={
@@ -595,7 +595,6 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
-
         <Route
           path="/templates/push/:id"
           element={
@@ -683,6 +682,31 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
+        <Route
+          path="/data-transfer"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <DataTransferTable />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/data-transfer/:id"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <DataTransfer />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+
         {/* Removed for version 1 release
         <Route
           path="/integrations"
