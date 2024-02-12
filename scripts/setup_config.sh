@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-OUTPUT=/app/client/config.js
+OUTPUT=${OUTPUT:-/app/client/config.js}
 echo "window.appConfig={}" >$OUTPUT
 if [[ -z "$API_BASE_URL" ]]; then
     echo "API_BASE_URL environment variable needs to be present."

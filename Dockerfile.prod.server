@@ -2,18 +2,24 @@
 # To build : docker build -f Dockerfile.prod.server -t laudspeaker-api:latest .
 # To run: docker run -it -p 3001:3001 --rm laudspeaker-api:latest
 FROM node:16 as build
+ARG BACKEND_SENTRY_AUTH_TOKEN
+ENV SENTRY_AUTH_TOKEN=${BACKEND_SENTRY_AUTH_TOKEN}
+ENV SENTRY_ORG=laudspeaker-rb
+ENV SENTRY_PROJECT=node
 WORKDIR /app
 COPY ./packages/server/package.json /app
-RUN npm install
+RUN npm install --legacy-peer-deps
 COPY . /app
 RUN npm run build:server
+RUN ./node_modules/.bin/sentry-cli releases propose-version > /app/SENTRY_RELEASE
+
 
 FROM node:16 As Production
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 WORKDIR /app
 COPY ./packages/server/package.json /app
-RUN npm install --only=production
+RUN npm install --only=production --legacy-peer-deps
 COPY --from=build /app/packages/server/dist /app/dist
 EXPOSE 3001
 CMD ["node", "dist/src/main.js"]

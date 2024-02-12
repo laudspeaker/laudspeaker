@@ -21,8 +21,8 @@ jobs:
             export AWS_SECRET_ACCESS_KEY=$DEMO_AWS_SECRET
             aws configure set region $DEMO_AWS_REGION
             aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 427506656486.dkr.ecr.us-east-1.amazonaws.com
-            docker build -f Dockerfile.prod.client -t laudspeaker:latest .
-            docker build -f Dockerfile.prod.server -t laudspeaker:api-latest .
+            docker build --build-arg="FRONTEND_SENTRY_AUTH_TOKEN=$FRONTEND_SENTRY_AUTH_TOKEN" -f Dockerfile.prod.client -t laudspeaker:latest .
+            docker build --build-arg="BACKEND_SENTRY_AUTH_TOKEN=$BACKEND_SENTRY_AUTH_TOKEN" -f Dockerfile.prod.server -t laudspeaker:api-latest .
             docker tag laudspeaker:api-latest 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:api-latest
             docker tag laudspeaker:latest 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:latest
             docker push 427506656486.dkr.ecr.us-east-1.amazonaws.com/laudspeaker:api-latest

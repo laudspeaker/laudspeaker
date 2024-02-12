@@ -59,6 +59,8 @@ import { JourneyLocationsService } from './api/journeys/journey-locations.servic
 import { SegmentsModule } from './api/segments/segments.module';
 import { OrganizationsModule } from './api/organizations/organizations.module';
 import { OrganizationInvites } from './api/organizations/entities/organization-invites.entity';
+import { redisStore } from 'cache-manager-redis-yet';
+import { CacheModule } from '@nestjs/cache-manager';
 
 const sensitiveKeys = [
   /cookie/i,
@@ -148,6 +150,17 @@ export const formatMongoConnectionString = (mongoConnectionString: string) => {
     MongooseModule.forRoot(
       formatMongoConnectionString(process.env.MONGOOSE_URL)
     ),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      useFactory: async () => ({
+        ttl: 5000,
+        store: await redisStore({
+          url: `redis://default:${process.env.REDIS_PASSWORD}@${
+            process.env.REDIS_HOST
+          }:${parseInt(process.env.REDIS_PORT)}`,
+        }),
+      }),
+    }),
     BullModule.forRoot({
       connection: {
         host: process.env.REDIS_HOST ?? 'localhost',

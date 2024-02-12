@@ -25,6 +25,7 @@ import { InjectConnection } from '@nestjs/mongoose';
 import mongoose, { Types } from 'mongoose';
 import e, { query } from 'express';
 import { CountSegmentUsersSizeDTO } from './dto/size-count.dto';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class SegmentsService {
@@ -408,10 +409,22 @@ export class SegmentsService {
 
       // Delete each collection
       for (const collectionName of collectionsToDelete) {
+        //toggle for testing segments
         await this.connection.db.collection(collectionName).drop();
         //console.log(`Deleted collection: ${collectionName}`);
       }
     } catch (error) {
+      const session = randomUUID();
+      this.debug(
+        `could not drop: ${prefix}`,
+        this.create.name,
+        session
+      );
+      this.error(
+        error,
+        this.create.name,
+        session
+      );
       //console.error('Error deleting collections:', error);
       //throw error; // Rethrow the error for further handling if necessary
     }
@@ -682,7 +695,7 @@ export class SegmentsService {
         null,
         2
       )}`,
-      this.create.name,
+      this.size.name,
       session,
       account.id
     );
@@ -717,6 +730,18 @@ export class SegmentsService {
         //await this.connection.db.collection(customersInSegment).drop();
         //console.log('Collection dropped successfully');
       } catch (e) {
+        this.debug(
+          `could not drop: ${collectionPrefix}`,
+          this.size.name,
+          session,
+          account.id
+        );
+        this.error(
+          e,
+          this.size.name,
+          session,
+          account.id
+        )
         //console.error('Error dropping collection:', e);
       }
       return { size: segmentDocuments, total: totalCount };
@@ -750,7 +775,17 @@ export class SegmentsService {
         //await this.connection.db.collection(customersInSegment).drop();
         //console.log('Collection dropped successfully');
       } catch (e) {
-        //console.error('Error dropping collection:', e);
+        this.debug(
+          `could not drop: ${collectionPrefix}`,
+          this.size.name,
+          session,
+          account.id
+        );
+        this.error(
+          e,
+          this.size.name,
+          session
+        );
       }
       return { size: segmentDocuments, total: totalCount };
     } else {

@@ -2,24 +2,30 @@
 # To run: docker run -it -p 3000:80 --rm laudspeaker:latest 
 FROM node:16 as build
 WORKDIR /app
+ARG FRONTEND_SENTRY_AUTH_TOKEN
+ENV SENTRY_AUTH_TOKEN=${FRONTEND_SENTRY_AUTH_TOKEN}
+ENV SENTRY_ORG=laudspeaker-rb
+ENV SENTRY_PROJECT=javascript-react
 ENV REACT_APP_WS_BASE_URL https://api.laudspeaker.com
-ENV REACT_APP_API_BASE_URL https://api.laudspeaker.com
+ENV REACT_APP_API_BASE_URL=https://api.laudspeaker.com
 ENV REACT_APP_ONBOARDING_API_KEY ONBOARDING-API-KEY
 ENV REACT_APP_POSTHOG_HOST https://app.posthog.com
 ENV REACT_APP_POSTHOG_KEY RxdBl8vjdTwic7xTzoKTdbmeSC1PCzV6sw-x-FKSB-k
+ENV REACT_APP_SENTRY_DSN_URL_FRONTEND=https://2444369e8e13b39377ba90663ae552d1@o4506038702964736.ingest.sentry.io/4506038705192960
 ENV PATH /app/node_modules/.bin:$PATH
 COPY ./packages/client/package.json /app/
 COPY ./package-lock.json /app/
 RUN npm install --legacy-peer-deps
 COPY . /app
 RUN npm run format:client
-RUN npm run build:client
+RUN REACT_APP_SENTRY_RELEASE=$(./node_modules/.bin/sentry-cli releases propose-version) npm run build:client
 
 # stage 2 - build the final image and copy the react build files
 FROM nginx:1.17.8-alpine
 COPY --from=build /app/packages/client/build /usr/share/nginx/html
+COPY ./scripts /app/scripts/
 RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx/prod.nginx.conf /etc/nginx/conf.d
 EXPOSE 80
 EXPOSE 443
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["nginx", "-g" ,"daemon off;"]

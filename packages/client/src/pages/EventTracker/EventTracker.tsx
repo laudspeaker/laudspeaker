@@ -77,7 +77,6 @@ const EventTracker = () => {
         data: fetchedCustomEvents,
         totalPages,
       }: { data: CustomEvent[]; totalPages: number } = data;
-
       setPagesCount(totalPages);
       setCustomEvents(fetchedCustomEvents);
       setPossibleNames(
@@ -88,7 +87,6 @@ const EventTracker = () => {
             [] as string[]
           )
       );
-
       /*
       setPagesCount(totalPages);
       setPosthogEvents(fetchedPosthogEvents);

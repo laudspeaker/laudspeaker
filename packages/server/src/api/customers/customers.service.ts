@@ -63,11 +63,17 @@ import {
   validateKeyForMutations,
 } from '@/utils/customer-key-name-validator';
 import { UpsertCustomerDto } from './dto/upsert-customer.dto';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { DeleteCustomerDto } from './dto/delete-customer.dto';
+import { ReadCustomerDto } from './dto/read-customer.dto';
 import {
   DeleteAttributeDto,
   ModifyAttributesDto,
   UpdateAttributeDto,
 } from './dto/modify-attributes.dto';
+import { parseISO, add, sub, formatISO } from 'date-fns';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -110,15 +116,15 @@ export interface QueryObject {
   value: any;
 }
 
-export interface QueryOptions {
-  // ... other properties ...
-  customerKeys?: { key: string; type: AttributeType }[];
-}
-
 const acceptableBooleanConvertable = {
   true: ['TRUE', 'true', 'T', 't'],
   false: ['FALSE', 'false', 'F', 'f'],
 };
+
+export interface QueryOptions {
+  // ... other properties ...
+  customerKeys?: { key: string; type: AttributeType }[];
+}
 
 @Injectable()
 export class CustomersService {
@@ -161,7 +167,8 @@ export class CustomersService {
     private readonly connection: mongoose.Connection,
     private readonly s3Service: S3Service,
     @Inject(JourneyLocationsService)
-    private readonly journeyLocationsService: JourneyLocationsService
+    private readonly journeyLocationsService: JourneyLocationsService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {
     const session = randomUUID();
     (async () => {
@@ -177,6 +184,11 @@ export class CustomersService {
             },
           }
         );
+        const keyCollection = this.connection.db.collection('customerkeys');
+        const primaryKeyDocs = keyCollection.find({ isPrimary: true });
+        for await (const primaryKey of primaryKeyDocs) {
+          await collection.createIndex({ [primaryKey.key]: 1, workspaceId: 1 });
+        }
       } catch (e) {
         this.error(e, CustomersService.name, session);
       }
@@ -1435,30 +1447,24 @@ export class CustomersService {
    */
 
   async upsert(
-    account: Account,
+    auth: { account: Account; workspace: Workspaces },
     upsertCustomerDto: UpsertCustomerDto,
     session: string
   ): Promise<{ id: string }> {
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
     try {
-      const accountWithWorkspace = await queryRunner.manager.findOne(Account, {
-        where: { id: account.id },
-        relations: ['teams.organization.workspaces'],
-      });
-      const workspace =
-        accountWithWorkspace?.teams?.[0]?.organization?.workspaces?.[0];
-
-      const primaryKey = await this.CustomerKeysModel.findOne({
-        workspaceId: workspace.id,
-        isPrimary: true,
-      })
-        .session(transactionSession)
-        .exec();
+      let primaryKey: CustomerKeysDocument = await this.cacheManager.get(
+        `${auth.workspace.id}-primary-key`
+      );
+      if (!primaryKey) {
+        primaryKey = await this.CustomerKeysModel.findOne({
+          workspaceId: auth.workspace.id,
+          isPrimary: true,
+        });
+        await this.cacheManager.set(
+          `${auth.workspace.id}-primary-key`,
+          primaryKey
+        );
+      }
 
       if (!primaryKey)
         throw new HttpException(
@@ -1466,57 +1472,127 @@ export class CustomersService {
           HttpStatus.BAD_REQUEST
         );
 
-      const existingCustomer = await this.CustomerModel.findOne({
-        workspaceId: workspace.id,
-        [primaryKey.key]: upsertCustomerDto.primary_key,
-      })
-        .session(transactionSession)
-        .exec();
+      let ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
+        {
+          workspaceId: auth.workspace.id,
+          [primaryKey.key]: upsertCustomerDto.primary_key,
+        },
+        { ...upsertCustomerDto.properties },
+        { upsert: true, new: true, projection: { _id: 1 } }
+      );
 
-      let returnID: string;
-
-      if (existingCustomer) {
-        await this.CustomerModel.updateOne(
-          {
-            workspaceId: workspace.id,
-            [primaryKey.key]: upsertCustomerDto.primary_key,
-          },
-          {
-            $set: {
-              ...upsertCustomerDto.properties,
-            },
-          }
-        )
-          .session(transactionSession)
-          .exec();
-        returnID = existingCustomer.id;
-      } else {
-        const res = await this.CustomerModel.create(
-          [
-            {
-              workspaceId: workspace.id,
-              [primaryKey.key]: upsertCustomerDto.primary_key,
-              ...upsertCustomerDto.properties,
-            },
-          ],
-          { session: transactionSession }
-        );
-        returnID = res[0].id;
-      }
-
-      await transactionSession.commitTransaction();
-      await queryRunner.commitTransaction();
-      await transactionSession.endSession();
-      await queryRunner.release();
-      return Promise.resolve({ id: returnID });
+      return Promise.resolve({ id: ret.id });
     } catch (err) {
-      await transactionSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
-      await transactionSession.endSession();
-      await queryRunner.release();
-      this.error(err, this.upsert.name, session, account.email);
+      this.error(err, this.upsert.name, session, auth.account.email);
       throw err;
     }
+  }
+
+  /**
+   * Delete a customer via API. Requires a primary key
+   * to have been set.
+   * @param account
+   * @param deleteCustomerDto
+   * @param session
+   * @returns
+   */
+
+  async delete(
+    auth: { account: Account; workspace: Workspaces },
+    deleteCustomerDto: DeleteCustomerDto,
+    session: string
+  ): Promise<{ primary_key: any }> {
+    let primaryKey: CustomerKeysDocument = await this.cacheManager.get(
+      `${auth.workspace.id}-primary-key`
+    );
+    if (!primaryKey) {
+      primaryKey = await this.CustomerKeysModel.findOne({
+        workspaceId: auth.workspace.id,
+        isPrimary: true,
+      });
+      await this.cacheManager.set(
+        `${auth.workspace.id}-primary-key`,
+        primaryKey
+      );
+    }
+
+    if (!primaryKey)
+      throw new HttpException(
+        'Primary key has not been set: see https://laudspeaker.com/docs/developer/api/users/delete for more details.',
+        HttpStatus.BAD_REQUEST
+      );
+
+    let ret: CustomerDocument = await this.CustomerModel.findOneAndDelete(
+      {
+        workspaceId: auth.workspace.id,
+        [primaryKey.key]: deleteCustomerDto.primary_key,
+      },
+      { projection: { [primaryKey.key]: 1 } }
+    );
+
+    if (!ret)
+      throw new HttpException(
+        `Customer specified by primary key ${deleteCustomerDto.primary_key} does not exist!`,
+        HttpStatus.NOT_FOUND
+      );
+
+    return Promise.resolve({ primary_key: ret[primaryKey.key] });
+  }
+
+  /**
+   * Retreive a customer via API. Requires a primary key
+   * to have been set.
+   * @param account
+   * @param readCustomerDto
+   * @param session
+   * @returns
+   */
+
+  async read(
+    auth: { account: Account; workspace: Workspaces },
+    readCustomerDto: ReadCustomerDto,
+    session: string
+  ): Promise<CustomerDocument> {
+    let primaryKey: CustomerKeysDocument = await this.cacheManager.get(
+      `${auth.workspace.id}-primary-key`
+    );
+    if (!primaryKey) {
+      primaryKey = await this.CustomerKeysModel.findOne({
+        workspaceId: auth.workspace.id,
+        isPrimary: true,
+      });
+      await this.cacheManager.set(
+        `${auth.workspace.id}-primary-key`,
+        primaryKey
+      );
+    }
+
+    if (!primaryKey)
+      throw new HttpException(
+        'Primary key has not been set: see https://laudspeaker.com/docs/developer/api/users/read for more details.',
+        HttpStatus.BAD_REQUEST
+      );
+
+    const projection = KEYS_TO_SKIP.reduce((acc, key) => {
+      acc[key] = 0;
+      return acc;
+    }, {});
+
+    const ret: CustomerDocument = await this.CustomerModel.findOne(
+      {
+        workspaceId: auth.workspace.id,
+        [primaryKey.key]: readCustomerDto.primary_key,
+      },
+      projection
+    ).lean();
+
+    if (!ret)
+      throw new HttpException(
+        `Customer specified by primary key ${readCustomerDto.primary_key} does not exist!`,
+        HttpStatus.NOT_FOUND
+      );
+
+    return Promise.resolve(ret);
   }
 
   async mergeCustomers(
@@ -2318,7 +2394,7 @@ export class CustomersService {
               session,
               account.id
             );
-            //toggle this line for testing
+            //toggle for testing segments
             await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
@@ -2486,7 +2562,7 @@ export class CustomersService {
               session,
               account.id
             );
-            //toggle for testing to do
+            //toggle for testing segments
             await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
@@ -2579,7 +2655,7 @@ export class CustomersService {
               session,
               account.id
             );
-            //toggle to do
+            //toggle for testing segments
             await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
@@ -3306,6 +3382,31 @@ export class CustomersService {
     }
   }
 
+  // Helper function to parse relative dates
+  parseRelativeDate(value: string): Date {
+    //console.log("in parseRelativeDate");
+    const parts = value.split(' ');
+    let date = new Date();
+    const number = parseInt(parts[0], 10);
+    const unit = parts[1] as 'days' | 'weeks' | 'months' | 'years';
+    const direction = parts[2];
+
+    if (direction === 'ago') {
+      date = sub(date, { [unit]: number });
+    } else if (direction === 'from-now') {
+      date = add(date, { [unit]: number });
+    }
+
+    //console.log("parsed date is", JSON.stringify(date, null, 2));
+
+    return date;
+  }
+
+  // Convert to MongoDB date format
+  toMongoDate(date: Date): string {
+    return formatISO(date, { representation: 'date' });
+  }
+
   /**
    * Gets set of customers from a single statement that
    * includes Attribute,
@@ -3339,6 +3440,7 @@ export class CustomersService {
       value,
       valueType,
       subComparisonValue,
+      dateComparisonType,
     } = statement;
     const query: any = {
       workspaceId: workspace.id,
@@ -3422,6 +3524,80 @@ export class CustomersService {
         } else {
           throw new Error('Invalid sub-comparison type for nested property');
         }
+        break;
+      case 'after':
+        //console.log("value type is", typeof value);
+        //console.log("value is", value);
+        let afterDate: Date;
+        let isoDateStringAfter: string;
+        if (valueType === 'Date' && dateComparisonType === 'relative') {
+          afterDate = this.parseRelativeDate(value);
+          isoDateStringAfter = afterDate.toISOString();
+        } else {
+          // Use the Date constructor for parsing RFC 2822 formatted dates
+          afterDate = new Date(value);
+          isoDateStringAfter = afterDate.toISOString();
+        }
+        //console.log("afterDate type is", typeof afterDate);
+        //console.log("after date is", afterDate);
+        // Check if afterDate is valid
+        if (isNaN(afterDate.getTime())) {
+          throw new Error('Invalid date format');
+        }
+        //query[key] = { $gt: afterDate };
+        query[key] = { $gt: isoDateStringAfter };
+        break;
+      case 'before':
+        //console.log("value type is", typeof value);
+        //console.log("value is", value);
+        let beforeDate: Date;
+        let isoDateStringBefore: string;
+        if (valueType === 'Date' && dateComparisonType === 'relative') {
+          beforeDate = this.parseRelativeDate(value);
+          isoDateStringBefore = beforeDate.toISOString();
+        } else {
+          // Directly use the Date constructor for parsing RFC 2822 formatted dates
+          beforeDate = new Date(value);
+          isoDateStringBefore = beforeDate.toISOString();
+        }
+        //console.log("beforeDate type is", typeof beforeDate);
+        //console.log("before date is", beforeDate);
+        // Check if beforeDate is valid
+        if (isNaN(beforeDate.getTime())) {
+          throw new Error('Invalid date format');
+        }
+        //query[key] = { $lt: this.toMongoDate(beforeDate) };
+        //query[key] = { $lt: beforeDate };
+        query[key] = { $lt: isoDateStringBefore };
+        break;
+      case 'during':
+        //console.log("value type is", typeof value);
+        //console.log("value is", value);
+        //console.log("subComparisonValue is", subComparisonValue);
+        let startDate: Date, endDate: Date;
+        let isoStart: string, isoEnd: string;
+        if (valueType === 'Date' && dateComparisonType === 'relative') {
+          startDate = this.parseRelativeDate(value);
+          endDate = this.parseRelativeDate(subComparisonValue);
+          isoStart = startDate.toISOString();
+          isoEnd = endDate.toISOString();
+        } else {
+          // Use the Date constructor for parsing RFC 2822 formatted dates
+          startDate = new Date(value);
+          endDate = new Date(subComparisonValue);
+          isoStart = startDate.toISOString();
+          isoEnd = endDate.toISOString();
+        }
+        //console.log("startDate type is", typeof startDate);
+        //console.log("startDate is", startDate);
+        //console.log("endDate type is", typeof endDate);
+        //console.log("endDate is", endDate);
+        // Check if dates are valid
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          throw new Error('Invalid date format');
+        }
+        //query[key] = { $gte: startDate, $lte: endDate };
+        query[key] = { $gte: isoStart, $lte: isoEnd };
         break;
       // Add more cases for other comparison types as needed
       default:

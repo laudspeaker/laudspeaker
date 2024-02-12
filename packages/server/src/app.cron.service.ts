@@ -441,12 +441,24 @@ export class CronService {
       if (err) throw err;
     }
   }
+
+ /*
+  * helper function that deletes
+  *
+  */
+
   checkSegmentHasMessageFilters(
     segmentCriteria: any,
     orgId: string,
     session: string
   ): boolean {
-    return true;
+
+      // Convert the segmentCriteria object to a JSON string
+    const criteriaString = JSON.stringify(segmentCriteria);
+
+    // Check for the presence of any of the specified types in the string
+    return /"type":\s*"(Email|Push|In-app message|SMS)"/.test(criteriaString);
+
   }
   /*
    *
@@ -464,7 +476,7 @@ export class CronService {
    * at clickhouse unprocessed events
    *
    */
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async updateStatementsWithMessageEvents() {
     const session = randomUUID();
     let err;
@@ -476,6 +488,9 @@ export class CronService {
       let queryRunner = this.dataSource.createQueryRunner();
       await queryRunner.connect();
       await queryRunner.startTransaction();
+      let segmentPrefixes : string[] = [];
+      //we keep for logging
+      let segmentError : string
       try {
         let segments = await this.segmentsService.getSegments(
           accounts[j],
@@ -484,6 +499,11 @@ export class CronService {
         );
         // for each segment check if it has a message component
         for (const segment of segments) {
+
+          if (!segment.inclusionCriteria || !segment.inclusionCriteria.query) {
+            continue; // Skip to the next iteration of the loop
+          }
+          
           let doInclude = this.checkSegmentHasMessageFilters(
             segment.inclusionCriteria.query,
             accounts[j].id,
@@ -499,6 +519,20 @@ export class CronService {
             // If segment includes message filters recalculate which customers should be in the segment
             const collectionPrefix =
               this.segmentsService.generateRandomString();
+            segmentError = segment.name;
+            this.debug(
+              `segment is: ${segment}`,
+              this.updateStatementsWithMessageEvents.name,
+              session,
+              accounts[j].id
+            );
+            this.debug(
+              `chron prefix for segment is: ${collectionPrefix}`,
+              this.updateStatementsWithMessageEvents.name,
+              session,
+              accounts[j].id
+            );
+            segmentPrefixes.push(collectionPrefix);
             const customersInSegment =
               await this.customersService.getSegmentCustomersFromQuery(
                 segment.inclusionCriteria.query,
@@ -526,17 +560,6 @@ export class CronService {
               queryRunner,
               500
             );
-            // } catch(error) {
-            /*
-            this.debug(
-              `error updating segment: ${segment.name}`,
-              this.updateStatementsWithMessageEvents.name,
-              session,
-              accounts[j].id
-            );
-            */
-
-            //}
             // drop the collections after adding customer segments
             await this.segmentsService.deleteCollectionsWithPrefix(
               collectionPrefix
@@ -545,12 +568,24 @@ export class CronService {
         }
         await queryRunner.commitTransaction();
       } catch (error) {
+        this.debug(
+          `error updating segment: ${segmentError}`,
+          this.updateStatementsWithMessageEvents.name,
+          session,
+          accounts[j].id
+        );
         this.error(
           error,
           this.updateStatementsWithMessageEvents.name,
           session,
           accounts[j].id
         );
+        //drop extraneous collections in case of error
+        for(const prefix of segmentPrefixes) {
+          await this.segmentsService.deleteCollectionsWithPrefix(
+            prefix
+          );
+        }
         await queryRunner.rollbackTransaction();
         err = error;
       } finally {
