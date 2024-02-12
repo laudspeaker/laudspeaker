@@ -389,7 +389,7 @@ export class EventsPreProcessor extends WorkerHost {
       if (job.data.event) {
         await this.eventModel.create({
           ...job.data.event,
-          ownerId: job.data.account.id,
+          workspaceId: workspace.id,
           //we should really standardize on .toISOString() or .toUTCString()
           //createdAt: new Date().toUTCString(),
           createdAt: new Date().toISOString(),
