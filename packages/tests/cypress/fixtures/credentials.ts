@@ -6,7 +6,7 @@ export default {
   firstName: "James",
   lastName: "Bond",
   organizationName: "MI6",
-  timeZone: "0 UTC",
+  timeZone: "UTC+00:00",
   MessageHitUser: {
     email: "testmail@gmail.com",
     password: "00000000",

@@ -1,5 +1,5 @@
 import React, { FC, useState } from "react";
-import { Handle, NodeProps, Position } from "reactflow";
+import { Handle, NodeProps, Position, getOutgoers } from "reactflow";
 import { handleDrawerAction } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import { useAppDispatch, useAppSelector } from "store/hooks";
@@ -41,19 +41,22 @@ export const EmptyNode: FC<NodeProps<NodeData>> = ({
       nodes.find((node) => node.id === edge.source)?.type === NodeType.START
   );
 
+  const thisNode = nodes.find((node) => node.id === id);
+  const outgoers = thisNode ? getOutgoers(thisNode, nodes, edges) : [];
+
   return (
     <div
       className={`empty-node w-[260px] h-[80px] rounded-lg bg-[#F3F4F6] border-2 border-dashed border-[#9CA3AF] flex justify-center items-center ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
-      } ${isDraggedOver ? "!border-[#6366F1] !bg-[#E0E7FF]" : ""}`}
+      } ${isDraggedOver ? "!border-[#6366F1] !bg-[#E0E7FF]" : ""}${
+        outgoers.length === 0 ? " last-empty-node" : ""
+      }`}
       onDragOver={(e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
       }}
       onDragEnter={() => setIsDraggedOver(true)}
-      onDragLeave={() => {
-        setIsDraggedOver(false);
-      }}
+      onDragLeave={() => setIsDraggedOver(false)}
       onDrop={async (e) => {
         const action = e.dataTransfer.getData("action");
 

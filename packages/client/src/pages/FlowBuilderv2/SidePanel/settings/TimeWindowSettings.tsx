@@ -24,6 +24,7 @@ const TimeWindowSettings: FC<SidePanelComponentProps<TimeWindowNodeData>> = ({
     <>
       {nodeData.windowType && (
         <Select
+          id="time-window-type-select"
           value={nodeData.windowType}
           onChange={(val) =>
             setNodeData({
@@ -59,6 +60,7 @@ const TimeWindowSettings: FC<SidePanelComponentProps<TimeWindowNodeData>> = ({
 
               return (
                 <div
+                  id={`time-window-week-day-option-${i}`}
                   key={i}
                   className={`${
                     isChecked && "!bg-[#6366F1] !border-[#6366F1] !text-white"

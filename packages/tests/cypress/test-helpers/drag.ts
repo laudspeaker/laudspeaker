@@ -1,4 +1,10 @@
-export default (dragSourceSelector: string, dragTargetSelector: string) => {
+export default (
+  dragSourceSelector: string,
+  dragTargetSelector: string,
+  options: { fireDragOver: boolean } = { fireDragOver: true }
+) => {
+  const { fireDragOver } = options;
+
   const dataTransfer = new DataTransfer();
   cy.get(dragSourceSelector).trigger("dragstart", {
     dataTransfer,
@@ -6,9 +12,11 @@ export default (dragSourceSelector: string, dragTargetSelector: string) => {
   cy.get(dragTargetSelector).trigger("drag", {
     dataTransfer,
   });
-  cy.get(dragTargetSelector).trigger("dragover", {
-    dataTransfer,
-  });
+  if (fireDragOver) {
+    cy.get(dragTargetSelector).trigger("dragover", {
+      dataTransfer,
+    });
+  }
   cy.get(dragTargetSelector).trigger("drop", {
     dataTransfer,
   });

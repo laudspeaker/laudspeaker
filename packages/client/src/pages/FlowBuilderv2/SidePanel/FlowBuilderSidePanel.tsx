@@ -306,6 +306,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     <>
       {isOpen && (
         <div
+          id="flow-builder-sidepanel-cancel"
           className="fixed top-[106px] left-0 bg-[#111827] bg-opacity-20 w-full h-screen"
           onClick={onCancel}
         />
