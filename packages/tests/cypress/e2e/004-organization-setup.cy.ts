@@ -13,14 +13,14 @@ describe("company-setup", () => {
     cy.clearAllCookies();
     cy.clearAllLocalStorage();
     cy.clearAllSessionStorage();
-    // signup(email, password, firstName, lastName);
-    // cy.wait(1000);
+    signup(email, password, firstName, lastName);
+    cy.wait(1000);
   });
 
   it("passes", () => {
-    // setupOrganization(organizationName, timeZone);
-    // cy.wait(10000);
-    // cy.visit("/home");
-    // cy.url().should("include", "/home");
+    setupOrganization(organizationName, timeZone);
+    cy.wait(10000);
+    cy.visit("/home");
+    cy.url().should("include", "/home");
   });
 });
