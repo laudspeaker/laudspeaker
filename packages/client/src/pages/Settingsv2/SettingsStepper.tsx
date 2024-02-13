@@ -11,11 +11,11 @@ const SettingsStepper: FC<SettingsStepperProps> = ({
   setCurrentTab,
 }) => {
   const settingsTabsToShow: SettingsTab[] = [
-    SettingsTab.ACCOUNT,
+    SettingsTab.WORKSPACE,
+    // SettingsTab.ACCOUNT,
     SettingsTab.MESSAGE_CHANNEL,
     SettingsTab.EVENT_PROVIDER,
     SettingsTab.API,
-    SettingsTab.ORGANIZATION,
     // Removed for 1 release
     // SettingsTab.PLAN,
     // SettingsTab.BILLING,
@@ -27,7 +27,7 @@ const SettingsStepper: FC<SettingsStepperProps> = ({
     [SettingsTab.MESSAGE_CHANNEL]: "Message channel",
     [SettingsTab.EVENT_PROVIDER]: "Event provider",
     [SettingsTab.API]: "API",
-    [SettingsTab.ORGANIZATION]: "Organization",
+    [SettingsTab.WORKSPACE]: "Workspace details",
     // Removed for 1 release
     // [SettingsTab.PLAN]: "Plan",
     // [SettingsTab.BILLING]: "Billing",

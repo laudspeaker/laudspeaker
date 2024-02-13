@@ -1,51 +1,15 @@
-import React, { ReactNode, useMemo, useState } from "react";
-import SettingsStepper from "./SettingsStepper";
-import SetupGuide from "./SetupGuide";
-import AccountTab from "./tabs/AccountTab";
-import APITab from "./tabs/APITab";
-import BillingTab from "./tabs/BillingTab";
-import EventProviderTab from "./tabs/EventProviderTab";
-import MessageChannelTab from "./tabs/MessageChannelTab";
-import PlanTab from "./tabs/PlanTab";
-import TeamTab from "./tabs/TeamTab";
-import OrganizationTab, { OrganizationTeamData } from "./tabs/OrganizationTab";
 import BackButton from "components/BackButton";
 import Input from "components/Elements/Inputv2";
+import OrganizationTab, {
+  OrganizationTeamData,
+} from "pages/Settingsv2/tabs/OrganizationTab";
+import React, { useState } from "react";
 
-export enum SettingsTab {
-  ACCOUNT,
-  MESSAGE_CHANNEL,
-  EVENT_PROVIDER,
-  API,
-  PLAN,
-  BILLING,
-  TEAM,
-  WORKSPACE,
-}
-
-const Settingsv2 = () => {
-  const [currentTab, setCurrentTab] = useState(SettingsTab.WORKSPACE);
+const WorkspaceOrganizationSettings = () => {
   const [viewTeamMember, setViewTeamMember] = useState<OrganizationTeamData>();
 
-  const settingsTabToComponentMap = useMemo<{ [key: number]: ReactNode }>(
-    () => ({
-      [SettingsTab.ACCOUNT]: <AccountTab />,
-      [SettingsTab.MESSAGE_CHANNEL]: <MessageChannelTab />,
-      [SettingsTab.EVENT_PROVIDER]: <EventProviderTab />,
-      [SettingsTab.API]: <APITab />,
-      [SettingsTab.WORKSPACE]: (
-        <OrganizationTab setViewTeamMember={setViewTeamMember} />
-      ),
-      // Removed for 1 release
-      // [SettingsTab.PLAN]: <PlanTab />,
-      // [SettingsTab.BILLING]: <BillingTab />,
-      // [SettingsTab.TEAM]: <TeamTab />,
-    }),
-    [viewTeamMember, currentTab]
-  );
-
   return (
-    <div className="w-full flex flex-col gap-5 items-center p-5 font-roboto text-[14px] font-normal leading-[22px] text-[#111827]">
+    <div className="w-full flex justify-center p-5">
       {viewTeamMember ? (
         <>
           <div className="max-w-[970px] w-full flex flex-col gap-5">
@@ -100,26 +64,32 @@ const Settingsv2 = () => {
           </div>
         </>
       ) : (
-        <>
-          <div className="max-w-[970px] w-full font-inter text-[20px] font-medium leading-[28px] text-black">
-            Settings
+        <div className="max-w-[970px] w-full flex flex-col gap-5">
+          <div className="font-inter font-semibold text-[20px] leading-[28px]">
+            Organization
           </div>
-          <div className="w-full flex flex-col items-center gap-[10px]">
-            <SettingsStepper
-              currentTab={currentTab}
-              setCurrentTab={setCurrentTab}
-            />
-
-            <div className="max-w-[970px] w-full rounded-b-[4px] bg-white">
-              {settingsTabToComponentMap[currentTab]}
-            </div>
+          <div className="bg-white rounded">
+            <OrganizationTab setViewTeamMember={setViewTeamMember} />
           </div>
-        </>
+        </div>
       )}
-
-      {/* <SetupGuide currentTab={currentTab} setCurrentTab={setCurrentTab} /> */}
     </div>
+
+    // <div className="w-full p-5 flex justify-center font-inter font-normal text-[#111827] text-[14px] leading-[22px]">
+    //   <div className="max-w-[970px] w-full flex flex-col gap-5">
+    //     <div className="font-semibold text-[20px] leading-[28px]">
+    //       Organization
+    //     </div>
+
+    //     <div className="flex flex-col gap-2.5">
+    //       <div className="bg-white px-[15px] flex items-center gap-8">
+    //         <div>General</div>
+    //         <div>Team members</div>
+    //       </div>
+    //     </div>
+    //   </div>
+    // </div>
   );
 };
 
-export default Settingsv2;
+export default WorkspaceOrganizationSettings;

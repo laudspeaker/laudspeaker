@@ -64,6 +64,10 @@ import ManualSegmentCreator from "pages/ManualSegmentCreator";
 import SegmentViewer from "pages/SegmentViewer";
 import DataTransferTable from "pages/DataTransferTable";
 import DataTransfer from "pages/DataTransfer";
+import WorkspaceAccountSettings from "pages/WorkspaceAccountSettings";
+import WorkspaceDrawerLayout from "components/WorkspaceDrawerLayout";
+import WorkspaceOrganizationSettings from "pages/WorkspaceOrganizationSettings";
+import WorkspaceManage from "pages/WorkspaceManage";
 
 interface IProtected {
   children: ReactElement;
@@ -749,6 +753,42 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <Verificationv2 />
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/workspace/account"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <WorkspaceDrawerLayout>
+                  <WorkspaceAccountSettings />
+                </WorkspaceDrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/workspace/organization"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <WorkspaceDrawerLayout>
+                  <WorkspaceOrganizationSettings />
+                </WorkspaceDrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/workspace/manage"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <WorkspaceDrawerLayout>
+                  <WorkspaceManage />
+                </WorkspaceDrawerLayout>
+              </VerificationProtected>
             </Protected>
           }
         />

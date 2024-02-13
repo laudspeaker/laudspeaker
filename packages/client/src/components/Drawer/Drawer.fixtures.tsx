@@ -5,6 +5,10 @@ import templateBuilderIcon from "./DrawerIcons/templateBuilder.svg";
 import audienceIcon from "./DrawerIcons/audience.svg";
 import dataIcon from "./DrawerIcons/data.svg";
 import settingsIcon from "./DrawerIcons/settings.svg";
+import { NavigationItem } from "./Drawer";
+import billingPlanIcon from "./DrawerIcons/billing-plan.svg";
+import organizationIcon from "./DrawerIcons/organization.svg";
+import manageWorkspaceIcon from "./DrawerIcons/manage-workspace.svg";
 
 export const dataSubArray = [
   {
@@ -116,5 +120,36 @@ export const dataSubArray = [
     text: "Settings",
     type: "menu",
     link: "/settings",
+  },
+];
+
+export const workspaceDrawerItems: NavigationItem[] = [
+  {
+    id: "workspace-account",
+    imgIcon: settingsIcon,
+    text: "Account",
+    type: "menu",
+    link: "/settings/workspace/account",
+  },
+  // {
+  //   id: "billing-plan",
+  //   imgIcon: billingPlanIcon,
+  //   text: "Billing and plan",
+  //   type: "menu",
+  //   link: "/settings/workspace/billing-plan",
+  // },
+  {
+    id: "organization",
+    imgIcon: organizationIcon,
+    text: "Organization",
+    type: "menu",
+    link: "/settings/workspace/organization",
+  },
+  {
+    id: "manage-workspace",
+    imgIcon: manageWorkspaceIcon,
+    text: "Manage workspace",
+    type: "menu",
+    link: "/settings/workspace/manage",
   },
 ];

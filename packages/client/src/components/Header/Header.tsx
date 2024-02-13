@@ -1,4 +1,4 @@
-import { FC, Fragment } from "react";
+import { FC, Fragment, useState } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { Bars3CenterLeftIcon, BellIcon } from "@heroicons/react/24/outline";
 import {
@@ -23,6 +23,8 @@ interface HeaderProps {
 const Header: FC<HeaderProps> = ({ crumbs }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const [workspaces, setWorkspaces] = useState(["a", "b", "c"]);
 
   const handleLogout = () => {
     localStorage.removeItem("userData");
@@ -102,34 +104,57 @@ const Header: FC<HeaderProps> = ({ crumbs }) => {
               leaveFrom="transform opacity-100 scale-100"
               leaveTo="transform opacity-0 scale-95"
             >
-              <Menu.Items className="absolute z-[120] right-0 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                <Menu.Item>
-                  {({ active }) => (
-                    <Link to="/settings">
+              <Menu.Items className="absolute z-[120] right-0 mt-2 w-[220px] origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none font-inter font-normal text-[#111827] text-[14px] leading-[22px]">
+                <div className="py-1">
+                  {workspaces.map((workspace, i) => (
+                    <Menu.Item key={i}>
+                      {({ active }) => (
+                        <div
+                          className={`p-2.5 flex items-center gap-2.5 cursor-pointer ${
+                            active ? " bg-gray-100" : ""
+                          }`}
+                        >
+                          <div className="bg-[#6366F1] w-[22px] h-[22px] rounded text-white text-[11px] leading-[18px] flex justify-center items-center">
+                            WA
+                          </div>
+                          <div>{workspace}</div>
+                        </div>
+                      )}
+                    </Menu.Item>
+                  ))}
+                </div>
+
+                <div className="h-[1px] w-full bg-[#E5E7EB]" />
+
+                <div className="py-1">
+                  <Menu.Item>
+                    {({ active }) => (
+                      <Link to="/settings/workspace/account">
+                        <div
+                          className={classNames(
+                            active ? "bg-gray-100" : "",
+                            "block p-2.5"
+                          )}
+                        >
+                          Manage account
+                        </div>
+                      </Link>
+                    )}
+                  </Menu.Item>
+                  <Menu.Item>
+                    {({ active }) => (
                       <div
                         className={classNames(
                           active ? "bg-gray-100" : "",
-                          "block px-4 py-2 text-sm text-gray-700"
+                          "block p-2.5 cursor-pointer"
                         )}
+                        onClick={handleLogout}
                       >
-                        Settings
+                        Log out
                       </div>
-                    </Link>
-                  )}
-                </Menu.Item>
-                <Menu.Item>
-                  {({ active }) => (
-                    <div
-                      className={classNames(
-                        active ? "bg-gray-100" : "",
-                        "block px-4 py-2 text-sm text-gray-700 cursor-pointer"
-                      )}
-                      onClick={handleLogout}
-                    >
-                      Logout
-                    </div>
-                  )}
-                </Menu.Item>
+                    )}
+                  </Menu.Item>
+                </div>
               </Menu.Items>
             </Transition>
           </Menu>
