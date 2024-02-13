@@ -427,7 +427,8 @@ export class EventsService {
       Math.ceil(
         (await this.EventModel.count({
           event: searchRegExp,
-          ownerId: (<Account>account).id,
+          workspaceId: workspace.id,
+          //ownerId: (<Account>account).id,
         }).exec()) / take
       ) || 1;
 
@@ -451,7 +452,8 @@ export class EventsService {
       {
         $match: {
           event: searchRegExp,
-          ownerId: (<Account>account).id,
+          workspaceId: workspace.id,
+          //ownerId: (<Account>account).id,
         },
       },
       {
@@ -463,6 +465,7 @@ export class EventsService {
         $project: {
           _id: 0, // Exclude the _id field
           ownerId: 0, // Exclude the ownerId field
+          workspaceId: 0, // Exclude the ownerId field
           __v: 0, // Exclude the __v field
           // Note: No need to explicitly include other fields; they are included by default
         },
