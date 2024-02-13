@@ -67,6 +67,8 @@ export const DateComponent: FC<ValueChanger & { isRelativeDate?: boolean }> = ({
   }, [value]);
 
   useEffect(() => {
+    if (!isRelativeDate) return;
+
     onChange(`${relativeCount} ${relativeUnit} ${relativePoint}`);
   }, [relativeCount, relativeUnit, relativePoint]);
 
