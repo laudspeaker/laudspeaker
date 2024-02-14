@@ -1261,31 +1261,33 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                             )
                           )}
                         </select>
-                        <span className="font-inter text-[14px] leading-[22px] text-[#18181B]">
-                          {statement.comparisonType === "has performed"
-                            ? "at least"
-                            : "more than"}
-                        </span>
+                        {statement.comparisonType === "has performed" && (
+                          <span className="font-inter text-[14px] leading-[22px] text-[#18181B]">
+                            at least
+                          </span>
+                        )}
                       </div>
-                      <div className="flex items-center">
-                        <input
-                          type="number"
-                          value={statement.value}
-                          onChange={(e) =>
-                            +e.target.value >= 0 &&
-                            handleChangeStatement(i, {
-                              ...statement,
-                              value: +e.target.value || 0,
-                            })
-                          }
-                          min="0"
-                          placeholder="Mins"
-                          className="w-full max-w-[80px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] mr-[6px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm"
-                        />
-                        <span className="font-inter text-[14px] leading-[22px] text-[#18181B]">
-                          time
-                        </span>
-                      </div>
+                      {statement.comparisonType === "has performed" && (
+                        <div className="flex items-center">
+                          <input
+                            type="number"
+                            value={statement.value}
+                            onChange={(e) =>
+                              +e.target.value >= 0 &&
+                              handleChangeStatement(i, {
+                                ...statement,
+                                value: +e.target.value || 0,
+                              })
+                            }
+                            min="0"
+                            placeholder="Mins"
+                            className="w-full max-w-[80px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] mr-[6px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm"
+                          />
+                          <span className="font-inter text-[14px] leading-[22px] text-[#18181B]">
+                            time
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {statement.time !== undefined && (
