@@ -314,6 +314,7 @@ const PeopleSettings = () => {
               searchValue={search}
               onSearchValueChange={setSearch}
               searchPlaceholder="Search attribute by name"
+              id="attribute-search"
               value={
                 pk || newPK
                   ? `${(newPK || pk)?.key};;${(newPK || pk)?.type}`

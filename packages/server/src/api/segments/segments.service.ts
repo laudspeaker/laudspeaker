@@ -415,16 +415,8 @@ export class SegmentsService {
       }
     } catch (error) {
       const session = randomUUID();
-      this.debug(
-        `could not drop: ${prefix}`,
-        this.create.name,
-        session
-      );
-      this.error(
-        error,
-        this.create.name,
-        session
-      );
+      this.debug(`could not drop: ${prefix}`, this.create.name, session);
+      this.error(error, this.create.name, session);
       //console.error('Error deleting collections:', error);
       //throw error; // Rethrow the error for further handling if necessary
     }
@@ -736,12 +728,7 @@ export class SegmentsService {
           session,
           account.id
         );
-        this.error(
-          e,
-          this.size.name,
-          session,
-          account.id
-        )
+        this.error(e, this.size.name, session, account.id);
         //console.error('Error dropping collection:', e);
       }
       return { size: segmentDocuments, total: totalCount };
@@ -781,11 +768,7 @@ export class SegmentsService {
           session,
           account.id
         );
-        this.error(
-          e,
-          this.size.name,
-          session
-        );
+        this.error(e, this.size.name, session);
       }
       return { size: segmentDocuments, total: totalCount };
     } else {

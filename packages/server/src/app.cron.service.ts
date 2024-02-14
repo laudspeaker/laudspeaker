@@ -442,23 +442,21 @@ export class CronService {
     }
   }
 
- /*
-  * helper function that deletes
-  *
-  */
+  /*
+   * helper function that deletes
+   *
+   */
 
   checkSegmentHasMessageFilters(
     segmentCriteria: any,
     orgId: string,
     session: string
   ): boolean {
-
-      // Convert the segmentCriteria object to a JSON string
+    // Convert the segmentCriteria object to a JSON string
     const criteriaString = JSON.stringify(segmentCriteria);
 
     // Check for the presence of any of the specified types in the string
     return /"type":\s*"(Email|Push|In-app message|SMS)"/.test(criteriaString);
-
   }
   /*
    *
@@ -488,9 +486,9 @@ export class CronService {
       let queryRunner = this.dataSource.createQueryRunner();
       await queryRunner.connect();
       await queryRunner.startTransaction();
-      let segmentPrefixes : string[] = [];
+      let segmentPrefixes: string[] = [];
       //we keep for logging
-      let segmentError : string
+      let segmentError: string;
       try {
         let segments = await this.segmentsService.getSegments(
           accounts[j],
@@ -499,11 +497,10 @@ export class CronService {
         );
         // for each segment check if it has a message component
         for (const segment of segments) {
-
           if (!segment.inclusionCriteria || !segment.inclusionCriteria.query) {
             continue; // Skip to the next iteration of the loop
           }
-          
+
           let doInclude = this.checkSegmentHasMessageFilters(
             segment.inclusionCriteria.query,
             accounts[j].id,
@@ -581,10 +578,8 @@ export class CronService {
           accounts[j].id
         );
         //drop extraneous collections in case of error
-        for(const prefix of segmentPrefixes) {
-          await this.segmentsService.deleteCollectionsWithPrefix(
-            prefix
-          );
+        for (const prefix of segmentPrefixes) {
+          await this.segmentsService.deleteCollectionsWithPrefix(prefix);
         }
         await queryRunner.rollbackTransaction();
         err = error;

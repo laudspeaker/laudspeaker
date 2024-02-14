@@ -159,6 +159,7 @@ const PeopleTablev2 = () => {
         <div className="flex items-center gap-[10px]">
           <Button
             type={ButtonType.SECONDARY}
+            id="people-settings"
             onClick={() => {
               navigate("/people/setting");
             }}

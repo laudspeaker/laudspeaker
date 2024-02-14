@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, MouseEvent } from "react";
 import { useParams } from "react-router-dom";
 import { Input } from "components/Elements";
 import ApiService from "services/api.service";
@@ -31,7 +31,8 @@ const ResetPassword = () => {
     email: !email.match(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$/),
   };
 
-  const handleSendLink = async () => {
+  const handleSendLink = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
     setIsSaving(true);
     try {
       await ApiService.post({
@@ -42,10 +43,10 @@ const ResetPassword = () => {
       });
       toast.success("We have sent a password reset link to your email.");
       navigate("/login");
-    } catch (e) {
+    } catch (err) {
       let message = "Something went wrong while sending email";
-      if (e instanceof AxiosError) {
-        message = e.response?.data?.message || message;
+      if (err instanceof AxiosError) {
+        message = err.response?.data?.message || message;
       }
       toast.error(message);
     } finally {
