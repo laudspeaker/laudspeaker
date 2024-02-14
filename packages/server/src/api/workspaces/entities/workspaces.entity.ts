@@ -164,4 +164,7 @@ export class Workspaces extends BaseEntity {
 
   @Column({ type: 'varchar', nullable: true })
   resendSendingEmail?: string;
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
 }

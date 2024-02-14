@@ -444,7 +444,7 @@ export class CustomersController {
       return new HttpException(e, 500);
     }
     account = <Account>user;
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     //to do will eventually need to make it so it does not take the top g
     try {

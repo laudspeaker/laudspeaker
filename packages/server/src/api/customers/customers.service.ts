@@ -265,7 +265,7 @@ export class CustomersService {
         _id: Types.ObjectId;
       }
   > {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     const createdCustomer = new this.CustomerModel({
       workspaceId: workspace.id,
@@ -412,7 +412,7 @@ export class CustomersService {
     showFreezed = false,
     createdAtSortType: 'asc' | 'desc' = 'desc'
   ): Promise<{ data: CustomerDocument[]; totalPages: number }> {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     const totalPages =
       Math.ceil(
@@ -441,7 +441,7 @@ export class CustomersService {
     if (!isValidObjectId(id))
       throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
 
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     const customer = await this.CustomerModel.findOne({
       _id: new Types.ObjectId(id),
@@ -718,7 +718,7 @@ export class CustomersService {
     });
 
     const customer = await this.findOne(account, id, session);
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     if (customer.isFreezed)
       throw new BadRequestException('Customer is freezed');
@@ -872,7 +872,7 @@ export class CustomersService {
       showFreezed,
       createdAtSortType || 'desc'
     );
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     const pk = (
       await this.CustomerKeysModel.findOne({
@@ -988,7 +988,7 @@ export class CustomersService {
     account: Account,
     audienceId: string
   ): Promise<CustomerDocument[]> {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     return this.CustomerModel.find({
       workspaceId: workspace.id,
@@ -1226,9 +1226,9 @@ export class CustomersService {
       where: {
         id: account,
       },
-      relations: ['teams.organization.workspaces'],
+      relations: ['teams.organization.workspaces', 'currentWorkspace'],
     });
-    const workspace = foundAccount?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = foundAccount?.currentWorkspace;
 
     if (
       !criteria ||
@@ -1663,7 +1663,7 @@ export class CustomersService {
   }
 
   async getAttributes(account: Account, resourceId: string, session: string) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     const attributes = await this.CustomerKeysModel.find({
       workspaceId: workspace.id,
@@ -1730,7 +1730,7 @@ export class CustomersService {
     if (csvFile?.mimetype !== 'text/csv')
       throw new BadRequestException('Only CSV files are allowed');
 
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
     try {
       const errorPromise = new Promise<{
         headers: string[];
@@ -1852,7 +1852,7 @@ export class CustomersService {
   }
 
   async getLastImportCSV(account: Account, session?: string) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     try {
       const importFile = await this.importsRepository.findOneBy({
@@ -1919,7 +1919,7 @@ export class CustomersService {
       columns: true,
       skipEmptyLines: true,
     });
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     for await (const record of records) {
       if (record.email) {
@@ -2015,7 +2015,7 @@ export class CustomersService {
     isArray?: boolean,
     removeLimit?: boolean
   ) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     const query = this.CustomerKeysModel.find({
       $and: [
@@ -2188,7 +2188,7 @@ export class CustomersService {
     take: number,
     skip: number
   ) {
-    const workspace = user?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = user?.currentWorkspace;
 
     const customer = await this.CustomerModel.findOne({
       _id: custId,
@@ -2273,7 +2273,7 @@ export class CustomersService {
   }
 
   async customersSize(account: Account, session: string) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     const totalNumberOfCustomers = this.CustomerModel.find({
       workspaceId: workspace.id,
@@ -2953,7 +2953,7 @@ export class CustomersService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     try {
       const journeys = await queryRunner.manager.find(Journey, {
@@ -3679,7 +3679,7 @@ export class CustomersService {
    * @returns string
    */
   async getPrimaryKey(account: Account, session: string): Promise<string> {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     let currentPK: string = await this.CustomerKeysModel.findOne({
       workspaceId: workspace.id,
@@ -5192,7 +5192,7 @@ export class CustomersService {
     dateFormat: unknown,
     session?: string
   ) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     try {
       if (!Object.values(AttributeType).includes(type)) {
@@ -5237,7 +5237,7 @@ export class CustomersService {
   ) {
     validateKeyForMutations(updateAttributeDto.key);
 
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     const attributeInDb = await this.CustomerKeysModel.findOne({
       _id: updateAttributeDto.id,
@@ -5269,7 +5269,7 @@ export class CustomersService {
   }
 
   async deleteAttribute(account: Account, id: string) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     const attributeInDb = await this.CustomerKeysModel.findOne({
       _id: id,
@@ -5399,7 +5399,7 @@ export class CustomersService {
     settings: ImportCustomersDTO,
     session: string
   ) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     let errorFilePath = '';
     try {
@@ -5630,7 +5630,7 @@ export class CustomersService {
     settings: ImportCustomersDTO,
     session: string
   ) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     try {
       const fileData = await this.importsRepository.findOneBy({
@@ -5777,7 +5777,7 @@ export class CustomersService {
     update: UpdatePK_DTO,
     session: string
   ) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.currentWorkspace;
 
     const pk = (
       await this.CustomerKeysModel.findOne({
