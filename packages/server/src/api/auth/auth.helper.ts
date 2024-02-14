@@ -20,6 +20,7 @@ import { StepType } from '../steps/types/step.interface';
 import generateName from '@good-ghosting/random-name-generator';
 import { Organization } from '../organizations/entities/organization.entity';
 import { OrganizationTeam } from '../organizations/entities/organization-team.entity';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class AuthHelper extends BaseJwtHelper {
@@ -39,8 +40,68 @@ export class AuthHelper extends BaseJwtHelper {
     this.jwt = jwt;
   }
 
+  log(message, method, session, user = 'ANONYMOUS') {
+    this.logger.log(
+      message,
+      JSON.stringify({
+        class: AuthHelper.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  debug(message, method, session, user = 'ANONYMOUS') {
+    this.logger.debug(
+      message,
+      JSON.stringify({
+        class: AuthHelper.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  warn(message, method, session, user = 'ANONYMOUS') {
+    this.logger.warn(
+      message,
+      JSON.stringify({
+        class: AuthHelper.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+  error(error, method, session, user = 'ANONYMOUS') {
+    this.logger.error(
+      error.message,
+      error.stack,
+      JSON.stringify({
+        class: AuthHelper.name,
+        method: method,
+        session: session,
+        cause: error.cause,
+        name: error.name,
+        user: user,
+      })
+    );
+  }
+  verbose(message, method, session, user = 'ANONYMOUS') {
+    this.logger.verbose(
+      message,
+      JSON.stringify({
+        class: AuthHelper.name,
+        method: method,
+        session: session,
+        user: user,
+      })
+    );
+  }
+
   // Decoding the JWT Token
   public async decode(token: string): Promise<unknown> {
+    this.log(`Decoding JWT Token: ${JSON.stringify(token)}`,this.decode.name,randomUUID())
     return this.jwt.decode(token, null);
   }
 
@@ -61,14 +122,18 @@ export class AuthHelper extends BaseJwtHelper {
 
   // Validate JWT Token, throw forbidden error if JWT Token is invalid
   private async validate(token: string): Promise<boolean | never> {
+    this.log(`Verifying JWT Token: ${JSON.stringify(token)}`,this.validate.name,randomUUID())
     const decoded: { id: string } = this.jwt.verify(token);
 
     if (!decoded) {
+      this.error(`Can't verify JWT`,this.validate.name,randomUUID())
       throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
     }
 
+    this.log(`Validating decoded JWT Token: ${JSON.stringify(decoded)}`,this.validate.name,randomUUID())
     const user: Account = await this.validateUser(decoded);
     if (!user) {
+      this.error(`User not found`,this.validate.name,randomUUID())
       throw new UnauthorizedException();
     }
 
