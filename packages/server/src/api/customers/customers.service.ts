@@ -74,6 +74,7 @@ import {
   UpdateAttributeDto,
 } from './dto/modify-attributes.dto';
 import { parseISO, add, sub, formatISO } from 'date-fns';
+import { cloneDeep } from 'lodash';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -3681,12 +3682,14 @@ export class CustomersService {
   async getPrimaryKey(account: Account, session: string): Promise<string> {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    let currentPK: string = await this.CustomerKeysModel.findOne({
+    const customerKeyDocument = await this.CustomerKeysModel.findOne({
       workspaceId: workspace.id,
       isPrimary: true,
-    });
+    })
 
-    if (currentPK) {
+    if (customerKeyDocument) {
+      const currentPK = customerKeyDocument.key;
+
       this.debug(
         `current pk is: ${currentPK}`,
         this.getPrimaryKey.name,
@@ -3703,8 +3706,9 @@ export class CustomersService {
         account.id
       );
       //to do just for testing
-      currentPK = 'email';
-      return currentPK;
+      //currentPK = 'email';
+      //return currentPK;
+      return 'email';
     }
   }
 
@@ -3853,6 +3857,9 @@ export class CustomersService {
         account.id
       );
 
+      //first we make the aggregation call with non-mobile events
+      //we treat mobile seperately to handle anonymous users
+
       const aggregationPipeline: any[] = [
         { $match: mongoQuery },
         {
@@ -3871,12 +3878,14 @@ export class CustomersService {
           },
         },
         { $match: { count: { $gte: value } } },
+        /*
         {
           $group: {
             _id: null,
             customerIds: { $push: '$_id' },
           },
         },
+        */
         { $out: intermediateCollection },
         //to do
       ];
@@ -3913,29 +3922,72 @@ export class CustomersService {
       ]
       Empty example: []
       */
-      //console.log("results are", JSON.stringify(result, null, 2));
-      /*
+
+      //now we make the aggregation call with mobile events
+      mongoQuery.source = "mobile"
+      //console.log("mongoquery in eventssegment is ", JSON.stringify(mongoQuery, null, 2) );
+
+      const aggregationPipelineMobile: any[] = [
+        { $match: mongoQuery },
+        {
+          $addFields: {
+            convertedCorrelationValue: { $toObjectId: "$correlationValue" }
+          }
+        },
+        {
+          $lookup: {
+            from: 'customers',
+            localField: 'convertedCorrelationValue',
+            foreignField: '_id',
+            as: 'matchedCustomers',
+          },
+        },
+        { $unwind: '$matchedCustomers' },
+        {
+          $group: {
+            _id: '$matchedCustomers._id',
+            count: { $sum: 1 },
+          },
+        },
+        { $match: { count: { $gte: value } } },
+        /*
+        {
+          $group: {
+            _id: null,
+            customerIds: { $push: '$_id' },
+          },
+        },
+        */
+        {
+          $merge: {
+            into: intermediateCollection, // specify the target collection name
+            on: "_id", // assuming '_id' is your unique identifier
+            whenMatched: "fail", // prevents updates to existing documents; consider "keepExisting" if you prefer not to error out
+            whenNotMatched: "insert" // inserts the document if no match is found
+          }
+        },
+        //to do
+      ];
+
       this.debug(
-        'Here are the results',
+        'aggregate mobile query is/n\n',
         this.customersFromEventStatement.name,
         session,
         account.id
       );
+
       this.debug(
-        JSON.stringify(result, null, 2),
+        JSON.stringify(aggregationPipeline, null, 2),
         this.customersFromEventStatement.name,
         session,
         account.id
       );
-      if (result.length > 0) {
-        const customerIdsSet: Set<string> = new Set(result[0].customerIds);
-        return customerIdsSet;
-      }
-      else{
-        // no customers who satisfy conditions so return empty set
-        return new Set<string>();
-      }
-      */
+
+      //fetch users here
+      const mobileResult: any = await this.eventsService.getCustomersbyEventsMongo(
+        aggregationPipelineMobile
+      );
+
       return intermediateCollection;
     } else if (comparisonType === 'has not performed') {
       /*
@@ -3947,7 +3999,7 @@ export class CustomersService {
        *
        */
       this.debug(
-        'in the aggregate construction - has performed',
+        'in the aggregate construction - has not performed',
         this.customersFromEventStatement.name,
         session,
         account.id
@@ -3994,12 +4046,14 @@ export class CustomersService {
               workspaceId: workspace.id,
             },
           },
+          /*
           {
             $group: {
               _id: null,
               customerIds: { $push: '$_id' },
             },
           },
+          */
           {
             $project: {
               _id: 1,
@@ -4011,47 +4065,193 @@ export class CustomersService {
         ];
 
         const result = await this.CustomerModel.aggregate(allUsers).exec();
-        /*
-        this.debug(
-          'the result is',
-          this.customersFromEventStatement.name,
-          session,
-          account.id
-        );
-        this.debug(
-          JSON.stringify(result,null,2),
-          this.customersFromEventStatement.name,
-          session,
-          account.id
-        );
-        //console.log("the result is", JSON.stringify(result,null,2) );
-
-        if (result.length > 0) {
-          const customerIdsSet: Set<string> = new Set(result[0].allCustomerIds);
-          return customerIdsSet;
-        }
-        else{
-          // no customers who satisfy conditions so return empty set
-          // likely on a fresh account with no users 
-          return new Set<string>();
-        }
-        */
+        //console.log("outputted to", intermediateCollection);
+        
         return intermediateCollection;
       }
+
+      /*
+      //mobile event check
+      let mobileMongoQuery = cloneDeep(mongoQuery)
+      mobileMongoQuery.source = "mobile";
+
+      const checkMobileEventExists = [
+        {
+          $match: mobileMongoQuery,
+        },
+        {
+          $group: {
+            _id: '$event',
+            count: { $sum: 1 },
+          },
+        },
+      ];
+      const checkMobile = await this.eventsService.getCustomersbyEventsMongo(
+        checkMobileEventExists
+      );
+      
+      if (checkMobile.length < 1) {
+        console.log("no mobile")
+      } else {
+
+      }
+      */
+
+
       this.debug(
         'event exists',
         this.customersFromEventStatement.name,
         session,
         account.id
       );
-      // double lookup, first find users who perform id, then filter them out
+
+
+      /*  
+       *  Find customers who perform event (non mobile) (pipeline1), then merge with users who perform event (mobile) (pipeline2)  
+       *  filter these customers out, return the remaining customers
+       *  re todo
+       */
+
+      const primaryKey = await this.getPrimaryKey(account, session); // Ensure this is done outside the pipeline
+
+      const pipeline1 = [
+        { $match: mongoQuery },
+        {
+          $lookup: {
+            from: 'customers',
+            localField: 'correlationValue',
+            foreignField: primaryKey,
+            as: 'matchedCustomers',
+          },
+        },
+        { $unwind: "$matchedCustomers" },
+        {
+          $project: {
+            _id: "$matchedCustomers._id", // Projects the _id of the matched customers
+          },
+        },
+        { $out: intermediateCollection },
+      ];
+
+      this.debug(
+        'about to run pipeline 1/n\n',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+
+      this.debug(
+        JSON.stringify(pipeline1, null, 2),
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+
+      const result = await this.eventsService.getCustomersbyEventsMongo(
+        pipeline1
+      );
+
+      let mobileMongoQuery = cloneDeep(mongoQuery)
+      mobileMongoQuery.source = "mobile";
+
+      const pipeline2 = [
+        { $match: mobileMongoQuery },
+        {
+          $addFields: {
+            convertedCorrelationValue: { $toObjectId: "$correlationValue" }
+          }
+        },
+        {
+          $lookup: {
+            from: 'customers',
+            localField: 'convertedCorrelationValue',
+            foreignField: '_id',
+            as: 'matchedOnCorrelationValue',
+          },
+        },
+        { $unwind: "$matchedOnCorrelationValue" },
+        {
+          $project: {
+            _id: "$matchedOnCorrelationValue._id", // Projects the _id of the matched customers
+          },
+        },
+        { 
+          $merge: { 
+            into: intermediateCollection, 
+            on: "_id", 
+            whenMatched: "keepExisting", 
+            whenNotMatched: "insert" 
+          } 
+        },
+      ];
+
+      this.debug(
+        'about to run pipeline 2/n\n',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+
+      this.debug(
+        JSON.stringify(pipeline2, null, 2),
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+
+      
+      const result2 = await this.eventsService.getCustomersbyEventsMongo(
+        pipeline2
+      );
+      
+      
+      const pipeline3 = [
+        {
+          $lookup: {
+            from: intermediateCollection,
+            localField: "_id",
+            foreignField: "_id",
+            as: "matchedInIntermediate",
+          },
+        },
+        {
+          $match: {
+            "matchedInIntermediate": { $size: 0 },
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+          },
+        },
+        { $out: intermediateCollection },
+      ];
+
+      this.debug(
+        'about to run pipeline 3/n\n',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+
+      this.debug(
+        JSON.stringify(pipeline3, null, 2),
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+
+      const result3 = await this.CustomerModel.aggregate(pipeline3).exec();
+      //const result3 = await this.eventsService.getCustomersbyEventsMongo(pipeline3);
+      
+      /*
       const aggregationPipeline: any[] = [
         { $match: mongoQuery },
         {
           $lookup: {
             from: 'customers',
             localField: 'correlationValue',
-            foreignField: await this.getPrimaryKey(account, session),
+            foreignField: primaryKey,
             as: 'matchedCustomers',
           },
         },
@@ -4077,7 +4277,7 @@ export class CustomersService {
                       {
                         $not: {
                           $in: [
-                            '$' + (await this.getPrimaryKey(account, session)),
+                            '$' +  primaryKey,//(await this.getPrimaryKey(account, session)),
                             { $ifNull: ['$$correlationValues', []] },
                           ],
                         },
@@ -4098,37 +4298,21 @@ export class CustomersService {
             as: 'unmatchedCustomers',
           },
         },
+        { $unwind: "$unmatchedCustomers" },
         {
           $project: {
-            unmatchedCustomers: {
-              $map: {
-                input: '$unmatchedCustomers',
-                as: 'customer',
-                in: '$$customer._id',
-              },
-            },
-            _id: 0,
+            _id: "$unmatchedCustomers._id",
           },
         },
         { $out: intermediateCollection },
       ];
+      */
 
       this.debug(
         'aggregate query is/n\n',
         this.customersFromEventStatement.name,
         session,
         account.id
-      );
-
-      this.debug(
-        JSON.stringify(aggregationPipeline, null, 2),
-        this.customersFromEventStatement.name,
-        session,
-        account.id
-      );
-
-      const result = await this.eventsService.getCustomersbyEventsMongo(
-        aggregationPipeline
       );
 
       this.debug(
