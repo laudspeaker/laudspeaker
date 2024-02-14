@@ -3925,7 +3925,7 @@ export class CustomersService {
 
       //now we make the aggregation call with mobile events
       mongoQuery.source = "mobile"
-      console.log("mongoquery in eventssegment is ", JSON.stringify(mongoQuery, null, 2) );
+      //console.log("mongoquery in eventssegment is ", JSON.stringify(mongoQuery, null, 2) );
 
       const aggregationPipelineMobile: any[] = [
         { $match: mongoQuery },
