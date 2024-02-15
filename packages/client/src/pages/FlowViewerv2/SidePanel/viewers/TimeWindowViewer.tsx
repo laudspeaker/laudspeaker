@@ -1,4 +1,7 @@
-import { TimeWindowNodeData } from "pages/FlowBuilderv2/Nodes/NodeData";
+import {
+  TimeWindowNodeData,
+  TimeWindowTypes,
+} from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, ReactNode, useEffect, useState } from "react";
 import { SidePanelComponentProps } from "../FlowViewerSidePanel";
 import { format } from "date-fns";
@@ -6,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import ApiService from "services/api.service";
 import Pagination from "components/Pagination";
 import Table from "components/Tablev2";
+import { weekDays } from "pages/FlowBuilderv2/EntryTimingViewer";
 
 enum TimeWindowViewerTab {
   CONFIGURATION = "configuration",
@@ -83,14 +87,33 @@ const TimeWindowViewer: FC<SidePanelComponentProps<TimeWindowNodeData>> = ({
       onClick: () => setActiveTab(TimeWindowViewerTab.CONFIGURATION),
       content: (
         <div className="p-5">
-          <div className="bg-gray-100 border border-gray-200 rounded gap-5 flex py-3 px-7">
-            <div className="flex flex-col">
-              <span>From</span>
-              <span>To</span>
+          <div className="bg-gray-100 border border-gray-200 rounded flex flex-col gap-2.5 py-3 px-7">
+            <div>
+              {nodeData.windowType === TimeWindowTypes.SPEC_DATES ? (
+                <b>Everyday</b>
+              ) : (
+                <>
+                  Every{" "}
+                  <b>
+                    {nodeData.onDays
+                      ?.map((flag, i) => (flag === 1 ? weekDays[i] : ""))
+                      .filter((item) => item)
+                      .join(" ")}
+                  </b>
+                </>
+              )}
             </div>
-            <div className="flex flex-col font-semibold">
-              <span>{from}</span>
-              <span>{to}</span>
+
+            <div>
+              {nodeData.windowType === TimeWindowTypes.SPEC_DATES ? (
+                <>
+                  From <b>{from}</b> to <b>{to}</b>
+                </>
+              ) : (
+                <>
+                  From <b>{nodeData.fromTime}</b> to <b>{nodeData.toTime}</b>
+                </>
+              )}
             </div>
           </div>
         </div>
