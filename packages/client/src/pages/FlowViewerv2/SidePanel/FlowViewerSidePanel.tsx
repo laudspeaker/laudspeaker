@@ -11,6 +11,7 @@ import TrackerViewer from "./viewers/TrackerViewer";
 import UserAttributeViewer from "./viewers/UserAttributeViewer";
 import WaitUntilViewer from "./viewers/WaitUntilViewer";
 import ExperimentViewer from "./viewers/ExperimentViewer";
+import MultisplitViewer from "./viewers/MultisplitViewer";
 
 export interface SidePanelComponentProps<T extends NodeData = NodeData> {
   nodeData: T;
@@ -96,6 +97,13 @@ const FlowViewerSidePanel: FC<FlowViewerSidePanelProps> = ({ className }) => {
       <>
         {nodeData.type === NodeType.EXPERIMENT && selectedNode && (
           <ExperimentViewer nodeData={nodeData} />
+        )}
+      </>
+    ),
+    [NodeType.MULTISPLIT]: (
+      <>
+        {nodeData.type === NodeType.MULTISPLIT && selectedNode && (
+          <MultisplitViewer nodeData={nodeData} />
         )}
       </>
     ),

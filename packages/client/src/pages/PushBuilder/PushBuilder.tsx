@@ -163,6 +163,7 @@ const PushBuilder = ({ isInlineCreator }: PushBuilderProps) => {
         },
       });
       loadData(false, true);
+      toast.success("Successfully saved template!");
     } catch (e) {
       let message = "Unexpected error";
       if (e instanceof AxiosError) {
@@ -318,6 +319,7 @@ const PushBuilder = ({ isInlineCreator }: PushBuilderProps) => {
                   (isInlineCreator ? handleBackToJourney : onSave)();
                 } else setPageIndex(1);
               }}
+              disabled={isSaving}
             >
               {pageIndex ? "Save" : "Next"}
             </Button>

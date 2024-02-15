@@ -46,12 +46,9 @@ export const limitQuery = (
   return [limitedQuery, count];
 };
 
-const MulisplitSettings: FC<SidePanelComponentProps<MultisplitNodeData>> = ({
-  nodeData,
-  setNodeData,
-  setIsError,
-  showErrors,
-}) => {
+const MulisplitSettings: FC<
+  SidePanelComponentProps<MultisplitNodeData> & { isViewMode?: boolean }
+> = ({ nodeData, setNodeData, setIsError, showErrors, isViewMode }) => {
   const [editBranchIndex, setEditBranchIndex] = useState<number | undefined>(
     undefined
   );
@@ -105,41 +102,48 @@ const MulisplitSettings: FC<SidePanelComponentProps<MultisplitNodeData>> = ({
                       See all conditions
                     </div>
                   )}
-                  <div className="flex gap-[10px] mt-[10px]">
-                    <Button
-                      type={ButtonType.LINK}
-                      onClick={() => setEditBranchIndex(i)}
-                      className="!text-[#6366F1]"
-                    >
-                      Edit branch
-                    </Button>
-                    <Button
-                      type={ButtonType.LINK}
-                      onClick={() => {
-                        handleDelete(i);
-                      }}
-                      className="!text-[#EB5757]"
-                    >
-                      Delete branch
-                    </Button>
-                  </div>
-                  <div className="w-[calc(100%+20px)] absolute left-[-20px] z-10 bottom-[0px] border-[#E5E7EB] border-t-[1px]" />
+                  {!isViewMode && (
+                    <>
+                      <div className="flex gap-[10px] mt-[10px]">
+                        <Button
+                          type={ButtonType.LINK}
+                          onClick={() => setEditBranchIndex(i)}
+                          className="!text-[#6366F1]"
+                        >
+                          Edit branch
+                        </Button>
+                        <Button
+                          type={ButtonType.LINK}
+                          onClick={() => {
+                            handleDelete(i);
+                          }}
+                          className="!text-[#EB5757]"
+                        >
+                          Delete branch
+                        </Button>
+                      </div>
+                      <div className="w-[calc(100%+20px)] absolute left-[-20px] z-10 bottom-[0px] border-[#E5E7EB] border-t-[1px]" />
+                    </>
+                  )}
                 </div>
               </React.Fragment>
             );
           })}
       </div>
-      <div className="py-5 relative">
-        <Button
-          type={ButtonType.SECONDARY}
-          onClick={() => {
-            setEditBranchIndex(-1);
-          }}
-          className="!text-[#111827] !border-[#E5E7EB]"
-        >
-          Add branch
-        </Button>
-      </div>
+      {!isViewMode && (
+        <div className="py-5 relative">
+          <Button
+            type={ButtonType.SECONDARY}
+            onClick={() => {
+              setEditBranchIndex(-1);
+            }}
+            className="!text-[#111827] !border-[#E5E7EB]"
+          >
+            Add branch
+          </Button>
+        </div>
+      )}
+
       <Suspense fallback={<></>}>
         <FlowBuilderMultisplitModal
           isOpen={editBranchIndex !== undefined}
@@ -151,6 +155,7 @@ const MulisplitSettings: FC<SidePanelComponentProps<MultisplitNodeData>> = ({
           index={editBranchIndex}
           onSave={handleSave}
           onClose={() => setEditBranchIndex(undefined)}
+          isViewMode={isViewMode}
         />
       </Suspense>
     </>

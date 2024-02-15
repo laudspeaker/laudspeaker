@@ -6,6 +6,7 @@ import {
 } from "reducers/flow-builder.reducer";
 import deepCopy from "utils/deepCopy";
 import FlowBuilderModal from "../Elements/FlowBuilderModal";
+import FilterViewer from "../FilterViewer/FilterViewer";
 const FilterBuilder = React.lazy(
   () => import("../FilterBuilder/FilterBuilder")
 );
@@ -16,6 +17,7 @@ interface FlowBuilderMultisplitModalProps {
   index?: number;
   onClose: () => void;
   onSave: (branch: ConditionalSegmentsSettings) => void;
+  isViewMode?: boolean;
 }
 
 const defaultObject = {
@@ -32,6 +34,7 @@ const FlowBuilderMultisplitModal = ({
   index,
   onClose,
   onSave,
+  isViewMode,
 }: FlowBuilderMultisplitModalProps) => {
   const [bufferBranch, setBufferBranch] = useState(
     deepCopy(branch) || defaultObject
@@ -88,28 +91,35 @@ const FlowBuilderMultisplitModal = ({
         </span>
         <div className="max-h-[584px] min-h-[500px] overflow-y-auto">
           <Suspense fallback={<></>}>
-            <FilterBuilder
-              settings={bufferBranch}
-              isMultisplitBuilder
-              onSettingsChange={(newData) => {
-                setBufferBranch(newData as ConditionalSegmentsSettings);
-              }}
-              shouldShowErrors={showErrors}
-              queryErrorsActions={{
-                add: addError,
-                remove: removeError,
-              }}
-            />
+            {isViewMode ? (
+              <FilterViewer settingsQuery={bufferBranch.query} />
+            ) : (
+              <FilterBuilder
+                settings={bufferBranch}
+                isMultisplitBuilder
+                onSettingsChange={(newData) => {
+                  setBufferBranch(newData as ConditionalSegmentsSettings);
+                }}
+                shouldShowErrors={showErrors}
+                queryErrorsActions={{
+                  add: addError,
+                  remove: removeError,
+                }}
+              />
+            )}
           </Suspense>
         </div>
       </div>
-      <div className="flex justify-end items-center gap-[10px]">
+      <div className="flex justify-end items-center gap-[10px] mt-6">
         <Button type={ButtonType.SECONDARY} onClick={handleCancel}>
-          Cancel
+          {isViewMode ? "OK" : "Cancel"}
         </Button>
-        <Button type={ButtonType.PRIMARY} onClick={handleSave}>
-          {branch ? "Save" : "Add"}
-        </Button>
+
+        {!isViewMode && (
+          <Button type={ButtonType.PRIMARY} onClick={handleSave}>
+            {branch ? "Save" : "Add"}
+          </Button>
+        )}
       </div>
     </FlowBuilderModal>
   );

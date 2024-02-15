@@ -1,5 +1,6 @@
 import {
   BranchType,
+  MessageCondition,
   WaitUntilNodeData,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, ReactNode, useEffect, useState } from "react";
@@ -10,6 +11,10 @@ import Table from "components/Tablev2";
 import { useNavigate } from "react-router-dom";
 import Pagination from "components/Pagination";
 import ApiService from "services/api.service";
+import { MessageEditor } from "pages/FlowBuilderv2/SidePanel/components/MessageEditor";
+import { ProviderType } from "types/Workflow";
+import { WaitUntilMessageProviderCorelation } from "reducers/flow-builder.reducer";
+import { capitalize } from "lodash";
 
 enum WaitUntilViewerTab {
   CONFIGURATION = "configuration",
@@ -89,12 +94,67 @@ const WaitUntilViewer: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
             >
               <div className="font-inter font-semibold text-base text-gray-900">
                 Branch {i + 1} -{" "}
-                {branch.type === BranchType.EVENT ? "Event" : "Max time"}
+                {[
+                  BranchType.EVENT,
+                  BranchType.ATTRIBUTE,
+                  BranchType.MESSAGE,
+                  BranchType.WU_ATTRIBUTE,
+                ].includes(branch.type)
+                  ? "Event"
+                  : "Max time"}
               </div>
               {branch.type === BranchType.EVENT ? (
                 <EventBranchView branch={branch} />
               ) : branch.type === BranchType.MAX_TIME ? (
                 <MaxTimeBranchView branch={branch} />
+              ) : branch.type === BranchType.MESSAGE ? (
+                <>
+                  <div>
+                    {branch.conditions.map((condition, j) =>
+                      [
+                        ProviderType.EMAIL_MESSAGE,
+                        ProviderType.IN_APP_MESSAGE,
+                        ProviderType.PUSH_MESSAGE,
+                        ProviderType.SMS_MESSAGE,
+                      ].includes(condition.providerType) ? (
+                        <div key={j} className="flex flex-col gap-2.5">
+                          <div className="p-2.5 flex flex-col gap-2.5 bg-[#F3F4F6] rounded">
+                            <div>
+                              <b>
+                                {capitalize(
+                                  WaitUntilMessageProviderCorelation[
+                                    condition.providerType
+                                  ]
+                                )}
+                              </b>
+                            </div>
+                            <div>
+                              <b>
+                                {
+                                  (condition as MessageCondition)
+                                    .fromSpecificMessage.title
+                                }
+                              </b>{" "}
+                              from{" "}
+                              <b>
+                                {(condition as MessageCondition).from?.title}
+                              </b>{" "}
+                              has been{" "}
+                              {(condition as MessageCondition).eventCondition}
+                            </div>
+                          </div>
+                          {j !== branch.conditions.length - 1 && (
+                            <div className="bg-[#F3F4F6] rounded-sm border border-[#E5E7EB] px-3 py-[5px] w-fit text-[#4B5563]">
+                              {capitalize(condition.relationToNext)}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <></>
+                      )
+                    )}
+                  </div>
+                </>
               ) : (
                 <></>
               )}

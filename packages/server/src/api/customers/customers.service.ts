@@ -4246,7 +4246,7 @@ export class CustomersService {
         },
         {
           $match: {
-            "matchedInIntermediate": { $size: 0 },
+            matchedInIntermediate: { $size: 0 },
           },
         },
         {
@@ -5361,11 +5361,20 @@ export class CustomersService {
       ],
     };
 
+    const pk = await this.CustomerKeysModel.findOne({
+      isPrimary: true,
+      workspaceId: workspace.id,
+    });
+
     if (search) {
+      const findRegexp = new RegExp(`.*${search}.*`, 'i');
+
       const searchConditions = {
         $or: [
-          { email: new RegExp(`.*${search}.*`, 'i') },
-          { phone: new RegExp(`.*${search}.*`, 'i') },
+          ...(isValidObjectId(search) ? [{ _id: search }] : []),
+          { email: findRegexp },
+          { phone: findRegexp },
+          ...(pk ? [{ [pk.key]: findRegexp }] : []),
         ],
       };
 
