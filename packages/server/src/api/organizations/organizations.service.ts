@@ -188,6 +188,11 @@ export class OrganizationService {
 
       await this.helper.generateDefaultData(account, queryRunner, session);
 
+      await queryRunner.manager.save(Account, {
+        id: account.id,
+        currentWorkspace: { id: workspace.id },
+      });
+
       await queryRunner.commitTransaction();
     } catch (err) {
       await queryRunner.rollbackTransaction();

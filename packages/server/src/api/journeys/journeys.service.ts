@@ -323,7 +323,7 @@ export class JourneysService {
       const journeys = await queryRunner.manager.find(Journey, {
         where: {
           workspace: {
-            id: account.teams?.[0]?.organization?.workspaces?.[0].id,
+            id: account.currentWorkspace.id,
           },
         },
       });
@@ -357,7 +357,7 @@ export class JourneysService {
     try {
       const startNodeUUID = uuid();
       const nextNodeUUID = uuid();
-      const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+      const workspace = account.currentWorkspace;
 
       const journey = await this.journeysRepository.create({
         name,
@@ -433,7 +433,7 @@ export class JourneysService {
       const startNodeUUID = uuid();
       const nextNodeUUID = uuid();
 
-      const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+      const workspace = account.currentWorkspace;
 
       const journey = await queryRunner.manager.create(Journey, {
         name,
@@ -501,7 +501,7 @@ export class JourneysService {
     await queryRunner.startTransaction();
     let err: any;
 
-    const workspace = user.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = user.currentWorkspace;
     try {
       const oldJourney = await queryRunner.manager.findOne(Journey, {
         where: {
@@ -638,7 +638,7 @@ export class JourneysService {
     queryRunner: QueryRunner,
     clientSession: ClientSession
   ) {
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     const journeys = await queryRunner.manager.find(Journey, {
       where: {
@@ -843,7 +843,7 @@ export class JourneysService {
     session: string
   ): Promise<void> {
     try {
-      const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+      const workspace = account.currentWorkspace;
 
       const journeys = await queryRunner.manager.find(Journey, {
         where: {
@@ -945,7 +945,7 @@ export class JourneysService {
       const isStopped = filterStatusesParts.includes(JourneyStatus.STOPPED);
       const isDeleted = filterStatusesParts.includes(JourneyStatus.DELETED);
       const isEditable = filterStatusesParts.includes(JourneyStatus.DRAFT);
-      const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+      const workspace = account.currentWorkspace;
 
       const whereOrParts: FindOptionsWhere<Journey>[] = [];
 
@@ -1281,7 +1281,7 @@ export class JourneysService {
    *
    */
   findAllActive(account: Account): Promise<Journey[]> {
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     return this.journeysRepository.find({
       where: {
@@ -1315,7 +1315,7 @@ export class JourneysService {
       relations: ['teams.organization.workspaces'],
     });
 
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     if (queryRunner)
       return await queryRunner.manager.findOne(Journey, {
@@ -1348,7 +1348,7 @@ export class JourneysService {
    */
   async findOne(account: Account, id: string, session: string): Promise<any> {
     if (!isUUID(id)) throw new BadRequestException('Id is not valid uuid');
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     let found: Journey;
     try {
@@ -1392,7 +1392,7 @@ export class JourneysService {
    */
 
   async markDeleted(account: Account, id: string, session: string) {
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     try {
       const result = await this.journeysRepository.update(
@@ -1432,7 +1432,7 @@ export class JourneysService {
     value: boolean,
     session: string
   ) {
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     try {
       const found: Journey = await this.journeysRepository.findOneBy({
@@ -1489,7 +1489,7 @@ export class JourneysService {
 
     try {
       if (!account) throw new HttpException('User not found', 404);
-      const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+      const workspace = account.currentWorkspace;
 
       journey = await queryRunner.manager.findOne(Journey, {
         where: {
@@ -1606,7 +1606,7 @@ export class JourneysService {
    * @returns
    */
   async stop(account: Account, id: string, session: string) {
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     try {
       const found: Journey = await this.journeysRepository.findOneBy({
@@ -2515,7 +2515,7 @@ export class JourneysService {
   }
 
   async getAllJourneyTags(account: Account, session: string): Promise<any> {
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     try {
       const tags = await this.dataSource.query(
@@ -2541,7 +2541,7 @@ export class JourneysService {
     session: string
   ): Promise<any> {
     if (!isUUID(id)) throw new BadRequestException('Id is not valid uuid');
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     try {
       const data = await this.dataSource.query(

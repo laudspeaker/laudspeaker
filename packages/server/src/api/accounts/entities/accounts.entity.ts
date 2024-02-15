@@ -1,11 +1,13 @@
 import { OrganizationTeam } from '@/api/organizations/entities/organization-team.entity';
 import { PushPlatforms } from '@/api/templates/entities/template.entity';
+import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
 import { Exclude } from 'class-transformer';
 import {
   BaseEntity,
   Column,
   Entity,
   ManyToMany,
+  ManyToOne,
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
@@ -71,4 +73,10 @@ export class Account extends BaseEntity {
 
   @Column({ type: 'boolean', default: false })
   public onboarded: boolean;
+
+  @ManyToOne(() => Workspaces, (workspace) => workspace.id, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
+  public currentWorkspace: Workspaces;
 }

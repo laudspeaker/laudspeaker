@@ -137,8 +137,7 @@ export class AccountsController {
 
       delete data?.[0].pushPlatforms?.Android?.credentials;
       delete data?.[0].pushPlatforms?.iOS?.credentials;
-      const workspace = (<Account>user)?.teams?.[0]?.organization
-        ?.workspaces?.[0];
+      const workspace = (<Account>user)?.currentWorkspace;
 
       let pk;
       if (workspace?.id) {
@@ -187,8 +186,7 @@ export class AccountsController {
       return transformToObject(
         {
           ...userData,
-          apiKey: (<Account>user).teams?.[0]?.organization?.workspaces?.[0]
-            .apiKey,
+          apiKey: (<Account>user).currentWorkspace.apiKey,
         },
         AccountSettingsResponse
       );
