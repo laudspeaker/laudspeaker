@@ -60,7 +60,7 @@ ENV CLIENT_PATH=/app/client
 ENV PATH /app/node_modules/.bin:$PATH
 ENV FRONTEND_URL=${EXTERNAL_URL}
 ENV POSTHOG_HOST=https://app.posthog.com
-ENV POSTHOG_KEY=phc_tXijmIHCxuV8CnUJUtbXbI7ZivlGIWfxURJwEpP3N9F
+ENV POSTHOG_KEY=RxdBl8vjdTwic7xTzoKTdbmeSC1PCzV6sw-x-FKSB-k
 
 # Setting working directory
 WORKDIR /app
