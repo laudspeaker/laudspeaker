@@ -69,7 +69,7 @@ const DataTransfer = () => {
 
     try {
       const { data } = await ApiService.get<any[]>({
-        url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Email&type=Date&type=DateTime&isArray=false`,
+        url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Email&type=Boolean&type=Date&type=DateTime&isArray=false`,
       });
 
       setAttributes(data);
