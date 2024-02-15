@@ -5,6 +5,7 @@ export enum AnalyticsProviderTypes {
   AMPLITUDE = 'amplitude',
   MIXPANEL = 'mixpanel',
   LAUDSPEAKER = 'custom',
+  MOBILE = 'mobile',
   TRACKER = 'tracker',
 }
 

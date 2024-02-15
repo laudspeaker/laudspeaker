@@ -268,7 +268,8 @@ export class EventsProcessor extends WorkerHost {
               job.data.event.source !== AnalyticsProviderTypes.POSTHOG &&
               analyticsEvent.provider !== AnalyticsProviderTypes.POSTHOG &&
               !(
-                job.data.event.source === analyticsEvent.provider &&
+                //allowing mobile events to also match here
+                (job.data.event.source ===  AnalyticsProviderTypes.MOBILE ? AnalyticsProviderTypes.LAUDSPEAKER : job.data.event.source) === analyticsEvent.provider &&
                 job.data.event.event === analyticsEvent.event
               )
             ) {

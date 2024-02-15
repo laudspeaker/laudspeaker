@@ -338,6 +338,7 @@ export class EventsPreProcessor extends WorkerHost {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
+    //finding the owner of th workspace for the event
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: job.data.account.id },
       relations: ['teams.organization.workspaces'],
@@ -346,6 +347,7 @@ export class EventsPreProcessor extends WorkerHost {
 
     let err: any;
 
+    //find customer associated with event or create new customer if not found
     try {
       const correlation: Correlation =
         await this.customersService.findOrCreateByCorrelationKVPair(
@@ -353,7 +355,8 @@ export class EventsPreProcessor extends WorkerHost {
           job.data.event,
           transactionSession
         );
-
+    
+      //enroll new customers in journeys that might be to relevant to them (but not existing customers)
       await this.journeysService.enrollCustomer(
         owner,
         correlation.cust,
@@ -361,7 +364,8 @@ export class EventsPreProcessor extends WorkerHost {
         transactionSession,
         job.data.session
       );
-
+      
+      //get all the journeys that are active, and pipe events to each journey in case they are listening for event
       const journeys = await queryRunner.manager.find(Journey, {
         where: {
           workspace: {
@@ -386,6 +390,7 @@ export class EventsPreProcessor extends WorkerHost {
           }
         );
       }
+      // add event to event database for visibility
       if (job.data.event) {
         await this.eventModel.create({
           ...job.data.event,
