@@ -101,42 +101,66 @@ export class AuthHelper extends BaseJwtHelper {
 
   // Decoding the JWT Token
   public async decode(token: string): Promise<unknown> {
-    this.log(`Decoding JWT Token: ${JSON.stringify(token)}`,this.decode.name,randomUUID())
+    this.log(
+      `Decoding JWT Token: ${JSON.stringify(token)}`,
+      this.decode.name,
+      randomUUID()
+    );
     return this.jwt.decode(token, null);
   }
 
   // Get User by User ID we get from decode()
   public async validateUser(decoded: { id: string }): Promise<Account> {
-    this.log(`Finding user: ${JSON.stringify(decoded)}`,this.validateUser.name,randomUUID())
+    this.log(
+      `Finding user: ${JSON.stringify(decoded)}`,
+      this.validateUser.name,
+      randomUUID()
+    );
     const user = await this.repository.findOne({
       where: { id: decoded.id },
       relations: ['teams.organization.workspaces', 'teams.organization.owner'],
     });
-    this.log(`Found user: ${JSON.stringify(user)}`,this.validateUser.name,randomUUID())
+    this.log(
+      `Found user: ${JSON.stringify(user)}`,
+      this.validateUser.name,
+      randomUUID()
+    );
 
     return user;
   }
 
   // Generate JWT Token
   public generateToken(user: Account): string {
-    this.log(`Generating JWT Token: ${JSON.stringify(user)}`,this.generateToken.name,randomUUID())
+    this.log(
+      `Generating JWT Token: ${JSON.stringify(user)}`,
+      this.generateToken.name,
+      randomUUID()
+    );
     return this.jwt.sign({ id: user.id, email: user.email });
   }
 
   // Validate JWT Token, throw forbidden error if JWT Token is invalid
   private async validate(token: string): Promise<boolean | never> {
-    this.log(`Verifying JWT Token: ${JSON.stringify(token)}`,this.validate.name,randomUUID())
+    this.log(
+      `Verifying JWT Token: ${JSON.stringify(token)}`,
+      this.validate.name,
+      randomUUID()
+    );
     const decoded: { id: string } = this.jwt.verify(token);
 
     if (!decoded) {
-      this.error(`Can't verify JWT`,this.validate.name,randomUUID())
+      this.error(`Can't verify JWT`, this.validate.name, randomUUID());
       throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
     }
 
-    this.log(`Validating decoded JWT Token: ${JSON.stringify(decoded)}`,this.validate.name,randomUUID())
+    this.log(
+      `Validating decoded JWT Token: ${JSON.stringify(decoded)}`,
+      this.validate.name,
+      randomUUID()
+    );
     const user: Account = await this.validateUser(decoded);
     if (!user) {
-      this.error(`User not found`,this.validate.name,randomUUID())
+      this.error(`User not found`, this.validate.name, randomUUID());
       throw new UnauthorizedException();
     }
 

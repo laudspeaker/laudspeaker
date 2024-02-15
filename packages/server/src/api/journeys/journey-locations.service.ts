@@ -148,7 +148,7 @@ export class JourneyLocationsService {
       await queryRunner.manager.save(JourneyLocation, {
         journey: journey.id,
         workspace,
-        customer: customer.id,
+        customer: customer.id ?? customer._id.toString(),
         step: step,
         stepEntry: Date.now(),
         moveStarted: Date.now(),

@@ -780,7 +780,7 @@ export class JourneysService {
           journeyID: journey.id,
           step: step,
           session: session,
-          customerID: customer.id,
+          customerID: customer.id ?? customer._id.toString(),
         },
       };
       jobs.push(job);

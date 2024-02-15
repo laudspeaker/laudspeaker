@@ -1223,6 +1223,7 @@ export class CustomersService {
   ): Promise<CustomerDocument[]> {
     let query: any;
     this.accountsRepository;
+    let collectionPrefix: string;
     const foundAccount = await this.accountsRepository.findOne({
       where: {
         id: account,
@@ -1242,14 +1243,46 @@ export class CustomersService {
         workspaceId: workspace.id,
       });
     } else {
-      //TODO: We need to translate segment builder condiitons
-      // into a mongo query
+      collectionPrefix = this.segmentsService.generateRandomString();
+      const customersInSegment = await this.getSegmentCustomersFromQuery(
+        criteria.query,
+        foundAccount,
+        session,
+        true,
+        0,
+        collectionPrefix
+      );
+      const collectionName = customersInSegment; // Name of the MongoDB collection
+
+      const pipeline = [
+        {
+          $lookup: {
+            from: collectionName, // The name of the intermediate collection
+            localField: '_id', // Field from the customers collection
+            foreignField: '_id', // Assuming intermediateCollection uses _id for customer IDs
+            as: 'matchedInIntermediate',
+          },
+        },
+        {
+          $match: {
+            'matchedInIntermediate.0': { $exists: true }, // Filters for customers present in intermediateCollection
+          },
+        },
+        {
+          $project: {
+            matchedInIntermediate: 0, // Optionally remove the matchedInIntermediate array from results
+          },
+        },
+      ];
+
+      query = this.CustomerModel.aggregate(pipeline);
     }
 
     if (transactionSession) query.session(transactionSession);
     if (limit) query.limit(limit);
     if (skip) query.skip(skip);
-    return await query.exec();
+    const res = await query.exec();
+    return res;
   }
 
   /**
@@ -3685,7 +3718,7 @@ export class CustomersService {
     const customerKeyDocument = await this.CustomerKeysModel.findOne({
       workspaceId: workspace.id,
       isPrimary: true,
-    })
+    });
 
     if (customerKeyDocument) {
       const currentPK = customerKeyDocument.key;
@@ -3924,15 +3957,15 @@ export class CustomersService {
       */
 
       //now we make the aggregation call with mobile events
-      mongoQuery.source = "mobile"
+      mongoQuery.source = 'mobile';
       //console.log("mongoquery in eventssegment is ", JSON.stringify(mongoQuery, null, 2) );
 
       const aggregationPipelineMobile: any[] = [
         { $match: mongoQuery },
         {
           $addFields: {
-            convertedCorrelationValue: { $toObjectId: "$correlationValue" }
-          }
+            convertedCorrelationValue: { $toObjectId: '$correlationValue' },
+          },
         },
         {
           $lookup: {
@@ -3961,10 +3994,10 @@ export class CustomersService {
         {
           $merge: {
             into: intermediateCollection, // specify the target collection name
-            on: "_id", // assuming '_id' is your unique identifier
-            whenMatched: "fail", // prevents updates to existing documents; consider "keepExisting" if you prefer not to error out
-            whenNotMatched: "insert" // inserts the document if no match is found
-          }
+            on: '_id', // assuming '_id' is your unique identifier
+            whenMatched: 'fail', // prevents updates to existing documents; consider "keepExisting" if you prefer not to error out
+            whenNotMatched: 'insert', // inserts the document if no match is found
+          },
         },
         //to do
       ];
@@ -3984,9 +4017,10 @@ export class CustomersService {
       );
 
       //fetch users here
-      const mobileResult: any = await this.eventsService.getCustomersbyEventsMongo(
-        aggregationPipelineMobile
-      );
+      const mobileResult: any =
+        await this.eventsService.getCustomersbyEventsMongo(
+          aggregationPipelineMobile
+        );
 
       return intermediateCollection;
     } else if (comparisonType === 'has not performed') {
@@ -4066,7 +4100,7 @@ export class CustomersService {
 
         const result = await this.CustomerModel.aggregate(allUsers).exec();
         //console.log("outputted to", intermediateCollection);
-        
+
         return intermediateCollection;
       }
 
@@ -4097,7 +4131,6 @@ export class CustomersService {
       }
       */
 
-
       this.debug(
         'event exists',
         this.customersFromEventStatement.name,
@@ -4105,9 +4138,8 @@ export class CustomersService {
         account.id
       );
 
-
-      /*  
-       *  Find customers who perform event (non mobile) (pipeline1), then merge with users who perform event (mobile) (pipeline2)  
+      /*
+       *  Find customers who perform event (non mobile) (pipeline1), then merge with users who perform event (mobile) (pipeline2)
        *  filter these customers out, return the remaining customers
        *  re todo
        */
@@ -4124,10 +4156,10 @@ export class CustomersService {
             as: 'matchedCustomers',
           },
         },
-        { $unwind: "$matchedCustomers" },
+        { $unwind: '$matchedCustomers' },
         {
           $project: {
-            _id: "$matchedCustomers._id", // Projects the _id of the matched customers
+            _id: '$matchedCustomers._id', // Projects the _id of the matched customers
           },
         },
         { $out: intermediateCollection },
@@ -4151,15 +4183,15 @@ export class CustomersService {
         pipeline1
       );
 
-      let mobileMongoQuery = cloneDeep(mongoQuery)
-      mobileMongoQuery.source = "mobile";
+      let mobileMongoQuery = cloneDeep(mongoQuery);
+      mobileMongoQuery.source = 'mobile';
 
       const pipeline2 = [
         { $match: mobileMongoQuery },
         {
           $addFields: {
-            convertedCorrelationValue: { $toObjectId: "$correlationValue" }
-          }
+            convertedCorrelationValue: { $toObjectId: '$correlationValue' },
+          },
         },
         {
           $lookup: {
@@ -4169,19 +4201,19 @@ export class CustomersService {
             as: 'matchedOnCorrelationValue',
           },
         },
-        { $unwind: "$matchedOnCorrelationValue" },
+        { $unwind: '$matchedOnCorrelationValue' },
         {
           $project: {
-            _id: "$matchedOnCorrelationValue._id", // Projects the _id of the matched customers
+            _id: '$matchedOnCorrelationValue._id', // Projects the _id of the matched customers
           },
         },
-        { 
-          $merge: { 
-            into: intermediateCollection, 
-            on: "_id", 
-            whenMatched: "keepExisting", 
-            whenNotMatched: "insert" 
-          } 
+        {
+          $merge: {
+            into: intermediateCollection,
+            on: '_id',
+            whenMatched: 'keepExisting',
+            whenNotMatched: 'insert',
+          },
         },
       ];
 
@@ -4199,19 +4231,17 @@ export class CustomersService {
         account.id
       );
 
-      
       const result2 = await this.eventsService.getCustomersbyEventsMongo(
         pipeline2
       );
-      
-      
+
       const pipeline3 = [
         {
           $lookup: {
             from: intermediateCollection,
-            localField: "_id",
-            foreignField: "_id",
-            as: "matchedInIntermediate",
+            localField: '_id',
+            foreignField: '_id',
+            as: 'matchedInIntermediate',
           },
         },
         {
@@ -4243,7 +4273,7 @@ export class CustomersService {
 
       const result3 = await this.CustomerModel.aggregate(pipeline3).exec();
       //const result3 = await this.eventsService.getCustomersbyEventsMongo(pipeline3);
-      
+
       /*
       const aggregationPipeline: any[] = [
         { $match: mongoQuery },
