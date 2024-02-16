@@ -7,6 +7,12 @@ export type EventDocument = Event & Document;
 export class Event {
   @Prop()
   workspaceId: string;
+
+  @Prop()
+  event: string;
+
+  @Prop({ type: Object })
+  payload: Record<string, unknown>;
 }
 
 export const EventSchema = SchemaFactory.createForClass(Event);

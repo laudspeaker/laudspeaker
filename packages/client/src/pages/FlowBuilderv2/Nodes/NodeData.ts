@@ -302,6 +302,7 @@ export interface AnotherNodeData extends CommonNodeData {
   type?: Exclude<
     NodeType,
     | NodeType.MESSAGE
+    | NodeType.PUSH
     | NodeType.WAIT_UNTIL
     | NodeType.TIME_DELAY
     | NodeType.TIME_WINDOW

@@ -331,6 +331,50 @@ export class EventsService {
     }));
   }
 
+  async getPossibleEventNames(account: Account, search: string) {
+    account = await this.accountsRepository.findOne({
+      where: { id: account.id },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    const records = await this.EventModel.find({
+      $and: [
+        { workspaceId: workspace.id },
+        { event: RegExp(`.*${search}.*`, 'i') },
+      ],
+    }).exec();
+
+    return records.map((record) => record.event);
+  }
+
+  async getPossibleEventProperties(
+    account: Account,
+    event: string,
+    search: string
+  ) {
+    account = await this.accountsRepository.findOne({
+      where: { id: account.id },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    const records = await this.EventModel.find({
+      $and: [{ workspaceId: workspace.id }, { event }],
+    }).exec();
+
+    if (records.length === 0) return [];
+
+    const uniqueProperties: string[] = records
+      .map((record) => Object.keys(record.payload))
+      .reduce((acc, el) => [...acc, ...el])
+      .reduce((acc, el) => (acc.includes(el) ? acc : [...acc, el]), []);
+
+    return uniqueProperties.filter((property) =>
+      property.match(RegExp(`.*${search}.*`, 'i'))
+    );
+  }
+
   async getPossibleTypes(session: string) {
     return keyTypes;
   }

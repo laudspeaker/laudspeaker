@@ -71,44 +71,24 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
   const id = useId();
   const dispatch = useDispatch();
   const [condition, setCondition] = useState(initialCondition);
-  const [keysQuery, setKeysQuery] = useState("");
-  const [possibleKeys, setPossibleKeys] = useState<
-    {
-      key: string;
-      type: StatementValueType;
-    }[]
-  >([]);
+  const [propertiesQuery, setPropertiesQuery] = useState("");
   const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     setCondition(initialCondition);
   }, [initialCondition]);
 
-  const loadPossibleKeys = async (query: string) => {
-    const { data } = await ApiService.get<
-      {
-        key: string;
-        type: StatementValueType;
-        isArray: boolean;
-      }[]
-    >({
-      url: `/customers/possible-attributes?key=${query}&isArray=false`,
+  const loadPossibleEvents = async (query: string) => {
+    const { data } = await ApiService.get<string[]>({
+      url: `/events/possible-names?search=${query}`,
     });
 
-    setPossibleKeys(data);
+    return data;
   };
 
-  useDebounce(
-    () => {
-      loadPossibleKeys(keysQuery);
-    },
-    300,
-    [keysQuery]
-  );
-
-  const loadPossiblePosthogEventTypes = async (query: string) => {
+  const loadPossibleEventProperties = async (event: string, query: string) => {
     const { data } = await ApiService.get<string[]>({
-      url: `/events/possible-posthog-types?search=${query}`,
+      url: `/events/possible-event-properties?event=${event}&search=${query}`,
     });
 
     return data;
@@ -303,14 +283,10 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
             !isMessageEditing && (
               <FlowBuilderAutoComplete
                 value={condition.name}
-                includedItems={
-                  condition.providerType === ProviderType.POSTHOG
-                    ? {
-                        type: "setter",
-                        getItems: loadPossiblePosthogEventTypes,
-                      }
-                    : { type: "getter", items: [] }
-                }
+                includedItems={{
+                  type: "setter",
+                  getItems: loadPossibleEvents,
+                }}
                 retrieveLabel={(item) => item}
                 onQueryChange={(query) => {
                   setCondition({ ...condition, name: query });
@@ -377,8 +353,9 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                         initialValue={statement.key}
                         value={statement.key}
                         includedItems={{
-                          type: "getter",
-                          items: possibleKeys.map((item) => item.key),
+                          type: "setter",
+                          getItems: (query) =>
+                            loadPossibleEventProperties(condition.name, query),
                         }}
                         retrieveLabel={(item) => item}
                         onQueryChange={(query) => {
@@ -386,7 +363,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                             ...statement,
                             key: query,
                           };
-                          setKeysQuery(query);
+                          setPropertiesQuery(query);
                           setCondition({ ...condition });
                         }}
                         onSelect={(value) => {
@@ -394,15 +371,8 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                             ...statement,
                             key: value,
                           };
-                          (
-                            condition.statements[i] as PropertyStatement
-                          ).valueType =
-                            possibleKeys.find((item) => item.key === value)
-                              ?.type ||
-                            (condition.statements[i] as PropertyStatement)
-                              .valueType;
 
-                          setKeysQuery(value);
+                          setPropertiesQuery(value);
                           setCondition({ ...condition });
                         }}
                         getKey={(value) => value}

@@ -60,6 +60,18 @@ export const messageFixtures: Record<
   [MessageType.PUSH]: {
     icon: <PushIcon />,
     text: "Push",
+    statsToShow: [
+      {
+        key: "sent",
+        name: "Sent",
+        renderLabel: (value) => compatNumberFormatter.format(value),
+      },
+      {
+        key: "clickedPercentage",
+        name: "Clicked",
+        renderLabel: (value) => `${compatNumberFormatter.format(value)}%`,
+      },
+    ],
   },
   [MessageType.SLACK]: {
     icon: <SlackIcon />,
