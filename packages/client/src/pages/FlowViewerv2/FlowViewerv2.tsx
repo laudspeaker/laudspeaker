@@ -145,7 +145,9 @@ const FlowViewerv2 = () => {
 
             if (
               !node.data.stepId ||
-              (node.type !== NodeType.MESSAGE && node.type !== NodeType.TRACKER)
+              (node.type !== NodeType.MESSAGE &&
+                node.type !== NodeType.TRACKER &&
+                node.type !== NodeType.PUSH)
             )
               return { ...node };
 

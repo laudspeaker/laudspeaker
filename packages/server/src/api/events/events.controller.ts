@@ -137,6 +137,31 @@ export class EventsController {
     );
   }
 
+  @Get('/possible-names')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  public getPossibleEventNames(
+    @Req() { user }: Request,
+    @Query('search') search: string
+  ) {
+    return this.eventsService.getPossibleEventNames(<Account>user, search);
+  }
+
+  @Get('/possible-event-properties')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  public getPossibleEventProperties(
+    @Req() { user }: Request,
+    @Query('event') event: string,
+    @Query('search') search: string
+  ) {
+    return this.eventsService.getPossibleEventProperties(
+      <Account>user,
+      event,
+      search
+    );
+  }
+
   @Post('/sendTestPush')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
