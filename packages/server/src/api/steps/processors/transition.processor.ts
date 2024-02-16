@@ -569,16 +569,7 @@ export class TransitionProcessor extends WorkerHost {
       where: { id: ownerID },
       relations: ['teams.organization.workspaces'],
     });
-    const workspace = await this.workspacesRepository.findOne({
-      where: {
-        organization: {
-          owner: {
-            id: ownerID,
-          },
-        },
-      },
-      relations: ['organization'],
-    });
+    const workspace = owner.teams?.[0]?.organization?.workspaces?.[0];
 
     const journey = await this.journeysService.findByID(
       owner,
