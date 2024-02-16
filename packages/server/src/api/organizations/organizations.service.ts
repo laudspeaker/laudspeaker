@@ -159,23 +159,21 @@ export class OrganizationService {
       await queryRunner.connect();
       await queryRunner.startTransaction();
 
-      const organization = await queryRunner.manager.create(Organization, {
+      const organization = await queryRunner.manager.save(Organization, {
         companyName: body.name,
         owner: {
           id: account.id,
         },
       });
-      await queryRunner.manager.save(organization);
 
-      const workspace = await queryRunner.manager.create(Workspaces, {
+      const workspace = await queryRunner.manager.save(Workspaces, {
         name: organization.companyName + ' workspace',
         organization,
         apiKey: this.authHelper.generateApiKey(),
         timezoneUTCOffset: body.timezoneUTCOffset,
       });
-      await queryRunner.manager.save(workspace);
 
-      const team = await queryRunner.manager.create(OrganizationTeam, {
+      await queryRunner.manager.save(OrganizationTeam, {
         teamName: 'Default team',
         organization,
         members: [
@@ -184,14 +182,13 @@ export class OrganizationService {
           },
         ],
       });
-      await queryRunner.manager.save(team);
-
-      await this.helper.generateDefaultData(account, queryRunner, session);
 
       await queryRunner.manager.save(Account, {
         id: account.id,
         currentWorkspace: { id: workspace.id },
       });
+
+      await this.helper.generateDefaultData(account, queryRunner, session);
 
       await queryRunner.commitTransaction();
     } catch (err) {

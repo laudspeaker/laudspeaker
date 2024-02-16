@@ -160,7 +160,7 @@ export class MessageProcessor extends WorkerHost {
     let textWithInsertedTags, subjectWithInsertedTags: string | undefined;
     const account = await this.accountRepository.findOne({
       where: { id: job.data.accountId },
-      relations: ['teams.organization.workspaces'],
+      relations: ['teams.organization.workspaces', 'currentWorkspace'],
     });
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -345,7 +345,7 @@ export class MessageProcessor extends WorkerHost {
     }
     const account = await this.accountRepository.findOne({
       where: { id: job.data.accountId },
-      relations: ['teams.organization.workspaces'],
+      relations: ['teams.organization.workspaces', 'currentWorkspace'],
     });
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 

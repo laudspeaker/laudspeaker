@@ -433,7 +433,9 @@ export class JourneysService {
       const startNodeUUID = uuid();
       const nextNodeUUID = uuid();
 
-      const workspace = account.currentWorkspace;
+      const workspace =
+        account.currentWorkspace ||
+        account.teams?.[0].organization?.workspaces?.[0];
 
       const journey = await queryRunner.manager.create(Journey, {
         name,

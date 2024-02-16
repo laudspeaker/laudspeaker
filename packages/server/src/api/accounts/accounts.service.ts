@@ -134,7 +134,7 @@ export class AccountsService extends BaseJwtHelper {
 
   findAll(): Promise<Account[]> {
     return this.accountsRepository.find({
-      relations: ['teams.organization.workspaces'],
+      relations: ['teams.organization.workspaces', 'currentWorkspace'],
     });
   }
 
@@ -156,7 +156,7 @@ export class AccountsService extends BaseJwtHelper {
         where: {
           id: owner.id,
         },
-        relations: ['teams.organization.workspaces'],
+        relations: ['teams.organization.workspaces', 'currentWorkspace'],
       });
 
       if (!account) {
@@ -184,7 +184,7 @@ export class AccountsService extends BaseJwtHelper {
     try {
       const account = await this.accountsRepository.findOne({
         where: { id: (<Account>user).id },
-        relations: ['teams.organization.workspaces'],
+        relations: ['teams.organization.workspaces', 'currentWorkspace'],
       });
 
       if (!account) {
@@ -219,7 +219,7 @@ export class AccountsService extends BaseJwtHelper {
       where: {
         id: workspace.organization.owner.id,
       },
-      relations: ['teams.organization.workspaces'],
+      relations: ['teams.organization.workspaces', 'currentWorkspace'],
     });
 
     return account;
@@ -655,7 +655,7 @@ export class AccountsService extends BaseJwtHelper {
       where: {
         email: process.env.ONBOARDING_ACCOUNT_EMAIL,
       },
-      relations: ['teams.organization.workspaces'],
+      relations: ['teams.organization.workspaces', 'currentWorkspace'],
     });
 
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
