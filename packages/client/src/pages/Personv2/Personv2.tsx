@@ -148,13 +148,24 @@ const Personv2 = () => {
         data: Segment[];
         totalPages: number;
       }>({
+        url: `/segments/person/${id}?take=${ITEMS_PER_PAGE}&skip=${
+          (currentPage - 1) * ITEMS_PER_PAGE
+        }&search=${search}&orderBy=${sortOptions.sortBy}&orderType=${
+          sortOptions.sortType
+        }`,
+      }); 
+      
+      
+      /*({
         url: `/segments?take=${ITEMS_PER_PAGE}&skip=${
           (currentPage - 1) * ITEMS_PER_PAGE
         }&search=${search}&orderBy=${sortOptions.sortBy}&orderType=${
           sortOptions.sortType
         }`,
       });
-
+      */
+      
+  
       setRows(
         data.map((segment) => ({
           id: segment.id,

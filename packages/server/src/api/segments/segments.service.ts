@@ -162,6 +162,44 @@ export class SegmentsService {
     return { data: segments, totalPages };
   }
 
+  async findAllSegmentsForCustomer(
+    account: Account,
+    id: string,
+    take = 100,
+    skip = 0,
+    search = '',
+    session: string
+  ) {
+    this.debug(`In findAllSegmentsForCustomer`, this.findAllSegmentsForCustomer.name, session, account.id);
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    const totalPages = Math.ceil(
+      (await this.segmentCustomersRepository.count({
+        where: {
+          workspace: {
+            id: workspace.id,
+          },
+          customerId: id,
+        },
+      })) / take || 1
+    );
+
+    const records = await this.segmentCustomersRepository.find({
+      where: {
+        workspace: {
+          id: workspace.id,
+        },
+        customerId: id,
+      },
+      take: take < 100 ? take : 100,
+      skip,
+      relations: ['segment']
+    });
+    
+    const segments = records.map(record => record.segment);
+    return { data: segments, totalPages };  
+  }
+
   /**
    * Get all segements for an account. Optionally filter by type
    * If @param type is undefined, return all types.
