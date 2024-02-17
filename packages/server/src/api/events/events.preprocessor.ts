@@ -355,7 +355,7 @@ export class EventsPreProcessor extends WorkerHost {
           job.data.event,
           transactionSession
         );
-    
+
       //enroll new customers in journeys that might be to relevant to them (but not existing customers)
       await this.journeysService.enrollCustomer(
         owner,
@@ -364,7 +364,7 @@ export class EventsPreProcessor extends WorkerHost {
         transactionSession,
         job.data.session
       );
-      
+
       //get all the journeys that are active, and pipe events to each journey in case they are listening for event
       const journeys = await queryRunner.manager.find(Journey, {
         where: {

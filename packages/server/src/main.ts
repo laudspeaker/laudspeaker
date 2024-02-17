@@ -9,6 +9,8 @@ import { urlencoded } from 'body-parser';
 import { readFileSync } from 'fs';
 import * as Sentry from '@sentry/node';
 import { ProfilingIntegration } from '@sentry/profiling-node';
+import { setTimeout as originalSetTimeout } from 'timers';
+import { setInterval as originalSetInterval } from 'timers';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN_URL_BACKEND,
@@ -25,6 +27,69 @@ if (process.env.SENTRY_ENVIRONMENT_TAG) {
 }
 
 const morgan = require('morgan');
+
+global.timeoutIds = new Map<
+  NodeJS.Timeout,
+  { callback: Function; delay: number; args: any[] }
+>();
+
+function customSetTimeout(
+  callback: (...args: any[]) => void,
+  delay: number,
+  ...args: any[]
+): NodeJS.Timeout {
+  const id: any = originalSetTimeout(
+    () => {
+      callback(...args);
+      global.timeoutIds.delete(id);
+    },
+    delay,
+    ...args
+  );
+
+  global.timeoutIds.set(id, { callback, delay, args });
+  return id;
+}
+
+// Assuming you want to add __promisify__
+(customSetTimeout as any).__promisify__ = (delay: number, ...args: any[]) => {
+  return new Promise((resolve) => originalSetTimeout(resolve, delay, ...args));
+};
+
+// Replace the global setTimeout
+global.setTimeout = customSetTimeout as any;
+
+
+global.intervalIds = new Map<
+  NodeJS.Timeout,
+  { callback: Function; delay: number; args: any[] }
+>();
+
+function customSetInterval(
+  callback: (...args: any[]) => void,
+  delay: number,
+  ...args: any[]
+): NodeJS.Timeout {
+  const id: any = originalSetInterval(
+    () => {
+      callback(...args);
+      global.intervalIds.delete(id);
+    },
+    delay,
+    ...args
+  );
+
+  global.intervalIds.set(id, { callback, delay, args });
+  return id;
+}
+
+// Assuming you want to add __promisify__
+(customSetInterval as any).__promisify__ = (delay: number, ...args: any[]) => {
+  return new Promise((resolve) => originalSetInterval(resolve, delay, ...args));
+};
+
+// Replace the global setTimeout
+global.setInterval = customSetInterval as any;
 
 async function bootstrap() {
   const httpsOptions = {
