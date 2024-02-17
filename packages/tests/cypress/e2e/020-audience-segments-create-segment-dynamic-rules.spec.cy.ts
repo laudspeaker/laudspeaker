@@ -17,8 +17,9 @@ describe("charawi", () => {
       cy.get("#segmentName").click();
       cy.get("#segmentName").type("Charawi");
       cy.wait(500);
-      cy.get("select").click();
-      cy.get("select").type("all");
+      cy.get("select").select('All');
+      //cy.get("select").click();
+      //cy.get("select").type("all");
       //cy.get("select").click();
       //cy.get('div.bg-\[\\#F3F4F6\] select').click();
       //cy.get('div.bg-\[\\#F3F4F6\] select').type("all");
