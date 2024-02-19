@@ -140,7 +140,7 @@ export class AuthHelper extends BaseJwtHelper {
   }
 
   // Validate JWT Token, throw forbidden error if JWT Token is invalid
-  private async validate(token: string): Promise<boolean | never> {
+  async validate(token: string): Promise<boolean | never> {
     this.log(
       `Verifying JWT Token: ${JSON.stringify(token)}`,
       this.validate.name,
