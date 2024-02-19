@@ -118,7 +118,11 @@ export class AuthHelper extends BaseJwtHelper {
     );
     const user = await this.repository.findOne({
       where: { id: decoded.id },
-      relations: ['teams.organization.workspaces', 'teams.organization.owner'],
+      relations: [
+        'teams.organization.workspaces',
+        'teams.organization.workspaces.emailConnections',
+        'teams.organization.owner',
+      ],
     });
     this.log(
       `Found user: ${JSON.stringify(user)}`,

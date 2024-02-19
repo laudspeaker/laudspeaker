@@ -777,6 +777,18 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
+          path="/settings/email/:service"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <EmailSettings />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
           path="/settings/add-member"
           element={
             <EEWrapper>

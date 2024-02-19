@@ -17,6 +17,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { WorkspaceEmailConnection } from './workspace-email-connection.entity';
 
 export enum PlanType {
   FREE = 'free',
@@ -164,4 +165,10 @@ export class Workspaces extends BaseEntity {
 
   @Column({ type: 'varchar', nullable: true })
   resendSendingEmail?: string;
+
+  @OneToMany(
+    () => WorkspaceEmailConnection,
+    (workspaceEmailConnection) => workspaceEmailConnection.workspace
+  )
+  emailConnections: WorkspaceEmailConnection[];
 }

@@ -1,3 +1,4 @@
+import { WorkspaceEmailConnection } from '@/api/workspaces/entities/workspace-email-connection.entity';
 import { Trim } from 'class-sanitizer';
 import { Type } from 'class-transformer';
 import {
@@ -12,6 +13,20 @@ import {
   IsObject,
   ValidateNested,
 } from 'class-validator';
+
+export class WorkspaceEmailConnectionDto {
+  @IsNotEmpty()
+  @IsString()
+  emailProvider: string;
+
+  @IsNotEmpty()
+  @IsString()
+  sendingEmail: string;
+
+  @IsNotEmpty()
+  @IsString()
+  sendingName: string;
+}
 
 class PlatformCredentials {
   @IsString()
@@ -197,4 +212,10 @@ export class UpdateAccountDto {
   @IsString()
   @IsOptional()
   public resendSendingName: string;
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => WorkspaceEmailConnectionDto)
+  emailConnections?: WorkspaceEmailConnectionDto[];
 }

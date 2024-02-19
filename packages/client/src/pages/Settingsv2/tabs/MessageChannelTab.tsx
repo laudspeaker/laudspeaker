@@ -12,7 +12,9 @@ import { toast } from "react-toastify";
 import { EmailSendingService } from "pages/EmailSettings/EmailSettings";
 
 export enum MessageChannel {
-  EMAIL,
+  MAILGUN,
+  SENDGRID,
+  RESEND,
   TWILIO,
   CUSTOM_MODAL,
   SLACK,
@@ -61,23 +63,26 @@ const MessageChannelTab = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [account, setAccount] = useState<Account>();
 
-  const isEmailConnected = Boolean(
-    (account?.workspace?.emailProvider === EmailSendingService.MAILGUN &&
-      account?.workspace?.mailgunAPIKey &&
+  const isMailgunConnected = Boolean(
+    account?.workspace?.mailgunAPIKey &&
       account?.workspace?.sendingDomain &&
       account?.workspace?.sendingEmail &&
-      account?.workspace?.sendingName) ||
-      (account?.workspace?.emailProvider === EmailSendingService.SENDGRID &&
-        account?.workspace?.sendgridApiKey &&
-        account?.workspace?.sendgridVerificationKey &&
-        account?.workspace?.sendgridFromEmail) ||
-      (account?.workspace?.emailProvider === EmailSendingService.RESEND &&
-        account?.workspace?.resendAPIKey &&
-        account?.workspace?.resendSigningSecret &&
-        account?.workspace?.resendSendingDomain &&
-        account?.workspace?.resendSendingEmail &&
-        account?.workspace?.resendSendingName)
+      account?.workspace?.sendingName
   );
+  const isSendgridConnected = Boolean(
+    account?.workspace?.sendgridApiKey && account?.workspace?.sendgridFromEmail
+  );
+
+  const isResendConnected = Boolean(
+    account?.workspace?.resendAPIKey &&
+      account?.workspace?.resendSigningSecret &&
+      account?.workspace?.resendSendingDomain &&
+      account?.workspace?.resendSendingEmail &&
+      account?.workspace?.resendSendingName
+  );
+
+  const isEmailConnected =
+    isMailgunConnected || isSendgridConnected || isResendConnected;
 
   const isTwilioConnected = Boolean(
     account?.workspace?.smsAccountSid &&
@@ -89,16 +94,36 @@ const MessageChannelTab = () => {
     MessageChannel,
     MessageChannelCardFixture
   > = {
-    [MessageChannel.EMAIL]: {
-      id: MessageChannel.EMAIL,
-      title: "Email",
+    [MessageChannel.MAILGUN]: {
+      id: MessageChannel.MAILGUN,
+      title: "Email (mailgun)",
       icon: emailCardIconImage,
-      onClick: () => navigate("/settings/email"),
-      connected: isEmailConnected,
+      onClick: () => navigate("/settings/email/mailgun"),
+      connected: isMailgunConnected,
       additionalInfo: account?.workspace?.emailProvider
-        ? emailServiceToAdditionalInfoMap[
-            account?.workspace?.emailProvider as EmailSendingService
-          ]
+        ? emailServiceToAdditionalInfoMap[EmailSendingService.MAILGUN]
+        : undefined,
+    },
+    [MessageChannel.SENDGRID]: {
+      id: MessageChannel.SENDGRID,
+      title: "Email (sendgrid)",
+      icon: emailCardIconImage,
+      onClick: () => navigate("/settings/email/sendgrid"),
+      connected: isSendgridConnected,
+      additionalInfo: account?.workspace?.emailProvider
+        ? emailServiceToAdditionalInfoMap[EmailSendingService.SENDGRID]
+        : undefined,
+    },
+    [MessageChannel.RESEND]: {
+      id: MessageChannel.RESEND,
+      title: "Email (resend)",
+      icon: emailCardIconImage,
+      // onClick: () => navigate("/settings/email/resend"),
+      connected: isResendConnected,
+      commingSoon: true,
+      disabled: true,
+      additionalInfo: account?.workspace?.emailProvider
+        ? emailServiceToAdditionalInfoMap[EmailSendingService.RESEND]
         : undefined,
     },
     [MessageChannel.TWILIO]: {

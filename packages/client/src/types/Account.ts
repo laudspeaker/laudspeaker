@@ -10,6 +10,12 @@ export interface UserPK {
   isPrimary: true;
 }
 
+export interface WorkspaceEmailConnectionDto {
+  emailProvider: string;
+  sendingEmail: string;
+  sendingName: string;
+}
+
 export default interface Account {
   id: string;
   email: string;
@@ -57,5 +63,6 @@ export default interface Account {
     resendSendingDomain: string;
     resendSendingName: string;
     resendSendingEmail: string;
+    emailConnections: WorkspaceEmailConnectionDto[];
   };
 }

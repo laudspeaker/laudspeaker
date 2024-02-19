@@ -38,6 +38,7 @@ import { update } from 'lodash';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { OrganizationTeam } from '../organizations/entities/organization-team.entity';
+import { WorkspaceEmailConnection } from '../workspaces/entities/workspace-email-connection.entity';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -415,6 +416,7 @@ export class AccountsService extends BaseJwtHelper {
         resendSigningSecret,
         resendSendingName,
         resendSendingEmail,
+        emailConnections,
       } = updateUserDto;
 
       const newPushPlatforms = {
@@ -459,6 +461,20 @@ export class AccountsService extends BaseJwtHelper {
 
       const updatedUser = await queryRunner.manager.save(oldUser);
       await queryRunner.manager.save(Workspaces, newWorkspace);
+
+      if (emailConnections) {
+        await queryRunner.manager.delete(WorkspaceEmailConnection, {
+          workspace: { id: workspace.id },
+        });
+        await queryRunner.manager.upsert(
+          WorkspaceEmailConnection,
+          emailConnections.map((connection) => ({
+            ...connection,
+            workspace: { id: workspace.id },
+          })),
+          ['workspaceId', 'emailProvider', 'sendingEmail', 'sendingName']
+        );
+      }
 
       if (needEmailUpdate)
         await this.authService.requestVerification(

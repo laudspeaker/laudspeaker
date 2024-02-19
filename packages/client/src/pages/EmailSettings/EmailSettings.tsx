@@ -6,10 +6,11 @@ import React, { ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import ApiService from "services/api.service";
-import Account from "types/Account";
+import Account, { WorkspaceEmailConnectionDto } from "types/Account";
 import MailgunSettings from "./components/MailgunSettings";
 import SendgridSettings from "./components/SendgridSettings";
 import ResendSettings from "./components/ResendSettings";
+import { useParams } from "react-router-dom";
 
 export enum EmailSendingService {
   MAILGUN = "mailgun",
@@ -31,6 +32,7 @@ interface EmailSettingsFormData {
   resendSendingDomain: string;
   resendSendingName: string;
   resendSendingEmail: string;
+  emailConnections: WorkspaceEmailConnectionDto[];
 }
 
 export interface SendingServiceSettingsProps {
@@ -40,9 +42,12 @@ export interface SendingServiceSettingsProps {
 
 const EmailSettings = () => {
   const navigate = useNavigate();
+  const { service } = useParams();
 
-  const [sendingService, setSendingService] = useState(
-    EmailSendingService.MAILGUN
+  const isLockedService = Object.values(EmailSendingService).includes(service);
+
+  const [sendingService, setSendingService] = useState<EmailSendingService>(
+    isLockedService ? service : EmailSendingService.MAILGUN
   );
   const [formData, setFormData] = useState<EmailSettingsFormData>({
     mailgunAPIKey: "",
@@ -58,6 +63,7 @@ const EmailSettings = () => {
     resendSendingName: "",
     resendSendingEmail: "",
     resendSigningSecret: "",
+    emailConnections: [],
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -96,6 +102,7 @@ const EmailSettings = () => {
           resendSendingName,
           resendSendingEmail,
           resendSigningSecret,
+          emailConnections,
         } = data.workspace;
         setFormData({
           mailgunAPIKey: mailgunAPIKey || "",
@@ -111,9 +118,14 @@ const EmailSettings = () => {
           resendSendingName: resendSendingName || "",
           resendSendingEmail: resendSendingEmail || "",
           resendSigningSecret: resendSigningSecret || "",
+          emailConnections: emailConnections || formData.emailConnections,
         });
         // @ts-ignore
-        setSendingService(provider || sendingService);
+        setSendingService(
+          isLockedService
+            ? sendingService
+            : (provider as EmailSendingService) || sendingService
+        );
       } catch (e) {
         toast.error("Error while loading data");
       } finally {
@@ -125,7 +137,7 @@ const EmailSettings = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const objToSend: Record<string, string> = {};
+      const objToSend: Record<string, unknown> = {};
       for (const key of Object.keys(formData)) {
         if (formData[key as keyof typeof formData])
           objToSend[key] = formData[key as keyof typeof formData];
@@ -184,6 +196,7 @@ const EmailSettings = () => {
               ]}
               value={sendingService}
               onChange={(value) => setSendingService(value)}
+              disabled={isLockedService}
             />
           </div>
 
