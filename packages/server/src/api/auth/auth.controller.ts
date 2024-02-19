@@ -141,6 +141,15 @@ export class AuthController {
     }
   }
 
+  @Get()
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  @UseGuards(JwtAuthGuard)
+  public async verify() {
+    const session = randomUUID();
+    this.debug(`GET /auth/verify`, this.verify.name, session);
+    return;
+  }
+
   @Patch('verify-email/:id')
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   @UseGuards(JwtAuthGuard)

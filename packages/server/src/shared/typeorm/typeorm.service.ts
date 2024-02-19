@@ -18,6 +18,9 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       subscribers: [],
       synchronize: process.env.SYNCHRONIZE == 'true', // never use TRUE in production!
       autoLoadEntities: true,
+      extra: {
+        options: '-c lock_timeout=15000ms -c statement_timeout=30000ms -c idle_in_transaction_session_timeout=30000ms',
+      }
       // migrationsRun: true,
     };
   }

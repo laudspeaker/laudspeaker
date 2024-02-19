@@ -81,7 +81,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     );
   }
 
-  async validate(payload: { id: string }): Promise<Account | never> {
+  private validate(payload: { id: string }): Promise<Account | never> {
     this.log(
       `Valdating user: ${JSON.stringify(payload)}`,
       this.validate.name,
