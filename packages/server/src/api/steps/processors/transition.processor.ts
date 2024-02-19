@@ -726,7 +726,7 @@ export class TransitionProcessor extends WorkerHost {
 
     if (
       messageSendType === 'SEND' &&
-      process.env.MOCK_SEND_MESSAGE === 'true'
+      process.env.MOCK_MESSAGE_SEND === 'true'
     ) {
       // 3. CHECK IF MESSAGE SEND SHOULD BE MOCKED
       messageSendType = 'MOCK_SEND';
@@ -1004,7 +1004,7 @@ export class TransitionProcessor extends WorkerHost {
       );
     } else if (messageSendType === 'MOCK_SEND') {
       this.log(
-        `MOCK_SEND_MESSAGE set to true, mocking message send for customer: ${customer.id} in journey ${journey.id}`,
+        `MOCK_MESSAGE_SEND set to true, mocking message send for customer: ${customer.id} in journey ${journey.id}`,
         this.handleMessage.name,
         session,
         owner.id
@@ -1021,7 +1021,7 @@ export class TransitionProcessor extends WorkerHost {
           }
         } catch {
           this.warn(
-            `MOCK_SEND_MESSAGE: ${process.env.MOCK_MESSAGE_SEND_URL} not valid http: or https: URL or error in mock send.`,
+            `MOCK_MESSAGE_SEND_URL: ${process.env.MOCK_MESSAGE_SEND_URL} not valid http: or https: URL or error in mock send.`,
             this.handleMessage.name,
             session,
             owner.id
