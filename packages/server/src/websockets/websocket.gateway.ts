@@ -43,6 +43,7 @@ import {
   CustomerKeys,
   CustomerKeysDocument,
 } from '@/api/customers/schemas/customer-keys.schema';
+import { EventDto } from '@/api/events/dto/event.dto';
 
 interface SocketData {
   account: Account & { apiKey: string };
@@ -554,7 +555,7 @@ export class WebsocketGateway implements OnGatewayConnection {
   }
 
   /**
-   * Handler for custom componenet events
+   * Handler for custom component events
    * @param socket Socket event is coming from
    * @param event Object of the form {event:String,trackerId:String}
    */
@@ -767,6 +768,10 @@ export class WebsocketGateway implements OnGatewayConnection {
     return false;
   }
 
+ /*
+  * old fire event for modal
+  */
+  /*
   @SubscribeMessage('fire')
   public async handleFire(
     @ConnectedSocket() socket: Socket,
@@ -809,6 +814,92 @@ export class WebsocketGateway implements OnGatewayConnection {
           event: '',
           payload: event,
         },
+        socket.data.session
+      );
+
+      socket.emit('log', 'Successful fire');
+    } catch (e) {
+      socket.emit('error', e);
+    }
+  }
+  */
+
+ /*
+  * 
+  */
+  @SubscribeMessage('fire')
+  public async handleFire(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() fullPayload: { eventName: string; payload: string; customerId: string }
+  ) {
+
+    //console.log("in websocket fire");
+    try {
+      const {
+        account: { teams },
+        customerId,
+      } = socket.data as SocketData;
+
+      const workspace = teams?.[0]?.organization?.workspaces?.[0];
+
+      let customer = await this.customersService.CustomerModel.findOne({
+        _id: customerId,
+        workspaceId: workspace.id,
+      });
+
+      if (!customer || customer.isFreezed) {
+        socket.emit(
+          'error',
+          'Invalid customer id. Creating new anonymous customer...'
+        );
+        customer = await this.customersService.CustomerModel.create({
+          isAnonymous: true,
+          workspaceId: workspace.id,
+        });
+
+        socket.data.customerId = customer.id;
+        socket.emit('customerId', customer.id);
+      }
+
+      /*
+      return this.eventsService.customPayload(
+      <{ account: Account; workspace: Workspaces }>user,
+      body,
+      session
+    );
+      */
+
+      const { eventName, payload } = fullPayload;
+
+      // Parse the JSON string payload to an object
+      let payloadObj = {};
+      payloadObj = JSON.parse(payload);
+
+      let eventStruct: EventDto = {
+        correlationKey: '_id',
+        correlationValue: customer.id,
+        source: AnalyticsProviderTypes.MOBILE,
+        //payload: payload,
+        payload: payloadObj,
+        event: eventName,
+      }
+
+      //console.log("event struct is", JSON.stringify(eventStruct, null, 2));
+      //auth: { account: Account; workspace: Workspaces },
+
+
+      await this.eventsService.customPayload(
+        { account: socket.data.account, workspace: workspace },
+        eventStruct,
+        /*
+        {
+          correlationKey: '_id',
+          correlationValue: customer.id,
+          source: AnalyticsProviderTypes.MOBILE,
+          event: eventName,
+          payload: payloadObj,
+        },
+        */
         socket.data.session
       );
 

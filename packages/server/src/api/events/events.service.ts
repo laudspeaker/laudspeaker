@@ -265,6 +265,7 @@ export class EventsService {
     eventDto: EventDto,
     session: string
   ) {
+    //console.log("here is the event", JSON.stringify(eventDto, null, 2));
     await this.eventPreprocessorQueue.add('laudspeaker', {
       account: auth.account,
       event: eventDto,
