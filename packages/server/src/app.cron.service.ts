@@ -332,7 +332,7 @@ export class CronService {
     } finally {
       await queryRunner.release();
     }
-    await this.transitionQueue.addBulk(timeBasedJobs);
+    if (!timeBasedErr) await this.transitionQueue.addBulk(timeBasedJobs);
 
     // Handle expiry of recovery emails
     let recoveryErr: any;
