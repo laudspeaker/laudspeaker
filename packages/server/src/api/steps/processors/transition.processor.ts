@@ -51,7 +51,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
 
 @Injectable()
-@Processor('transition', { removeOnComplete: { age: 0, count: 0 } })
+@Processor('transition', { removeOnComplete: { count: 100 } })
 export class TransitionProcessor extends WorkerHost {
   private phClient = new PostHog(process.env.POSTHOG_KEY, {
     host: process.env.POSTHOG_HOST,

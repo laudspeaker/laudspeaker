@@ -36,7 +36,7 @@ export enum EventType {
 }
 
 @Injectable()
-@Processor('events', { removeOnComplete: { age: 0, count: 0 } })
+@Processor('events', { removeOnComplete: { count: 100 } })
 export class EventsProcessor extends WorkerHost {
   private providerMap: Record<
     EventType,
