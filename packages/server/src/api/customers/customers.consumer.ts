@@ -23,6 +23,7 @@ import {
 } from './schemas/customer.schema';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { ProviderType } from '../events/events.preprocessor';
 
 @Injectable()
 export class CustomersConsumerService implements OnApplicationBootstrap {
@@ -172,7 +173,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
             );
 
             if (message.operationType === 'update')
-              await this.eventPreprocessorQueue.add('wu_attribute', {
+              await this.eventPreprocessorQueue.add(ProviderType.WU_ATTRIBUTE, {
                 account: account,
                 session: session,
                 message,

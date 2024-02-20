@@ -31,6 +31,7 @@ import {
 } from '../customers/schemas/customer.schema';
 import * as Sentry from '@sentry/node';
 import { Account } from '../accounts/entities/accounts.entity';
+import { EventType } from './events.processor';
 
 export enum ProviderType {
   LAUDSPEAKER = 'laudspeaker',
@@ -378,7 +379,7 @@ export class EventsPreProcessor extends WorkerHost {
       });
       for (let i = 0; i < journeys.length; i++) {
         await this.eventsQueue.add(
-          'event',
+          EventType.EVENT,
           {
             accountID: job.data.account.id,
             event: job.data.event,
@@ -455,7 +456,7 @@ export class EventsPreProcessor extends WorkerHost {
       });
       for (let i = 0; i < journeys.length; i++) {
         await this.eventsQueue.add(
-          'message',
+          EventType.MESSAGE,
           {
             workspaceId: job.data.workspaceId,
             message: job.data.message,
@@ -519,7 +520,7 @@ export class EventsPreProcessor extends WorkerHost {
       for (let i = 0; i < journeys.length; i++) {
         if (job.data.message.operationType === 'update') {
           await this.eventsQueue.add(
-            'attribute_change',
+            EventType.ATTRIBUTE,
             {
               accountID: job.data.account.id,
               customer: job.data.message.documentKey._id['$oid'],
