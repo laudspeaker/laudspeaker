@@ -5,7 +5,7 @@ import {
   OnWorkerEvent,
 } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { Account } from '../accounts/entities/accounts.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { CustomersService } from '../customers/customers.service';
@@ -82,7 +82,7 @@ export class EventsProcessor extends WorkerHost {
     private readonly logger: Logger,
     private dataSource: DataSource,
     @InjectConnection() private readonly connection: mongoose.Connection,
-    @Inject(CustomersService)
+    @Inject(forwardRef(() => CustomersService))
     private readonly customersService: CustomersService,
     private readonly audiencesHelper: AudiencesHelper,
     @Inject(WebsocketGateway)

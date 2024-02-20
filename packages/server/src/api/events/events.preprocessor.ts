@@ -7,7 +7,7 @@ import {
   OnWorkerEvent,
 } from '@nestjs/bullmq';
 import { Job, Queue, UnrecoverableError } from 'bullmq';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { Correlation, CustomersService } from '../customers/customers.service';
 import { DataSource } from 'typeorm';
 import mongoose, { Model } from 'mongoose';
@@ -66,9 +66,9 @@ export class EventsPreProcessor extends WorkerHost {
     private readonly logger: Logger,
     private dataSource: DataSource,
     @InjectConnection() private readonly connection: mongoose.Connection,
-    @Inject(CustomersService)
+    @Inject(forwardRef(() => CustomersService))
     private readonly customersService: CustomersService,
-    @Inject(JourneysService)
+    @Inject(forwardRef(() => JourneysService))
     private readonly journeysService: JourneysService,
     @InjectModel(Event.name)
     private eventModel: Model<EventDocument>,
