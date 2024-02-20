@@ -405,12 +405,7 @@ export class EventsPreProcessor extends WorkerHost {
     } catch (e) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.error(
-        e,
-        this.handleCustom.name,
-        job.data.session,
-        job.data.account.email
-      );
+      this.error(e, this.handleCustom.name, job.data.session, job.data.account);
       err = e;
     } finally {
       await transactionSession.endSession();
@@ -547,7 +542,7 @@ export class EventsPreProcessor extends WorkerHost {
         e,
         this.handleAttributeChange.name,
         job.data.session,
-        job.data.account.email
+        job.data.account
       );
       err = e;
     } finally {

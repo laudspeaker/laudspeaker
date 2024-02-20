@@ -121,6 +121,12 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
   private handleCustomerChangeStream(this: CustomersConsumerService) {
     return async (changeMessage: EachMessagePayload) => {
       const session = randomUUID();
+      let err: any;
+      const queryRunner = await this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      const clientSession = await this.connection.startSession();
+      await clientSession.startTransaction();
       try {
         const messStr = changeMessage.message.value.toString();
         let message: ChangeStreamDocument<Customer> = JSON.parse(messStr);
@@ -130,87 +136,69 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
         //const session = randomUUID();
         let account: Account;
         let customer: CustomerDocument;
-        const queryRunner = await this.dataSource.createQueryRunner();
-        await queryRunner.connect();
-        await queryRunner.startTransaction();
-        const clientSession = await this.connection.startSession();
-        await clientSession.startTransaction();
-        try {
-          switch (message.operationType) {
-            case 'insert':
-            case 'update':
-            case 'replace':
-              customer = await this.customersService.findByCustomerId(
-                message.documentKey._id['$oid'],
-                clientSession
-              );
-              if (!customer) {
-                this.logger.warn(
-                  `No customer with id ${message.documentKey._id['$oid']}. Can't process ${CustomersConsumerService.name}.`
-                );
-                break;
-              }
-              account =
-                await this.accountsService.findOrganizationOwnerByWorkspaceId(
-                  customer.workspaceId,
-                  session
-                );
-              //console.log("in change stream",message);
-              await this.segmentsService.updateCustomerSegments(
-                account,
-                customer.id,
-                session,
-                queryRunner
-              );
-              await this.journeysService.updateEnrollmentForCustomer(
-                account,
-                customer.id,
-                message.operationType === 'insert' ? 'NEW' : 'CHANGE',
-                session,
-                queryRunner,
-                clientSession
-              );
-
-              if (message.operationType === 'update')
-                await this.eventPreprocessorQueue.add('wu_attribute', {
-                  account: account,
-                  session: session,
-                  message,
-                });
-              break;
-            case 'delete': {
-              // TODO_JH: remove customerID from all steps also
-              const customerId = message.documentKey._id['$oid'];
-              await this.segmentsService.removeCustomerFromAllSegments(
-                customerId,
-                queryRunner
+        switch (message.operationType) {
+          case 'insert':
+          case 'update':
+          case 'replace':
+            customer = await this.customersService.findByCustomerId(
+              message.documentKey._id['$oid'],
+              clientSession
+            );
+            if (!customer) {
+              this.logger.warn(
+                `No customer with id ${message.documentKey._id['$oid']}. Can't process ${CustomersConsumerService.name}.`
               );
               break;
             }
+            account =
+              await this.accountsService.findOrganizationOwnerByWorkspaceId(
+                customer.workspaceId,
+                session
+              );
+            //console.log("in change stream",message);
+            await this.segmentsService.updateCustomerSegments(
+              account,
+              customer.id,
+              session,
+              queryRunner
+            );
+            await this.journeysService.updateEnrollmentForCustomer(
+              account,
+              customer.id,
+              message.operationType === 'insert' ? 'NEW' : 'CHANGE',
+              session,
+              queryRunner,
+              clientSession
+            );
+
+            if (message.operationType === 'update')
+              await this.eventPreprocessorQueue.add('wu_attribute', {
+                account: account,
+                session: session,
+                message,
+              });
+            break;
+          case 'delete': {
+            // TODO_JH: remove customerID from all steps also
+            const customerId = message.documentKey._id['$oid'];
+            await this.segmentsService.removeCustomerFromAllSegments(
+              customerId,
+              queryRunner
+            );
+            break;
           }
-          await clientSession.commitTransaction();
-          await clientSession.endSession();
-          await queryRunner.commitTransaction();
-          await queryRunner.release();
-        } catch (e) {
-          if (clientSession && clientSession.inTransaction)
-            await clientSession.abortTransaction();
-          if (clientSession && !clientSession.hasEnded)
-            await clientSession.endSession();
-          if (queryRunner && queryRunner.isTransactionActive)
-            await queryRunner.rollbackTransaction();
-          if (queryRunner && !queryRunner.isReleased)
-            await queryRunner.release();
-          throw e;
         }
+        await clientSession.commitTransaction();
+        await queryRunner.commitTransaction();
       } catch (e) {
         this.error(e, this.handleCustomerChangeStream.name, session);
-        /*
-        this.error(
-          `Something went wrong processing mongo change stream message ${changeMessage.message.value.toString()}.`,
-          e
-        );
-        */
+        err = e;
+        await clientSession.abortTransaction();
+        await queryRunner.rollbackTransaction();
+      } finally {
+        await clientSession.endSession();
+        await queryRunner.release();
+        if (err) throw err;
       }
     };
   }
