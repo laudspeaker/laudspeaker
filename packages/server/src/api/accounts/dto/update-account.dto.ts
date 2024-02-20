@@ -1,4 +1,3 @@
-import { WorkspaceEmailConnection } from '@/api/workspaces/entities/workspace-email-connection.entity';
 import { Trim } from 'class-sanitizer';
 import { Type } from 'class-transformer';
 import {

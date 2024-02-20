@@ -48,7 +48,7 @@ import { JourneySettingsQuietFallbackBehavior } from '@/api/journeys/types/addit
 import { StepsService } from '../steps.service';
 import { Journey } from '@/api/journeys/entities/journey.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
+import { Workspace } from '@/api/workspaces/entities/workspace.entity';
 
 @Injectable()
 @Processor('transition', { removeOnComplete: { age: 0, count: 0 } })
@@ -64,8 +64,8 @@ export class TransitionProcessor extends WorkerHost {
     @InjectQueue('transition') private readonly transitionQueue: Queue,
     @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection,
-    @InjectRepository(Workspaces)
-    private workspacesRepository: Repository<Workspaces>,
+    @InjectRepository(Workspace)
+    private workspacesRepository: Repository<Workspace>,
     @InjectRepository(Account)
     private accountRepository: Repository<Account>,
     @Inject(WebhooksService)

@@ -7,7 +7,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
+import { Workspace } from '@/api/workspaces/entities/workspace.entity';
 
 export enum SegmentType {
   AUTOMATIC = 'automatic',
@@ -20,10 +20,10 @@ export class Segment extends BaseEntity {
   public id: string;
 
   @JoinColumn()
-  @ManyToOne(() => Workspaces, (workspace) => workspace.id, {
+  @ManyToOne(() => Workspace, (workspace) => workspace.id, {
     onDelete: 'CASCADE',
   })
-  workspace: Workspaces;
+  workspace: Workspace;
 
   @Column()
   public name: string;
