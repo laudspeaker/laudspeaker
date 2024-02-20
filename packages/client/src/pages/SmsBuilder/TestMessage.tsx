@@ -1,6 +1,7 @@
 import styled from "@emotion/styled";
 import { Input } from "components/Elements/";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
+import { CustomerResponse, SearchUser } from "pages/PushBuilder/SearchUser";
 import { useState } from "react";
 
 const StyledContainer = styled.div`
@@ -25,35 +26,21 @@ type TestMessageProps = {
 };
 
 export const TestMessage = ({ message }: TestMessageProps) => {
-  const [phoneNumber, setPhoneNumber] = useState<string>("");
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && phoneNumber) {
-      console.log("send");
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPhoneNumber(e.target.value);
-  };
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerResponse>();
 
   return (
     <StyledContainer>
       <StyledMessageContainer>
         <StyledHeaderText>Send a test SMS</StyledHeaderText>
-        <Input
-          value={phoneNumber}
-          placeholder={"Example: +1 123 456 7890"}
-          name="title"
-          id="title"
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          className="text-sm"
+        <SearchUser
+          selectedCustomer={selectedCustomer}
+          setSelectedCustomer={setSelectedCustomer}
+          previewFieldKey="phone"
         />
         <Button
           className="mt-4"
           type={ButtonType.PRIMARY}
-          disabled={!phoneNumber || !message}
+          disabled={!selectedCustomer?.phone || !message}
           onClick={() => console.log("send")}
         >
           Send Test
