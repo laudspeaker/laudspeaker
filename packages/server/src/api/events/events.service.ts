@@ -55,6 +55,7 @@ import {
   PushPlatforms,
 } from '../templates/entities/template.entity';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { ProviderType } from './events.preprocessor';
 
 @Injectable()
 export class EventsService {
@@ -265,7 +266,7 @@ export class EventsService {
     eventDto: EventDto,
     session: string
   ) {
-    await this.eventPreprocessorQueue.add('laudspeaker', {
+    await this.eventPreprocessorQueue.add(ProviderType.LAUDSPEAKER, {
       account: auth.account,
       event: eventDto,
       session: session,

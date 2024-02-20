@@ -32,7 +32,7 @@ import { JourneyLocationsService } from '../journeys/journey-locations.service';
 export enum EventType {
   EVENT = 'event',
   ATTRIBUTE = 'attribute_change',
-  MESSAGE = 'email_message',
+  MESSAGE = 'message',
 }
 
 @Injectable()
