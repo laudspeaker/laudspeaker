@@ -110,7 +110,7 @@ export class CronService {
     @InjectQueue('transition') private readonly transitionQueue: Queue,
     @Inject(RedlockService)
     private readonly redlockService: RedlockService
-  ) { }
+  ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -247,7 +247,7 @@ export class CronService {
     }
   }
 
-  @Cron("0 */2 * * * *")
+  @Cron(CronExpression.EVERY_MINUTE)
   async minuteTasks() {
     const session = randomUUID();
     // Time based steps
@@ -424,8 +424,16 @@ export class CronService {
   @Cron(CronExpression.EVERY_MINUTE)
   printTimeoutLength() {
     const session = randomUUID();
-    this.log(`Number of timeouts: ${global.timeoutIds.size}`, this.printTimeoutLength.name, session)
-    this.log(`Number of intervals: ${global.intervalIds.size}`, this.printTimeoutLength.name, session)
+    this.log(
+      `Number of timeouts: ${global.timeoutIds.size}`,
+      this.printTimeoutLength.name,
+      session
+    );
+    this.log(
+      `Number of intervals: ${global.intervalIds.size}`,
+      this.printTimeoutLength.name,
+      session
+    );
 
     // let timeoutID = +(setTimeout(function () { }, 0));
     // let intervalID = +(setInterval(function () { }, 0));

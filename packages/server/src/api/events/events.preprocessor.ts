@@ -337,18 +337,17 @@ export class EventsPreProcessor extends WorkerHost {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-
-    //finding the owner of th workspace for the event
-    const owner = await queryRunner.manager.findOne(Account, {
-      where: { id: job.data.account.id },
-      relations: ['teams.organization.workspaces'],
-    });
-    const workspace = owner.teams?.[0]?.organization?.workspaces?.[0];
-
     let err: any;
 
-    //find customer associated with event or create new customer if not found
     try {
+      //finding the owner of th workspace for the event
+      const owner = await queryRunner.manager.findOne(Account, {
+        where: { id: job.data.account.id },
+        relations: ['teams.organization.workspaces'],
+      });
+      const workspace = owner.teams?.[0]?.organization?.workspaces?.[0];
+
+      //find customer associated with event or create new customer if not found
       const correlation: Correlation =
         await this.customersService.findOrCreateByCorrelationKVPair(
           owner,
