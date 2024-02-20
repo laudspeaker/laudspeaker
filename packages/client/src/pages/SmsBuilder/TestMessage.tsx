@@ -32,6 +32,9 @@ export const TestMessage = ({ message }: TestMessageProps) => {
     <StyledContainer>
       <StyledMessageContainer>
         <StyledHeaderText>Send a test SMS</StyledHeaderText>
+        <div className="font-inter text-xs text-[#111827] mt-1 mb-2 opacity-70">
+          * Test Customer should have a <b>phone</b> property
+        </div>
         <SearchUser
           selectedCustomer={selectedCustomer}
           setSelectedCustomer={setSelectedCustomer}
