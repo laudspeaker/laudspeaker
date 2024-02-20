@@ -792,6 +792,7 @@ export class EventsProcessor extends WorkerHost {
     let branch: number;
     const stepsToQueue: Step[] = [];
 
+    /* TODO: Finish defintiion here
     //Account associated with event
     const account: Account = await queryRunner.manager.findOneBy(Account, {
       id: job.data.accountID,
@@ -1176,6 +1177,7 @@ export class EventsProcessor extends WorkerHost {
       }
       return;
     }
+    */
     return;
   }
 

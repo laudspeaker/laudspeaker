@@ -21,7 +21,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       maxQueryExecutionTime: 2000,
       extra: {
         options:
-          '-c lock_timeout=3000ms -c statement_timeout=6000ms -c idle_in_transaction_session_timeout=6000ms',
+          '-c lock_timeout=16000ms -c statement_timeout=32000ms -c idle_in_transaction_session_timeout=32000ms',
       },
       // migrationsRun: true,
     };
