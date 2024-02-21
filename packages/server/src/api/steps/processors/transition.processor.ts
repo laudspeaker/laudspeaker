@@ -1101,10 +1101,23 @@ export class TransitionProcessor extends WorkerHost {
     transactionSession: mongoose.mongo.ClientSession,
     event?: string
   ) {
+    let start = process.hrtime.bigint(); // Start time in nanoseconds
+
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
       relations: ['teams.organization.workspaces'],
     });
+
+    let end = process.hrtime.bigint(); // End time in nanoseconds
+    let duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
+
+    this.warn(
+      `Account call duration: ${duration} ms`,
+      this.handleStart.name,
+      session
+    );
+
+    start = process.hrtime.bigint(); // Start time in nanoseconds
 
     const journey = await this.journeysService.findByID(
       owner,
@@ -1113,6 +1126,16 @@ export class TransitionProcessor extends WorkerHost {
       queryRunner
     );
 
+    end = process.hrtime.bigint(); // End time in nanoseconds
+    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
+
+    this.warn(
+      `Journey call duration: ${duration} ms`,
+      this.handleStart.name,
+      session
+    );
+    start = process.hrtime.bigint(); // Start time in nanoseconds
+
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: stepID,
@@ -1120,7 +1143,25 @@ export class TransitionProcessor extends WorkerHost {
       },
     });
 
+    end = process.hrtime.bigint(); // End time in nanoseconds
+    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
+
+    this.warn(
+      `Current Step call duration: ${duration} ms`,
+      this.handleStart.name,
+      session
+    );
+    start = process.hrtime.bigint(); // Start time in nanoseconds
     const customer = await this.customersService.findById(owner, customerID);
+    end = process.hrtime.bigint(); // End time in nanoseconds
+    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
+
+    this.warn(
+      `Customer call duration: ${duration} ms`,
+      this.handleStart.name,
+      session
+    );
+    start = process.hrtime.bigint(); // Start time in nanoseconds
 
     const location = await this.journeyLocationsService.findForWrite(
       journey,
@@ -1129,6 +1170,15 @@ export class TransitionProcessor extends WorkerHost {
       owner,
       queryRunner
     );
+    end = process.hrtime.bigint(); // End time in nanoseconds
+    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
+
+    this.warn(
+      `Location call duration: ${duration} ms`,
+      this.handleStart.name,
+      session
+    );
+    start = process.hrtime.bigint(); // Start time in nanoseconds
 
     if (!location) {
       this.warn(
@@ -1149,6 +1199,15 @@ export class TransitionProcessor extends WorkerHost {
         id: currentStep.metadata.destination,
       },
     });
+    end = process.hrtime.bigint(); // End time in nanoseconds
+    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
+
+    this.warn(
+      `nextStep call duration: ${duration} ms`,
+      this.handleStart.name,
+      session
+    );
+    start = process.hrtime.bigint(); // Start time in nanoseconds
 
     if (nextStep) {
       // Destination exists, move customer into destination
@@ -1598,10 +1657,23 @@ export class TransitionProcessor extends WorkerHost {
     transactionSession: mongoose.mongo.ClientSession,
     event?: string
   ) {
+    let start = process.hrtime.bigint(); // Start time in nanoseconds
+
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
       relations: ['teams.organization.workspaces'],
     });
+
+    let end = process.hrtime.bigint(); // End time in nanoseconds
+    let duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
+
+    this.warn(
+      `Account call duration: ${duration} ms`,
+      this.handleWaitUntil.name,
+      session
+    );
+
+    start = process.hrtime.bigint(); // Start time in nanoseconds
 
     const journey = await this.journeysService.findByID(
       owner,
@@ -1609,7 +1681,15 @@ export class TransitionProcessor extends WorkerHost {
       session,
       queryRunner
     );
+    end = process.hrtime.bigint(); // End time in nanoseconds
+    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
 
+    this.warn(
+      `Journey call duration: ${duration} ms`,
+      this.handleWaitUntil.name,
+      session
+    );
+    start = process.hrtime.bigint(); // Start time in nanoseconds
     const currentStep = await queryRunner.manager.findOne(Step, {
       where: {
         id: stepID,
@@ -1617,7 +1697,26 @@ export class TransitionProcessor extends WorkerHost {
       },
     });
 
+    end = process.hrtime.bigint(); // End time in nanoseconds
+    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
+
+    this.warn(
+      `Current Step call duration: ${duration} ms`,
+      this.handleWaitUntil.name,
+      session
+    );
+    start = process.hrtime.bigint(); // Start time in nanoseconds
+
     const customer = await this.customersService.findById(owner, customerID);
+    end = process.hrtime.bigint(); // End time in nanoseconds
+    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
+
+    this.warn(
+      `Customer call duration: ${duration} ms`,
+      this.handleWaitUntil.name,
+      session
+    );
+    start = process.hrtime.bigint(); // Start time in nanoseconds
 
     const location = await this.journeyLocationsService.findForWrite(
       journey,
@@ -1626,6 +1725,15 @@ export class TransitionProcessor extends WorkerHost {
       owner,
       queryRunner
     );
+    end = process.hrtime.bigint(); // End time in nanoseconds
+    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
+
+    this.warn(
+      `Location call duration: ${duration} ms`,
+      this.handleWaitUntil.name,
+      session
+    );
+    start = process.hrtime.bigint(); // Start time in nanoseconds
 
     if (!location) {
       this.warn(
