@@ -386,7 +386,8 @@ export class EventsPreProcessor extends WorkerHost {
             journeyID: journeys[i].id,
           },
           {
-            attempts: 1,
+            attempts: Number.MAX_SAFE_INTEGER,
+            backoff: { type: 'fixed', delay: 100 },
           }
         );
       }
@@ -429,7 +430,7 @@ export class EventsPreProcessor extends WorkerHost {
         job.data.session,
         job.data.account.id
       );
-      throw new UnrecoverableError();
+      throw err;
     }
   }
 
@@ -464,7 +465,8 @@ export class EventsPreProcessor extends WorkerHost {
             journeyID: journeys[i].id,
           },
           {
-            attempts: 1,
+            attempts: Number.MAX_SAFE_INTEGER,
+            backoff: { type: 'fixed', delay: 100 },
           }
         );
       }
@@ -492,7 +494,7 @@ export class EventsPreProcessor extends WorkerHost {
         job.data.session,
         job.data.accountID
       );
-      throw new UnrecoverableError();
+      throw err;
     }
   }
 
@@ -528,7 +530,8 @@ export class EventsPreProcessor extends WorkerHost {
               journeyID: journeys[i].id,
             },
             {
-              attempts: 1,
+              attempts: Number.MAX_SAFE_INTEGER,
+              backoff: { type: 'fixed', delay: 100 },
             }
           );
         }
@@ -557,7 +560,7 @@ export class EventsPreProcessor extends WorkerHost {
         job.data.session,
         job.data.account.id
       );
-      throw new UnrecoverableError();
+      throw err;
     }
   }
 
