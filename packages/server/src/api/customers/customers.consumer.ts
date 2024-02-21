@@ -27,32 +27,40 @@ import { ProviderType } from '../events/events.preprocessor';
 import { KEYS_TO_SKIP } from '@/utils/customer-key-name-validator';
 
 const containsUnskippedKeys = (updateDescription) => {
-  // Combining keys from updatedFields, removedFields, and truncatedArrays
+  // Combine keys from updatedFields, removedFields, and the fields of truncatedArrays
   const allKeys = Object.keys(updateDescription.updatedFields)
     .concat(updateDescription.removedFields)
     .concat(updateDescription.truncatedArrays.map((array) => array.field));
 
-  // Check if any key is not included in KEYS_TO_SKIP
-  return allKeys.some((key) => !KEYS_TO_SKIP.includes(key));
+  // Check if any key is not included in KEYS_TO_SKIP, considering prefix matches
+  return allKeys.some(
+    (key) =>
+      !KEYS_TO_SKIP.some(
+        (skipKey) => key.startsWith(skipKey) || key === skipKey
+      )
+  );
 };
 
 const copyMessageWithFilteredUpdateDescription = (message) => {
-  // Deep copy for updatedFields
+  // Filter updatedFields with consideration for dynamic keys like journeyEnrollmentsDates.<uuid>
   const filteredUpdatedFields = Object.entries(
     message.updateDescription.updatedFields
   )
-    .filter(([key]) => !KEYS_TO_SKIP.includes(key))
+    .filter(
+      ([key]) =>
+        !KEYS_TO_SKIP.some(
+          (skipKey) => key.startsWith(skipKey) || key === skipKey
+        )
+    )
     .reduce((acc, [key, value]) => {
       acc[key] = value;
       return acc;
     }, {});
 
-  // Filter for removedFields
+  // Assume removedFields and truncatedArrays are handled as before since they're not affected by the new information
   const filteredRemovedFields = message.updateDescription.removedFields.filter(
     (key) => !KEYS_TO_SKIP.includes(key)
   );
-
-  // Filter for truncatedArrays
   const filteredTruncatedArrays =
     message.updateDescription.truncatedArrays.filter(
       (entry) => !KEYS_TO_SKIP.includes(entry.field)
@@ -181,6 +189,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
         if (typeof message === 'string') {
           message = JSON.parse(message); //double parse if kafka record is published as string not object
         }
+
         //const session = randomUUID();
         let account: Account;
         let customer: CustomerDocument;
@@ -188,6 +197,11 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
           case 'insert':
           case 'update':
           case 'replace':
+            if (
+              message.operationType === 'update' &&
+              !containsUnskippedKeys(message.updateDescription)
+            )
+              break;
             customer = await this.customersService.findByCustomerId(
               message.documentKey._id['$oid'],
               clientSession
@@ -219,10 +233,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
               clientSession
             );
 
-            if (
-              message.operationType === 'update' &&
-              containsUnskippedKeys(message.updateDescription)
-            )
+            if (message.operationType === 'update')
               await this.eventPreprocessorQueue.add(ProviderType.WU_ATTRIBUTE, {
                 account: account,
                 session: session,
