@@ -4,7 +4,7 @@ import {
   InjectQueue,
   OnWorkerEvent,
 } from '@nestjs/bullmq';
-import { Job, Queue } from 'bullmq';
+import { Job, Queue, UnrecoverableError } from 'bullmq';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { Account } from '../accounts/entities/accounts.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
@@ -176,7 +176,11 @@ export class EventsProcessor extends WorkerHost {
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
-      if (err) throw err;
+      if (err?.code === 'CUSTOMER_STILL_MOVING') {
+        throw err;
+      } else if (err) {
+        throw new UnrecoverableError(err.message);
+      }
     }
   }
 

@@ -387,7 +387,7 @@ export class EventsPreProcessor extends WorkerHost {
           },
           {
             attempts: Number.MAX_SAFE_INTEGER,
-            backoff: { type: 'fixed', delay: 100 },
+            backoff: { type: 'fixed', delay: 1000 },
           }
         );
       }
@@ -466,7 +466,7 @@ export class EventsPreProcessor extends WorkerHost {
           },
           {
             attempts: Number.MAX_SAFE_INTEGER,
-            backoff: { type: 'fixed', delay: 100 },
+            backoff: { type: 'fixed', delay: 1000 },
           }
         );
       }
@@ -531,7 +531,7 @@ export class EventsPreProcessor extends WorkerHost {
             },
             {
               attempts: Number.MAX_SAFE_INTEGER,
-              backoff: { type: 'fixed', delay: 100 },
+              backoff: { type: 'fixed', delay: 1000 },
             }
           );
         }
