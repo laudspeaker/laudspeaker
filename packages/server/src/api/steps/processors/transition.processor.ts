@@ -2006,6 +2006,7 @@ export class TransitionProcessor extends WorkerHost {
   ) {
     const owner = await queryRunner.manager.findOne(Account, {
       where: { id: ownerID },
+      relations: ['teams.organization.workspaces'],
     });
 
     const journey = await this.journeysService.findByID(
