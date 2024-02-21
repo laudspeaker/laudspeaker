@@ -17,9 +17,9 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
   const [possibleDomains, setPossibleDomains] = useState<string[]>([]);
 
   const callDomains = async () => {
-    if (formData.mailgunAPIKey) {
-      dispatch(setSettingsPrivateApiKey(formData.mailgunAPIKey));
-      const response = await dispatch(setDomainsList(formData.mailgunAPIKey));
+    if (formData.apiKey) {
+      dispatch(setSettingsPrivateApiKey(formData.apiKey));
+      const response = await dispatch(setDomainsList(formData.apiKey));
       if (response?.data) {
         setPossibleDomains(
           response?.data?.map((item: { name: string }) => item.name) || []
@@ -30,7 +30,7 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
 
   useEffect(() => {
     callDomains();
-  }, [formData.mailgunAPIKey]);
+  }, [formData.apiKey]);
 
   return (
     <>
@@ -40,10 +40,8 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
           id="mailgun-api-key-input"
           wrapperClassName="!w-full"
           className="w-full"
-          value={formData.mailgunAPIKey}
-          onChange={(value) =>
-            setFormData({ ...formData, mailgunAPIKey: value })
-          }
+          value={formData.apiKey}
+          onChange={(value) => setFormData({ ...formData, apiKey: value })}
           type="password"
           placeholder="Key number"
         />
@@ -65,7 +63,7 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
         />
       </div>
 
-      <div className="flex flex-col gap-[5px]">
+      {/* <div className="flex flex-col gap-[5px]">
         <div>Sending name</div>
         <Input
           id="mailgun-sending-name-input"
@@ -89,7 +87,7 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
           }
           placeholder="sender"
         />
-      </div>
+      </div> */}
     </>
   );
 };

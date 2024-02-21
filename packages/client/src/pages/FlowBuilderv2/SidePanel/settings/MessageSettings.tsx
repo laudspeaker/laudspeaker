@@ -16,7 +16,7 @@ import { NodeType } from "pages/FlowBuilderv2/FlowEditor";
 import { useAppSelector } from "store/hooks";
 import {
   PushBuilderData,
-  PushPlatforms,
+  PushPlatform,
 } from "pages/PushBuilder/PushBuilderContent";
 import LockScreenIOS from "pages/PushBuilder/Badges/LockScreenIOS";
 import LockScreenAndroid from "pages/PushBuilder/Badges/LockScreenAndroid";
@@ -41,7 +41,7 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
     (state) => state.flowBuilder
   );
   const [availablePlatformOptions, setAvailablePlatformOptions] = useState<
-    { key: PushPlatforms | "All"; title: string }[]
+    { key: PushPlatform | "All"; title: string }[]
   >([]);
 
   useEffect(() => {
@@ -82,7 +82,7 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
   const countAvailablePlatforms = (data: PushBuilderData) => {
     const isAll = data.platform.Android && data.platform.iOS;
 
-    const options: { key: PushPlatforms | "All"; title: string }[] = [];
+    const options: { key: PushPlatform | "All"; title: string }[] = [];
 
     if (isAll) {
       options.push(
@@ -91,22 +91,22 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
           title: "All",
         },
         {
-          key: PushPlatforms.IOS,
+          key: PushPlatform.IOS,
           title: "iOS",
         },
         {
-          key: PushPlatforms.ANDROID,
+          key: PushPlatform.ANDROID,
           title: "Android",
         }
       );
     } else if (data.platform.Android) {
       options.push({
-        key: PushPlatforms.ANDROID,
+        key: PushPlatform.ANDROID,
         title: "Android",
       });
     } else if (data.platform.iOS) {
       options.push({
-        key: PushPlatforms.IOS,
+        key: PushPlatform.IOS,
         title: "iOS",
       });
     }
@@ -128,8 +128,8 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
       templateInlineCreation.needsCallbackUpdate.data.platform.iOS
         ? "All"
         : templateInlineCreation.needsCallbackUpdate.data.platform.Android
-        ? PushPlatforms.ANDROID
-        : PushPlatforms.IOS;
+        ? PushPlatform.ANDROID
+        : PushPlatform.IOS;
 
     setAvailablePlatformOptions(
       countAvailablePlatforms(templateInlineCreation.needsCallbackUpdate.data)

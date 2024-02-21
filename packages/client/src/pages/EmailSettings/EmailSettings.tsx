@@ -2,11 +2,11 @@ import { AxiosError } from "axios";
 import BackButton from "components/BackButton";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Select from "components/Elements/Selectv2/Select";
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import ApiService from "services/api.service";
-import Account, { WorkspaceEmailConnectionDto } from "types/Account";
+import Account, { WorkspaceEmailConnection } from "types/Account";
 import MailgunSettings from "./components/MailgunSettings";
 import SendgridSettings from "./components/SendgridSettings";
 import ResendSettings from "./components/ResendSettings";
@@ -19,20 +19,14 @@ export enum EmailSendingService {
 }
 
 interface EmailSettingsFormData {
-  mailgunAPIKey: string;
+  name: string;
+  apiKey: string;
   sendingDomain: string;
-  sendingName: string;
-  sendingEmail: string;
-  testSendingName: string;
-  testSendingEmail: string;
-  sendgridApiKey: string;
-  sendgridFromEmail: string;
-  resendAPIKey: string;
-  resendSigningSecret: string;
-  resendSendingDomain: string;
-  resendSendingName: string;
-  resendSendingEmail: string;
-  emailConnections: WorkspaceEmailConnectionDto[];
+  sendingOptions: {
+    sendingEmail: string;
+    sendingName?: string;
+  }[];
+  signingSecret: string;
 }
 
 export interface SendingServiceSettingsProps {
@@ -42,28 +36,24 @@ export interface SendingServiceSettingsProps {
 
 const EmailSettings = () => {
   const navigate = useNavigate();
-  const { service } = useParams();
+  const { service, id } = useParams();
 
-  const isLockedService = Object.values(EmailSendingService).includes(service);
+  const isCreating = useMemo(() => id === "create", [id]);
+
+  const isLockedService = useMemo(
+    () => Object.values(EmailSendingService).includes(service),
+    [service]
+  );
 
   const [sendingService, setSendingService] = useState<EmailSendingService>(
     isLockedService ? service : EmailSendingService.MAILGUN
   );
   const [formData, setFormData] = useState<EmailSettingsFormData>({
-    mailgunAPIKey: "",
+    name: "",
+    apiKey: "",
     sendingDomain: "",
-    sendingName: "",
-    sendingEmail: "",
-    testSendingName: "",
-    testSendingEmail: "",
-    sendgridApiKey: "",
-    sendgridFromEmail: "",
-    resendAPIKey: "",
-    resendSendingDomain: "",
-    resendSendingName: "",
-    resendSendingEmail: "",
-    resendSigningSecret: "",
-    emailConnections: [],
+    sendingOptions: [],
+    signingSecret: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -83,49 +73,15 @@ const EmailSettings = () => {
 
   useEffect(() => {
     (async () => {
+      if (isCreating) return;
+
       setIsLoading(true);
       try {
-        const { data } = await ApiService.get<Account>({ url: "/accounts" });
-        const { verified } = data;
-        const {
-          mailgunAPIKey,
-          sendingDomain,
-          sendingName,
-          sendingEmail,
-          testSendingEmail,
-          testSendingName,
-          emailProvider: provider,
-          sendgridApiKey,
-          sendgridFromEmail,
-          resendAPIKey,
-          resendSendingDomain,
-          resendSendingName,
-          resendSendingEmail,
-          resendSigningSecret,
-          emailConnections,
-        } = data.workspace;
-        setFormData({
-          mailgunAPIKey: mailgunAPIKey || "",
-          sendingDomain: sendingDomain || "",
-          sendingName: sendingName || "",
-          sendingEmail: sendingEmail || "",
-          testSendingEmail: testSendingEmail || "",
-          testSendingName: testSendingName || "",
-          sendgridApiKey: sendgridApiKey || "",
-          sendgridFromEmail: sendgridFromEmail || "",
-          resendAPIKey: resendAPIKey || "",
-          resendSendingDomain: resendSendingDomain || "",
-          resendSendingName: resendSendingName || "",
-          resendSendingEmail: resendSendingEmail || "",
-          resendSigningSecret: resendSigningSecret || "",
-          emailConnections: emailConnections || formData.emailConnections,
+        const { data } = await ApiService.get<WorkspaceEmailConnection>({
+          url: `/workspaces/channels/${service}/${id}`,
         });
-        // @ts-ignore
-        setSendingService(
-          isLockedService
-            ? sendingService
-            : (provider as EmailSendingService) || sendingService
-        );
+
+        setFormData({ ...formData, ...data });
       } catch (e) {
         toast.error("Error while loading data");
       } finally {
@@ -142,10 +98,19 @@ const EmailSettings = () => {
         if (formData[key as keyof typeof formData])
           objToSend[key] = formData[key as keyof typeof formData];
       }
-      await ApiService.patch({
-        url: "/accounts",
-        options: { ...objToSend, emailProvider: sendingService },
-      });
+
+      if (isCreating) {
+        await ApiService.post({
+          url: `/workspaces/channels/${service}`,
+          options: { ...objToSend },
+        });
+      } else {
+        await ApiService.patch({
+          url: `/workspaces/channels/${service}/${id}`,
+          options: { ...objToSend },
+        });
+      }
+
       navigate("/settings");
     } catch (e) {
       let message = "Unexpected error";
@@ -159,18 +124,11 @@ const EmailSettings = () => {
   const isError = Boolean(error);
   const isFulfilled = Boolean(
     sendingService === EmailSendingService.MAILGUN
-      ? formData.mailgunAPIKey &&
-          formData.sendingDomain &&
-          formData.sendingEmail &&
-          formData.sendingName
+      ? formData.apiKey && formData.sendingDomain
       : sendingService === EmailSendingService.SENDGRID
-      ? formData.sendgridApiKey && formData.sendgridFromEmail
+      ? formData.apiKey
       : sendingService === EmailSendingService.RESEND
-      ? formData.resendAPIKey &&
-        formData.resendSigningSecret &&
-        formData.resendSendingDomain &&
-        formData.resendSendingEmail &&
-        formData.resendSendingName
+      ? formData.apiKey && formData.signingSecret && formData.sendingDomain
       : false
   );
 

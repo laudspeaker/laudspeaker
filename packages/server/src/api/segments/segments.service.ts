@@ -504,7 +504,7 @@ export class SegmentsService {
     const mongoCollection = this.connection.db.collection(collectionName);
 
     let processedCount = 0;
-    let totalDocuments = await mongoCollection.countDocuments();
+    const totalDocuments = await mongoCollection.countDocuments();
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     //console.log("looks like top level segment is created in mongo");
@@ -1182,7 +1182,7 @@ export class SegmentsService {
     segmentId: string,
     session: string,
     queryRunner: QueryRunner,
-    batchSize: number = 500 // default batch size
+    batchSize = 500 // default batch size
   ) {
     // Start transaction
     //await queryRunner.startTransaction();

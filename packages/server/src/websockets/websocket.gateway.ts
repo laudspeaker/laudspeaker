@@ -451,7 +451,7 @@ export class WebsocketGateway implements OnGatewayConnection {
 
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    let customer = await this.customersService.CustomerModel.findOne({
+    const customer = await this.customersService.CustomerModel.findOne({
       _id: customerId,
       workspaceId: workspace.id,
     });

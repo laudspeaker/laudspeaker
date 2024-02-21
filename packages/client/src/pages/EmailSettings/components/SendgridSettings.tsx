@@ -14,16 +14,14 @@ const SendgridSettings: FC<SendingServiceSettingsProps> = ({
           id="sendgrid-api-key-input"
           wrapperClassName="!w-full"
           className="w-full"
-          value={formData.sendgridApiKey}
-          onChange={(value) =>
-            setFormData({ ...formData, sendgridApiKey: value })
-          }
+          value={formData.apiKey}
+          onChange={(value) => setFormData({ ...formData, apiKey: value })}
           type="password"
           placeholder="Key number"
         />
       </div>
 
-      <div className="flex flex-col gap-[5px]">
+      {/* <div className="flex flex-col gap-[5px]">
         <div>SendGrid email</div>
         <Input
           id="sendgrid-email-input"
@@ -35,7 +33,7 @@ const SendgridSettings: FC<SendingServiceSettingsProps> = ({
           }
           placeholder="sender@example.com"
         />
-      </div>
+      </div> */}
     </>
   );
 };

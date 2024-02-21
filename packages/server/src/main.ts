@@ -59,7 +59,6 @@ function customSetTimeout(
 // Replace the global setTimeout
 global.setTimeout = customSetTimeout as any;
 
-
 global.intervalIds = new Map<
   NodeJS.Timeout,
   { callback: Function; delay: number; args: any[] }

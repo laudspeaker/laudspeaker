@@ -103,7 +103,10 @@ export class TransferConnectionsToSeparateTables1708424773506
         ]);
       }
 
-      if (workspace.pushPlatforms) {
+      if (
+        workspace.pushPlatforms &&
+        Object.keys(workspace.pushPlatforms).length !== 0
+      ) {
         await queryRunner.manager.save(WorkspacePushConnection, [
           {
             workspace: { id: workspace.id },
