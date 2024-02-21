@@ -24,6 +24,53 @@ import {
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { ProviderType } from '../events/events.preprocessor';
+import { KEYS_TO_SKIP } from '@/utils/customer-key-name-validator';
+
+const containsUnskippedKeys = (updateDescription) => {
+  // Combining keys from updatedFields, removedFields, and truncatedArrays
+  const allKeys = Object.keys(updateDescription.updatedFields)
+    .concat(updateDescription.removedFields)
+    .concat(updateDescription.truncatedArrays.map((array) => array.field));
+
+  // Check if any key is not included in KEYS_TO_SKIP
+  return allKeys.some((key) => !KEYS_TO_SKIP.includes(key));
+};
+
+const copyMessageWithFilteredUpdateDescription = (message) => {
+  // Deep copy for updatedFields
+  const filteredUpdatedFields = Object.entries(
+    message.updateDescription.updatedFields
+  )
+    .filter(([key]) => !KEYS_TO_SKIP.includes(key))
+    .reduce((acc, [key, value]) => {
+      acc[key] = value;
+      return acc;
+    }, {});
+
+  // Filter for removedFields
+  const filteredRemovedFields = message.updateDescription.removedFields.filter(
+    (key) => !KEYS_TO_SKIP.includes(key)
+  );
+
+  // Filter for truncatedArrays
+  const filteredTruncatedArrays =
+    message.updateDescription.truncatedArrays.filter(
+      (entry) => !KEYS_TO_SKIP.includes(entry.field)
+    );
+
+  // Constructing a new message object with filtered updateDescription
+  const newMessage = {
+    ...message,
+    updateDescription: {
+      ...message.updateDescription,
+      updatedFields: filteredUpdatedFields,
+      removedFields: filteredRemovedFields,
+      truncatedArrays: filteredTruncatedArrays,
+    },
+  };
+
+  return newMessage;
+};
 
 @Injectable()
 export class CustomersConsumerService implements OnApplicationBootstrap {
@@ -172,11 +219,14 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
               clientSession
             );
 
-            if (message.operationType === 'update')
+            if (
+              message.operationType === 'update' &&
+              containsUnskippedKeys(message.updateDescription)
+            )
               await this.eventPreprocessorQueue.add(ProviderType.WU_ATTRIBUTE, {
                 account: account,
                 session: session,
-                message,
+                message: copyMessageWithFilteredUpdateDescription(message),
               });
             break;
           case 'delete': {
