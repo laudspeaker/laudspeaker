@@ -15,10 +15,11 @@ import { setInterval as originalSetInterval } from 'timers';
 Sentry.init({
   dsn: process.env.SENTRY_DSN_URL_BACKEND,
   release: process.env.SENTRY_RELEASE,
-  integrations: [
-    new ProfilingIntegration(),
-    ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
-  ],
+  integrations: [new Sentry.Integrations.Mongo({
+    useMongoose: true // Default: false
+  }), new Sentry.Integrations.Postgres({
+    usePgNative: false
+  })],
   // Performance Monitoring
   tracesSampleRate: 1.0, // Capture 100% of the transactions, reduce in production!
   // Set sampling rate for profiling - this is relative to tracesSampleRate
