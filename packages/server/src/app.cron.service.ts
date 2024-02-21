@@ -60,8 +60,15 @@ import { Requeue } from './api/steps/entities/requeue.entity';
 import { KEYS_TO_SKIP } from './utils/customer-key-name-validator';
 import { SegmentsService } from './api/segments/segments.service';
 import { CustomersService } from './api/customers/customers.service';
+import { Temporal } from '@js-temporal/polyfill';
 
 const BATCH_SIZE = 500;
+
+const generateUniqueJobId = (jobData) => {
+  // Concatenate the unique identifiers
+  const { ownerID, journeyID, customerID, step } = jobData;
+  return `${ownerID}-${journeyID}-${customerID}-${step.id}`;
+};
 
 @Injectable()
 export class CronService {
@@ -291,6 +298,140 @@ export class CronService {
             }
             branch = -1;
           }
+          // Checking if enough time has elapsed to add step
+          switch (step.type) {
+            case StepType.WAIT_UNTIL_BRANCH:
+              if (step.metadata.timeBranch.delay) {
+                if (
+                  Date.now() - locations[locationsIndex].stepEntry <
+                  Temporal.Duration.from(step.metadata.timeBranch.delay).total({
+                    unit: 'millisecond',
+                  })
+                ) {
+                  continue;
+                }
+              } else if (step.metadata.timeBranch.window) {
+                // Case 1: days of the week/time of day
+                if (step.metadata.timeBranch.window.onDays) {
+                  const now = new Date();
+
+                  const startTime = new Date(now.getTime());
+                  startTime.setHours(
+                    step.metadata.timeBranch.window.fromTime.split(':')[0]
+                  );
+                  startTime.setMinutes(
+                    step.metadata.timeBranch.window.fromTime.split(':')[1]
+                  );
+
+                  const endTime = new Date(now.getTime());
+                  endTime.setHours(
+                    step.metadata.timeBranch.window.toTime.split(':')[0]
+                  );
+                  endTime.setMinutes(
+                    step.metadata.timeBranch.window.toTime.split(':')[1]
+                  );
+
+                  const day = now.getDay();
+
+                  if (
+                    !(
+                      startTime < now &&
+                      endTime > now &&
+                      step.metadata.window.onDays[day] === 1
+                    )
+                  ) {
+                    continue;
+                  }
+                }
+                // Case2: Date and time of window
+                else {
+                  if (
+                    !(
+                      new Date(
+                        Temporal.Instant.from(
+                          step.metadata.timeBranch.window.from
+                        ).epochMilliseconds
+                      ).getTime() < Date.now() &&
+                      Date.now() <
+                        new Date(
+                          Temporal.Instant.from(
+                            step.metadata.timeBranch.window.to
+                          ).epochMilliseconds
+                        ).getTime()
+                    )
+                  ) {
+                    continue;
+                  }
+                }
+              }
+              break;
+            case StepType.TIME_WINDOW:
+              // Case 1: Specific days of the week
+              if (step.metadata.window.onDays) {
+                const now = new Date();
+
+                const startTime = new Date(now.getTime());
+                startTime.setHours(step.metadata.window.fromTime.split(':')[0]);
+                startTime.setMinutes(
+                  step.metadata.window.fromTime.split(':')[1]
+                );
+
+                const endTime = new Date(now.getTime());
+                endTime.setHours(step.metadata.window.toTime.split(':')[0]);
+                endTime.setMinutes(step.metadata.window.toTime.split(':')[1]);
+
+                const day = now.getDay();
+
+                this.warn(
+                  JSON.stringify({ day, startTime, endTime, now, step }),
+                  this.minuteTasks.name,
+                  session
+                );
+
+                if (
+                  !(
+                    startTime < now &&
+                    endTime > now &&
+                    step.metadata.window.onDays[day] === 1
+                  )
+                ) {
+                  continue;
+                }
+              }
+              // Case2: Date and time of window
+              else {
+                if (
+                  !(
+                    new Date(
+                      Temporal.Instant.from(
+                        step.metadata.window.from
+                      ).epochMilliseconds
+                    ).getTime() < Date.now() &&
+                    Date.now() <
+                      new Date(
+                        Temporal.Instant.from(
+                          step.metadata.window.to
+                        ).epochMilliseconds
+                      ).getTime()
+                  )
+                ) {
+                  continue;
+                }
+              }
+              break;
+            case StepType.TIME_DELAY:
+              if (
+                Date.now() - locations[locationsIndex].stepEntry <
+                Temporal.Duration.from(step.metadata.delay).total({
+                  unit: 'millisecond',
+                })
+              ) {
+                continue;
+              }
+              break;
+            default:
+              break;
+          }
           try {
             await this.journeyLocationsService.lock(
               locations[locationsIndex],
@@ -307,6 +448,14 @@ export class CronService {
                 journeyID: journeys[journeyIndex].id,
                 customerID: locations[locationsIndex].customer,
                 branch,
+              },
+              opts: {
+                jobId: generateUniqueJobId({
+                  step: step,
+                  ownerID: step.workspace.organization.owner.id,
+                  journeyID: journeys[journeyIndex].id,
+                  customerID: locations[locationsIndex].customer,
+                }),
               },
             });
           } catch (e) {
