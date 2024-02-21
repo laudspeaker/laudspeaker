@@ -81,7 +81,8 @@ export class WebsocketGateway implements OnGatewayConnection {
     private journeyService: JourneysService,
     @Inject(forwardRef(() => DevModeService))
     private devModeService: DevModeService,
-    @Inject(WebhooksService) private readonly webhooksService: WebhooksService,
+    @Inject(forwardRef(() => WebhooksService))
+    private readonly webhooksService: WebhooksService,
     @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>,
     @InjectModel(CustomerKeys.name)
     public CustomerKeysModel: Model<CustomerKeysDocument>

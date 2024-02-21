@@ -5,7 +5,7 @@ import {
   OnWorkerEvent,
 } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { Account } from '../accounts/entities/accounts.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { CustomersService } from '../customers/customers.service';
@@ -36,7 +36,7 @@ export enum EventType {
 }
 
 @Injectable()
-@Processor('events', { removeOnComplete: { age: 0, count: 0 } })
+@Processor('events', { removeOnComplete: { count: 100 } })
 export class EventsProcessor extends WorkerHost {
   private providerMap: Record<
     EventType,
@@ -82,7 +82,7 @@ export class EventsProcessor extends WorkerHost {
     private readonly logger: Logger,
     private dataSource: DataSource,
     @InjectConnection() private readonly connection: mongoose.Connection,
-    @Inject(CustomersService)
+    @Inject(forwardRef(() => CustomersService))
     private readonly customersService: CustomersService,
     private readonly audiencesHelper: AudiencesHelper,
     @Inject(WebsocketGateway)
@@ -792,6 +792,7 @@ export class EventsProcessor extends WorkerHost {
     let branch: number;
     const stepsToQueue: Step[] = [];
 
+    /* TODO: Finish defintiion here
     //Account associated with event
     const account: Account = await queryRunner.manager.findOneBy(Account, {
       id: job.data.accountID,
@@ -1176,6 +1177,7 @@ export class EventsProcessor extends WorkerHost {
       }
       return;
     }
+    */
     return;
   }
 

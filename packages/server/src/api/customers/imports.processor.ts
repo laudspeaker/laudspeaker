@@ -17,7 +17,7 @@ import { Repository } from 'typeorm';
 import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
 
 @Injectable()
-@Processor('imports', { removeOnComplete: { age: 0, count: 0 } })
+@Processor('imports', { removeOnComplete: { count: 100 } })
 export class ImportProcessor extends WorkerHost {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)

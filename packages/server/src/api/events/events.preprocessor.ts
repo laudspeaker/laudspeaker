@@ -7,7 +7,7 @@ import {
   OnWorkerEvent,
 } from '@nestjs/bullmq';
 import { Job, Queue, UnrecoverableError } from 'bullmq';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { Correlation, CustomersService } from '../customers/customers.service';
 import { DataSource } from 'typeorm';
 import mongoose, { Model } from 'mongoose';
@@ -41,7 +41,7 @@ export enum ProviderType {
 }
 
 @Injectable()
-@Processor('events_pre', { removeOnComplete: { age: 0, count: 0 } })
+@Processor('events_pre', { removeOnComplete: { count: 100 } })
 export class EventsPreProcessor extends WorkerHost {
   private providerMap: Record<
     ProviderType,
@@ -66,9 +66,9 @@ export class EventsPreProcessor extends WorkerHost {
     private readonly logger: Logger,
     private dataSource: DataSource,
     @InjectConnection() private readonly connection: mongoose.Connection,
-    @Inject(CustomersService)
+    @Inject(forwardRef(() => CustomersService))
     private readonly customersService: CustomersService,
-    @Inject(JourneysService)
+    @Inject(forwardRef(() => JourneysService))
     private readonly journeysService: JourneysService,
     @InjectModel(Event.name)
     private eventModel: Model<EventDocument>,
@@ -386,7 +386,8 @@ export class EventsPreProcessor extends WorkerHost {
             journeyID: journeys[i].id,
           },
           {
-            attempts: 1,
+            attempts: Number.MAX_SAFE_INTEGER,
+            backoff: { type: 'fixed', delay: 100 },
           }
         );
       }
@@ -429,7 +430,7 @@ export class EventsPreProcessor extends WorkerHost {
         job.data.session,
         job.data.account.id
       );
-      throw new UnrecoverableError();
+      throw err;
     }
   }
 
@@ -464,7 +465,8 @@ export class EventsPreProcessor extends WorkerHost {
             journeyID: journeys[i].id,
           },
           {
-            attempts: 1,
+            attempts: Number.MAX_SAFE_INTEGER,
+            backoff: { type: 'fixed', delay: 100 },
           }
         );
       }
@@ -492,7 +494,7 @@ export class EventsPreProcessor extends WorkerHost {
         job.data.session,
         job.data.accountID
       );
-      throw new UnrecoverableError();
+      throw err;
     }
   }
 
@@ -528,7 +530,8 @@ export class EventsPreProcessor extends WorkerHost {
               journeyID: journeys[i].id,
             },
             {
-              attempts: 1,
+              attempts: Number.MAX_SAFE_INTEGER,
+              backoff: { type: 'fixed', delay: 100 },
             }
           );
         }
@@ -557,7 +560,7 @@ export class EventsPreProcessor extends WorkerHost {
         job.data.session,
         job.data.account.id
       );
-      throw new UnrecoverableError();
+      throw err;
     }
   }
 

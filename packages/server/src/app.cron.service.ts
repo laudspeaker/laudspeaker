@@ -46,7 +46,7 @@ import { randomUUID } from 'crypto';
 import { StepsService } from './api/steps/steps.service';
 import { StepType } from './api/steps/types/step.interface';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
+import { Job, Queue } from 'bullmq';
 import { JourneysService } from './api/journeys/journeys.service';
 import { RedlockService } from './api/redlock/redlock.service';
 import { Lock } from 'redlock';
@@ -255,6 +255,7 @@ export class CronService {
     let queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
+    let timeBasedJobs: any[] = [];
     try {
       const journeys = await this.journeysService.allActiveTransactional(
         queryRunner
@@ -297,13 +298,16 @@ export class CronService {
               undefined,
               queryRunner
             );
-            this.transitionQueue.add(step.type, {
-              step: step,
-              ownerID: step.workspace.organization.owner.id,
-              session: session,
-              journeyID: journeys[journeyIndex].id,
-              customerID: locations[locationsIndex].customer,
-              branch,
+            timeBasedJobs.push({
+              name: String(step.type),
+              data: {
+                step: step,
+                ownerID: step.workspace.organization.owner.id,
+                session: session,
+                journeyID: journeys[journeyIndex].id,
+                customerID: locations[locationsIndex].customer,
+                branch,
+              },
             });
           } catch (e) {
             this.warn(
@@ -328,6 +332,7 @@ export class CronService {
     } finally {
       await queryRunner.release();
     }
+    if (!timeBasedErr) await this.transitionQueue.addBulk(timeBasedJobs);
 
     // Handle expiry of recovery emails
     let recoveryErr: any;
