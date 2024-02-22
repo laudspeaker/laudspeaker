@@ -125,7 +125,20 @@ const MessageChannelTab = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [account, setAccount] = useState<Account>();
 
-  const connectedFixtures: MessageChannelCardFixture[] = [];
+  const connectedFixtures: MessageChannelCardFixture[] = [
+    ...(account?.workspace.mailgunConnections.map((connection) => ({
+      id: connection.id,
+      channel: MessageChannel.MAILGUN,
+      title: connection.name,
+      icon: emailCardIconImage,
+    })) || []),
+    ...(account?.workspace.sendgridConnections.map((connection) => ({
+      id: connection.id,
+      channel: MessageChannel.SENDGRID,
+      title: connection.name,
+      icon: emailCardIconImage,
+    })) || []),
+  ];
 
   const supportedFixtures = Object.values(supportedMessageChannelCardsFixtures);
 

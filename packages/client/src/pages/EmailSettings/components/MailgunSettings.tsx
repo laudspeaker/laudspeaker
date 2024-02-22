@@ -7,6 +7,8 @@ import {
 } from "reducers/settings.reducer";
 import { useAppDispatch } from "store/hooks";
 import { SendingServiceSettingsProps } from "../EmailSettings";
+import Button, { ButtonType } from "components/Elements/Buttonv2";
+import TrashIcon from "assets/icons/TrashIcon";
 
 const MailgunSettings: FC<SendingServiceSettingsProps> = ({
   formData,
@@ -46,7 +48,6 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
           placeholder="Key number"
         />
       </div>
-
       <div className="flex flex-col gap-[5px]">
         <div>Domain</div>
         <Select
@@ -63,31 +64,68 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
         />
       </div>
 
-      {/* <div className="flex flex-col gap-[5px]">
-        <div>Sending name</div>
-        <Input
-          id="mailgun-sending-name-input"
-          wrapperClassName="!w-full"
-          className="w-full"
-          value={formData.sendingName}
-          onChange={(value) => setFormData({ ...formData, sendingName: value })}
-          placeholder="Display name"
-        />
-      </div>
+      {formData.sendingOptions.length !== 0 && (
+        <div className="h-[1px] w-full bg-black" />
+      )}
 
-      <div className="flex flex-col gap-[5px]">
-        <div>Sending email</div>
-        <Input
-          id="mailgun-sending-email-input"
-          wrapperClassName="!w-full"
-          className="w-full"
-          value={formData.sendingEmail}
-          onChange={(value) =>
-            setFormData({ ...formData, sendingEmail: value })
-          }
-          placeholder="sender"
-        />
-      </div> */}
+      {formData.sendingOptions.map((option, i) => (
+        <div className="flex items-center gap-2.5">
+          <div className="flex flex-col gap-[5px] w-full">
+            <div>Sending email</div>
+            <Input
+              id="mailgun-sending-email"
+              wrapperClassName="!w-full"
+              className="w-full"
+              value={option.sendingEmail}
+              onChange={(value) => {
+                formData.sendingOptions[i].sendingEmail = value;
+                setFormData({ ...formData });
+              }}
+              placeholder="Sending email"
+            />
+          </div>
+
+          <div className="flex flex-col gap-[5px] w-full">
+            <div>Sending name</div>
+            <Input
+              id="mailgun-sending-email"
+              wrapperClassName="!w-full"
+              className="w-full"
+              value={option.sendingName || ""}
+              onChange={(value) => {
+                formData.sendingOptions[i].sendingName = value;
+                setFormData({ ...formData });
+              }}
+              placeholder="Sending email"
+            />
+          </div>
+
+          <div
+            className="cursor-pointer"
+            onClick={() => {
+              formData.sendingOptions.splice(i, 1);
+              setFormData({ ...formData });
+            }}
+          >
+            <TrashIcon />
+          </div>
+        </div>
+      ))}
+
+      <Button
+        type={ButtonType.SECONDARY}
+        onClick={() =>
+          setFormData({
+            ...formData,
+            sendingOptions: [
+              ...formData.sendingOptions,
+              { sendingEmail: "", sendingName: "" },
+            ],
+          })
+        }
+      >
+        Add sending option
+      </Button>
     </>
   );
 };

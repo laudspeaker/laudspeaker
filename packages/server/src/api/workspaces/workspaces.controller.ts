@@ -1,4 +1,5 @@
 import {
+  Body,
   ClassSerializerInterceptor,
   Controller,
   Get,
@@ -16,6 +17,10 @@ import { Request } from 'express';
 import { Account } from '../accounts/entities/accounts.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { MessageChannel } from './entities/message-channel.enum';
+import { CreateMailgunChannelDto } from './dto/mailgun/create-mailgun-channel.dto';
+import { UpdateMailgunChannelDto } from './dto/mailgun/update-mailgun-channel.dto';
+import { UpdateSendgridChannelDto } from './dto/sendgrid/update-sendgrid-channel.dto';
+import { CreateSendgridChannelDto } from './dto/sendgrid/create-sendgrid-channel.dto';
 
 @Controller('workspaces')
 export class WorkspacesController {
@@ -37,23 +42,61 @@ export class WorkspacesController {
     );
   }
 
-  @Patch('/channels/:channel/:id')
+  @Patch('/channels/mailgun/:id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  public async updateSpecificChannel(
+  public async updateMailgunChannel(
     @Req() { user }: Request,
-    @Param('channel', new ParseEnumPipe(MessageChannel))
-    channel: MessageChannel,
-    @Param('id', ParseUUIDPipe) id: string
-  ) {}
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateMailgunChannelDto: UpdateMailgunChannelDto
+  ) {
+    return this.workspacesService.updateMailgunChannel(
+      <Account>user,
+      id,
+      updateMailgunChannelDto
+    );
+  }
 
-  @Post('/channels/:channel')
+  @Post('/channels/mailgun')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
-  public async createSpecificChannels(
+  public async createMailgunChannel(
     @Req() { user }: Request,
-    @Param('channel') channel: MessageChannel
-  ) {}
+    @Body() createMailgunChannelDto: CreateMailgunChannelDto
+  ) {
+    return this.workspacesService.createMailgunChannel(
+      <Account>user,
+      createMailgunChannelDto
+    );
+  }
+
+  @Patch('/channels/sendgrid/:id')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async updateSendgridChannel(
+    @Req() { user }: Request,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateSendgridChannelDto: UpdateSendgridChannelDto
+  ) {
+    return this.workspacesService.updateSendgridChannel(
+      <Account>user,
+      id,
+      updateSendgridChannelDto
+    );
+  }
+
+  @Post('/channels/sendgrid')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async createSendgridChannel(
+    @Req() { user }: Request,
+    @Body() createMailgunChannelDto: CreateSendgridChannelDto
+  ) {
+    return this.workspacesService.createSendgridChannel(
+      <Account>user,
+      createMailgunChannelDto
+    );
+  }
 
   @Get('/channels/:channel')
   @UseGuards(JwtAuthGuard)
