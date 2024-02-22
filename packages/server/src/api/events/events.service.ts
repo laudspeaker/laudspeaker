@@ -339,14 +339,16 @@ export class EventsService {
     });
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    const records = await this.EventModel.find({
+    const eventNames = await this.EventModel.find({
       $and: [
         { workspaceId: workspace.id },
         { event: RegExp(`.*${search}.*`, 'i') },
       ],
-    }).exec();
+    })
+      .distinct('event')
+      .exec();
 
-    return records.map((record) => record.event);
+    return eventNames;
   }
 
   async getPossibleEventProperties(
