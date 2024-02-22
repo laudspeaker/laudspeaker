@@ -10,6 +10,7 @@ interface TextareaProps {
   placeholder?: string;
   name?: string;
   id?: string;
+  maxLength?: number;
 }
 
 const Textarea: FC<TextareaProps> = ({
@@ -22,6 +23,7 @@ const Textarea: FC<TextareaProps> = ({
   placeholder,
   name,
   id,
+  maxLength,
 }) => {
   return (
     <textarea
@@ -34,6 +36,7 @@ const Textarea: FC<TextareaProps> = ({
       placeholder={placeholder}
       name={name}
       id={id}
+      maxLength={maxLength}
     />
   );
 };
