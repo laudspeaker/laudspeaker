@@ -670,13 +670,14 @@ export class JourneysService {
         );
       //let shouldInclude = true;
       // TODO_JH: implement the following
-      const shouldInclude = this.customersService.checkCustomerMatchesQuery(
-        journey.inclusionCriteria,
-        account,
-        session,
-        undefined,
-        customerId
-      );
+      const shouldInclude =
+        await this.customersService.checkCustomerMatchesQuery(
+          journey.inclusionCriteria,
+          account,
+          session,
+          undefined,
+          customerId
+        );
       // if (customer matches journeyInclusionCriteria)
       //     shouldInclude = true
       // for segment in journey.segments

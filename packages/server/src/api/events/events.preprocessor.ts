@@ -7,7 +7,7 @@ import {
   OnWorkerEvent,
 } from '@nestjs/bullmq';
 import { Job, Queue, UnrecoverableError } from 'bullmq';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { Correlation, CustomersService } from '../customers/customers.service';
 import { DataSource } from 'typeorm';
 import mongoose, { Model } from 'mongoose';
@@ -31,6 +31,7 @@ import {
 } from '../customers/schemas/customer.schema';
 import * as Sentry from '@sentry/node';
 import { Account } from '../accounts/entities/accounts.entity';
+import { EventType } from './events.processor';
 
 export enum ProviderType {
   LAUDSPEAKER = 'laudspeaker',
@@ -40,7 +41,7 @@ export enum ProviderType {
 }
 
 @Injectable()
-@Processor('events_pre', { removeOnComplete: { age: 0, count: 0 } })
+@Processor('events_pre', { removeOnComplete: { count: 100 } })
 export class EventsPreProcessor extends WorkerHost {
   private providerMap: Record<
     ProviderType,
@@ -65,9 +66,9 @@ export class EventsPreProcessor extends WorkerHost {
     private readonly logger: Logger,
     private dataSource: DataSource,
     @InjectConnection() private readonly connection: mongoose.Connection,
-    @Inject(CustomersService)
+    @Inject(forwardRef(() => CustomersService))
     private readonly customersService: CustomersService,
-    @Inject(JourneysService)
+    @Inject(forwardRef(() => JourneysService))
     private readonly journeysService: JourneysService,
     @InjectModel(Event.name)
     private eventModel: Model<EventDocument>,
@@ -337,18 +338,17 @@ export class EventsPreProcessor extends WorkerHost {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-
-    //finding the owner of th workspace for the event
-    const owner = await queryRunner.manager.findOne(Account, {
-      where: { id: job.data.account.id },
-      relations: ['teams.organization.workspaces'],
-    });
-    const workspace = owner.teams?.[0]?.organization?.workspaces?.[0];
-
     let err: any;
 
-    //find customer associated with event or create new customer if not found
     try {
+      //finding the owner of th workspace for the event
+      const owner = await queryRunner.manager.findOne(Account, {
+        where: { id: job.data.account.id },
+        relations: ['teams.organization.workspaces'],
+      });
+      const workspace = owner.teams?.[0]?.organization?.workspaces?.[0];
+
+      //find customer associated with event or create new customer if not found
       const correlation: Correlation =
         await this.customersService.findOrCreateByCorrelationKVPair(
           owner,
@@ -379,14 +379,15 @@ export class EventsPreProcessor extends WorkerHost {
       });
       for (let i = 0; i < journeys.length; i++) {
         await this.eventsQueue.add(
-          'event',
+          EventType.EVENT,
           {
             accountID: job.data.account.id,
             event: job.data.event,
             journeyID: journeys[i].id,
           },
           {
-            attempts: 1,
+            attempts: Number.MAX_SAFE_INTEGER,
+            backoff: { type: 'fixed', delay: 1000 },
           }
         );
       }
@@ -406,12 +407,7 @@ export class EventsPreProcessor extends WorkerHost {
     } catch (e) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.error(
-        e,
-        this.handleCustom.name,
-        job.data.session,
-        job.data.account.email
-      );
+      this.error(e, this.handleCustom.name, job.data.session, job.data.account);
       err = e;
     } finally {
       await transactionSession.endSession();
@@ -434,7 +430,7 @@ export class EventsPreProcessor extends WorkerHost {
         job.data.session,
         job.data.account.id
       );
-      throw new UnrecoverableError();
+      throw err;
     }
   }
 
@@ -461,7 +457,7 @@ export class EventsPreProcessor extends WorkerHost {
       });
       for (let i = 0; i < journeys.length; i++) {
         await this.eventsQueue.add(
-          'message',
+          EventType.MESSAGE,
           {
             workspaceId: job.data.workspaceId,
             message: job.data.message,
@@ -469,7 +465,8 @@ export class EventsPreProcessor extends WorkerHost {
             journeyID: journeys[i].id,
           },
           {
-            attempts: 1,
+            attempts: Number.MAX_SAFE_INTEGER,
+            backoff: { type: 'fixed', delay: 1000 },
           }
         );
       }
@@ -497,7 +494,7 @@ export class EventsPreProcessor extends WorkerHost {
         job.data.session,
         job.data.accountID
       );
-      throw new UnrecoverableError();
+      throw err;
     }
   }
 
@@ -525,7 +522,7 @@ export class EventsPreProcessor extends WorkerHost {
       for (let i = 0; i < journeys.length; i++) {
         if (job.data.message.operationType === 'update') {
           await this.eventsQueue.add(
-            'attribute_change',
+            EventType.ATTRIBUTE,
             {
               accountID: job.data.account.id,
               customer: job.data.message.documentKey._id['$oid'],
@@ -533,7 +530,8 @@ export class EventsPreProcessor extends WorkerHost {
               journeyID: journeys[i].id,
             },
             {
-              attempts: 1,
+              attempts: Number.MAX_SAFE_INTEGER,
+              backoff: { type: 'fixed', delay: 1000 },
             }
           );
         }
@@ -548,7 +546,7 @@ export class EventsPreProcessor extends WorkerHost {
         e,
         this.handleAttributeChange.name,
         job.data.session,
-        job.data.account.email
+        job.data.account
       );
       err = e;
     } finally {
@@ -562,7 +560,7 @@ export class EventsPreProcessor extends WorkerHost {
         job.data.session,
         job.data.account.id
       );
-      throw new UnrecoverableError();
+      throw err;
     }
   }
 
