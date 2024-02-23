@@ -1805,6 +1805,10 @@ export class JourneysService {
               return node.id === relevantEdges[0].target;
             })[0].data.stepId;
             metadata.channel = nodes[i].data['template']['type'];
+
+            metadata.connectionId = nodes[i].data.connectionId;
+            metadata.sendingOptionId = nodes[i].data.sendingOptionId;
+
             metadata.customName = nodes[i].data['customName'] || 'Unknown name';
             if (nodes[i].data['template']['selected'])
               metadata.template = nodes[i].data['template']['selected']['id'];

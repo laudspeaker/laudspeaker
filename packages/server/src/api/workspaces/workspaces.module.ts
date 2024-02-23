@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { WorkspacesController } from './workspaces.controller';
 import { WorkspacesService } from './workspaces.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -24,9 +24,10 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
       WorkspaceTwilioConnection,
       WorkspacePushConnection,
     ]),
-    WebhooksModule,
+    forwardRef(() => WebhooksModule),
   ],
   controllers: [WorkspacesController],
   providers: [WorkspacesService],
+  exports: [WorkspacesService],
 })
 export class WorkspacesModule {}

@@ -31,6 +31,7 @@ import { JourneyLocationsService } from '../journeys/journey-locations.service';
 import { JourneyLocation } from '../journeys/entities/journey-location.entity';
 import { JourneysModule } from '../journeys/journeys.module';
 import { Workspace } from '../workspaces/entities/workspace.entity';
+import { WorkspacesModule } from '../workspaces/workspaces.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { Workspace } from '../workspaces/entities/workspace.entity';
     forwardRef(() => WebsocketsModule),
     forwardRef(() => RedlockModule),
     forwardRef(() => JourneysModule),
+    forwardRef(() => WorkspacesModule),
     SlackModule,
   ],
   providers: [
