@@ -11,8 +11,6 @@ import { Workspace } from './workspace.entity';
 import { SendgridSendingOption } from './sendgrid-sending-option.entity';
 
 @Entity()
-@Unique(['workspaceId', 'apiKey'])
-@Unique(['workspaceId', 'name'])
 export class WorkspaceSendgridConnection {
   @PrimaryGeneratedColumn('uuid')
   id: string;

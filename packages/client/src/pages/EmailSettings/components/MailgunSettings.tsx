@@ -74,6 +74,9 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
             <div>Sending email</div>
             <Input
               id="mailgun-sending-email"
+              //pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" // Regular expression for email validation
+              //title="Please enter a valid email address." 
+              //type="email" // Specifies that the input should be treated as an email address
               wrapperClassName="!w-full"
               className="w-full"
               value={option.sendingEmail}
@@ -81,7 +84,7 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
                 formData.sendingOptions[i].sendingEmail = value;
                 setFormData({ ...formData });
               }}
-              placeholder="Sending email"
+              placeholder="example@email.com"
             />
           </div>
 
