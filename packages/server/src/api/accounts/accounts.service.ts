@@ -63,6 +63,7 @@ export class AccountsService extends BaseJwtHelper {
     @Inject(forwardRef(() => StepsService))
     private stepsService: StepsService,
     @InjectConnection() private readonly connection: mongoose.Connection,
+    @Inject(forwardRef(() => WebhooksService))
     private webhookService: WebhooksService
   ) {
     super();

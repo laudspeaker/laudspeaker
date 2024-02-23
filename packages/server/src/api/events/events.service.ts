@@ -55,6 +55,7 @@ import {
   PushPlatforms,
 } from '../templates/entities/template.entity';
 import { Workspace } from '../workspaces/entities/workspace.entity';
+import { ProviderType } from './events.preprocessor';
 
 @Injectable()
 export class EventsService {
@@ -265,7 +266,7 @@ export class EventsService {
     eventDto: EventDto,
     session: string
   ) {
-    await this.eventPreprocessorQueue.add('laudspeaker', {
+    await this.eventPreprocessorQueue.add(ProviderType.LAUDSPEAKER, {
       account: auth.account,
       event: eventDto,
       session: session,
@@ -338,14 +339,16 @@ export class EventsService {
     });
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    const records = await this.EventModel.find({
+    const eventNames = await this.EventModel.find({
       $and: [
         { workspaceId: workspace.id },
         { event: RegExp(`.*${search}.*`, 'i') },
       ],
-    }).exec();
+    })
+      .distinct('event')
+      .exec();
 
-    return records.map((record) => record.event);
+    return eventNames;
   }
 
   async getPossibleEventProperties(

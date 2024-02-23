@@ -578,8 +578,11 @@ export class JourneyLocationsService {
       location.moveStarted &&
       Date.now() - location.moveStarted < LOCATION_LOCK_TIMEOUT_MS
     )
-      throw new Error(
-        `Customer ${location.customer} is still moving through journey ${location.journey}`
+      throw Object.assign(
+        new Error(
+          `Customer ${location.customer} is still moving through journey ${location.journey}`
+        ),
+        { code: 'CUSTOMER_STILL_MOVING' }
       );
     if (queryRunner) {
       await queryRunner.manager.update(

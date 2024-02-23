@@ -23,6 +23,62 @@ import {
 } from './schemas/customer.schema';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { ProviderType } from '../events/events.preprocessor';
+import { KEYS_TO_SKIP } from '@/utils/customer-key-name-validator';
+
+const containsUnskippedKeys = (updateDescription) => {
+  // Combine keys from updatedFields, removedFields, and the fields of truncatedArrays
+  const allKeys = Object.keys(updateDescription.updatedFields)
+    .concat(updateDescription.removedFields)
+    .concat(updateDescription.truncatedArrays.map((array) => array.field));
+
+  // Check if any key is not included in KEYS_TO_SKIP, considering prefix matches
+  return allKeys.some(
+    (key) =>
+      !KEYS_TO_SKIP.some(
+        (skipKey) => key.startsWith(skipKey) || key === skipKey
+      )
+  );
+};
+
+const copyMessageWithFilteredUpdateDescription = (message) => {
+  // Filter updatedFields with consideration for dynamic keys like journeyEnrollmentsDates.<uuid>
+  const filteredUpdatedFields = Object.entries(
+    message.updateDescription.updatedFields
+  )
+    .filter(
+      ([key]) =>
+        !KEYS_TO_SKIP.some(
+          (skipKey) => key.startsWith(skipKey) || key === skipKey
+        )
+    )
+    .reduce((acc, [key, value]) => {
+      acc[key] = value;
+      return acc;
+    }, {});
+
+  // Assume removedFields and truncatedArrays are handled as before since they're not affected by the new information
+  const filteredRemovedFields = message.updateDescription.removedFields.filter(
+    (key) => !KEYS_TO_SKIP.includes(key)
+  );
+  const filteredTruncatedArrays =
+    message.updateDescription.truncatedArrays.filter(
+      (entry) => !KEYS_TO_SKIP.includes(entry.field)
+    );
+
+  // Constructing a new message object with filtered updateDescription
+  const newMessage = {
+    ...message,
+    updateDescription: {
+      ...message.updateDescription,
+      updatedFields: filteredUpdatedFields,
+      removedFields: filteredRemovedFields,
+      truncatedArrays: filteredTruncatedArrays,
+    },
+  };
+
+  return newMessage;
+};
 
 @Injectable()
 export class CustomersConsumerService implements OnApplicationBootstrap {
@@ -121,96 +177,90 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
   private handleCustomerChangeStream(this: CustomersConsumerService) {
     return async (changeMessage: EachMessagePayload) => {
       const session = randomUUID();
+      let err: any;
+      const queryRunner = await this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      const clientSession = await this.connection.startSession();
+      await clientSession.startTransaction();
       try {
         const messStr = changeMessage.message.value.toString();
         let message: ChangeStreamDocument<Customer> = JSON.parse(messStr);
         if (typeof message === 'string') {
           message = JSON.parse(message); //double parse if kafka record is published as string not object
         }
+
         //const session = randomUUID();
         let account: Account;
         let customer: CustomerDocument;
-        const queryRunner = await this.dataSource.createQueryRunner();
-        await queryRunner.connect();
-        await queryRunner.startTransaction();
-        const clientSession = await this.connection.startSession();
-        await clientSession.startTransaction();
-        try {
-          switch (message.operationType) {
-            case 'insert':
-            case 'update':
-            case 'replace':
-              customer = await this.customersService.findByCustomerId(
-                message.documentKey._id['$oid'],
-                clientSession
-              );
-              if (!customer) {
-                this.logger.warn(
-                  `No customer with id ${message.documentKey._id['$oid']}. Can't process ${CustomersConsumerService.name}.`
-                );
-                break;
-              }
-              account =
-                await this.accountsService.findOrganizationOwnerByWorkspaceId(
-                  customer.workspaceId,
-                  session
-                );
-              //console.log("in change stream",message);
-              await this.segmentsService.updateCustomerSegments(
-                account,
-                customer.id,
-                session,
-                queryRunner
-              );
-              await this.journeysService.updateEnrollmentForCustomer(
-                account,
-                customer.id,
-                message.operationType === 'insert' ? 'NEW' : 'CHANGE',
-                session,
-                queryRunner,
-                clientSession
-              );
-
-              if (message.operationType === 'update')
-                await this.eventPreprocessorQueue.add('wu_attribute', {
-                  account: account,
-                  session: session,
-                  message,
-                });
+        switch (message.operationType) {
+          case 'insert':
+          case 'update':
+          case 'replace':
+            if (
+              message.operationType === 'update' &&
+              !containsUnskippedKeys(message.updateDescription)
+            )
               break;
-            case 'delete': {
-              // TODO_JH: remove customerID from all steps also
-              const customerId = message.documentKey._id['$oid'];
-              await this.segmentsService.removeCustomerFromAllSegments(
-                customerId,
-                queryRunner
+            customer = await this.customersService.findByCustomerId(
+              message.documentKey._id['$oid'],
+              clientSession
+            );
+            if (!customer) {
+              this.logger.warn(
+                `No customer with id ${message.documentKey._id['$oid']}. Can't process ${CustomersConsumerService.name}.`
               );
               break;
             }
+            account =
+              await this.accountsService.findOrganizationOwnerByWorkspaceId(
+                customer.workspaceId,
+                session
+              );
+            //console.log("in change stream",message);
+            await this.segmentsService.updateCustomerSegments(
+              account,
+              customer.id,
+              session,
+              queryRunner
+            );
+            await this.journeysService.updateEnrollmentForCustomer(
+              account,
+              customer.id,
+              message.operationType === 'insert' ? 'NEW' : 'CHANGE',
+              session,
+              queryRunner,
+              clientSession
+            );
+
+            if (message.operationType === 'update')
+              await this.eventPreprocessorQueue.add(ProviderType.WU_ATTRIBUTE, {
+                account: account,
+                session: session,
+                message: copyMessageWithFilteredUpdateDescription(message),
+              });
+            break;
+          case 'delete': {
+            // TODO_JH: remove customerID from all steps also
+            const customerId = message.documentKey._id['$oid'];
+            await this.segmentsService.removeCustomerFromAllSegments(
+              customerId,
+              queryRunner
+            );
+            break;
           }
-          await clientSession.commitTransaction();
-          await clientSession.endSession();
-          await queryRunner.commitTransaction();
-          await queryRunner.release();
-        } catch (e) {
-          if (clientSession && clientSession.inTransaction)
-            await clientSession.abortTransaction();
-          if (clientSession && !clientSession.hasEnded)
-            await clientSession.endSession();
-          if (queryRunner && queryRunner.isTransactionActive)
-            await queryRunner.rollbackTransaction();
-          if (queryRunner && !queryRunner.isReleased)
-            await queryRunner.release();
-          throw e;
         }
+        await clientSession.commitTransaction();
+        await queryRunner.commitTransaction();
       } catch (e) {
         this.error(e, this.handleCustomerChangeStream.name, session);
-        /*
-        this.error(
-          `Something went wrong processing mongo change stream message ${changeMessage.message.value.toString()}.`,
-          e
-        );
-        */
+        err = e;
+        await clientSession.abortTransaction();
+        await queryRunner.rollbackTransaction();
+      } finally {
+        await clientSession.endSession();
+        await queryRunner.release();
+        if (err) throw err;
       }
     };
   }

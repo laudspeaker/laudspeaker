@@ -23,7 +23,7 @@ import { JourneysService } from './journeys.service';
 const BATCH_SIZE = +process.env.START_BATCH_SIZE;
 
 @Injectable()
-@Processor('start', { removeOnComplete: { age: 0, count: 0 } })
+@Processor('start', { removeOnComplete: { count: 100 } })
 export class StartProcessor extends WorkerHost {
   constructor(
     private dataSource: DataSource,

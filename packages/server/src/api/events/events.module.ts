@@ -42,6 +42,10 @@ import { RedlockModule } from '../redlock/redlock.module';
 import { RedlockService } from '../redlock/redlock.service';
 import { JourneyLocationsService } from '../journeys/journey-locations.service';
 import { JourneyLocation } from '../journeys/entities/journey-location.entity';
+import { CustomersService } from '../customers/customers.service';
+import { Imports } from '../customers/entities/imports.entity';
+import { StepsModule } from '../steps/steps.module';
+import { S3Service } from '../s3/s3.service';
 
 @Module({
   imports: [
@@ -53,6 +57,7 @@ import { JourneyLocation } from '../journeys/entities/journey-location.entity';
       Template,
       Workflow,
       JourneyLocation,
+      Imports,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
@@ -83,6 +88,9 @@ import { JourneyLocation } from '../journeys/entities/journey-location.entity';
     BullModule.registerQueue({
       name: 'transition',
     }),
+    BullModule.registerQueue({
+      name: 'imports',
+    }),
     forwardRef(() => AuthModule),
     forwardRef(() => CustomersModule),
     forwardRef(() => AccountsModule),
@@ -94,6 +102,7 @@ import { JourneyLocation } from '../journeys/entities/journey-location.entity';
     AudiencesModule,
     SlackModule,
     forwardRef(() => RedlockModule),
+    forwardRef(() => StepsModule),
   ],
   controllers: [EventsController],
   providers: [
@@ -103,6 +112,8 @@ import { JourneyLocation } from '../journeys/entities/journey-location.entity';
     AudiencesHelper,
     RedlockService,
     JourneyLocationsService,
+    CustomersService,
+    S3Service,
   ],
   exports: [EventsService],
 })

@@ -69,53 +69,49 @@ const Input = (props: InputProps) => {
   } = props;
 
   return (
-    <>
-      <div className={`w-full ${wrapperClasses || ""}`}>
-        <label
-          htmlFor={name}
-          className="block text-sm font-medium text-gray-700"
-        >
-          {label}
-        </label>
-        <div className="relative">
-          <input
-            required={isRequired}
-            type={type || "text"}
-            name={name}
-            id={id}
-            ref={inputRef}
-            value={value}
-            onChange={onChange}
-            onKeyDown={onKeyDown}
-            onFocus={onFocus}
-            onBlur={onBlur}
-            disabled={disabled}
-            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
-              className ? className : ""
-            } ${
-              isError
-                ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
-                : "border-gray-300 focus:border-[#818CF8] focus:ring-[#818CF8]"
-            }`}
-            placeholder={placeholder}
-            style={style}
-            {...otherProps}
-          />
-          {endText && (
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-              <span className="text-gray-500 sm:text-sm" id="price-currency">
-                {endText}
-              </span>
-            </div>
-          )}
-        </div>
-        {isError && (
-          <>
-            <p className="mt-2 text-sm text-red-600">{errorText}</p>
-          </>
+    <div className={`w-full ${wrapperClasses || ""}`}>
+      <label htmlFor={name} className="block text-sm font-medium text-gray-700">
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          autoFocus={autoFocus}
+          required={isRequired}
+          type={type || "text"}
+          name={name}
+          id={id}
+          ref={inputRef}
+          value={value}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          disabled={disabled}
+          className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
+            className ? className : ""
+          } ${
+            isError
+              ? "focus:!border-red-500 !border-red-300 shadow-sm focus:!ring-red-500"
+              : "border-gray-300 focus:border-[#818CF8] focus:ring-[#818CF8]"
+          }`}
+          placeholder={placeholder}
+          style={style}
+          {...otherProps}
+        />
+        {endText && (
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+            <span className="text-gray-500 sm:text-sm" id="price-currency">
+              {endText}
+            </span>
+          </div>
         )}
       </div>
-    </>
+      {isError && (
+        <>
+          <p className="mt-2 text-sm text-red-600">{errorText}</p>
+        </>
+      )}
+    </div>
   );
 };
 
