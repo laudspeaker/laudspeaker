@@ -57,6 +57,7 @@
     "@sentry/cli": "^2.21.2",
     "@sentry/node": "^7.73.0",
     "@sentry/profiling-node": "^1.2.1",
+    "@sentry/tracing": "^7.102.1",
     "@slack/oauth": "^2.5.4",
     "@slack/web-api": "^6.7.2",
     "@types/bcryptjs": "^2.4.2",
@@ -175,4 +176,3 @@
     "testEnvironment": "node"
   }
 }
-
