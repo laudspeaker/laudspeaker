@@ -636,7 +636,12 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <VerificationProtected>
-                <DrawerLayout>
+                <DrawerLayout
+                  crumbs={[
+                    { text: "Message Template", link: "/templates" },
+                    { text: "Create a Push" },
+                  ]}
+                >
                   <WebhookBuilder />
                 </DrawerLayout>
               </VerificationProtected>
