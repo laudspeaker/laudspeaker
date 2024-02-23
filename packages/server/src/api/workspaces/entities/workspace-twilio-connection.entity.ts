@@ -9,8 +9,6 @@ import {
 import { Workspace } from './workspace.entity';
 
 @Entity()
-@Unique(['workspaceId', 'sid', 'from'])
-@Unique(['workspaceId', 'name'])
 export class WorkspaceTwilioConnection {
   @PrimaryGeneratedColumn('uuid')
   id: string;

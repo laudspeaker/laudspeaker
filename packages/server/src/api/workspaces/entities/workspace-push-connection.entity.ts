@@ -11,8 +11,6 @@ import { PushPlatforms } from '@/api/templates/entities/template.entity';
 import { PushFirebasePlatforms } from '@/api/accounts/entities/accounts.entity';
 
 @Entity()
-@Unique(['workspaceId', 'pushPlatforms'])
-@Unique(['workspaceId', 'name'])
 export class WorkspacePushConnection {
   @PrimaryGeneratedColumn('uuid')
   id: string;

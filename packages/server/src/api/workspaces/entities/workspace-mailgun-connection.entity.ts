@@ -11,8 +11,6 @@ import { Workspace } from './workspace.entity';
 import { MailgunSendingOption } from './mailgun-sending-option.entity';
 
 @Entity()
-@Unique(['workspaceId', 'apiKey', 'sendingDomain'])
-@Unique(['workspaceId', 'name'])
 export class WorkspaceMailgunConnection {
   @PrimaryGeneratedColumn('uuid')
   id: string;

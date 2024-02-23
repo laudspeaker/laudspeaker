@@ -11,8 +11,6 @@ import { Workspace } from './workspace.entity';
 import { ResendSendingOption } from './resend-sending-option.entity';
 
 @Entity()
-@Unique(['workspaceId', 'apiKey', 'signingSecret', 'sendingDomain'])
-@Unique(['workspaceId', 'name'])
 export class WorkspaceResendConnection {
   @PrimaryGeneratedColumn('uuid')
   id: string;
