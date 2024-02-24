@@ -24,7 +24,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { randomUUID } from 'crypto';
 import { RavenInterceptor } from 'nest-raven';
 import { CustomerPushTest } from './dto/customer-push-test.dto';
-import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 
 @Controller('events')
 export class EventsController {
@@ -114,7 +114,7 @@ export class EventsController {
   ): Promise<void | HttpException> {
     const session = randomUUID();
     return this.eventsService.customPayload(
-      <{ account: Account; workspace: Workspaces }>user,
+      <{ account: Account; workspace: Workspace }>user,
       body,
       session
     );

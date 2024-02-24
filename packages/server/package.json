@@ -100,6 +100,7 @@
     "passport-local": "^1.0.0",
     "pg": "^8.7.3",
     "pg-cursor": "^2.8.0",
+    "pg-query-stream": "^4.5.3",
     "posthog-node": "^2.5.4",
     "reactflow": "^11.5.6",
     "redis": "^4.6.7",

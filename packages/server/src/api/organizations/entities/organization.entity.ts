@@ -3,7 +3,7 @@ import {
   PushFirebasePlatforms,
 } from '@/api/accounts/entities/accounts.entity';
 import { PushPlatforms } from '@/api/templates/entities/template.entity';
-import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
+import { Workspace } from '@/api/workspaces/entities/workspace.entity';
 import {
   BaseEntity,
   Column,
@@ -34,10 +34,10 @@ export class Organization extends BaseEntity {
   })
   public teams: OrganizationTeam[];
 
-  @OneToMany(() => Workspaces, (workspace) => workspace.organization, {
+  @OneToMany(() => Workspace, (workspace) => workspace.organization, {
     onDelete: 'CASCADE',
   })
-  public workspaces: Workspaces[];
+  public workspaces: Workspace[];
 
   @JoinColumn()
   @OneToOne(() => Account, (account) => account.id, { onDelete: 'CASCADE' })
