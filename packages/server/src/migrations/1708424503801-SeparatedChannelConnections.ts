@@ -13,25 +13,25 @@ export class SeparatedChannelConnections1708424503801
       `CREATE TABLE "mailgun_sending_option" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "sendingEmail" character varying NOT NULL, "sendingName" character varying NOT NULL, "mailgunConnectionId" uuid NOT NULL, CONSTRAINT "UQ_df7ce6c91fa5d188ec63f365b1a" UNIQUE ("mailgunConnectionId", "sendingEmail", "sendingName"), CONSTRAINT "PK_14b7ce1f2d2518c5c71e30db713" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
-      `CREATE TABLE "workspace_mailgun_connection" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "apiKey" character varying NOT NULL, "sendingDomain" character varying NOT NULL, "workspaceId" uuid NOT NULL, CONSTRAINT "UQ_fdcb2a721111c0439c130c284ce", CONSTRAINT "UQ_0bc1138c631b2ea7a2227296fed", CONSTRAINT "PK_e052f23a025a6ed6171636fff9b" PRIMARY KEY ("id"))`
+      `CREATE TABLE "workspace_mailgun_connection" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "apiKey" character varying NOT NULL, "sendingDomain" character varying NOT NULL, "workspaceId" uuid NOT NULL, CONSTRAINT "PK_e052f23a025a6ed6171636fff9b" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
       `CREATE TABLE "sendgrid_sending_option" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "sendingEmail" character varying NOT NULL, "sendgridConnectionId" uuid NOT NULL, CONSTRAINT "UQ_c18275312f62bacab6d7433f041" UNIQUE ("sendgridConnectionId", "sendingEmail"), CONSTRAINT "PK_def14d0e7b0a331ef03b123ff73" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
-      `CREATE TABLE "workspace_sendgrid_connection" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "apiKey" character varying NOT NULL, "verificationKey" character varying NOT NULL, "workspaceId" uuid NOT NULL, CONSTRAINT "UQ_de05a1cb4fe890c8e5b8c3b95a3", CONSTRAINT "UQ_6c98b7882efa7f3023a59543396", CONSTRAINT "PK_02e0e39a8932b266e7cf81fb250" PRIMARY KEY ("id"))`
+      `CREATE TABLE "workspace_sendgrid_connection" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "apiKey" character varying NOT NULL, "verificationKey" character varying NOT NULL, "workspaceId" uuid NOT NULL, CONSTRAINT "PK_02e0e39a8932b266e7cf81fb250" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
-      `CREATE TABLE "workspace_twilio_connection" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "sid" character varying NOT NULL, "token" character varying NOT NULL, "from" character varying NOT NULL, "workspaceId" uuid NOT NULL, CONSTRAINT "UQ_38dbd687328ce2b636c0177eced", CONSTRAINT "UQ_51b94a50499a5dce9b825425076", CONSTRAINT "PK_39deb1d523e5320d78232f925ee" PRIMARY KEY ("id"))`
+      `CREATE TABLE "workspace_twilio_connection" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "sid" character varying NOT NULL, "token" character varying NOT NULL, "from" character varying NOT NULL, "workspaceId" uuid NOT NULL, CONSTRAINT "PK_39deb1d523e5320d78232f925ee" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
-      `CREATE TABLE "workspace_push_connection" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "pushPlatforms" jsonb NOT NULL DEFAULT '{}', "workspaceId" uuid NOT NULL, CONSTRAINT "UQ_968089603b666b30f18d134f890", CONSTRAINT "UQ_1b07bbfd37209fbe65202a590ec", CONSTRAINT "PK_e6d806d6c5969743af02db697ee" PRIMARY KEY ("id"))`
+      `CREATE TABLE "workspace_push_connection" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "pushPlatforms" jsonb NOT NULL DEFAULT '{}', "workspaceId" uuid NOT NULL, CONSTRAINT "PK_e6d806d6c5969743af02db697ee" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
       `CREATE TABLE "resend_sending_option" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "sendingEmail" character varying NOT NULL, "sendingName" character varying NOT NULL, "resendConnectionId" uuid NOT NULL, CONSTRAINT "UQ_5b4affc388cbe023e136ebcff44" UNIQUE ("resendConnectionId", "sendingEmail", "sendingName"), CONSTRAINT "PK_2e6942fab1880df7e3b11ceb9e4" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
-      `CREATE TABLE "workspace_resend_connection" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "apiKey" character varying NOT NULL, "signingSecret" character varying NOT NULL, "sendingDomain" character varying NOT NULL, "workspaceId" uuid NOT NULL, CONSTRAINT "UQ_0a14ee8fa641ad6e29ff80f8ed3", CONSTRAINT "UQ_26461d89b7f6bd443fbca9898ec", CONSTRAINT "PK_f9b507739b524a220f79e05294e" PRIMARY KEY ("id"))`
+      `CREATE TABLE "workspace_resend_connection" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "apiKey" character varying NOT NULL, "signingSecret" character varying NOT NULL, "sendingDomain" character varying NOT NULL, "workspaceId" uuid NOT NULL, CONSTRAINT "PK_f9b507739b524a220f79e05294e" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
       `ALTER TABLE "workspace_push_connection" DROP CONSTRAINT "UQ_1b07bbfd37209fbe65202a590ec"`
