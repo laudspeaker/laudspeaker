@@ -18,17 +18,13 @@ import { useDispatch } from "react-redux";
 import DrawerLayout from "components/DrawerLayout";
 import Verify from "pages/Verify";
 import SmsBuilder from "pages/SmsBuilder";
-import Database from "pages/Integrations/Database";
-import Integrations from "pages/Integrations/Integrations";
 import Modal from "components/Elements/Modal";
 import ApiService from "services/api.service";
 import Account from "types/Account";
 import { GenericButton } from "components/Elements";
 import ResetPassword from "pages/ResetPassword";
-import ModalBuilder from "pages/ModalBuilder";
 import WebhookBuilder from "pages/WebhookBuilder";
 import EventTracker from "pages/EventTracker";
-import ModalBackgroundProvider from "pages/ModalBuilder/ModalBackgroundProvider";
 import FlowBuilderv2 from "pages/FlowBuilderv2";
 import FlowViewerv2 from "pages/FlowViewerv2";
 import Onboardingv2 from "pages/Onboardingv2";
@@ -48,7 +44,6 @@ import JavascriptSnippetSettings from "pages/JavascriptSnippetSettings";
 import CustomModalSettings from "pages/CustomModalSettings";
 import TrackerTemplateTable from "pages/TrackerTemplateTable";
 import { LaudspeakerProvider } from "@laudspeaker/react";
-import AppConfig from "constants/app";
 import Personv2 from "pages/Personv2";
 import SegmentCreation from "pages/SegmentCreation/index";
 import PushBuilder from "pages/PushBuilder/PushBuilder";
@@ -269,7 +264,7 @@ const RouteComponent: React.FC = () => {
             expectedOnboarding: data.expectedOnboarding,
             verified: data.verified,
             pk: data.workspace.pk,
-            pushPlatforms: data.workspace.pushPlatforms,
+            // pushPlatforms: data.workspace.pushPlatforms,
           },
         });
       } catch (e) {
@@ -782,6 +777,18 @@ const RouteComponent: React.FC = () => {
         />
         <Route
           path="/settings/email"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <EmailSettings />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/email/:service/:id"
           element={
             <Protected>
               <VerificationProtected>

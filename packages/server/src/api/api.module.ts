@@ -28,6 +28,7 @@ import { randomUUID } from 'crypto';
 import { StepsModule } from './steps/steps.module';
 import { JourneysModule } from './journeys/journeys.module';
 import { DevModeModule } from './dev-mode/dev-mode.module';
+import { WorkspacesModule } from './workspaces/workspaces.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { DevModeModule } from './dev-mode/dev-mode.module';
     StepsModule,
     JourneysModule,
     DevModeModule,
+    WorkspacesModule,
   ],
 })
 export class ApiModule {

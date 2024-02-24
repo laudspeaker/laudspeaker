@@ -17,11 +17,9 @@ const ResendSettings: FC<SendingServiceSettingsProps> = ({
   const [possibleDomains, setPossibleDomains] = useState<string[]>([]);
 
   const callDomains = async () => {
-    if (formData.resendAPIKey) {
-      dispatch(setResendSettingsPrivateApiKey(formData.resendAPIKey));
-      const response = await dispatch(
-        setResendDomainsList(formData.resendAPIKey)
-      );
+    if (formData.apiKey) {
+      dispatch(setResendSettingsPrivateApiKey(formData.apiKey));
+      const response = await dispatch(setResendDomainsList(formData.apiKey));
       if (response?.data) {
         setPossibleDomains(
           response?.data?.map((item: { name: string }) => item.name) || []
@@ -32,7 +30,7 @@ const ResendSettings: FC<SendingServiceSettingsProps> = ({
 
   useEffect(() => {
     callDomains();
-  }, [formData.resendAPIKey]);
+  }, [formData.apiKey]);
   return (
     <>
       <div className="flex flex-col gap-[5px]">
@@ -41,10 +39,8 @@ const ResendSettings: FC<SendingServiceSettingsProps> = ({
           id="resend-api-key-input"
           wrapperClassName="!w-full"
           className="w-full"
-          value={formData.resendAPIKey}
-          onChange={(value) =>
-            setFormData({ ...formData, resendAPIKey: value })
-          }
+          value={formData.apiKey}
+          onChange={(value) => setFormData({ ...formData, apiKey: value })}
           type="password"
           placeholder="API Key"
         />
@@ -56,9 +52,9 @@ const ResendSettings: FC<SendingServiceSettingsProps> = ({
           id="resend-api-key-input"
           wrapperClassName="!w-full"
           className="w-full"
-          value={formData.resendSigningSecret}
+          value={formData.signingSecret}
           onChange={(value) =>
-            setFormData({ ...formData, resendSigningSecret: value })
+            setFormData({ ...formData, signingSecret: value })
           }
           type="password"
           placeholder="Signing Secret"
@@ -73,15 +69,15 @@ const ResendSettings: FC<SendingServiceSettingsProps> = ({
             key: domain,
             title: domain,
           }))}
-          value={formData.resendSendingDomain}
+          value={formData.sendingDomain}
           onChange={(value) =>
-            setFormData({ ...formData, resendSendingDomain: value })
+            setFormData({ ...formData, sendingDomain: value })
           }
           placeholder="Email domain"
         />
       </div>
 
-      <div className="flex flex-col gap-[5px]">
+      {/* <div className="flex flex-col gap-[5px]">
         <div>Sending name</div>
         <Input
           id="resend-sending-name-input"
@@ -107,7 +103,7 @@ const ResendSettings: FC<SendingServiceSettingsProps> = ({
           }
           placeholder="sender@example.com"
         />
-      </div>
+      </div> */}
     </>
   );
 };
