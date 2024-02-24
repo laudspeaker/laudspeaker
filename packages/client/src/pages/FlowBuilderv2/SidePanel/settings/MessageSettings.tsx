@@ -16,7 +16,7 @@ import { NodeType } from "pages/FlowBuilderv2/FlowEditor";
 import { useAppSelector } from "store/hooks";
 import {
   PushBuilderData,
-  PushPlatforms,
+  PushPlatform,
 } from "pages/PushBuilder/PushBuilderContent";
 import LockScreenIOS from "pages/PushBuilder/Badges/LockScreenIOS";
 import LockScreenAndroid from "pages/PushBuilder/Badges/LockScreenAndroid";
@@ -36,12 +36,24 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
   const userData = useAppSelector((state) => state.auth.userData);
 
   const [templateList, setTemplateList] = useState<Template[]>([]);
+  const [connectionList, setConnectionList] = useState<
+    {
+      id: string;
+      name: string;
+      sendingOptions: {
+        id: string;
+        sendingEmail: string;
+        sendingName?: string;
+      }[];
+    }[]
+  >([]);
+
   const dispatch = useDispatch();
   const { nodes, templateInlineCreation } = useAppSelector(
     (state) => state.flowBuilder
   );
   const [availablePlatformOptions, setAvailablePlatformOptions] = useState<
-    { key: PushPlatforms | "All"; title: string }[]
+    { key: PushPlatform | "All"; title: string }[]
   >([]);
 
   useEffect(() => {
@@ -49,6 +61,20 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
       setIsError(!nodeData.template?.selected);
     else setIsError(!selectedTemplate?.id);
   }, [nodeData.template]);
+
+  useEffect(() => {
+    (async () => {
+      const {
+        data: { mailgunConnections, sendgridConnections, resendConnections },
+      } = await ApiService.get({ url: "/workspaces/channels" });
+
+      setConnectionList([
+        ...mailgunConnections,
+        ...sendgridConnections,
+        ...resendConnections,
+      ]);
+    })();
+  }, []);
 
   const getAllTemplates = async () => {
     const { data: templates } = await ApiService.get<{ data: Template[] }>({
@@ -82,7 +108,7 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
   const countAvailablePlatforms = (data: PushBuilderData) => {
     const isAll = data.platform.Android && data.platform.iOS;
 
-    const options: { key: PushPlatforms | "All"; title: string }[] = [];
+    const options: { key: PushPlatform | "All"; title: string }[] = [];
 
     if (isAll) {
       options.push(
@@ -91,22 +117,22 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
           title: "All",
         },
         {
-          key: PushPlatforms.IOS,
+          key: PushPlatform.IOS,
           title: "iOS",
         },
         {
-          key: PushPlatforms.ANDROID,
+          key: PushPlatform.ANDROID,
           title: "Android",
         }
       );
     } else if (data.platform.Android) {
       options.push({
-        key: PushPlatforms.ANDROID,
+        key: PushPlatform.ANDROID,
         title: "Android",
       });
     } else if (data.platform.iOS) {
       options.push({
-        key: PushPlatforms.IOS,
+        key: PushPlatform.IOS,
         title: "iOS",
       });
     }
@@ -128,8 +154,8 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
       templateInlineCreation.needsCallbackUpdate.data.platform.iOS
         ? "All"
         : templateInlineCreation.needsCallbackUpdate.data.platform.Android
-        ? PushPlatforms.ANDROID
-        : PushPlatforms.IOS;
+        ? PushPlatform.ANDROID
+        : PushPlatform.IOS;
 
     setAvailablePlatformOptions(
       countAvailablePlatforms(templateInlineCreation.needsCallbackUpdate.data)
@@ -168,40 +194,89 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
   return (
     <div className="flex flex-col gap-[10px]">
       {templateType !== MessageType.PUSH ? (
-        <div className="flex p-5 justify-between items-center">
-          <div className="font-inter font-normal text-[14px] leading-[22px]">
-            Template
-          </div>
-          <div className="flex flex-col gap-[10px]">
-            <select
-              className="w-[200px] h-[32px] rounded-sm px-[12px] py-[4px] text-[14px] font-roboto leading-[22px]"
-              value={selectedTemplate?.id}
-              id="template-select"
-              onChange={(e) =>
-                setNodeData({
-                  ...nodeData,
-                  template: {
-                    type: templateType,
-                    selected: {
-                      id: +e.target.value,
-                      name:
-                        templateList.find(
-                          (template) => template.id === +e.target.value
-                        )?.name || "",
+        <div className="font-inter font-normal text-[14px] leading-[22px]">
+          <div className="flex p-5 justify-between items-center">
+            <div>Template</div>
+            <div className="flex flex-col gap-[10px]">
+              <select
+                className="w-[200px] h-[32px] rounded-sm px-[12px] py-[4px] text-[14px] font-roboto leading-[22px]"
+                value={selectedTemplate?.id}
+                id="template-select"
+                onChange={(e) =>
+                  setNodeData({
+                    ...nodeData,
+                    template: {
+                      type: templateType,
+                      selected: {
+                        id: +e.target.value,
+                        name:
+                          templateList.find(
+                            (template) => template.id === +e.target.value
+                          )?.name || "",
+                      },
                     },
-                  },
-                })
-              }
-            >
-              <option disabled selected value={undefined}>
-                select template
-              </option>
-              {templateList.map((template) => (
-                <option value={template.id} key={template.id}>
-                  {template.name}
+                  })
+                }
+              >
+                <option disabled selected value={undefined}>
+                  select template
                 </option>
-              ))}
-            </select>
+                {templateList.map((template) => (
+                  <option value={template.id} key={template.id}>
+                    {template.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-2.5 p-5 justify-between items-center">
+            <div>Connection</div>
+            <div className="flex flex-col gap-[10px]">
+              <Select
+                className="w-[200px] min-h-[32px]"
+                buttonClassName="w-[200px] min-h-[32px]"
+                buttonInnerWrapperClassName="w-[200px] min-h-[32px]"
+                value={nodeData.connectionId}
+                onChange={(value) =>
+                  setNodeData({ ...nodeData, connectionId: value })
+                }
+                options={connectionList.map((connection) => ({
+                  key: connection.id,
+                  title: connection.name,
+                }))}
+                placeholder="select connection"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2.5 p-5 justify-between items-center">
+            <div>Sending option</div>
+            <div className="flex flex-col gap-[10px]">
+              <Select
+                className="w-[200px] min-h-[32px]"
+                buttonClassName="w-[200px] min-h-[32px]"
+                buttonInnerWrapperClassName="w-[200px] min-h-[32px]"
+                value={nodeData.sendingOptionId}
+                onChange={(value) =>
+                  setNodeData({ ...nodeData, sendingOptionId: value })
+                }
+                options={
+                  nodeData.connectionId
+                    ? connectionList
+                        .find(
+                          (connection) =>
+                            connection.id === nodeData.connectionId
+                        )
+                        ?.sendingOptions.map((option) => ({
+                          key: option.id,
+                          title: `${option.sendingEmail}${
+                            option.sendingName ? ` <${option.sendingName}>` : ""
+                          }`,
+                        })) || []
+                    : []
+                }
+                placeholder="select option"
+              />
+            </div>
           </div>
         </div>
       ) : userData.pushPlatforms &&

@@ -54,7 +54,7 @@ import {
   PlatformSettings,
   PushPlatforms,
 } from '../templates/entities/template.entity';
-import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 import { ProviderType } from './events.preprocessor';
 
 @Injectable()
@@ -262,7 +262,7 @@ export class EventsService {
   }
 
   async customPayload(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     eventDto: EventDto,
     session: string
   ) {

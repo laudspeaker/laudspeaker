@@ -14,7 +14,7 @@ import { Logger } from 'winston';
 import { DisconnectFirebaseDTO } from '../accounts/dto/disconnect-firebase.dto';
 import { Account } from '../accounts/entities/accounts.entity';
 import { AuthHelper } from '../auth/auth.helper';
-import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 import { CreateOrganizationDTO } from './dto/create-ogranization.dto';
 import { InviteMemberDTO } from './dto/invite-user.dto';
 import { UpdateOrganizationDTO } from './dto/update-organization.dto';
@@ -30,8 +30,8 @@ export class OrganizationService {
     private readonly logger: Logger,
     @InjectRepository(Organization)
     public journeysRepository: Repository<Organization>,
-    @InjectRepository(Workspaces)
-    public workspacesRepository: Repository<Workspaces>,
+    @InjectRepository(Workspace)
+    public workspacesRepository: Repository<Workspace>,
     @InjectRepository(OrganizationInvites)
     public organizationInvitesRepository: Repository<OrganizationInvites>,
     @InjectRepository(OrganizationTeam)
@@ -127,7 +127,7 @@ export class OrganizationService {
       );
 
       await queryRunner.manager.update(
-        Workspaces,
+        Workspace,
         {
           id: account?.teams?.[0]?.organization?.workspaces?.[0]?.id,
         },
@@ -167,7 +167,7 @@ export class OrganizationService {
       });
       await queryRunner.manager.save(organization);
 
-      const workspace = await queryRunner.manager.create(Workspaces, {
+      const workspace = await queryRunner.manager.create(Workspace, {
         name: organization.companyName + ' workspace',
         organization,
         apiKey: this.authHelper.generateApiKey(),
