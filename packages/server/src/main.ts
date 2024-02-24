@@ -2,24 +2,29 @@
 import './tracer';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import { ExpressAdapter, NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { urlencoded } from 'body-parser';
 import { readFileSync } from 'fs';
 import * as Sentry from '@sentry/node';
-import { ProfilingIntegration } from '@sentry/profiling-node';
 import { setTimeout as originalSetTimeout } from 'timers';
 import { setInterval as originalSetInterval } from 'timers';
+import express from 'express';
+
+const morgan = require('morgan');
+
+const expressApp = express();
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN_URL_BACKEND,
   release: process.env.SENTRY_RELEASE,
-  integrations: [new Sentry.Integrations.Mongo({
-    useMongoose: true // Default: false
-  }), new Sentry.Integrations.Postgres({
-    usePgNative: false
-  })],
+  integrations: [
+    new Sentry.Integrations.Express({
+      app: expressApp,
+    }),
+    ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
+  ],
   // Performance Monitoring
   tracesSampleRate: 1.0, // Capture 100% of the transactions, reduce in production!
   // Set sampling rate for profiling - this is relative to tracesSampleRate
@@ -29,8 +34,6 @@ Sentry.init({
 if (process.env.SENTRY_ENVIRONMENT_TAG) {
   Sentry.setTag('laudspeaker_environment', process.env.SENTRY_ENVIRONMENT_TAG);
 }
-
-const morgan = require('morgan');
 
 global.timeoutIds = new Map<
   NodeJS.Timeout,
@@ -105,11 +108,17 @@ async function bootstrap() {
         ? readFileSync(process.env.CERT_PATH, 'utf8')
         : null,
   };
-  const app: NestExpressApplication = await NestFactory.create(AppModule, {
+
+  expressApp.use(Sentry.Handlers.requestHandler());
+  expressApp.use(Sentry.Handlers.tracingHandler());
+
+  const app: NestExpressApplication = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), {
     rawBody: true,
     httpsOptions: parseInt(process.env.PORT) == 443 ? httpsOptions : undefined,
   });
   const port: number = parseInt(process.env.PORT);
+
+  expressApp.use(Sentry.Handlers.errorHandler())
 
   const rawBodyBuffer = (req, res, buf, encoding) => {
     if (buf && buf.length) {
