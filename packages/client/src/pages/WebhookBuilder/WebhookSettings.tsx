@@ -109,7 +109,6 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
   basicPasswordRef,
   customHeaderRef,
   bodyRef,
-  headersRef,
   selectedRef,
   setSelectedRefValueSetter,
   className,
@@ -204,10 +203,8 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
 
   const authComonents: Record<AuthType, ReactNode> = {
     [AuthType.BEARER]: (
-      <div className="flex items-center bg-gray-200 gap-5 p-2.5">
-        <div className="font-inter text-[16px] font-semibold leading-[24px]">
-          Token
-        </div>
+      <div className="flex items-center bg-gray-200 gap-8 p-2.5 rounded">
+        <div className="font-semibold">Token</div>
         <Input
           value={
             webhookState.headers.Authorization?.replace("Bearer ", "") || ""
@@ -224,10 +221,8 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
     ),
     [AuthType.BASIC]: (
       <>
-        <div className="flex items-center bg-gray-200 gap-5 p-2.5">
-          <div className="font-inter text-[16px] font-semibold leading-[24px]">
-            Username
-          </div>
+        <div className="flex items-center rounded-t-[4px] bg-gray-200 gap-8 px-2.5 pt-2.5">
+          <div className="min-w-[70px] font-semibold">Username</div>
           <Input
             className="w-full"
             wrapperClassName="w-full"
@@ -239,10 +234,8 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
             placeholder="Username"
           />
         </div>
-        <div className="flex items-center bg-gray-200 gap-5 p-2.5">
-          <div className="font-inter text-[16px] font-semibold leading-[24px]">
-            Password
-          </div>
+        <div className="flex items-center rounded-b-[4px] bg-gray-200 gap-8 p-2.5">
+          <div className="min-w-[70px] font-semibold">Password</div>
           <Input
             wrapperClassName="w-full"
             className="w-full"
@@ -256,10 +249,8 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
       </>
     ),
     [AuthType.CUSTOM]: (
-      <div className="flex items-center bg-gray-200 gap-5 p-2.5">
-        <div className="font-inter text-[16px] font-semibold leading-[24px]">
-          Header
-        </div>
+      <div className="flex items-center bg-gray-200 gap-8 p-2.5 rounded">
+        <div className="w-[70px] font-semibold">Header</div>
         <Input
           wrapperClassName="w-full"
           className="w-full"
@@ -305,7 +296,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
               type="radio"
               name="authtype"
               checked={authType === AuthType.BEARER}
-              className="text-[#6366F1] focus:ring-[#6366F1] mr-[10px]"
+              className="text-[#6366F1] focus:ring-[#6366F1] mr-2"
               readOnly
             />
             <label htmlFor="authtype">Bearer Token</label>
@@ -316,7 +307,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
               name="authtype"
               value="Basic auth"
               checked={authType === AuthType.BASIC}
-              className="text-[#6366F1] focus:ring-[#6366F1] mr-[10px]"
+              className="text-[#6366F1] focus:ring-[#6366F1] mr-2"
               readOnly
             />
             Basic Auth
@@ -327,13 +318,15 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
               name="authtype"
               value="Custom"
               checked={authType === AuthType.CUSTOM}
-              className="text-[#6366F1] focus:ring-[#6366F1] mr-[10px]"
+              className="text-[#6366F1] focus:ring-[#6366F1] mr-2"
               readOnly
             />
             Custom
           </div>
         </div>
-        <div>{authComonents[authType]}</div>
+        <div className="text-sm leading-[22px] flex flex-col">
+          {authComonents[authType]}
+        </div>
       </>
     ),
     Headers: (
@@ -341,9 +334,9 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
         {headers.map((header, index) => (
           <div
             key={index}
-            className="flex items-center bg-gray-200 gap-5 p-2.5"
+            className="flex items-center bg-gray-200 gap-8 p-2.5 rounded"
           >
-            <div className="font-inter text-[16px] font-semibold leading-[24px]">
+            <div className="text-[16px] font-semibold leading-[24px]">
               Header
             </div>
 
@@ -369,7 +362,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
       </>
     ),
     Content: (
-      <div className="p-2 bg-[#F3F4F6] gap-[10px] flex flex-col w-full">
+      <div className="p-2 bg-[#F3F4F6] gap-[10px] flex flex-col w-full rounded">
         <Select
           value={bodyType}
           options={[
@@ -381,7 +374,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
           buttonClassName="w-fit"
         />
         <div className="w-full flex">
-          <div className="w-7 bg-gray-300" />
+          <div className="w-[50px] bg-[#E5E7EB] rounded-l-[4px]" />
           <Textarea
             className="w-full rounded-l-none border-0"
             id="webhook-body"
@@ -473,8 +466,10 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
 
   return (
     <>
-      <div className={`h-full flex w-full m-auto ${className}`}>
-        <div className="h-full w-[420px] overflow-y-hidden break-words">
+      <div
+        className={`h-full flex flex-col md:flex-row w-full m-auto font-inter ${className}`}
+      >
+        <div className="h-full w-full md:w-[380px] overflow-y-hidden break-words order-2  md:order-1">
           <div className="h-[calc(100%-40px)] bg-white m-5 p-5">
             {isValidURL ? (
               <div className="whitespace-pre-line">{rawRequest}</div>
@@ -483,47 +478,53 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
             )}
           </div>
         </div>
-        <div className="w-full h-full bg-white">
-          <div className="px-5 flex w-full flex-col">
-            <p className="font-inter text-[16px] font-semibold pt-[20px] leading-[24px]">
-              URL
-            </p>
-            <div className="flex items-center gap-[10px] w-full mb-2">
-              <Select
-                value={webhookState.method}
-                options={[
-                  { key: WebhookMethod.GET, title: WebhookMethod.GET },
-                  { key: WebhookMethod.POST, title: WebhookMethod.POST },
-                  { key: WebhookMethod.PUT, title: WebhookMethod.PUT },
-                  { key: WebhookMethod.PATCH, title: WebhookMethod.PATCH },
-                  { key: WebhookMethod.DELETE, title: WebhookMethod.DELETE },
-                  { key: WebhookMethod.HEAD, title: WebhookMethod.HEAD },
-                  { key: WebhookMethod.OPTIONS, title: WebhookMethod.OPTIONS },
-                ]}
-                buttonClassName="w-full"
-                className="w-fit max-w-[100px]"
-                onChange={(val) =>
-                  setWebhookState({ ...webhookState, method: val })
-                }
-              />
-              <Input
-                wrapperClassName="w-full"
-                placeholder="Enter webhook URL"
-                className="w-full"
-                name="webhookURL"
-                id="webhookURL"
-                onFocus={() => setSelectedRef?.(urlRef)}
-                value={webhookState.url}
-                onChange={handleUrl}
-              />
-              <Button
-                type={ButtonType.PRIMARY}
-                onClick={handleTest}
-                className="min-w-[100px]"
-              >
-                Send test
-              </Button>
+        <div className="w-full h-full bg-white order-1 md:order-2">
+          <div className="px-5 flex w-full flex-col gap-2.5">
+            <div className="w-full flex flex-col gap-2.5">
+              <p className="text-[16px] font-semibold pt-[20px] leading-[24px]">
+                URL
+              </p>
+              <div className="flex items-center gap-[10px] w-full">
+                <Select
+                  value={webhookState.method}
+                  options={[
+                    { key: WebhookMethod.GET, title: WebhookMethod.GET },
+                    { key: WebhookMethod.POST, title: WebhookMethod.POST },
+                    { key: WebhookMethod.PUT, title: WebhookMethod.PUT },
+                    { key: WebhookMethod.PATCH, title: WebhookMethod.PATCH },
+                    { key: WebhookMethod.DELETE, title: WebhookMethod.DELETE },
+                    { key: WebhookMethod.HEAD, title: WebhookMethod.HEAD },
+                    {
+                      key: WebhookMethod.OPTIONS,
+                      title: WebhookMethod.OPTIONS,
+                    },
+                  ]}
+                  buttonClassName="w-full"
+                  className="w-fit max-w-[100px]"
+                  onChange={(val) =>
+                    setWebhookState({ ...webhookState, method: val })
+                  }
+                />
+                <Input
+                  wrapperClassName="w-full"
+                  placeholder="Enter webhook URL"
+                  className="w-full"
+                  name="webhookURL"
+                  id="webhookURL"
+                  onFocus={() => setSelectedRef?.(urlRef)}
+                  value={webhookState.url}
+                  onChange={handleUrl}
+                />
+                <Button
+                  type={ButtonType.PRIMARY}
+                  onClick={handleTest}
+                  className="min-w-[100px]"
+                >
+                  Send test
+                </Button>
+              </div>
             </div>
+
             <div className="flex flex-col gap-[10px]">
               {webhookProps && setWebhookProps && (
                 <div className="flex justify-between items-center">
@@ -547,8 +548,8 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
                 </div>
               )}
               <div className="flex w-full justify-between gap-2">
-                <div className="flex flex-col w-full">
-                  <p className="font-inter text-[16px] font-semibold pt-[20px] leading-[24px]">
+                <div className="flex flex-col w-full gap-[5px]">
+                  <p className="text-[16px] font-semibold leading-[24px]">
                     Retries
                   </p>
                   <div>
@@ -565,8 +566,8 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
                     />
                   </div>
                 </div>
-                <div className="flex flex-col w-full">
-                  <p className="font-inter text-[16px] font-semibold pt-[20px] leading-[24px]">
+                <div className="flex flex-col w-full gap-[5px]">
+                  <p className="text-[16px] font-semibold leading-[24px]">
                     Fallback action
                   </p>
                   <div>
@@ -591,9 +592,9 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
               </div>
             </div>
           </div>
-          <div className="border-y-[1px] pb-5 w-full mt-5">
-            <div className="px-5">
-              <p className="font-inter text-[16px] font-semibold pt-[20px] leading-[24px]">
+          <div className="border-y-[1px] pb-5 w-full mt-5 ">
+            <div className="px-5 flex flex-col gap-2.5 pt-2.5">
+              <p className="text-[16px] font-semibold leading-[24px]">
                 Preview with sample user
               </p>
               <SearchUser
@@ -605,8 +606,8 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
             </div>
           </div>
           <div className="px-5">
-            <div className="px-4 sm:px-6 md:px-0">
-              <div className="lg:hidden">
+            <div className="pt-2.5 md:pt-0">
+              <div className="md:hidden">
                 <label htmlFor="selected-tab" className="sr-only">
                   Select a tab
                 </label>
@@ -623,7 +624,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
                   }
                 />
               </div>
-              <div className="hidden lg:block">
+              <div className="hidden md:block">
                 <div className="border-b border-gray-200">
                   <nav className="-mb-px flex space-x-8">
                     {(
@@ -647,7 +648,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
                   </nav>
                 </div>
               </div>
-              <div className="my-5 flex flex-col gap-[10px]">
+              <div className="my-2.5 flex flex-col gap-2.5">
                 {tabComponents[currentTab]}
               </div>
             </div>

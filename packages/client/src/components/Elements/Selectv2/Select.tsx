@@ -72,7 +72,7 @@ const Select = <T, U = any>({
       {({ close }) => (
         <>
           <Popover.Button
-            className={` ${buttonClassName || ""}`}
+            className={`${buttonClassName || ""}`}
             id={id}
             disabled={disabled}
           >
@@ -86,7 +86,11 @@ const Select = <T, U = any>({
                   disabled ? "bg-[#F3F4F6] select-none" : "bg-white"
                 } px-[12px] py-[4px] flex items-center justify-between gap-[6px]`}
               >
-                <div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                <div
+                  className={`${
+                    value ? "text-ellipsis" : "text-muted"
+                  } max-w-full overflow-hidden  whitespace-nowrap`}
+                >
                   {options.find((option) => option.key === value)?.title ||
                     placeholder}
                 </div>
