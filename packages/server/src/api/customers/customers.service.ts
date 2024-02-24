@@ -63,7 +63,7 @@ import {
   validateKeyForMutations,
 } from '@/utils/customer-key-name-validator';
 import { UpsertCustomerDto } from './dto/upsert-customer.dto';
-import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { DeleteCustomerDto } from './dto/delete-customer.dto';
@@ -1481,7 +1481,7 @@ export class CustomersService {
    */
 
   async upsert(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     upsertCustomerDto: UpsertCustomerDto,
     session: string
   ): Promise<{ id: string }> {
@@ -1506,7 +1506,7 @@ export class CustomersService {
           HttpStatus.BAD_REQUEST
         );
 
-      let ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
+      const ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
         {
           workspaceId: auth.workspace.id,
           [primaryKey.key]: upsertCustomerDto.primary_key,
@@ -1532,7 +1532,7 @@ export class CustomersService {
    */
 
   async delete(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     deleteCustomerDto: DeleteCustomerDto,
     session: string
   ): Promise<{ primary_key: any }> {
@@ -1556,7 +1556,7 @@ export class CustomersService {
         HttpStatus.BAD_REQUEST
       );
 
-    let ret: CustomerDocument = await this.CustomerModel.findOneAndDelete(
+    const ret: CustomerDocument = await this.CustomerModel.findOneAndDelete(
       {
         workspaceId: auth.workspace.id,
         [primaryKey.key]: deleteCustomerDto.primary_key,
@@ -1583,7 +1583,7 @@ export class CustomersService {
    */
 
   async read(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     readCustomerDto: ReadCustomerDto,
     session: string
   ): Promise<CustomerDocument> {
@@ -4183,7 +4183,7 @@ export class CustomersService {
         pipeline1
       );
 
-      let mobileMongoQuery = cloneDeep(mongoQuery);
+      const mobileMongoQuery = cloneDeep(mongoQuery);
       mobileMongoQuery.source = 'mobile';
 
       const pipeline2 = [

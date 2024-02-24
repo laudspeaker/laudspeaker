@@ -453,7 +453,7 @@ export class WebsocketGateway implements OnGatewayConnection {
 
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    let customer = await this.customersService.CustomerModel.findOne({
+    const customer = await this.customersService.CustomerModel.findOne({
       _id: customerId,
       workspaceId: workspace.id,
     });
@@ -769,9 +769,9 @@ export class WebsocketGateway implements OnGatewayConnection {
     return false;
   }
 
- /*
-  * old fire event for modal
-  */
+  /*
+   * old fire event for modal
+   */
   /*
   @SubscribeMessage('fire')
   public async handleFire(
@@ -825,15 +825,15 @@ export class WebsocketGateway implements OnGatewayConnection {
   }
   */
 
- /*
-  * 
-  */
+  /*
+   *
+   */
   @SubscribeMessage('fire')
   public async handleFire(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() fullPayload: { eventName: string; payload: string; customerId: string }
+    @MessageBody()
+    fullPayload: { eventName: string; payload: string; customerId: string }
   ) {
-
     //console.log("in websocket fire");
     try {
       const {
@@ -883,11 +883,10 @@ export class WebsocketGateway implements OnGatewayConnection {
         //payload: payload,
         payload: payloadObj,
         event: eventName,
-      }
+      };
 
       //console.log("event struct is", JSON.stringify(eventStruct, null, 2));
       //auth: { account: Account; workspace: Workspaces },
-
 
       await this.eventsService.customPayload(
         { account: socket.data.account, workspace: workspace },

@@ -278,6 +278,8 @@ export class MessageStepMetadata extends SingleBranchMetadata {
   /** Template ID (UUID) */
   template: string;
   selectedPlatform?: string;
+  connectionId: string;
+  sendingOptionId?: string;
 }
 
 /**
