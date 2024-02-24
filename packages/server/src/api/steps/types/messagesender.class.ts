@@ -289,7 +289,7 @@ export class MessageSender {
         const mailgun = new Mailgun(formData);
         const mg = mailgun.client({ username: 'api', key: key });
         const mailgunMessage = await mg.messages.create(domain, {
-          from: `${from} <${email}@${domain}>`,
+          from: `${from} <${email}>`,
           to: to,
           cc: cc,
           subject: subjectWithInsertedTags,

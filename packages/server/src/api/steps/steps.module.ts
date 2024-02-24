@@ -30,7 +30,8 @@ import { StartProcessor } from '../journeys/start.processor';
 import { JourneyLocationsService } from '../journeys/journey-locations.service';
 import { JourneyLocation } from '../journeys/entities/journey-location.entity';
 import { JourneysModule } from '../journeys/journeys.module';
-import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
+import { WorkspacesModule } from '../workspaces/workspaces.module';
 
 @Module({
   imports: [
@@ -41,7 +42,7 @@ import { Workspaces } from '../workspaces/entities/workspaces.entity';
       Audience,
       Account,
       JourneyLocation,
-      Workspaces,
+      Workspace,
     ]),
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
@@ -67,6 +68,7 @@ import { Workspaces } from '../workspaces/entities/workspaces.entity';
     forwardRef(() => WebsocketsModule),
     forwardRef(() => RedlockModule),
     forwardRef(() => JourneysModule),
+    forwardRef(() => WorkspacesModule),
     SlackModule,
   ],
   providers: [

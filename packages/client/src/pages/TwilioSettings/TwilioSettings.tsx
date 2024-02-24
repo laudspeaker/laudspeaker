@@ -30,22 +30,22 @@ const TwilioSettings = () => {
   const [error, setError] = useState<string>();
 
   useEffect(() => {
-    (async () => {
-      setIsLoading(true);
-      try {
-        const { data } = await ApiService.get<Account>({ url: "/accounts" });
-        const { smsAccountSid, smsAuthToken, smsFrom } = data.workspace;
-        setFormData({
-          smsAccountSid: smsAccountSid || "",
-          smsAuthToken: smsAuthToken || "",
-          smsFrom: smsFrom || "",
-        });
-      } catch (e) {
-        toast.error("Error while loading data");
-      } finally {
-        setIsLoading(false);
-      }
-    })();
+    // (async () => {
+    //   setIsLoading(true);
+    //   try {
+    //     const { data } = await ApiService.get<Account>({ url: "/accounts" });
+    //     const { smsAccountSid, smsAuthToken, smsFrom } = data.workspace;
+    //     setFormData({
+    //       smsAccountSid: smsAccountSid || "",
+    //       smsAuthToken: smsAuthToken || "",
+    //       smsFrom: smsFrom || "",
+    //     });
+    //   } catch (e) {
+    //     toast.error("Error while loading data");
+    //   } finally {
+    //     setIsLoading(false);
+    //   }
+    // })();
   }, []);
 
   const loadPossibleNumbers = async (

@@ -1,4 +1,4 @@
-import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
+import { Workspace } from '@/api/workspaces/entities/workspace.entity';
 import {
   BaseEntity,
   Column,
@@ -17,12 +17,12 @@ export class Requeue extends BaseEntity {
   public customerId: string;
 
   @JoinColumn()
-  @ManyToOne(() => Workspaces, (workspace) => workspace.id, {
+  @ManyToOne(() => Workspace, (workspace) => workspace.id, {
     onDelete: 'CASCADE',
     nullable: false,
   })
   @PrimaryColumn('uuid', { name: 'workspaceId' })
-  workspace: Workspaces;
+  workspace: Workspace;
 
   @PrimaryColumn('uuid', { name: 'stepId' })
   @JoinColumn({ name: 'stepId' })
