@@ -2,7 +2,10 @@
 import './tracer';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { ExpressAdapter, NestExpressApplication } from '@nestjs/platform-express';
+import {
+  ExpressAdapter,
+  NestExpressApplication,
+} from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { urlencoded } from 'body-parser';
@@ -112,13 +115,18 @@ async function bootstrap() {
   expressApp.use(Sentry.Handlers.requestHandler());
   expressApp.use(Sentry.Handlers.tracingHandler());
 
-  const app: NestExpressApplication = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), {
-    rawBody: true,
-    httpsOptions: parseInt(process.env.PORT) == 443 ? httpsOptions : undefined,
-  });
+  const app: NestExpressApplication = await NestFactory.create(
+    AppModule,
+    new ExpressAdapter(expressApp),
+    {
+      rawBody: true,
+      httpsOptions:
+        parseInt(process.env.PORT) == 443 ? httpsOptions : undefined,
+    }
+  );
   const port: number = parseInt(process.env.PORT);
 
-  expressApp.use(Sentry.Handlers.errorHandler())
+  expressApp.use(Sentry.Handlers.errorHandler());
 
   const rawBodyBuffer = (req, res, buf, encoding) => {
     if (buf && buf.length) {

@@ -3,8 +3,8 @@ import { uploadCSV } from "../test-helpers/uploadCSV";
 import { setupOrganization } from "../test-helpers/setupOrganization";
 import signup from "../test-helpers/signup";
 
-
-const { email, password, firstName, lastName, organizationName, timeZone } = credentials;
+const { email, password, firstName, lastName, organizationName, timeZone } =
+  credentials;
 
 describe("Creating Customers via CSV import", () => {
   beforeEach(() => {

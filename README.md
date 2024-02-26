@@ -14,7 +14,7 @@
   
 </p>
 
-## Laudspeaker - Open Source Customer Engagement and Product Onboarding and Adoption Platform. Alternative to Braze / One Signal / Customer io / Appcues / Pendo 
+## Laudspeaker - Open Source Customer Engagement and Product Onboarding and Adoption Platform. Alternative to Braze / One Signal / Customer io / Appcues / Pendo
 
 <img width="1708" alt="UI2" src="https://github.com/laudspeaker/laudspeaker/assets/7728266/4c3c2917-6899-48f7-bcbe-a4bd92049c24">
 
@@ -23,7 +23,6 @@
 - **Monitor and Track User Progress:** See user progress and which steps users get stuck on.
 - **Personalize Journeys for Different User Personas:** Build different user journeys for different personas, so that you highlight the right features for the right users.
 - **Edit, Experiment and Change Onboarding Easily:** Make changes to onboarding copy easily, or edit live journeys.
-
 
 ## 🚀 Get Started
 

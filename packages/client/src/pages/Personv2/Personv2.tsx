@@ -46,7 +46,7 @@ enum PersonTab {
 
 function validateType(value: any, type: any) {
   console.log("in validateType");
-  console.log(value,type);
+  console.log(value, type);
   console.log("ok");
   switch (type) {
     case "Number":
@@ -64,10 +64,6 @@ function validateType(value: any, type: any) {
       // Simple email validation using regex
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return emailPattern.test(value);
-    case "Efdasfmail":
-      // Simple email validation using regex
-      //const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      //return emailPattern.test(value);
     default:
       return false;
   }
@@ -83,8 +79,10 @@ const Personv2 = () => {
     Record<string, any>
   >({});
   // Add validationErrors state
-  const [validationErrors, setValidationErrors] = useState<Record<string, string | null>>({});
-  
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string | null>
+  >({});
+
   const [timeLine, setTimeLine] = useState<CustomerEventsResponse | undefined>(
     undefined
   );
@@ -130,22 +128,24 @@ const Personv2 = () => {
   }, [page]);
   */
 
-  useEffect(() => {
-    (async () => {
-      try {
-        await loadPossibleKeys();
-        const { data: personData } = await ApiService.get({
-          url: "/customers/" + id,
-        });
+  const loadData = async () => {
+    try {
+      await loadPossibleKeys();
+      const { data: personData } = await ApiService.get({
+        url: "/customers/" + id,
+      });
 
-        setPersonInfo(personData);
-        //uploadEvents();
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    })();
+      setPersonInfo(personData);
+      //uploadEvents();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -155,39 +155,43 @@ const Personv2 = () => {
   const validateAllFields = () => {
     let allValid = true;
     const newValidationErrors: Record<string, string> = {};
-    //const newValidationErrors = {};
-  
+
     Object.entries(editingPersonInfo).forEach(([key, value]) => {
       if (key === "createdAt") {
         return;
       }
-      const foundAttribute = possibleAttributes.find(attr => attr.key === key);
+      const foundAttribute = possibleAttributes.find(
+        (attr) => attr.key === key
+      );
       const isValid = validateType(value, foundAttribute?.type);
       if (!isValid) {
         allValid = false;
         newValidationErrors[key] = `Value must be a ${foundAttribute?.type}`;
       }
     });
-  
+
     setValidationErrors(newValidationErrors);
     return allValid;
   };
 
   const handleSave = async () => {
-
     const allFieldsValid = validateAllFields();
 
     // If not all fields are valid, show a toast and abort the save operation
     if (!allFieldsValid) {
-      toast.error("Cannot save - make sure the data you entered matches the type.");
+      toast.error(
+        "Cannot save - make sure the data you entered matches the type."
+      );
       return;
     }
-    
+
     setIsSaving(true);
     try {
-      await ApiService.put({ url: "/customers/" + id, options: personInfo });
-      //setPersonInfo(editingPersonInfo);
-      //setIsEditing(false); // Optionally, exit editing mode on successful save
+      await ApiService.put({
+        url: "/customers/" + id,
+        options: editingPersonInfo,
+      });
+      setIsEditing(false);
     } catch (e) {
       let message = "Error while saving";
       //if (e instanceof AxiosError) message = e.response?.data?.message;
@@ -195,21 +199,12 @@ const Personv2 = () => {
       if (e instanceof AxiosError && e.response) {
         message = e.response.data.message || message; // Ensure we don't overwrite message with undefined
       }
-      //toast.error(message);
+      toast.error(message);
     } finally {
       setIsSaving(false);
+      await loadData();
     }
   };
-
-  useEffect(() => {
-    if (isFirstRenderSave) {
-      setIsFirstRenderSave(false);
-      return;
-    }
-    handleSave();
-  }, [personInfo]);
-  //}, [editingPersonInfo]);
-  
 
   const handleDeletePerson = () => {
     confirmAlert({
@@ -241,8 +236,6 @@ const Personv2 = () => {
       ],
     });
   };
-
-  
 
   const personInfoToShow = isEditing ? editingPersonInfo : personInfo;
 
@@ -328,7 +321,9 @@ const Personv2 = () => {
                     const foundAttribute = possibleAttributes.find(
                       (attr) => attr.key === key
                     );
-                    console.log(`Debugging - Key: ${key}, Type: ${foundAttribute?.type}`);
+                    console.log(
+                      `Debugging - Key: ${key}, Type: ${foundAttribute?.type}`
+                    );
                     return {
                       key,
                       type: foundAttribute?.type,
@@ -352,12 +347,12 @@ const Personv2 = () => {
                             className="w-full"
                             wrapperClassName="w-full"
                             value={personInfoToShow[key]}
-                            onChange={(val) => 
+                            onChange={(val) =>
                               setEditingPersonInfo({
-                                  ...editingPersonInfo,
-                                  [key]: val,
-                                })
-                              }
+                                ...editingPersonInfo,
+                                [key]: val,
+                              })
+                            }
                             placeholder="Input value"
                           />
                           <button
@@ -440,26 +435,7 @@ const Personv2 = () => {
                 <>
                   <div className="h-[1px] w-full bg-[#E5E7EB]" />
                   <div className="flex gap-[10px]">
-                    <Button
-                      type={ButtonType.PRIMARY}
-                      onClick={handleSave}
-                      
-                      //onClick={() => {
-                      //  if (validateAllFields()) {
-                      //    setPersonInfo(editingPersonInfo);
-                      //    setIsEditing(false);
-                          // Optionally clear validation errors after a successful save
-                      //    setValidationErrors({});
-                      //  } else {
-                          // Handle validation failure (e.g., show an error message)
-                      //    console.error("Validation failed. Please correct the errors and try again.");
-                      //  }
-                      //}}
-                      //onClick={() => {
-                      //  setPersonInfo(editingPersonInfo);
-                      //  setIsEditing(false);
-                      //}}
-                    >
+                    <Button type={ButtonType.PRIMARY} onClick={handleSave}>
                       Save
                     </Button>
                     <Button
@@ -532,11 +508,11 @@ const Personv2 = () => {
                                   className="w-full"
                                   wrapperClassName="w-full"
                                   value={personInfoToShow[key]}
-                                  onChange={(val) => 
-                                      setEditingPersonInfo({
-                                        ...editingPersonInfo,
-                                        [key]: val,
-                                      })
+                                  onChange={(val) =>
+                                    setEditingPersonInfo({
+                                      ...editingPersonInfo,
+                                      [key]: val,
+                                    })
                                   }
                                   placeholder="Input value"
                                 />

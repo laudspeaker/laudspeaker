@@ -257,7 +257,7 @@ export class CustomersService {
 
   async create(
     account: Account,
-    createCustomerDto: CreateCustomerDto,
+    createCustomerDto: any,
     session: string,
     transactionSession?: ClientSession
   ): Promise<
@@ -726,35 +726,6 @@ export class CustomersService {
 
     if (customer.workspaceId != workspace.id) {
       throw new HttpException("You can't update this customer.", 400);
-    }
-
-    for (const key of Object.keys(newCustomerData).filter(
-      (item) => !KEYS_TO_SKIP.includes(item)
-    )) {
-      const value = newCustomerData[key];
-      if (value === '' || value === undefined || value === null) continue;
-
-      const keyType = getType(value);
-      const isArray = keyType.isArray();
-      let type = isArray ? getType(value[0]).name : keyType.name;
-
-      if (type === 'String') {
-        if (isEmail(value)) type = 'Email';
-        if (isDateString(value)) type = 'Date';
-      }
-
-      await this.CustomerKeysModel.updateOne(
-        { key, workspaceId: workspace.id },
-        {
-          $set: {
-            key,
-            type,
-            isArray,
-            workspaceId: workspace.id,
-          },
-        },
-        { upsert: true }
-      ).exec();
     }
 
     delete customer._id;
@@ -1506,7 +1477,7 @@ export class CustomersService {
           HttpStatus.BAD_REQUEST
         );
 
-      let ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
+      const ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
         {
           workspaceId: auth.workspace.id,
           [primaryKey.key]: upsertCustomerDto.primary_key,
@@ -1556,7 +1527,7 @@ export class CustomersService {
         HttpStatus.BAD_REQUEST
       );
 
-    let ret: CustomerDocument = await this.CustomerModel.findOneAndDelete(
+    const ret: CustomerDocument = await this.CustomerModel.findOneAndDelete(
       {
         workspaceId: auth.workspace.id,
         [primaryKey.key]: deleteCustomerDto.primary_key,
@@ -4183,7 +4154,7 @@ export class CustomersService {
         pipeline1
       );
 
-      let mobileMongoQuery = cloneDeep(mongoQuery);
+      const mobileMongoQuery = cloneDeep(mongoQuery);
       mobileMongoQuery.source = 'mobile';
 
       const pipeline2 = [

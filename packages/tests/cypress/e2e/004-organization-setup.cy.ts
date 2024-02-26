@@ -3,8 +3,8 @@ import { loginFunc } from "../test-helpers/loginFunc";
 import { setupOrganization } from "../test-helpers/setupOrganization";
 import signup from "../test-helpers/signup";
 
-
-const { email, password, firstName, lastName, organizationName, timeZone } = credentials;
+const { email, password, firstName, lastName, organizationName, timeZone } =
+  credentials;
 
 describe("company-setup", () => {
   beforeEach(() => {
