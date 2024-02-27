@@ -108,83 +108,30 @@ const FlowBuilderSegmentEditor: FC<FlowBuilderSegmentEditorProps> = ({
                 <div className="flex w-full gap-5">
                   <div className="flex flex-col w-full">
                     <div className="text-[#111827] font-inter text-[14px] leading-[22px] mb-[5px] font-semibold">
-                      Start on date
+                      Start Date and Time
                     </div>
                     <div>
-                      <input
-                        value={format(
-                          new Date(
-                            journeyEntrySettings.entryTiming.time.startDate
-                          ),
-                          "yyyy-MM-dd"
-                        )}
-                        onChange={(e) => {
-                          const selectedDate = new Date(e.target.value);
-
-                          let updatedDate = new Date(
-                            journeyEntrySettings.entryTiming.time!.startDate
-                          );
-                          updatedDate = setYear(
-                            updatedDate,
-                            selectedDate.getFullYear()
-                          );
-                          updatedDate = setMonth(
-                            updatedDate,
-                            selectedDate.getMonth()
-                          );
-                          updatedDate = setDate(
-                            updatedDate,
-                            selectedDate.getDate()
-                          );
-
+                      <DateComponent
+                        value={
+                          journeyEntrySettings.entryTiming.time.startDate
+                            
+                        }
+                        onChange={(date) => {
                           dispatch(
                             setJourneyEntryTimingTime({
                               ...journeyEntrySettings.entryTiming.time!,
-                              startDate: updatedDate.toISOString(),
+                              startDate: new Date(date).toISOString(), // Assuming 'date' is in the correct ISO format
                             })
                           );
-                        }}
-                        type="date"
-                        className="w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
-                        placeholder="Select date"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-col w-full">
-                    <div className="text-[#111827] font-inter text-[14px] leading-[22px] mb-[5px] font-semibold">
-                      Time
-                    </div>
-                    <div>
-                      <input
-                        value={format(
-                          new Date(
-                            journeyEntrySettings.entryTiming.time.startDate
-                          ),
-                          "hh:mm"
-                        )}
-                        onChange={(e) => {
-                          let updatedDate = new Date(
-                            journeyEntrySettings.entryTiming.time!.startDate
-                          );
-
-                          const [hh, mm] = e.target.value.split(":");
-
-                          updatedDate = setHours(updatedDate, +hh);
-                          updatedDate = setMinutes(updatedDate, +mm);
-                          updatedDate = setSeconds(updatedDate, 0);
-                          updatedDate = setMilliseconds(updatedDate, 0);
-
                           dispatch(
                             setJourneyEntryTimingTime({
                               ...journeyEntrySettings.entryTiming.time!,
-                              startDate: updatedDate.toISOString(),
+                              startDate: new Date(date).toISOString(),
                             })
                           );
                         }}
-                        type="time"
-                        className="w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
-                        placeholder="Select date"
                       />
+                      
                     </div>
                   </div>
                   <div className="flex flex-col w-full">
