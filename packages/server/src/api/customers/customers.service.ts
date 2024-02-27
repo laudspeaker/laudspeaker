@@ -429,7 +429,6 @@ export class CustomersService {
             [key]: new RegExp(`.*${search}.*`, 'i'),
           }
         : {}),
-      ...(showFreezed ? {} : { isFreezed: { $ne: true } }),
     })
       .skip(skip)
       .limit(take <= 100 ? take : 100)
@@ -721,9 +720,6 @@ export class CustomersService {
     const customer = await this.findOne(account, id, session);
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    if (customer.isFreezed)
-      throw new BadRequestException('Customer is freezed');
-
     if (customer.workspaceId != workspace.id) {
       throw new HttpException("You can't update this customer.", 400);
     }
@@ -759,7 +755,6 @@ export class CustomersService {
       delete newCustomerData._id;
       delete newCustomerData.__v;
       delete newCustomerData.audiences;
-      delete newCustomerData.isFreezed;
       delete newCustomerData.id;
       const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -768,9 +763,6 @@ export class CustomersService {
         id,
         transactionSession
       );
-
-      if (customer.isFreezed)
-        throw new BadRequestException('Customer is freezed');
 
       if (customer.workspaceId != workspace.id) {
         throw new HttpException("You can't update this customer.", 400);
@@ -1316,8 +1308,14 @@ export class CustomersService {
     session: string,
     transactionSession?: ClientSession
   ): Promise<number> {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-
+    const foundAccount = await this.accountsRepository.findOne({
+      where: {
+        id: account.id,
+      },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = foundAccount?.teams?.[0]?.organization?.workspaces?.[0];
+    let collectionPrefix: string;
     let count = 0;
     if (
       !criteria ||
@@ -1334,6 +1332,19 @@ export class CustomersService {
     } else {
       //TODO: We need to translate segment builder condiitons
       // into a mongo query
+
+      collectionPrefix = this.segmentsService.generateRandomString();
+      const customersInSegment = await this.getSegmentCustomersFromQuery(
+        criteria.query,
+        foundAccount,
+        session,
+        true,
+        0,
+        collectionPrefix
+      );
+      const collectionName = customersInSegment; // Name of the MongoDB collection
+      const coll = this.connection.collection(collectionName);
+      count = await coll.countDocuments({});
     }
 
     this.debug(
@@ -1395,7 +1406,6 @@ export class CustomersService {
     } else {
       queryParam[correlationKey] = correlationValue;
     }
-    queryParam.isFreezed = { $ne: true };
     try {
       if (transactionSession) {
         customer = await this.CustomerModel.findOne(queryParam)
@@ -1653,8 +1663,6 @@ export class CustomersService {
       session,
       account.id
     );
-
-    if (cust.isFreezed) throw new BadRequestException('Customer is freezed');
 
     const res = await this.CustomerModel.deleteOne({
       _id: new mongoose.Types.ObjectId(cust.id),

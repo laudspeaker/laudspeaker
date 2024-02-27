@@ -91,7 +91,7 @@ export const DateComponent: FC<ValueChanger & { isRelativeDate?: boolean }> = ({
         value={relativeValue}
         onChange={(e) => onChange(new Date(e.target.value).toUTCString())}
         type="datetime-local"
-        className="w-[200px] h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
+        className="w-[250px] h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
         placeholder="Select time"
       />
     );

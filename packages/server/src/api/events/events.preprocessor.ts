@@ -428,7 +428,7 @@ export class EventsPreProcessor extends WorkerHost {
         err,
         this.handleCustom.name,
         job.data.session,
-        job.data.account.id
+        job.data.account?.id
       );
       throw err;
     }
