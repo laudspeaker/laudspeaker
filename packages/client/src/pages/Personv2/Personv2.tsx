@@ -19,6 +19,7 @@ import { ChevronDoubleDownIcon } from "@heroicons/react/20/solid";
 import { Attribute } from "pages/PeopleSettings/PeopleSettings";
 import Select from "components/Elements/Selectv2";
 import { StatementValueType } from "reducers/flow-builder.reducer";
+import DynamicInput from "pages/FlowBuilderv2/Elements/DynamicInput";
 
 export interface EventObject {
   event: string;
@@ -101,7 +102,7 @@ const Personv2 = () => {
 
   const loadPossibleKeys = async () => {
     const { data } = await ApiService.get<any[]>({
-      url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Email&type=Boolean&type=Date&type=DateTime&isArray=false`,
+      url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Email&type=Boolean&type=Date&type=DateTime`,
     });
 
     setPossibleAttributes(data);
@@ -178,12 +179,12 @@ const Personv2 = () => {
     const allFieldsValid = validateAllFields();
 
     // If not all fields are valid, show a toast and abort the save operation
-    if (!allFieldsValid) {
-      toast.error(
-        "Cannot save - make sure the data you entered matches the type."
-      );
-      return;
-    }
+    // if (!allFieldsValid) {
+    //   toast.error(
+    //     "Cannot save - make sure the data you entered matches the type."
+    //   );
+    //   return;
+    // }
 
     setIsSaving(true);
     try {
@@ -321,12 +322,10 @@ const Personv2 = () => {
                     const foundAttribute = possibleAttributes.find(
                       (attr) => attr.key === key
                     );
-                    console.log(
-                      `Debugging - Key: ${key}, Type: ${foundAttribute?.type}`
-                    );
                     return {
                       key,
-                      type: foundAttribute?.type,
+                      type: foundAttribute?.type || StatementValueType.STRING,
+                      isArray: foundAttribute?.isArray || false,
                       dateFormat: [
                         StatementValueType.DATE,
                         StatementValueType.DATE_TIME,
@@ -335,24 +334,25 @@ const Personv2 = () => {
                         : undefined,
                     };
                   })
-                  .map(({ key, type, dateFormat }) =>
+                  .map(({ key, type, isArray, dateFormat }) =>
                     isEditing ? (
                       <div className="flex flex-col gap-[10px]" key={key}>
                         <div className="text-[#18181B]">
-                          {key} ({type}){" "}
+                          {key} ({type}
+                          {isArray ? "[]" : ""}){" "}
                           {dateFormat ? <>[{dateFormat}]</> : <></>}
                         </div>
                         <div className="flex gap-4 items-center">
-                          <Input
-                            className="w-full"
-                            wrapperClassName="w-full"
+                          <DynamicInput
+                            type={type}
+                            isArray={isArray}
                             value={personInfoToShow[key]}
-                            onChange={(val) =>
+                            onChange={(value) => {
                               setEditingPersonInfo({
                                 ...editingPersonInfo,
-                                [key]: val,
-                              })
-                            }
+                                [key]: value,
+                              });
+                            }}
                             placeholder="Input value"
                           />
                           <button
@@ -371,7 +371,8 @@ const Personv2 = () => {
                     ) : (
                       <div className="" key={key}>
                         <div className="text-[#6B7280] text-[12px] leading-[20px]">
-                          {key} ({type}){" "}
+                          {key} ({type}
+                          {isArray ? "[]" : ""}){" "}
                           {dateFormat ? <>[{dateFormat}]</> : <></>}
                         </div>
                         <div>
@@ -485,7 +486,9 @@ const Personv2 = () => {
 
                           return {
                             key,
-                            type: foundAttribute?.type,
+                            type:
+                              foundAttribute?.type || StatementValueType.STRING,
+                            isArray: foundAttribute?.isArray || false,
                             dateFormat: [
                               StatementValueType.DATE,
                               StatementValueType.DATE_TIME,
@@ -496,24 +499,25 @@ const Personv2 = () => {
                               : undefined,
                           };
                         })
-                        .map(({ key, type, dateFormat }) =>
+                        .map(({ key, type, isArray, dateFormat }) =>
                           isEditing ? (
                             <div className="flex flex-col gap-[10px]" key={key}>
                               <div className="text-[#18181B]">
-                                {key} ({type}){" "}
+                                {key} ({type}
+                                {isArray ? "[]" : ""}){" "}
                                 {dateFormat ? <>[{dateFormat}]</> : <></>}
                               </div>
                               <div className="flex gap-4 items-center">
-                                <Input
-                                  className="w-full"
-                                  wrapperClassName="w-full"
+                                <DynamicInput
+                                  type={type}
+                                  isArray={isArray}
                                   value={personInfoToShow[key]}
-                                  onChange={(val) =>
+                                  onChange={(value) => {
                                     setEditingPersonInfo({
                                       ...editingPersonInfo,
-                                      [key]: val,
-                                    })
-                                  }
+                                      [key]: value,
+                                    });
+                                  }}
                                   placeholder="Input value"
                                 />
                               </div>
@@ -521,7 +525,8 @@ const Personv2 = () => {
                           ) : (
                             <div className="" key={key}>
                               <div className="text-[#6B7280] text-[12px] leading-[20px]">
-                                {key} ({type}){" "}
+                                {key} ({type}
+                                {isArray ? "[]" : ""}){" "}
                                 {dateFormat ? <>[{dateFormat}]</> : <></>}
                               </div>
                               <div>

@@ -5384,7 +5384,8 @@ export class CustomersService {
     key: string,
     type: AttributeType,
     dateFormat: unknown,
-    session?: string
+    session?: string,
+    isArray?: boolean
   ) {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -5400,7 +5401,7 @@ export class CustomersService {
       const previousKey = await this.CustomerKeysModel.findOne({
         key: key.trim(),
         type,
-        isArray: false,
+        isArray: isArray || false,
         workspaceId: workspace.id,
       }).exec();
 
@@ -5415,7 +5416,7 @@ export class CustomersService {
         key: key.trim(),
         type,
         dateFormat,
-        isArray: false,
+        isArray: isArray || false,
         workspaceId: workspace.id,
       });
       return newKey;
@@ -5497,7 +5498,14 @@ export class CustomersService {
       try {
         const { key, type, isArray, dateFormat } = createdAttribute; // TODO: arrays handling
 
-        await this.createAttribute(account, key, type, dateFormat);
+        await this.createAttribute(
+          account,
+          key,
+          type,
+          dateFormat,
+          undefined,
+          isArray
+        );
       } catch (e) {
         console.error(e);
       }

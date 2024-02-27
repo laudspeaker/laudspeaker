@@ -1,6 +1,6 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Input from "components/Elements/Inputv2";
-import FlowBuilderDynamicInput from "pages/FlowBuilderv2/Elements/FlowBuilderDynamicInput";
+import DynamicInput from "pages/FlowBuilderv2/Elements/DynamicInput";
 import React, { useEffect, useLayoutEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useHover } from "react-use";
