@@ -267,7 +267,8 @@ export class EventsService {
     session: string
   ) {
     await this.eventPreprocessorQueue.add(ProviderType.LAUDSPEAKER, {
-      account: auth.account,
+      owner: auth.account,
+      workspace: auth.workspace,
       event: eventDto,
       session: session,
     });
