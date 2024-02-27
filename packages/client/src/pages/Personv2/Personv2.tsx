@@ -46,15 +46,15 @@ enum PersonTab {
 }
 
 function validateType(value: any, type: any) {
-  console.log("in validateType");
-  console.log(value, type);
-  console.log("ok");
+  //console.log("in validateType");
+  //console.log(value, type);
+  //console.log("ok");
   switch (type) {
     case "Number":
       return !isNaN(parseFloat(value)) && isFinite(value);
     case "String":
       return typeof value === "string";
-    case "date":
+    case "Date":
       // Example of date validation; implement as needed
       return !isNaN(Date.parse(value));
     case "Boolean":
@@ -67,6 +67,26 @@ function validateType(value: any, type: any) {
       return emailPattern.test(value);
     default:
       return false;
+  }
+}
+
+function enforceType(value: any, type: any) {
+  console.log("in enforce type");
+  console.log("value is", value);
+  console.log("type is", type);
+  switch (type) {
+    case "Number":
+      return Number(value);
+    case "String":
+      return String(value);
+    case "Boolean":
+      return String(value).toLowerCase() === "true"; // Assuming boolean values are represented as strings 'true' or 'false'
+    case "Date":
+      // Assuming the value is in a format that can be parsed by the Date constructor
+      return new Date(value);
+    // Add more cases as needed for other types
+    default:
+      return value;
   }
 }
 
@@ -186,11 +206,32 @@ const Personv2 = () => {
     //   return;
     // }
 
+    const enforcedData = Object.entries(editingPersonInfo).reduce<
+      Record<string, any>
+    >((acc, [key, value]) => {
+      if (key === "createdAt") {
+        acc[key] = value; // Skip enforcing and keep 'createdAt' as is
+      } else {
+        const foundAttribute = possibleAttributes.find(
+          (attr) => attr.key === key
+        );
+        if (foundAttribute) {
+          acc[key] = enforceType(value, foundAttribute.type);
+        } else {
+          acc[key] = value; // Keep as is if no specific type is found
+        }
+      }
+      return acc;
+    }, {});
+
+    //console.log("old cust is", JSON.stringify(editingPersonInfo, null, 2));
+    //console.log("enforced cust is",JSON.stringify(enforcedData, null, 2));
+
     setIsSaving(true);
     try {
       await ApiService.put({
         url: "/customers/" + id,
-        options: editingPersonInfo,
+        options: enforcedData,
       });
       setIsEditing(false);
     } catch (e) {
