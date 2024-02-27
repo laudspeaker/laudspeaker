@@ -19,6 +19,7 @@ import { ChevronDoubleDownIcon } from "@heroicons/react/20/solid";
 import { Attribute } from "pages/PeopleSettings/PeopleSettings";
 import Select from "components/Elements/Selectv2";
 import { StatementValueType } from "reducers/flow-builder.reducer";
+import DynamicInput from "pages/FlowBuilderv2/Elements/DynamicInput";
 import { Segment, SegmentType } from "types/Segment";
 import Table from "components/Tablev2";
 import sortAscChevronsImage from "./svg/sort-asc-chevrons.svg";
@@ -73,6 +74,51 @@ interface SortOptions {
   sortType: SortType;
 }
 
+function validateType(value: any, type: any) {
+  //console.log("in validateType");
+  //console.log(value, type);
+  //console.log("ok");
+  switch (type) {
+    case "Number":
+      return !isNaN(parseFloat(value)) && isFinite(value);
+    case "String":
+      return typeof value === "string";
+    case "Date":
+      // Example of date validation; implement as needed
+      return !isNaN(Date.parse(value));
+    case "Boolean":
+      // Considering boolean input as string 'true' or 'false'
+      return value === "true" || value === "false";
+    // Add other type validations as needed
+    case "Email":
+      // Simple email validation using regex
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailPattern.test(value);
+    default:
+      return false;
+  }
+}
+
+function enforceType(value: any, type: any) {
+  console.log("in enforce type");
+  console.log("value is", value);
+  console.log("type is", type);
+  switch (type) {
+    case "Number":
+      return Number(value);
+    case "String":
+      return String(value);
+    case "Boolean":
+      return String(value).toLowerCase() === "true"; // Assuming boolean values are represented as strings 'true' or 'false'
+    case "Date":
+      // Assuming the value is in a format that can be parsed by the Date constructor
+      return new Date(value);
+    // Add more cases as needed for other types
+    default:
+      return value;
+  }
+}
+
 const Personv2 = () => {
   const navigate = useNavigate();
 
@@ -82,6 +128,11 @@ const Personv2 = () => {
   const [editingPersonInfo, setEditingPersonInfo] = useState<
     Record<string, any>
   >({});
+  // Add validationErrors state
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string | null>
+  >({});
+
   const [timeLine, setTimeLine] = useState<CustomerEventsResponse | undefined>(
     undefined
   );
@@ -117,7 +168,7 @@ const Personv2 = () => {
 
   const loadPossibleKeys = async () => {
     const { data } = await ApiService.get<any[]>({
-      url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Email&type=Boolean&type=Date&type=DateTime&isArray=false`,
+      url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Email&type=Boolean&type=Date&type=DateTime`,
     });
 
     setPossibleAttributes(data);
@@ -138,7 +189,7 @@ const Personv2 = () => {
     setIsLoadingEvents(false);
   };
 
-  const loadData = async () => {
+  const loadSegmentData = async () => {
     setIsLoadingSegments(true);
     try {
       const {
@@ -181,7 +232,7 @@ const Personv2 = () => {
   };
 
   useEffect(() => {
-    loadData();
+    loadSegmentData();
   }, [currentPage, sortOptions]);
 
   /*
@@ -190,49 +241,104 @@ const Personv2 = () => {
   }, [page]);
   */
 
-  useEffect(() => {
-    (async () => {
-      try {
-        await loadPossibleKeys();
-        const { data: personData } = await ApiService.get({
-          url: "/customers/" + id,
-        });
+  const loadData = async () => {
+    try {
+      await loadPossibleKeys();
+      const { data: personData } = await ApiService.get({
+        url: "/customers/" + id,
+      });
 
-        setPersonInfo(personData);
-        //uploadEvents();
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    })();
+      setPersonInfo(personData);
+      //uploadEvents();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   useEffect(() => {
     setEditingPersonInfo(personInfo);
   }, [isEditing]);
 
+  const validateAllFields = () => {
+    let allValid = true;
+    const newValidationErrors: Record<string, string> = {};
+
+    Object.entries(editingPersonInfo).forEach(([key, value]) => {
+      if (key === "createdAt") {
+        return;
+      }
+      const foundAttribute = possibleAttributes.find(
+        (attr) => attr.key === key
+      );
+      const isValid = validateType(value, foundAttribute?.type);
+      if (!isValid) {
+        allValid = false;
+        newValidationErrors[key] = `Value must be a ${foundAttribute?.type}`;
+      }
+    });
+
+    setValidationErrors(newValidationErrors);
+    return allValid;
+  };
+
   const handleSave = async () => {
+    const allFieldsValid = validateAllFields();
+
+    // If not all fields are valid, show a toast and abort the save operation
+    // if (!allFieldsValid) {
+    //   toast.error(
+    //     "Cannot save - make sure the data you entered matches the type."
+    //   );
+    //   return;
+    // }
+
+    const enforcedData = Object.entries(editingPersonInfo).reduce<
+      Record<string, any>
+    >((acc, [key, value]) => {
+      if (key === "createdAt") {
+        acc[key] = value; // Skip enforcing and keep 'createdAt' as is
+      } else {
+        const foundAttribute = possibleAttributes.find(
+          (attr) => attr.key === key
+        );
+        if (foundAttribute) {
+          acc[key] = enforceType(value, foundAttribute.type);
+        } else {
+          acc[key] = value; // Keep as is if no specific type is found
+        }
+      }
+      return acc;
+    }, {});
+
+    //console.log("old cust is", JSON.stringify(editingPersonInfo, null, 2));
+    //console.log("enforced cust is",JSON.stringify(enforcedData, null, 2));
+
     setIsSaving(true);
     try {
-      await ApiService.put({ url: "/customers/" + id, options: personInfo });
+      await ApiService.put({
+        url: "/customers/" + id,
+        options: enforcedData,
+      });
+      setIsEditing(false);
     } catch (e) {
       let message = "Error while saving";
-      if (e instanceof AxiosError) message = e.response?.data?.message;
+      //if (e instanceof AxiosError) message = e.response?.data?.message;
+      toast.error(message);
+      if (e instanceof AxiosError && e.response) {
+        message = e.response.data.message || message; // Ensure we don't overwrite message with undefined
+      }
       toast.error(message);
     } finally {
       setIsSaving(false);
+      await loadData();
     }
   };
-
-  useEffect(() => {
-    if (isFirstRenderSave) {
-      setIsFirstRenderSave(false);
-      return;
-    }
-
-    handleSave();
-  }, [personInfo]);
 
   const handleDeletePerson = () => {
     confirmAlert({
@@ -357,10 +463,10 @@ const Personv2 = () => {
                     const foundAttribute = possibleAttributes.find(
                       (attr) => attr.key === key
                     );
-
                     return {
                       key,
-                      type: foundAttribute?.type,
+                      type: foundAttribute?.type || StatementValueType.STRING,
+                      isArray: foundAttribute?.isArray || false,
                       dateFormat: [
                         StatementValueType.DATE,
                         StatementValueType.DATE_TIME,
@@ -369,24 +475,25 @@ const Personv2 = () => {
                         : undefined,
                     };
                   })
-                  .map(({ key, type, dateFormat }) =>
+                  .map(({ key, type, isArray, dateFormat }) =>
                     isEditing ? (
                       <div className="flex flex-col gap-[10px]" key={key}>
                         <div className="text-[#18181B]">
-                          {key} ({type}){" "}
+                          {key} ({type}
+                          {isArray ? "[]" : ""}){" "}
                           {dateFormat ? <>[{dateFormat}]</> : <></>}
                         </div>
                         <div className="flex gap-4 items-center">
-                          <Input
-                            className="w-full"
-                            wrapperClassName="w-full"
+                          <DynamicInput
+                            type={type}
+                            isArray={isArray}
                             value={personInfoToShow[key]}
-                            onChange={(val) =>
+                            onChange={(value) => {
                               setEditingPersonInfo({
                                 ...editingPersonInfo,
-                                [key]: val,
-                              })
-                            }
+                                [key]: value,
+                              });
+                            }}
                             placeholder="Input value"
                           />
                           <button
@@ -405,7 +512,8 @@ const Personv2 = () => {
                     ) : (
                       <div className="" key={key}>
                         <div className="text-[#6B7280] text-[12px] leading-[20px]">
-                          {key} ({type}){" "}
+                          {key} ({type}
+                          {isArray ? "[]" : ""}){" "}
                           {dateFormat ? <>[{dateFormat}]</> : <></>}
                         </div>
                         <div>
@@ -469,13 +577,7 @@ const Personv2 = () => {
                 <>
                   <div className="h-[1px] w-full bg-[#E5E7EB]" />
                   <div className="flex gap-[10px]">
-                    <Button
-                      type={ButtonType.PRIMARY}
-                      onClick={() => {
-                        setPersonInfo(editingPersonInfo);
-                        setIsEditing(false);
-                      }}
-                    >
+                    <Button type={ButtonType.PRIMARY} onClick={handleSave}>
                       Save
                     </Button>
                     <Button
@@ -525,7 +627,9 @@ const Personv2 = () => {
 
                           return {
                             key,
-                            type: foundAttribute?.type,
+                            type:
+                              foundAttribute?.type || StatementValueType.STRING,
+                            isArray: foundAttribute?.isArray || false,
                             dateFormat: [
                               StatementValueType.DATE,
                               StatementValueType.DATE_TIME,
@@ -536,24 +640,25 @@ const Personv2 = () => {
                               : undefined,
                           };
                         })
-                        .map(({ key, type, dateFormat }) =>
+                        .map(({ key, type, isArray, dateFormat }) =>
                           isEditing ? (
                             <div className="flex flex-col gap-[10px]" key={key}>
                               <div className="text-[#18181B]">
-                                {key} ({type}){" "}
+                                {key} ({type}
+                                {isArray ? "[]" : ""}){" "}
                                 {dateFormat ? <>[{dateFormat}]</> : <></>}
                               </div>
                               <div className="flex gap-4 items-center">
-                                <Input
-                                  className="w-full"
-                                  wrapperClassName="w-full"
+                                <DynamicInput
+                                  type={type}
+                                  isArray={isArray}
                                   value={personInfoToShow[key]}
-                                  onChange={(val) =>
+                                  onChange={(value) => {
                                     setEditingPersonInfo({
                                       ...editingPersonInfo,
-                                      [key]: val,
-                                    })
-                                  }
+                                      [key]: value,
+                                    });
+                                  }}
                                   placeholder="Input value"
                                 />
                               </div>
@@ -561,7 +666,8 @@ const Personv2 = () => {
                           ) : (
                             <div className="" key={key}>
                               <div className="text-[#6B7280] text-[12px] leading-[20px]">
-                                {key} ({type}){" "}
+                                {key} ({type}
+                                {isArray ? "[]" : ""}){" "}
                                 {dateFormat ? <>[{dateFormat}]</> : <></>}
                               </div>
                               <div>

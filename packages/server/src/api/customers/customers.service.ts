@@ -257,7 +257,7 @@ export class CustomersService {
 
   async create(
     account: Account,
-    createCustomerDto: CreateCustomerDto,
+    createCustomerDto: any,
     session: string,
     transactionSession?: ClientSession
   ): Promise<
@@ -722,35 +722,6 @@ export class CustomersService {
 
     if (customer.workspaceId != workspace.id) {
       throw new HttpException("You can't update this customer.", 400);
-    }
-
-    for (const key of Object.keys(newCustomerData).filter(
-      (item) => !KEYS_TO_SKIP.includes(item)
-    )) {
-      const value = newCustomerData[key];
-      if (value === '' || value === undefined || value === null) continue;
-
-      const keyType = getType(value);
-      const isArray = keyType.isArray();
-      let type = isArray ? getType(value[0]).name : keyType.name;
-
-      if (type === 'String') {
-        if (isEmail(value)) type = 'Email';
-        if (isDateString(value)) type = 'Date';
-      }
-
-      await this.CustomerKeysModel.updateOne(
-        { key, workspaceId: workspace.id },
-        {
-          $set: {
-            key,
-            type,
-            isArray,
-            workspaceId: workspace.id,
-          },
-        },
-        { upsert: true }
-      ).exec();
     }
 
     delete customer._id;
@@ -5421,7 +5392,8 @@ export class CustomersService {
     key: string,
     type: AttributeType,
     dateFormat: unknown,
-    session?: string
+    session?: string,
+    isArray?: boolean
   ) {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -5437,7 +5409,7 @@ export class CustomersService {
       const previousKey = await this.CustomerKeysModel.findOne({
         key: key.trim(),
         type,
-        isArray: false,
+        isArray: isArray || false,
         workspaceId: workspace.id,
       }).exec();
 
@@ -5452,7 +5424,7 @@ export class CustomersService {
         key: key.trim(),
         type,
         dateFormat,
-        isArray: false,
+        isArray: isArray || false,
         workspaceId: workspace.id,
       });
       return newKey;
@@ -5534,7 +5506,14 @@ export class CustomersService {
       try {
         const { key, type, isArray, dateFormat } = createdAttribute; // TODO: arrays handling
 
-        await this.createAttribute(account, key, type, dateFormat);
+        await this.createAttribute(
+          account,
+          key,
+          type,
+          dateFormat,
+          undefined,
+          isArray
+        );
       } catch (e) {
         console.error(e);
       }

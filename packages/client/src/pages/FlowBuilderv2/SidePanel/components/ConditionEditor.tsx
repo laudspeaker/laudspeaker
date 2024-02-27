@@ -1,6 +1,6 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2/Button";
 import FlowBuilderAutoComplete from "components/AutoCompletev2/AutoCompletev2";
-import FlowBuilderDynamicInput from "pages/FlowBuilderv2/Elements/FlowBuilderDynamicInput";
+import DynamicInput from "pages/FlowBuilderv2/Elements/DynamicInput";
 import Select from "components/Elements/Selectv2/Select";
 import {
   Condition,
@@ -495,7 +495,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                       </div>
                       <div className="flex flex-col gap-[10px]">
                         <div className="dynamic-input w-full">
-                          <FlowBuilderDynamicInput
+                          <DynamicInput
                             type={statement.valueType}
                             value={statement.value}
                             onChange={(value) => {

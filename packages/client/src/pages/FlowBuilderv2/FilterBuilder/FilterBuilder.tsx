@@ -37,7 +37,7 @@ import Button, {
   ButtonType,
 } from "../../../components/Elements/Buttonv2/Button";
 import FlowBuilderAutoComplete from "../../../components/AutoCompletev2/AutoCompletev2";
-import FilterBuilderDynamicInput from "../Elements/FlowBuilderDynamicInput";
+import FilterBuilderDynamicInput from "../Elements/DynamicInput";
 import { isBefore } from "date-fns";
 import { useDispatch } from "react-redux";
 import { SegmentsSettings } from "reducers/segment.reducer";

@@ -34,7 +34,7 @@ import {
   StatementValueType,
 } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
-import { DateComponent } from "./Elements/FlowBuilderDynamicInput";
+import { DateComponent } from "./Elements/DynamicInput";
 import FilterBuilder from "./FilterBuilder/FilterBuilder";
 import { FC } from "react";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
