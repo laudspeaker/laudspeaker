@@ -14,7 +14,3 @@ export function createAccount(email, httpxWrapper) {
   );
   return { email, password, authorization };
 }
-
-export function deleteAccount(authorization) {
-  // pass
-}
