@@ -19,6 +19,7 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { Journey } from './entities/journey.entity';
 import { JourneyLocationsService } from './journey-locations.service';
 import { JourneysService } from './journeys.service';
+import { Step } from '../steps/entities/step.entity';
 
 const BATCH_SIZE = +process.env.START_BATCH_SIZE;
 
@@ -124,9 +125,9 @@ export class StartProcessor extends WorkerHost {
   async process(
     job: Job<
       {
-        ownerID: string;
-        stepID: string;
-        journeyID: string;
+        owner: Account;
+        step: Step;
+        journey: Journey;
         skip: number;
         limit: number;
         query: any;
@@ -147,7 +148,7 @@ export class StartProcessor extends WorkerHost {
       try {
         // Retrieve customers from mongo
         const customers = await this.customersService.find(
-          job.data.ownerID,
+          job.data.owner.id,
           job.data.query,
           job.data.session,
           transactionSession,
@@ -157,24 +158,24 @@ export class StartProcessor extends WorkerHost {
 
         await this.customersService.updateJourneyList(
           customers,
-          job.data.journeyID,
+          job.data.journey.id,
           job.data.session,
           transactionSession
         );
-        const account = await queryRunner.manager.findOne(Account, {
-          where: {
-            id: job.data.ownerID,
-          },
-          relations: ['teams.organization.workspaces'],
-        });
-        const journey = await queryRunner.manager.findOne(Journey, {
-          where: {
-            id: job.data.journeyID,
-          },
-        });
+        // const account = await queryRunner.manager.findOne(Account, {
+        //   where: {
+        //     id: job.data.ownerID,
+        //   },
+        //   relations: ['teams.organization.workspaces'],
+        // });
+        // const journey = await queryRunner.manager.findOne(Journey, {
+        //   where: {
+        //     id: job.data.journeyID,
+        //   },
+        // });
         await this.journeysService.enrollCustomersInJourney(
-          account,
-          journey,
+          job.data.owner,
+          job.data.journey,
           customers,
           job.data.session,
           queryRunner,
@@ -183,7 +184,7 @@ export class StartProcessor extends WorkerHost {
         await transactionSession.commitTransaction();
         await queryRunner.commitTransaction();
       } catch (e) {
-        this.error(e, this.process.name, job.data.session, job.data.ownerID);
+        this.error(e, this.process.name, job.data.session, job.data.owner.id);
         await transactionSession.abortTransaction();
         await queryRunner.rollbackTransaction();
         err = e;
@@ -199,9 +200,9 @@ export class StartProcessor extends WorkerHost {
         {
           name: 'start',
           data: {
-            ownerID: job.data.ownerID,
-            journeyID: job.data.journeyID,
-            stepID: job.data.stepID,
+            owner: job.data.owner,
+            journey: job.data.journey,
+            step: job.data.step,
             session: job.data.session,
             query: job.data.query,
             skip: job.data.skip,
@@ -211,9 +212,9 @@ export class StartProcessor extends WorkerHost {
         {
           name: 'start',
           data: {
-            ownerID: job.data.ownerID,
-            journeyID: job.data.journeyID,
-            stepID: job.data.stepID,
+            owner: job.data.owner,
+            journey: job.data.journey,
+            step: job.data.step,
             session: job.data.session,
             query: job.data.query,
             skip: job.data.skip + Math.floor(job.data.limit / 2),
