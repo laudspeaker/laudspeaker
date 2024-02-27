@@ -101,9 +101,6 @@ export class Customer {
   isAnonymous?: boolean;
 
   @Prop()
-  isFreezed?: boolean;
-
-  @Prop()
   device_token_android?: string;
 
   @Prop()

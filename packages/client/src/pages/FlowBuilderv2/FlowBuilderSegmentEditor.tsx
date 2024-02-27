@@ -112,10 +112,7 @@ const FlowBuilderSegmentEditor: FC<FlowBuilderSegmentEditorProps> = ({
                     </div>
                     <div>
                       <DateComponent
-                        value={
-                          journeyEntrySettings.entryTiming.time.startDate
-                            
-                        }
+                        value={journeyEntrySettings.entryTiming.time.startDate}
                         onChange={(date) => {
                           dispatch(
                             setJourneyEntryTimingTime({
@@ -131,7 +128,6 @@ const FlowBuilderSegmentEditor: FC<FlowBuilderSegmentEditorProps> = ({
                           );
                         }}
                       />
-                      
                     </div>
                   </div>
                   <div className="flex flex-col w-full">

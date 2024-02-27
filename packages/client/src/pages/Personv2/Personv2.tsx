@@ -114,7 +114,6 @@ const Personv2 = () => {
 
   const [possibleAttributes, setPossibleAttributes] = useState<Attribute[]>([]);
   const [attributeSearch, setAttributeSearch] = useState("");
-  
 
   const loadPossibleKeys = async () => {
     const { data } = await ApiService.get<any[]>({
@@ -153,9 +152,8 @@ const Personv2 = () => {
         }&search=${search}&orderBy=${sortOptions.sortBy}&orderType=${
           sortOptions.sortType
         }`,
-      }); 
-      
-      
+      });
+
       /*({
         url: `/segments?take=${ITEMS_PER_PAGE}&skip=${
           (currentPage - 1) * ITEMS_PER_PAGE
@@ -164,8 +162,7 @@ const Personv2 = () => {
         }`,
       });
       */
-      
-  
+
       setRows(
         data.map((segment) => ({
           id: segment.id,
@@ -178,7 +175,9 @@ const Personv2 = () => {
       setIsLoaded(true);
     } catch (e) {
       toast.error("Failed to load data");
-    } finally {setIsLoading(false);}
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -212,7 +211,6 @@ const Personv2 = () => {
   useEffect(() => {
     setEditingPersonInfo(personInfo);
   }, [isEditing]);
-
 
   const handleSave = async () => {
     setIsSaving(true);

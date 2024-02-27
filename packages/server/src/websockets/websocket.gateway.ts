@@ -188,11 +188,7 @@ export class WebsocketGateway implements OnGatewayConnection {
           customerId
         );
 
-        if (
-          !customer ||
-          customer.isFreezed ||
-          customer.workspaceId !== workspace.id
-        ) {
+        if (!customer || customer.workspaceId !== workspace.id) {
           socket.emit(
             'log',
             'Customer id is not valid. Creating new anonymous customer.'
@@ -453,12 +449,12 @@ export class WebsocketGateway implements OnGatewayConnection {
 
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    let customer = await this.customersService.CustomerModel.findOne({
+    const customer = await this.customersService.CustomerModel.findOne({
       _id: customerId,
       workspaceId: workspace.id,
     });
 
-    if (!customer || customer.isFreezed || customer.isAnonymous) {
+    if (!customer || customer.isAnonymous) {
       socket.emit('error', 'Invalid customer id. Please call identify first');
       return;
     }
@@ -499,7 +495,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       workspaceId: workspace.id,
     });
 
-    if (!customer || customer.isFreezed) {
+    if (!customer) {
       socket.emit(
         'error',
         'Invalid customer id. Creating new anonymous customer...'
@@ -533,9 +529,7 @@ export class WebsocketGateway implements OnGatewayConnection {
     if (identifiedCustomer) {
       await this.customersService.deleteEverywhere(customer.id);
 
-      await this.customersService.CustomerModel.findByIdAndUpdate(customer.id, {
-        isFreezed: true,
-      });
+      await customer.deleteOne();
 
       socket.data.customerId = identifiedCustomer.id;
       socket.emit('customerId', identifiedCustomer.id);
@@ -606,12 +600,6 @@ export class WebsocketGateway implements OnGatewayConnection {
         );
         err = true;
         //Customer is frozen.
-      } else if (customer.isFreezed) {
-        socket.emit(
-          'error',
-          'Customer is frozen and cannot accept any new events.'
-        );
-        err = true;
       }
 
       const trackerId = event.trackerId;
@@ -769,9 +757,9 @@ export class WebsocketGateway implements OnGatewayConnection {
     return false;
   }
 
- /*
-  * old fire event for modal
-  */
+  /*
+   * old fire event for modal
+   */
   /*
   @SubscribeMessage('fire')
   public async handleFire(
@@ -825,15 +813,15 @@ export class WebsocketGateway implements OnGatewayConnection {
   }
   */
 
- /*
-  * 
-  */
+  /*
+   *
+   */
   @SubscribeMessage('fire')
   public async handleFire(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() fullPayload: { eventName: string; payload: string; customerId: string }
+    @MessageBody()
+    fullPayload: { eventName: string; payload: string; customerId: string }
   ) {
-
     //console.log("in websocket fire");
     try {
       const {
@@ -848,7 +836,7 @@ export class WebsocketGateway implements OnGatewayConnection {
         workspaceId: workspace.id,
       });
 
-      if (!customer || customer.isFreezed) {
+      if (!customer) {
         socket.emit(
           'error',
           'Invalid customer id. Creating new anonymous customer...'
@@ -876,18 +864,17 @@ export class WebsocketGateway implements OnGatewayConnection {
       let payloadObj = {};
       payloadObj = JSON.parse(payload);
 
-      let eventStruct: EventDto = {
+      const eventStruct: EventDto = {
         correlationKey: '_id',
         correlationValue: customer.id,
         source: AnalyticsProviderTypes.MOBILE,
         //payload: payload,
         payload: payloadObj,
         event: eventName,
-      }
+      };
 
       //console.log("event struct is", JSON.stringify(eventStruct, null, 2));
       //auth: { account: Account; workspace: Workspaces },
-
 
       await this.eventsService.customPayload(
         { account: socket.data.account, workspace: workspace },
@@ -978,7 +965,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       workspaceId: workspace.id,
     });
 
-    if (!customer || customer.isFreezed) {
+    if (!customer) {
       socket.emit(
         'error',
         'Invalid customer id. Creating new anonymous customer...'
