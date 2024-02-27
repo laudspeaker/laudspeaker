@@ -1,5 +1,5 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2";
-import React, { useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import ApiService from "services/api.service";
 import UserIcon from "./icons/UserIcon";
@@ -19,6 +19,13 @@ import { ChevronDoubleDownIcon } from "@heroicons/react/20/solid";
 import { Attribute } from "pages/PeopleSettings/PeopleSettings";
 import Select from "components/Elements/Selectv2";
 import { StatementValueType } from "reducers/flow-builder.reducer";
+import { Segment, SegmentType } from "types/Segment";
+import Table from "components/Tablev2";
+import sortAscChevronsImage from "./svg/sort-asc-chevrons.svg";
+import sortDescChevronsImage from "./svg/sort-desc-chevrons.svg";
+import sortNoneChevronsImage from "./svg/sort-none-chevrons.svg";
+import { Menu, Transition } from "@headlessui/react";
+import threeDotsIconImage from "./svg/three-dots-icon.svg";
 
 export interface EventObject {
   event: string;
@@ -42,6 +49,28 @@ interface CustomerEventsResponse {
 enum PersonTab {
   OVERVIEW = "Overview",
   JOURNEY = "Journey",
+  SEGMENTS = "Segments",
+}
+
+interface SegmentRowData {
+  id: string;
+  name: string;
+  type: string;
+  lastUpdate: string;
+}
+
+enum SortProperty {
+  UPDATED_AT = "updatedAt",
+}
+
+enum SortType {
+  ASC = "asc",
+  DESC = "desc",
+}
+
+interface SortOptions {
+  sortBy: SortProperty;
+  sortType: SortType;
 }
 
 const Personv2 = () => {
@@ -62,12 +91,30 @@ const Personv2 = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
+
+  //segments state
+
+  const ITEMS_PER_PAGE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagesCount, setPagesCount] = useState(1);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoadingSegments, setIsLoadingSegments] = useState(false);
+  const [rows, setRows] = useState<SegmentRowData[]>([]);
+  const [sortOptions, setSortOptions] = useState<SortOptions>({
+    sortBy: SortProperty.UPDATED_AT,
+    sortType: SortType.DESC,
+  });
+  const [search, setSearch] = useState("");
+
+  //
+
   const [isFirstRenderSave, setIsFirstRenderSave] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [currentTab, setCurrentTab] = useState(PersonTab.OVERVIEW);
 
   const [possibleAttributes, setPossibleAttributes] = useState<Attribute[]>([]);
   const [attributeSearch, setAttributeSearch] = useState("");
+  
 
   const loadPossibleKeys = async () => {
     const { data } = await ApiService.get<any[]>({
@@ -91,6 +138,52 @@ const Personv2 = () => {
     }
     setIsLoadingEvents(false);
   };
+
+  const loadData = async () => {
+    setIsLoadingSegments(true);
+    try {
+      const {
+        data: { data, totalPages },
+      } = await ApiService.get<{
+        data: Segment[];
+        totalPages: number;
+      }>({
+        url: `/segments/person/${id}?take=${ITEMS_PER_PAGE}&skip=${
+          (currentPage - 1) * ITEMS_PER_PAGE
+        }&search=${search}&orderBy=${sortOptions.sortBy}&orderType=${
+          sortOptions.sortType
+        }`,
+      }); 
+      
+      
+      /*({
+        url: `/segments?take=${ITEMS_PER_PAGE}&skip=${
+          (currentPage - 1) * ITEMS_PER_PAGE
+        }&search=${search}&orderBy=${sortOptions.sortBy}&orderType=${
+          sortOptions.sortType
+        }`,
+      });
+      */
+      
+  
+      setRows(
+        data.map((segment) => ({
+          id: segment.id,
+          name: segment.name,
+          type: segment.type,
+          lastUpdate: new Date().toUTCString(),
+        }))
+      );
+      setPagesCount(totalPages);
+      setIsLoaded(true);
+    } catch (e) {
+      toast.error("Failed to load data");
+    } finally {setIsLoading(false);}
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [currentPage, sortOptions]);
 
   /*
   useEffect(() => {
@@ -119,6 +212,7 @@ const Personv2 = () => {
   useEffect(() => {
     setEditingPersonInfo(personInfo);
   }, [isEditing]);
+
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -225,6 +319,14 @@ const Personv2 = () => {
           onClick={() => setCurrentTab(PersonTab.JOURNEY)}
         >
           Journeys
+        </button>
+        <button
+          className={`border-[#4338CA] ${
+            currentTab === PersonTab.SEGMENTS ? "border-b-2 text-[#4338CA]" : ""
+          }`}
+          onClick={() => setCurrentTab(PersonTab.SEGMENTS)}
+        >
+          Segments
         </button>
       </div>
       <div className="w-full h-[calc(100vh-188px)] p-5 flex gap-5">
@@ -545,11 +647,77 @@ const Personv2 = () => {
               </div>
             )}
           </>
-        ) : (
+        ) : currentTab === PersonTab.JOURNEY ? (
           <div className="w-full h-full bg-white rounded-lg p-5">
             <PeopleInJourneyTable />
           </div>
-        )}
+        ) : currentTab === PersonTab.SEGMENTS ? (
+          <div className="w-full h-full bg-white rounded-lg p-5">
+            {/* Segments tab content here */}
+            <Table
+              isLoading={isLoading}
+              headings={[
+                <div className="px-5 py-[10px] select-none">Name</div>,
+                <div className="px-5 py-[10px] select-none">Type</div>,
+                <div
+                  className="px-5 py-[10px] select-none flex gap-[2px] items-center cursor-pointer"
+                  onClick={() => {
+                    if (sortOptions.sortBy !== SortProperty.UPDATED_AT) {
+                      setSortOptions({
+                        sortBy: SortProperty.UPDATED_AT,
+                        sortType: SortType.DESC,
+                      });
+
+                      return;
+                    }
+
+                    if (sortOptions.sortType === SortType.ASC) {
+                      setSortOptions({
+                        sortBy: SortProperty.UPDATED_AT,
+                        sortType: SortType.DESC,
+                      });
+
+                      return;
+                    }
+
+                    setSortOptions({
+                      sortBy: SortProperty.UPDATED_AT,
+                      sortType: SortType.ASC,
+                    });
+                  }}
+                >
+                  <div>Last update</div>
+                  <div>
+                    <img
+                      src={
+                        sortOptions.sortBy === SortProperty.UPDATED_AT
+                          ? sortOptions.sortType === SortType.ASC
+                            ? sortAscChevronsImage
+                            : sortDescChevronsImage
+                          : sortNoneChevronsImage
+                      }
+                    />
+                  </div>
+                </div>,
+                ,
+                <div className="px-5 py-[10px] select-none"></div>,
+              ]}
+              rowsData={rows}
+              rows={rows.map((row) => [
+                <button
+                  className="text-[#6366F1]"
+                  onClick={() => navigate(`/segment/${row.id}`)}
+                >
+                  {row.name}
+                </button>,
+                <div>{row.type}</div>,
+                <div>
+                  {format(new Date(row.lastUpdate), "MM/dd/yyyy HH:mm")}
+                </div>,
+              ])}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );
