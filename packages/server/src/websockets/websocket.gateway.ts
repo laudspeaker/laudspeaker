@@ -344,6 +344,7 @@ export class WebsocketGateway implements OnGatewayConnection {
         return;
       }
       socket.emit('log', 'Connection procedure complete.');
+      socket.emit('flush');
 
       await this.accountsService.accountsRepository.save({
         id: account.id,
@@ -769,9 +770,9 @@ export class WebsocketGateway implements OnGatewayConnection {
     return false;
   }
 
- /*
-  * old fire event for modal
-  */
+  /*
+   * old fire event for modal
+   */
   /*
   @SubscribeMessage('fire')
   public async handleFire(
@@ -825,16 +826,15 @@ export class WebsocketGateway implements OnGatewayConnection {
   }
   */
 
- /*
-  * 
-  */
+  /*
+   *
+   */
   @SubscribeMessage('fire')
   public async handleFire(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() fullPayload: { eventName: string; payload: string; customerId: string }
+    @MessageBody()
+    fullPayload: { eventName: string; payload: string; customerId: string }
   ) {
-
-    //console.log("in websocket fire");
     try {
       const {
         account: { teams },
@@ -862,14 +862,6 @@ export class WebsocketGateway implements OnGatewayConnection {
         socket.emit('customerId', customer.id);
       }
 
-      /*
-      return this.eventsService.customPayload(
-      <{ account: Account; workspace: Workspaces }>user,
-      body,
-      session
-    );
-      */
-
       const { eventName, payload } = fullPayload;
 
       // Parse the JSON string payload to an object
@@ -880,32 +872,19 @@ export class WebsocketGateway implements OnGatewayConnection {
         correlationKey: '_id',
         correlationValue: customer.id,
         source: AnalyticsProviderTypes.MOBILE,
-        //payload: payload,
         payload: payloadObj,
         event: eventName,
-      }
-
-      //console.log("event struct is", JSON.stringify(eventStruct, null, 2));
-      //auth: { account: Account; workspace: Workspaces },
-
+      };
 
       await this.eventsService.customPayload(
         { account: socket.data.account, workspace: workspace },
         eventStruct,
-        /*
-        {
-          correlationKey: '_id',
-          correlationValue: customer.id,
-          source: AnalyticsProviderTypes.MOBILE,
-          event: eventName,
-          payload: payloadObj,
-        },
-        */
         socket.data.session
       );
 
       socket.emit('log', 'Successful fire');
     } catch (e) {
+      this.error(e, this.handleFire.name, randomUUID());
       socket.emit('error', e);
     }
   }

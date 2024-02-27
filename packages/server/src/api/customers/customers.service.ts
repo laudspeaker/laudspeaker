@@ -1345,8 +1345,14 @@ export class CustomersService {
     session: string,
     transactionSession?: ClientSession
   ): Promise<number> {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-
+    const foundAccount = await this.accountsRepository.findOne({
+      where: {
+        id: account.id,
+      },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = foundAccount?.teams?.[0]?.organization?.workspaces?.[0];
+    let collectionPrefix: string;
     let count = 0;
     if (
       !criteria ||
@@ -1363,6 +1369,19 @@ export class CustomersService {
     } else {
       //TODO: We need to translate segment builder condiitons
       // into a mongo query
+
+      collectionPrefix = this.segmentsService.generateRandomString();
+      const customersInSegment = await this.getSegmentCustomersFromQuery(
+        criteria.query,
+        foundAccount,
+        session,
+        true,
+        0,
+        collectionPrefix
+      );
+      const collectionName = customersInSegment; // Name of the MongoDB collection
+      const coll = this.connection.collection(collectionName);
+      count = await coll.countDocuments({});
     }
 
     this.debug(

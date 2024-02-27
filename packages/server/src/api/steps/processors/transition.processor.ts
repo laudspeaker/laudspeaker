@@ -164,9 +164,9 @@ export class TransitionProcessor extends WorkerHost {
       switch (job.data.step.type) {
         case StepType.START:
           await this.handleStart(
-            job.data.ownerID,
-            job.data.journeyID,
-            job.data.step.id,
+            job.data.owner,
+            job.data.journey,
+            job.data.step,
             job.data.session,
             job.data.customerID,
             queryRunner,
@@ -1092,76 +1092,16 @@ export class TransitionProcessor extends WorkerHost {
    * @param transactionSession
    */
   async handleStart(
-    ownerID: string,
-    journeyID: string,
-    stepID: string,
+    owner: Account,
+    journey: Journey,
+    step: Step,
     session: string,
     customerID: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession,
     event?: string
   ) {
-    let start = process.hrtime.bigint(); // Start time in nanoseconds
-
-    const owner = await queryRunner.manager.findOne(Account, {
-      where: { id: ownerID },
-      relations: ['teams.organization.workspaces'],
-    });
-
-    let end = process.hrtime.bigint(); // End time in nanoseconds
-    let duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
-
-    this.warn(
-      `Account call duration: ${duration} ms`,
-      this.handleStart.name,
-      session
-    );
-
-    start = process.hrtime.bigint(); // Start time in nanoseconds
-
-    const journey = await this.journeysService.findByID(
-      owner,
-      journeyID,
-      session,
-      queryRunner
-    );
-
-    end = process.hrtime.bigint(); // End time in nanoseconds
-    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
-
-    this.warn(
-      `Journey call duration: ${duration} ms`,
-      this.handleStart.name,
-      session
-    );
-    start = process.hrtime.bigint(); // Start time in nanoseconds
-
-    const currentStep = await queryRunner.manager.findOne(Step, {
-      where: {
-        id: stepID,
-        type: StepType.START,
-      },
-    });
-
-    end = process.hrtime.bigint(); // End time in nanoseconds
-    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
-
-    this.warn(
-      `Current Step call duration: ${duration} ms`,
-      this.handleStart.name,
-      session
-    );
-    start = process.hrtime.bigint(); // Start time in nanoseconds
     const customer = await this.customersService.findById(owner, customerID);
-    end = process.hrtime.bigint(); // End time in nanoseconds
-    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
-
-    this.warn(
-      `Customer call duration: ${duration} ms`,
-      this.handleStart.name,
-      session
-    );
-    start = process.hrtime.bigint(); // Start time in nanoseconds
 
     const location = await this.journeyLocationsService.findForWrite(
       journey,
@@ -1170,22 +1110,13 @@ export class TransitionProcessor extends WorkerHost {
       owner,
       queryRunner
     );
-    end = process.hrtime.bigint(); // End time in nanoseconds
-    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
-
-    this.warn(
-      `Location call duration: ${duration} ms`,
-      this.handleStart.name,
-      session
-    );
-    start = process.hrtime.bigint(); // Start time in nanoseconds
 
     if (!location) {
       this.warn(
         `${JSON.stringify({
           warning: 'Customer not in step',
           customerID,
-          currentStep,
+          step,
         })}`,
         this.handleMessage.name,
         session,
@@ -1196,24 +1127,15 @@ export class TransitionProcessor extends WorkerHost {
 
     const nextStep = await queryRunner.manager.findOne(Step, {
       where: {
-        id: currentStep.metadata.destination,
+        id: step.metadata.destination,
       },
     });
-    end = process.hrtime.bigint(); // End time in nanoseconds
-    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
-
-    this.warn(
-      `nextStep call duration: ${duration} ms`,
-      this.handleStart.name,
-      session
-    );
-    start = process.hrtime.bigint(); // Start time in nanoseconds
 
     if (nextStep) {
       // Destination exists, move customer into destination
       await this.journeyLocationsService.move(
         location,
-        currentStep,
+        step,
         nextStep,
         session,
         owner,
@@ -1225,8 +1147,8 @@ export class TransitionProcessor extends WorkerHost {
         nextStep.type !== StepType.WAIT_UNTIL_BRANCH
       ) {
         await this.transitionQueue.add(nextStep.type, {
-          ownerID,
-          journeyID,
+          ownerID: owner.id,
+          journeyID: journey.id,
           step: nextStep,
           session: session,
           customerID,
