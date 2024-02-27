@@ -170,7 +170,7 @@ export class SegmentsService {
     search = '',
     session: string
   ) {
-    this.debug(`In findAllSegmentsForCustomer`, this.findAllSegmentsForCustomer.name, session, account.id);
+    //this.debug(`In findAllSegmentsForCustomer`, this.findAllSegmentsForCustomer.name, session, account.id);
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const totalPages = Math.ceil(
