@@ -35,13 +35,6 @@ export const dataSubArray = [
         link: "/templates",
       },
       {
-        id: "tracker-template",
-        imgIcon: templateBuilderIcon,
-        text: "Component templates",
-        type: "menu",
-        link: "/tracker-template",
-      },
-      {
         id: "event-tracker",
         imgIcon: templateBuilderIcon,
         text: "Event Tracker",
