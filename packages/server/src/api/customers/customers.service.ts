@@ -429,7 +429,6 @@ export class CustomersService {
             [key]: new RegExp(`.*${search}.*`, 'i'),
           }
         : {}),
-      ...(showFreezed ? {} : { isFreezed: { $ne: true } }),
     })
       .skip(skip)
       .limit(take <= 100 ? take : 100)
@@ -721,9 +720,6 @@ export class CustomersService {
     const customer = await this.findOne(account, id, session);
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    if (customer.isFreezed)
-      throw new BadRequestException('Customer is freezed');
-
     if (customer.workspaceId != workspace.id) {
       throw new HttpException("You can't update this customer.", 400);
     }
@@ -788,7 +784,6 @@ export class CustomersService {
       delete newCustomerData._id;
       delete newCustomerData.__v;
       delete newCustomerData.audiences;
-      delete newCustomerData.isFreezed;
       delete newCustomerData.id;
       const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -797,9 +792,6 @@ export class CustomersService {
         id,
         transactionSession
       );
-
-      if (customer.isFreezed)
-        throw new BadRequestException('Customer is freezed');
 
       if (customer.workspaceId != workspace.id) {
         throw new HttpException("You can't update this customer.", 400);
@@ -1443,7 +1435,6 @@ export class CustomersService {
     } else {
       queryParam[correlationKey] = correlationValue;
     }
-    queryParam.isFreezed = { $ne: true };
     try {
       if (transactionSession) {
         customer = await this.CustomerModel.findOne(queryParam)
@@ -1525,7 +1516,7 @@ export class CustomersService {
           HttpStatus.BAD_REQUEST
         );
 
-      let ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
+      const ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
         {
           workspaceId: auth.workspace.id,
           [primaryKey.key]: upsertCustomerDto.primary_key,
@@ -1575,7 +1566,7 @@ export class CustomersService {
         HttpStatus.BAD_REQUEST
       );
 
-    let ret: CustomerDocument = await this.CustomerModel.findOneAndDelete(
+    const ret: CustomerDocument = await this.CustomerModel.findOneAndDelete(
       {
         workspaceId: auth.workspace.id,
         [primaryKey.key]: deleteCustomerDto.primary_key,
@@ -1701,8 +1692,6 @@ export class CustomersService {
       session,
       account.id
     );
-
-    if (cust.isFreezed) throw new BadRequestException('Customer is freezed');
 
     const res = await this.CustomerModel.deleteOne({
       _id: new mongoose.Types.ObjectId(cust.id),
@@ -4202,7 +4191,7 @@ export class CustomersService {
         pipeline1
       );
 
-      let mobileMongoQuery = cloneDeep(mongoQuery);
+      const mobileMongoQuery = cloneDeep(mongoQuery);
       mobileMongoQuery.source = 'mobile';
 
       const pipeline2 = [

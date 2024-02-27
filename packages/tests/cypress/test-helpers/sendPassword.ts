@@ -1,7 +1,5 @@
 import "@4tw/cypress-drag-drop";
-export const sendPassword = (
-  email: string,
-) => {
+export const sendPassword = (email: string) => {
   cy.clearCookies();
   cy.visit("/");
   cy.url().should("include", "/login");

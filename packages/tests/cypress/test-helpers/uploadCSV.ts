@@ -1,7 +1,5 @@
 import "@4tw/cypress-drag-drop";
-export const uploadCSV = (
-  filename: string,
-) => {
+export const uploadCSV = (filename: string) => {
   cy.visit("/people");
   //cy.url().should("include", "/company-setup");
   cy.get("div.justify-between button:nth-of-type(2)").click();

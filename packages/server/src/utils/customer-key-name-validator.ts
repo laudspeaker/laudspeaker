@@ -11,7 +11,6 @@ export const KEYS_TO_SKIP = [
   'journeyEnrollmentsDates',
   'verified',
   'isAnonymous',
-  'isFreezed',
   'customComponents',
   'createdAt',
   'workflows',

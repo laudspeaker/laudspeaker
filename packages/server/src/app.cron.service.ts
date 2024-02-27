@@ -267,7 +267,7 @@ export class CronService {
     let queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    let timeBasedJobs: any[] = [];
+    const timeBasedJobs: any[] = [];
     try {
       const journeys = await this.journeysService.allActiveTransactional(
         queryRunner
@@ -769,14 +769,14 @@ export class CronService {
     // to do change this to organisations rather than
     const accounts = await this.accountsService.findAll();
     for (let j = 0; j < accounts.length; j++) {
-      let queryRunner = this.dataSource.createQueryRunner();
+      const queryRunner = this.dataSource.createQueryRunner();
       await queryRunner.connect();
       await queryRunner.startTransaction();
-      let segmentPrefixes: string[] = [];
+      const segmentPrefixes: string[] = [];
       //we keep for logging
       let segmentError: string;
       try {
-        let segments = await this.segmentsService.getSegments(
+        const segments = await this.segmentsService.getSegments(
           accounts[j],
           undefined,
           queryRunner
@@ -787,7 +787,7 @@ export class CronService {
             continue; // Skip to the next iteration of the loop
           }
 
-          let doInclude = this.checkSegmentHasMessageFilters(
+          const doInclude = this.checkSegmentHasMessageFilters(
             segment.inclusionCriteria.query,
             accounts[j].id,
             session
