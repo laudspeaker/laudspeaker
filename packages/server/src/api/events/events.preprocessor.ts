@@ -344,7 +344,7 @@ export class EventsPreProcessor extends WorkerHost {
       //find customer associated with event or create new customer if not found
       const correlation: Correlation =
         await this.customersService.findOrCreateByCorrelationKVPair(
-          job.data.owner,
+          job.data.workspace,
           job.data.event,
           transactionSession
         );

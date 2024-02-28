@@ -1430,13 +1430,11 @@ export class CustomersService {
   }
 
   async findOrCreateByCorrelationKVPair(
-    account: Account,
+    workspace: Workspaces,
     dto: EventDto,
     transactionSession: ClientSession
   ): Promise<Correlation> {
     let customer: CustomerDocument; // Found customer
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-
     const queryParam = { workspaceId: workspace.id };
     queryParam[dto.correlationKey] = dto.correlationValue;
     try {
