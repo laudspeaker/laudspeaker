@@ -168,7 +168,7 @@ export class StepsService {
       throw new Error('Can only have one start step per journey.');
 
     const { collectionName, customers } = await this.customersService.find(
-      account.id,
+      account,
       query,
       session,
       transactionSession,

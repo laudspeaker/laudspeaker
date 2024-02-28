@@ -1177,7 +1177,7 @@ export class CustomersService {
    *
    */
   async find(
-    account: string,
+    account: Account,
     criteria: any,
     session: string,
     transactionSession?: ClientSession,
@@ -1187,13 +1187,7 @@ export class CustomersService {
     let query: any;
     let collectionPrefix: string;
     let collectionName: string;
-    const foundAccount = await this.accountsRepository.findOne({
-      where: {
-        id: account,
-      },
-      relations: ['teams.organization.workspaces'],
-    });
-    const workspace = foundAccount?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     if (
       !criteria ||
@@ -1209,7 +1203,7 @@ export class CustomersService {
       collectionPrefix = this.segmentsService.generateRandomString();
       const customersInSegment = await this.getSegmentCustomersFromQuery(
         criteria.query,
-        foundAccount,
+        account,
         session,
         true,
         0,
@@ -1309,13 +1303,7 @@ export class CustomersService {
     transactionSession?: ClientSession
   ): Promise<{ collectionName: string; count: number }> {
     let collectionName: string;
-    const foundAccount = await this.accountsRepository.findOne({
-      where: {
-        id: account.id,
-      },
-      relations: ['teams.organization.workspaces'],
-    });
-    const workspace = foundAccount?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     let collectionPrefix: string;
     let count = 0;
     if (
@@ -1337,7 +1325,7 @@ export class CustomersService {
       collectionPrefix = this.segmentsService.generateRandomString();
       const customersInSegment = await this.getSegmentCustomersFromQuery(
         criteria.query,
-        foundAccount,
+        account,
         session,
         true,
         0,

@@ -148,7 +148,7 @@ export class StartProcessor extends WorkerHost {
       try {
         // Retrieve customers from mongo
         const { collectionName, customers } = await this.customersService.find(
-          job.data.owner.id,
+          job.data.owner,
           job.data.query,
           job.data.session,
           transactionSession,
