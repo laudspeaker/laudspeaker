@@ -162,10 +162,15 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
   const handleBody = (value: string) =>
     setWebhookState({ ...webhookState, body: value });
 
-  const [headers, setHeaders] = useState([""]);
+  const [headers, setHeaders] = useState<
+    {
+      id: number;
+      value: string;
+    }[]
+  >([]);
   const customHeaders = headers.reduce(
     (acc: Record<string, string>, header) => {
-      const [key, value] = header.split(":");
+      const [key, value] = header.value.split(":");
       if (key && value) acc[key.trim()] = value.trim();
       return acc;
     },
@@ -173,13 +178,18 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
   );
 
   const handleAddHeader = () => {
-    setHeaders([...headers, ""]);
+    setHeaders((prevHeaders) => [
+      ...prevHeaders,
+      { id: Date.now(), value: "" },
+    ]);
   };
 
-  const handleHeaderChange = (index: number, value: string) => {
-    const newHeaders = [...headers];
-    newHeaders[index] = value;
-    setHeaders(newHeaders);
+  const handleHeaderChange = (id: number, updatedValue: string) => {
+    setHeaders((prevHeaders) =>
+      prevHeaders.map((header) =>
+        header.id === id ? { ...header, value: updatedValue } : header
+      )
+    );
   };
 
   const refSetterMap = new Map<
@@ -201,7 +211,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
       });
   }, [selectedRef]);
 
-  const authComonents: Record<AuthType, ReactNode> = {
+  const authComponents: Record<AuthType, ReactNode> = {
     [AuthType.BEARER]: (
       <div className="flex items-center bg-gray-200 gap-8 p-2.5 rounded">
         <div className="font-semibold">Token</div>
@@ -325,15 +335,15 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
           </div>
         </div>
         <div className="text-sm leading-[22px] flex flex-col">
-          {authComonents[authType]}
+          {authComponents[authType]}
         </div>
       </>
     ),
     Headers: (
       <>
-        {headers.map((header, index) => (
+        {headers.map(({ id, value }) => (
           <div
-            key={header}
+            key={id}
             className="flex items-center bg-gray-200 gap-8 p-2.5 rounded"
           >
             <div className="text-[16px] font-semibold leading-[24px]">
@@ -341,12 +351,13 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
             </div>
 
             <Input
+              // key={`input-${index}`} // Set a constant key for the Input
               wrapperClassName="w-full"
               className="w-full"
-              name={`custom-header-${index}`}
-              id={`custom-header-${index}`}
-              value={header || ""}
-              onChange={(e) => handleHeaderChange(index, e)}
+              name={`custom-header-${id}`}
+              id={`custom-header-${id}`}
+              value={value || ""}
+              onChange={(e) => handleHeaderChange(id, e)}
               onFocus={() => setSelectedRef?.(customHeaderRef)}
               placeholder="Header"
             />
