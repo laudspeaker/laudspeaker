@@ -226,7 +226,7 @@ export class JourneyLocationsService {
         Date.now(),
         Date.now(),
       ]);
-    } 
+    }
   }
 
   /**

@@ -448,7 +448,7 @@ const PeopleImport: FC<PeopleImportProps> = ({ inSegment }) => {
             <div className="w-full flex flex-col items-center justify-center">
               <div className="relative bg-transparent border-t-transparent  border-[#6366F1] border-4 rounded-full w-10 h-10 animate-spin" />
               <div className="my-2 text-base text-center font-roboto text-[#4B5563] animate-pulse">
-                Preforming calculation...
+                Performing calculation...
               </div>
             </div>
           </FlowBuilderModal>
@@ -456,7 +456,7 @@ const PeopleImport: FC<PeopleImportProps> = ({ inSegment }) => {
             <div className="w-full flex flex-col items-center justify-center">
               <div className="relative bg-transparent border-t-transparent  border-[#6366F1] border-4 rounded-full w-10 h-10 animate-spin" />
               <div className="my-2 text-center text-base font-roboto text-[#4B5563] animate-pulse">
-                Starting import
+                Starting import...
               </div>
             </div>
           </FlowBuilderModal>
