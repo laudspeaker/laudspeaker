@@ -183,81 +183,82 @@ export class CronService {
     );
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
-  async handleCustomerKeysCron() {
-    const session = randomUUID();
-    try {
-      let current = 0;
-      const documentsCount = await this.customerModel
-        .estimatedDocumentCount()
-        .exec();
+  // TODO: might be deleted after clarification
+  // @Cron(CronExpression.EVERY_HOUR)
+  // async handleCustomerKeysCron() {
+  //   const session = randomUUID();
+  //   try {
+  //     let current = 0;
+  //     const documentsCount = await this.customerModel
+  //       .estimatedDocumentCount()
+  //       .exec();
 
-      const keys: Record<string, any[]> = {};
-      const keyCustomerMap: Record<string, Set<string>> = {};
+  //     const keys: Record<string, any[]> = {};
+  //     const keyCustomerMap: Record<string, Set<string>> = {};
 
-      while (current < documentsCount) {
-        const batch = await this.customerModel
-          .find()
-          .skip(current)
-          .limit(BATCH_SIZE)
-          .exec();
+  //     while (current < documentsCount) {
+  //       const batch = await this.customerModel
+  //         .find()
+  //         .skip(current)
+  //         .limit(BATCH_SIZE)
+  //         .exec();
 
-        batch.forEach((customer) => {
-          const obj = customer.toObject();
-          for (const key of Object.keys(obj)) {
-            if (KEYS_TO_SKIP.includes(key)) continue;
+  //       batch.forEach((customer) => {
+  //         const obj = customer.toObject();
+  //         for (const key of Object.keys(obj)) {
+  //           if (KEYS_TO_SKIP.includes(key)) continue;
 
-            if (keys[key]) {
-              keys[key].push(obj[key]);
-              keyCustomerMap[key].add(customer.workspaceId);
-              continue;
-            }
+  //           if (keys[key]) {
+  //             keys[key].push(obj[key]);
+  //             keyCustomerMap[key].add(customer.workspaceId);
+  //             continue;
+  //           }
 
-            keys[key] = [obj[key]];
-            keyCustomerMap[key] = new Set([customer.workspaceId]);
-          }
-        });
-        current += BATCH_SIZE;
-      }
+  //           keys[key] = [obj[key]];
+  //           keyCustomerMap[key] = new Set([customer.workspaceId]);
+  //         }
+  //       });
+  //       current += BATCH_SIZE;
+  //     }
 
-      for (const key of Object.keys(keys)) {
-        const validItem = keys[key].find(
-          (item) => item !== '' && item !== undefined && item !== null
-        );
+  //     for (const key of Object.keys(keys)) {
+  //       const validItem = keys[key].find(
+  //         (item) => item !== '' && item !== undefined && item !== null
+  //       );
 
-        if (validItem === '' || validItem === undefined || validItem === null)
-          continue;
+  //       if (validItem === '' || validItem === undefined || validItem === null)
+  //         continue;
 
-        const keyType = getType(validItem);
-        const isArray = keyType.isArray();
-        let type = isArray ? getType(validItem[0]).name : keyType.name;
+  //       const keyType = getType(validItem);
+  //       const isArray = keyType.isArray();
+  //       let type = isArray ? getType(validItem[0]).name : keyType.name;
 
-        if (type === 'String') {
-          if (isEmail(validItem)) type = 'Email';
-          if (isDateString(validItem)) type = 'Date';
-        }
+  //       if (type === 'String') {
+  //         if (isEmail(validItem)) type = 'Email';
+  //         if (isDateString(validItem)) type = 'Date';
+  //       }
 
-        for (const workspaceId of keyCustomerMap[key].values()) {
-          await this.customerKeysModel
-            .updateOne(
-              { key, workspaceId },
-              {
-                $set: {
-                  key,
-                  type,
-                  isArray,
-                  workspaceId,
-                },
-              },
-              { upsert: true }
-            )
-            .exec();
-        }
-      }
-    } catch (e) {
-      this.error(e, this.handleCustomerKeysCron.name, session);
-    }
-  }
+  //       for (const workspaceId of keyCustomerMap[key].values()) {
+  //         await this.customerKeysModel
+  //           .updateOne(
+  //             { key, workspaceId },
+  //             {
+  //               $set: {
+  //                 key,
+  //                 type,
+  //                 isArray,
+  //                 workspaceId,
+  //               },
+  //             },
+  //             { upsert: true }
+  //           )
+  //           .exec();
+  //       }
+  //     }
+  //   } catch (e) {
+  //     this.error(e, this.handleCustomerKeysCron.name, session);
+  //   }
+  // }
 
   @Cron(CronExpression.EVERY_MINUTE)
   async minuteTasks() {

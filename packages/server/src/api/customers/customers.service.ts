@@ -5148,11 +5148,17 @@ export class CustomersService {
           this.correctValueType(valueType, value, account, session)
         ); //value;
       case 'contains':
+        if (Array.isArray(customerValue)) {
+          return customerValue.includes(value);
+        }
         if (typeof customerValue === 'string' && typeof value === 'string') {
           return customerValue.includes(value);
         }
         return false;
       case 'does not contain':
+        if (Array.isArray(customerValue)) {
+          return !customerValue.includes(value);
+        }
         if (typeof customerValue === 'string' && typeof value === 'string') {
           return !customerValue.includes(value);
         }
@@ -5179,6 +5185,24 @@ export class CustomersService {
           ); //value;;
         }
         return false;
+      case 'after':
+        return new Date(customerValue) > new Date(value);
+      case 'before':
+        return new Date(customerValue) < new Date(value);
+      case 'during':
+        return (
+          new Date(customerValue) > new Date(value) &&
+          new Date(customerValue) < new Date(subComparisonValue)
+        );
+      case 'length is greater than':
+        if (!customerValue.length || isNaN(+value)) return false;
+        return customerValue.length > +value;
+      case 'length is less than':
+        if (!customerValue.length || isNaN(+value)) return false;
+        return customerValue.length < +value;
+      case 'length is equal to':
+        if (!customerValue.length || isNaN(+value)) return false;
+        return customerValue.length === +value;
       //not checked
       // nested object
       case 'key':

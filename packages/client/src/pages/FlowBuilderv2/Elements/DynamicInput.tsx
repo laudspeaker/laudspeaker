@@ -7,9 +7,9 @@ import { StatementValueType } from "reducers/flow-builder.reducer";
 import { ArrayComponent } from "./ArrayComponent";
 
 export interface ValueChanger {
-  value: string;
+  value: any;
   placeholder?: string;
-  onChange: (value: string) => void;
+  onChange: (value: any) => void;
 }
 
 const BooleanComponent: FC<ValueChanger> = ({ value, onChange }) => {
@@ -18,8 +18,8 @@ const BooleanComponent: FC<ValueChanger> = ({ value, onChange }) => {
       placeholder="value"
       value={value}
       options={[
-        { key: "true", title: "true" },
-        { key: "false", title: "false" },
+        { key: true, title: "true" },
+        { key: false, title: "false" },
       ]}
       onChange={(v) => onChange(v)}
     />
@@ -36,11 +36,9 @@ export enum DateRelativePoint {
   AGO = "ago",
 }
 
-export const DateComponent: FC<ValueChanger & { isRelativeDate?: boolean }> = ({
-  value,
-  onChange,
-  isRelativeDate,
-}) => {
+export const DateComponent: FC<
+  ValueChanger & { isRelativeDate?: boolean; onlyDate?: boolean }
+> = ({ value, onChange, isRelativeDate, onlyDate }) => {
   const [relativeCount, setRelativeCount] = useState(0);
   const [relativeUnit, setRelativeUnit] = useState<DateRelativeUnit>(
     DateRelativeUnit.DAYS
@@ -84,14 +82,16 @@ export const DateComponent: FC<ValueChanger & { isRelativeDate?: boolean }> = ({
       )
         .toISOString()
         .slice(0, 16);
+
+      if (onlyDate) relativeValue = relativeValue.split("T")[0];
     } catch (e) {}
 
     return (
       <input
         value={relativeValue}
         onChange={(e) => onChange(new Date(e.target.value).toUTCString())}
-        type="datetime-local"
-        className="w-[250px] h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
+        type={onlyDate ? "date" : "datetime-local"}
+        className="min-w-[250px] w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
         placeholder="Select time"
       />
     );
@@ -173,6 +173,7 @@ interface DynamicInputProps extends ValueChanger {
   type: StatementValueType;
   isArray?: boolean;
   isRelativeDate?: boolean;
+  dateFormat?: string;
 }
 
 const DynamicInput: FC<DynamicInputProps> = ({
@@ -182,6 +183,7 @@ const DynamicInput: FC<DynamicInputProps> = ({
   placeholder,
   onChange,
   isRelativeDate,
+  dateFormat,
 }) => {
   const [isFirstRender, setIsFirstRender] = useState(true);
 
@@ -205,6 +207,7 @@ const DynamicInput: FC<DynamicInputProps> = ({
         value={value}
         onChange={onChange}
         isRelativeDate={isRelativeDate}
+        onlyDate
       />
     ),
     [StatementValueType.DATE_TIME]: (
@@ -262,6 +265,7 @@ const DynamicInput: FC<DynamicInputProps> = ({
           value={value}
           onChange={onChange}
           placeholder={placeholder}
+          dateFormat={dateFormat}
         />
       ) : (
         dynamicComponent
