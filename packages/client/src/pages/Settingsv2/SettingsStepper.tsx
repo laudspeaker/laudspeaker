@@ -25,7 +25,7 @@ const SettingsStepper: FC<SettingsStepperProps> = ({
   const settingsTabToNameMap: { [key: number]: string } = {
     [SettingsTab.ACCOUNT]: "Account",
     [SettingsTab.MESSAGE_CHANNEL]: "Message Channels",
-    [SettingsTab.EVENT_PROVIDER]: "Event provider",
+    [SettingsTab.EVENT_PROVIDER]: "Event Providers",
     [SettingsTab.API]: "API",
     [SettingsTab.ORGANIZATION]: "Organization",
     // Removed for 1 release
