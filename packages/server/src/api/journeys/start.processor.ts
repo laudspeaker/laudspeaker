@@ -147,7 +147,7 @@ export class StartProcessor extends WorkerHost {
       transactionSession.startTransaction();
       try {
         // Retrieve customers from mongo
-        const customers = await this.customersService.find(
+        const { collectionName, customers } = await this.customersService.find(
           job.data.owner.id,
           job.data.query,
           job.data.session,
@@ -162,17 +162,6 @@ export class StartProcessor extends WorkerHost {
           job.data.session,
           transactionSession
         );
-        // const account = await queryRunner.manager.findOne(Account, {
-        //   where: {
-        //     id: job.data.ownerID,
-        //   },
-        //   relations: ['teams.organization.workspaces'],
-        // });
-        // const journey = await queryRunner.manager.findOne(Journey, {
-        //   where: {
-        //     id: job.data.journeyID,
-        //   },
-        // });
         await this.journeysService.enrollCustomersInJourney(
           job.data.owner,
           job.data.journey,
@@ -183,6 +172,7 @@ export class StartProcessor extends WorkerHost {
         );
         await transactionSession.commitTransaction();
         await queryRunner.commitTransaction();
+        if (collectionName) this.connection.dropCollection(collectionName);
       } catch (e) {
         this.error(e, this.process.name, job.data.session, job.data.owner.id);
         await transactionSession.abortTransaction();

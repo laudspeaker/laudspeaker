@@ -16,6 +16,8 @@ import { Requeue } from './entities/requeue.entity';
 import { JourneyLocationsService } from '../journeys/journey-locations.service';
 import { CustomersService } from '../customers/customers.service';
 import { Journey } from '../journeys/entities/journey.entity';
+import { InjectConnection } from '@nestjs/mongoose';
+import mongoose, { ClientSession } from 'mongoose';
 
 @Injectable()
 export class StepsService {
@@ -38,6 +40,7 @@ export class StepsService {
     private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
+    @InjectConnection() private readonly connection: mongoose.Connection,
     @InjectRepository(Step)
     public stepsRepository: Repository<Step>,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
@@ -148,8 +151,9 @@ export class StepsService {
     query: any,
     audienceSize: number,
     queryRunner: QueryRunner,
+    transactionSession: ClientSession,
     session: string
-  ) {
+  ): Promise<string> {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const startStep = await queryRunner.manager.find(Step, {
@@ -163,18 +167,18 @@ export class StepsService {
     if (startStep.length !== 1)
       throw new Error('Can only have one start step per journey.');
 
-    const customerDocumentArray = await this.customersService.find(
+    const { collectionName, customers } = await this.customersService.find(
       account.id,
       query,
       session,
-      null,
+      transactionSession,
       0,
       audienceSize
     );
 
     await this.journeyLocationsService.createAndLockBulk(
       journey.id,
-      customerDocumentArray.map((document) => {
+      customers.map((document) => {
         return document._id.toString();
       }),
       startStep[0],
@@ -192,6 +196,8 @@ export class StepsService {
       skip: 0,
       limit: audienceSize,
     });
+
+    return collectionName;
   }
 
   /**

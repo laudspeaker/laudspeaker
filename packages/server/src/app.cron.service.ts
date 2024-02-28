@@ -1269,6 +1269,7 @@ export class CronService {
   @Cron(CronExpression.EVERY_MINUTE)
   async handleEntryTiming() {
     const session = randomUUID();
+    const collectionNames: string[] = [];
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -1339,12 +1340,14 @@ export class CronService {
             this.handleEntryTiming.name,
             session
           );
-          const audienceSize = await this.customersService.getAudienceSize(
-            delayedJourneys[journeysIndex].workspace.organization.owner,
-            delayedJourneys[journeysIndex].inclusionCriteria,
-            session,
-            transactionSession
-          );
+          const { collectionName, count } =
+            await this.customersService.getAudienceSize(
+              delayedJourneys[journeysIndex].workspace.organization.owner,
+              delayedJourneys[journeysIndex].inclusionCriteria,
+              session,
+              transactionSession
+            );
+          if (collectionName) collectionNames.push(collectionName);
           // Step 3: Edit journey details
           await queryRunner.manager.save(Journey, {
             ...delayedJourneys[journeysIndex],
@@ -1353,33 +1356,43 @@ export class CronService {
             last_enrollment_timestamp: Date.now(),
           });
           // Step 4: Reenroll customers that have been unenrolled
-          await this.stepsService.triggerStart(
-            delayedJourneys[journeysIndex].workspace.organization.owner,
-            delayedJourneys[journeysIndex],
-            delayedJourneys[journeysIndex].inclusionCriteria,
-            delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
-              ?.enabled &&
-              audienceSize >
-                parseInt(
-                  delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
-                    ?.maxEntries
-                )
-              ? parseInt(
-                  delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
-                    ?.maxEntries
-                )
-              : audienceSize,
-            queryRunner,
-            session
-          );
+          const collectionNameFromTrigger =
+            await this.stepsService.triggerStart(
+              delayedJourneys[journeysIndex].workspace.organization.owner,
+              delayedJourneys[journeysIndex],
+              delayedJourneys[journeysIndex].inclusionCriteria,
+              delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
+                ?.enabled &&
+                count >
+                  parseInt(
+                    delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
+                      ?.maxEntries
+                  )
+                ? parseInt(
+                    delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
+                      ?.maxEntries
+                  )
+                : count,
+              queryRunner,
+              transactionSession,
+              session
+            );
+          if (collectionNameFromTrigger)
+            collectionNames.push(collectionNameFromTrigger);
         }
       }
+      await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
+      for (const collection of collectionNames) {
+        await this.connection.dropCollection(collection);
+      }
     } catch (e) {
       this.error(e, this.handleEntryTiming.name, session);
       await queryRunner.rollbackTransaction();
+      await transactionSession.abortTransaction();
     } finally {
-      queryRunner.release();
+      await transactionSession.endSession();
+      await queryRunner.release();
     }
   }
 }

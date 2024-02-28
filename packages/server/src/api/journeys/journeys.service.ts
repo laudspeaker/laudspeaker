@@ -1461,7 +1461,9 @@ export class JourneysService {
    * @returns
    */
   async start(account: Account, journeyID: string, session: string) {
-    let journey: Journey; // Workflow to update
+    let journey: Journey;
+    let err: any;
+    let collectionNameFromTrigger: string;
     this.debug(
       `${JSON.stringify({ account, journeyID })}`,
       this.start.name,
@@ -1527,12 +1529,13 @@ export class JourneysService {
       if (!alg.isAcyclic(graph))
         throw new Error('Flow has infinite loops, cannot start.');
 
-      const audienceSize = await this.customersService.getAudienceSize(
-        account,
-        journey.inclusionCriteria,
-        session,
-        transactionSession
-      );
+      const { collectionName, count } =
+        await this.customersService.getAudienceSize(
+          account,
+          journey.inclusionCriteria,
+          session,
+          transactionSession
+        );
       if (
         journey.journeyEntrySettings.entryTiming.type ===
         EntryTiming.WhenPublished
@@ -1544,16 +1547,16 @@ export class JourneysService {
           isActive: true,
           startedAt: new Date(Date.now()),
         });
-        await this.stepsService.triggerStart(
+        collectionNameFromTrigger = await this.stepsService.triggerStart(
           account,
           journey,
           journey.inclusionCriteria,
           journey?.journeySettings?.maxEntries?.enabled &&
-            audienceSize >
-              parseInt(journey?.journeySettings?.maxEntries?.maxEntries)
+            count > parseInt(journey?.journeySettings?.maxEntries?.maxEntries)
             ? parseInt(journey?.journeySettings?.maxEntries?.maxEntries)
-            : audienceSize,
+            : count,
           queryRunner,
+          transactionSession,
           session
         );
       } else {
@@ -1568,14 +1571,21 @@ export class JourneysService {
 
       await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
-    } catch (err) {
+      if (collectionName) {
+        await this.connection.dropCollection(collectionName);
+      }
+      if (collectionNameFromTrigger) {
+        await this.connection.dropCollection(collectionNameFromTrigger);
+      }
+    } catch (e) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.logger.error('Error:  ' + err);
-      throw err;
+      err = e;
+      this.error(e, this.start.name, session, account.email);
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
+      if (err) throw err;
     }
   }
 

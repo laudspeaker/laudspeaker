@@ -1183,9 +1183,8 @@ export class CustomersService {
     transactionSession?: ClientSession,
     skip?: number,
     limit?: number
-  ): Promise<CustomerDocument[]> {
+  ): Promise<{ collectionName: string; customers: CustomerDocument[] }> {
     let query: any;
-    this.accountsRepository;
     let collectionPrefix: string;
     let collectionName: string;
     const foundAccount = await this.accountsRepository.findOne({
@@ -1246,8 +1245,7 @@ export class CustomersService {
     if (limit) query.limit(limit);
     if (skip) query.skip(skip);
     const res = await query.exec();
-    if (collectionName) await this.connection.dropCollection(collectionName);
-    return res;
+    return { collectionName, customers: res };
   }
 
   /**
@@ -1309,7 +1307,8 @@ export class CustomersService {
     criteria: any,
     session: string,
     transactionSession?: ClientSession
-  ): Promise<number> {
+  ): Promise<{ collectionName: string; count: number }> {
+    let collectionName: string;
     const foundAccount = await this.accountsRepository.findOne({
       where: {
         id: account.id,
@@ -1344,10 +1343,9 @@ export class CustomersService {
         0,
         collectionPrefix
       );
-      const collectionName = customersInSegment; // Name of the MongoDB collection
+      collectionName = customersInSegment; // Name of the MongoDB collection
       const coll = this.connection.collection(collectionName);
       count = await coll.countDocuments({});
-      await coll.drop();
     }
 
     this.debug(
@@ -1357,7 +1355,7 @@ export class CustomersService {
       account.email
     );
 
-    return count;
+    return { collectionName, count };
   }
 
   checkInclusion(
