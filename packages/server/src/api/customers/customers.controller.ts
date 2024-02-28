@@ -275,13 +275,11 @@ export class CustomersController {
     );
   }
 
+  // TODO: rewrite in order to pass primary key value in @Param()
   @Post('/create/')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  async create(
-    @Req() { user }: Request,
-    @Body() createCustomerDto: CreateCustomerDto
-  ) {
+  async create(@Req() { user }: Request, @Body() createCustomerDto: any) {
     const session = randomUUID();
     const cust = await this.customersService.create(
       <Account>user,

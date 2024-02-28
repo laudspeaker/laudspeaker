@@ -1,6 +1,7 @@
 /* eslint-disable no-case-declarations */
 import { HttpException, HttpStatus, Inject, Logger } from '@nestjs/common';
 import * as http from 'node:http';
+import https from 'https';
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import {
@@ -164,9 +165,9 @@ export class TransitionProcessor extends WorkerHost {
       switch (job.data.step.type) {
         case StepType.START:
           await this.handleStart(
-            job.data.ownerID,
-            job.data.journeyID,
-            job.data.step.id,
+            job.data.owner,
+            job.data.journey,
+            job.data.step,
             job.data.session,
             job.data.customerID,
             queryRunner,
@@ -612,13 +613,15 @@ export class TransitionProcessor extends WorkerHost {
     }
 
     // Rate limiting and sending quiet hours will be stored here
-    // Initial default is 'SEND'
-    let messageSendType:
+    type MessageSendType =
       | 'SEND' // should send
       | 'QUIET_REQUEUE' // quiet hours, requeue message when quiet hours over
       | 'QUIET_ABORT' // quiet hours, abort message, move to next step
       | 'LIMIT_REQUEUE' // messages per minute rate limit hit, requeue for next minute
-      | 'LIMIT_HOLD' = 'SEND'; // customers messaged per journey rate limit hit, hold at current
+      | 'LIMIT_HOLD' // customers messaged per journey rate limit hit, hold at current
+      | 'MOCK_SEND'; // mock message send, don't actually send message
+    // Initial default is 'SEND'
+    let messageSendType: MessageSendType = 'SEND';
     let requeueTime: Date;
     if (
       journey.journeySettings &&
@@ -687,6 +690,7 @@ export class TransitionProcessor extends WorkerHost {
     }
 
     if (messageSendType === 'SEND') {
+      // 1. CHECK RATE LIMITING BY UNIQUE CUSTOMERS MESSAGED
       const [customersMessagedLimitEnabled] =
         this.journeysService.rateLimitByCustomersMessagedEnabled(journey);
       if (customersMessagedLimitEnabled) {
@@ -704,6 +708,7 @@ export class TransitionProcessor extends WorkerHost {
     }
 
     if (messageSendType === 'SEND') {
+      // 2. CHECK RATE LIMITING BY NUMBER MESSAGES SENT IN LAST HOUR
       const [rateLimitByMinuteEnabled] =
         this.journeysService.rateLimitByMinuteEnabled(journey);
       if (rateLimitByMinuteEnabled) {
@@ -717,6 +722,14 @@ export class TransitionProcessor extends WorkerHost {
           requeueTime.setMinutes(requeueTime.getMinutes() + 1);
         }
       }
+    }
+
+    if (
+      messageSendType === 'SEND' &&
+      process.env.MOCK_MESSAGE_SEND === 'true'
+    ) {
+      // 3. CHECK IF MESSAGE SEND SHOULD BE MOCKED
+      messageSendType = 'MOCK_SEND';
     }
 
     if (messageSendType === 'SEND') {
@@ -989,6 +1002,55 @@ export class TransitionProcessor extends WorkerHost {
         ],
         session
       );
+    } else if (messageSendType === 'MOCK_SEND') {
+      this.log(
+        `MOCK_MESSAGE_SEND set to true, mocking message send for customer: ${customer.id} in journey ${journey.id}`,
+        this.handleMessage.name,
+        session,
+        owner.id
+      );
+      if (process.env.MOCK_MESSAGE_SEND_URL) {
+        try {
+          const MOCK_MESSAGE_SEND_URL = new URL(
+            process.env.MOCK_MESSAGE_SEND_URL
+          );
+          if (MOCK_MESSAGE_SEND_URL.protocol === 'http:') {
+            await http.get(MOCK_MESSAGE_SEND_URL);
+          } else if (MOCK_MESSAGE_SEND_URL.protocol === 'https:') {
+            await https.get(MOCK_MESSAGE_SEND_URL);
+          }
+        } catch {
+          this.warn(
+            `MOCK_MESSAGE_SEND_URL: ${process.env.MOCK_MESSAGE_SEND_URL} not valid http: or https: URL or error in mock send.`,
+            this.handleMessage.name,
+            session,
+            owner.id
+          );
+        }
+      }
+      await this.webhooksService.insertMessageStatusToClickhouse(
+        [
+          {
+            stepId: stepID,
+            createdAt: new Date().toISOString(),
+            customerId: customerID,
+            event: 'sent',
+            eventProvider: ClickHouseEventProvider.TRACKER,
+            messageId: currentStep.metadata.humanReadableName,
+            templateId: currentStep.metadata.template,
+            workspaceId: workspace.id,
+            processed: true,
+          },
+        ],
+        session
+      );
+      // After mock send, update rate limit stuff
+      await this.journeyLocationsService.setMessageSent(
+        location,
+        owner,
+        queryRunner
+      );
+      await this.journeysService.rateLimitByMinuteIncrement(owner, journey);
     } else if (messageSendType === 'LIMIT_HOLD') {
       this.log(
         `Unique customers messaged limit hit. Holding customer:${customer.id} at message step for journey: ${journey.id}`,
@@ -1092,76 +1154,16 @@ export class TransitionProcessor extends WorkerHost {
    * @param transactionSession
    */
   async handleStart(
-    ownerID: string,
-    journeyID: string,
-    stepID: string,
+    owner: Account,
+    journey: Journey,
+    step: Step,
     session: string,
     customerID: string,
     queryRunner: QueryRunner,
     transactionSession: mongoose.mongo.ClientSession,
     event?: string
   ) {
-    let start = process.hrtime.bigint(); // Start time in nanoseconds
-
-    const owner = await queryRunner.manager.findOne(Account, {
-      where: { id: ownerID },
-      relations: ['teams.organization.workspaces'],
-    });
-
-    let end = process.hrtime.bigint(); // End time in nanoseconds
-    let duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
-
-    this.warn(
-      `Account call duration: ${duration} ms`,
-      this.handleStart.name,
-      session
-    );
-
-    start = process.hrtime.bigint(); // Start time in nanoseconds
-
-    const journey = await this.journeysService.findByID(
-      owner,
-      journeyID,
-      session,
-      queryRunner
-    );
-
-    end = process.hrtime.bigint(); // End time in nanoseconds
-    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
-
-    this.warn(
-      `Journey call duration: ${duration} ms`,
-      this.handleStart.name,
-      session
-    );
-    start = process.hrtime.bigint(); // Start time in nanoseconds
-
-    const currentStep = await queryRunner.manager.findOne(Step, {
-      where: {
-        id: stepID,
-        type: StepType.START,
-      },
-    });
-
-    end = process.hrtime.bigint(); // End time in nanoseconds
-    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
-
-    this.warn(
-      `Current Step call duration: ${duration} ms`,
-      this.handleStart.name,
-      session
-    );
-    start = process.hrtime.bigint(); // Start time in nanoseconds
     const customer = await this.customersService.findById(owner, customerID);
-    end = process.hrtime.bigint(); // End time in nanoseconds
-    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
-
-    this.warn(
-      `Customer call duration: ${duration} ms`,
-      this.handleStart.name,
-      session
-    );
-    start = process.hrtime.bigint(); // Start time in nanoseconds
 
     const location = await this.journeyLocationsService.findForWrite(
       journey,
@@ -1170,22 +1172,13 @@ export class TransitionProcessor extends WorkerHost {
       owner,
       queryRunner
     );
-    end = process.hrtime.bigint(); // End time in nanoseconds
-    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
-
-    this.warn(
-      `Location call duration: ${duration} ms`,
-      this.handleStart.name,
-      session
-    );
-    start = process.hrtime.bigint(); // Start time in nanoseconds
 
     if (!location) {
       this.warn(
         `${JSON.stringify({
           warning: 'Customer not in step',
           customerID,
-          currentStep,
+          step,
         })}`,
         this.handleMessage.name,
         session,
@@ -1196,24 +1189,15 @@ export class TransitionProcessor extends WorkerHost {
 
     const nextStep = await queryRunner.manager.findOne(Step, {
       where: {
-        id: currentStep.metadata.destination,
+        id: step.metadata.destination,
       },
     });
-    end = process.hrtime.bigint(); // End time in nanoseconds
-    duration = (end - start) / BigInt(1000000); // Convert duration to milliseconds
-
-    this.warn(
-      `nextStep call duration: ${duration} ms`,
-      this.handleStart.name,
-      session
-    );
-    start = process.hrtime.bigint(); // Start time in nanoseconds
 
     if (nextStep) {
       // Destination exists, move customer into destination
       await this.journeyLocationsService.move(
         location,
-        currentStep,
+        step,
         nextStep,
         session,
         owner,
@@ -1225,8 +1209,8 @@ export class TransitionProcessor extends WorkerHost {
         nextStep.type !== StepType.WAIT_UNTIL_BRANCH
       ) {
         await this.transitionQueue.add(nextStep.type, {
-          ownerID,
-          journeyID,
+          ownerID: owner.id,
+          journeyID: journey.id,
           step: nextStep,
           session: session,
           customerID,

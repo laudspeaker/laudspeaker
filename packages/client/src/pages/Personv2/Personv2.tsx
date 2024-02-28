@@ -1,5 +1,5 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2";
-import React, { useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import ApiService from "services/api.service";
 import UserIcon from "./icons/UserIcon";
@@ -19,6 +19,14 @@ import { ChevronDoubleDownIcon } from "@heroicons/react/20/solid";
 import { Attribute } from "pages/PeopleSettings/PeopleSettings";
 import Select from "components/Elements/Selectv2";
 import { StatementValueType } from "reducers/flow-builder.reducer";
+import DynamicInput from "pages/FlowBuilderv2/Elements/DynamicInput";
+import { Segment, SegmentType } from "types/Segment";
+import Table from "components/Tablev2";
+import sortAscChevronsImage from "./svg/sort-asc-chevrons.svg";
+import sortDescChevronsImage from "./svg/sort-desc-chevrons.svg";
+import sortNoneChevronsImage from "./svg/sort-none-chevrons.svg";
+import { Menu, Transition } from "@headlessui/react";
+import threeDotsIconImage from "./svg/three-dots-icon.svg";
 
 export interface EventObject {
   event: string;
@@ -42,6 +50,73 @@ interface CustomerEventsResponse {
 enum PersonTab {
   OVERVIEW = "Overview",
   JOURNEY = "Journey",
+  SEGMENTS = "Segments",
+}
+
+interface SegmentRowData {
+  id: string;
+  name: string;
+  type: string;
+  lastUpdate: string;
+}
+
+enum SortProperty {
+  UPDATED_AT = "updatedAt",
+}
+
+enum SortType {
+  ASC = "asc",
+  DESC = "desc",
+}
+
+interface SortOptions {
+  sortBy: SortProperty;
+  sortType: SortType;
+}
+
+function validateType(value: any, type: any) {
+  //console.log("in validateType");
+  //console.log(value, type);
+  //console.log("ok");
+  switch (type) {
+    case "Number":
+      return !isNaN(parseFloat(value)) && isFinite(value);
+    case "String":
+      return typeof value === "string";
+    case "Date":
+      // Example of date validation; implement as needed
+      return !isNaN(Date.parse(value));
+    case "Boolean":
+      // Considering boolean input as string 'true' or 'false'
+      return value === "true" || value === "false";
+    // Add other type validations as needed
+    case "Email":
+      // Simple email validation using regex
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailPattern.test(value);
+    default:
+      return false;
+  }
+}
+
+function enforceType(value: any, type: any) {
+  console.log("in enforce type");
+  console.log("value is", value);
+  console.log("type is", type);
+  switch (type) {
+    case "Number":
+      return Number(value);
+    case "String":
+      return String(value);
+    case "Boolean":
+      return String(value).toLowerCase() === "true"; // Assuming boolean values are represented as strings 'true' or 'false'
+    case "Date":
+      // Assuming the value is in a format that can be parsed by the Date constructor
+      return new Date(value);
+    // Add more cases as needed for other types
+    default:
+      return value;
+  }
 }
 
 const Personv2 = () => {
@@ -53,6 +128,11 @@ const Personv2 = () => {
   const [editingPersonInfo, setEditingPersonInfo] = useState<
     Record<string, any>
   >({});
+  // Add validationErrors state
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string | null>
+  >({});
+
   const [timeLine, setTimeLine] = useState<CustomerEventsResponse | undefined>(
     undefined
   );
@@ -62,6 +142,23 @@ const Personv2 = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
+
+  //segments state
+
+  const ITEMS_PER_PAGE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagesCount, setPagesCount] = useState(1);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoadingSegments, setIsLoadingSegments] = useState(false);
+  const [rows, setRows] = useState<SegmentRowData[]>([]);
+  const [sortOptions, setSortOptions] = useState<SortOptions>({
+    sortBy: SortProperty.UPDATED_AT,
+    sortType: SortType.DESC,
+  });
+  const [search, setSearch] = useState("");
+
+  //
+
   const [isFirstRenderSave, setIsFirstRenderSave] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [currentTab, setCurrentTab] = useState(PersonTab.OVERVIEW);
@@ -71,7 +168,7 @@ const Personv2 = () => {
 
   const loadPossibleKeys = async () => {
     const { data } = await ApiService.get<any[]>({
-      url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Email&type=Boolean&type=Date&type=DateTime&isArray=false`,
+      url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Email&type=Boolean&type=Date&type=DateTime`,
     });
 
     setPossibleAttributes(data);
@@ -92,55 +189,156 @@ const Personv2 = () => {
     setIsLoadingEvents(false);
   };
 
+  const loadSegmentData = async () => {
+    setIsLoadingSegments(true);
+    try {
+      const {
+        data: { data, totalPages },
+      } = await ApiService.get<{
+        data: Segment[];
+        totalPages: number;
+      }>({
+        url: `/segments/person/${id}?take=${ITEMS_PER_PAGE}&skip=${
+          (currentPage - 1) * ITEMS_PER_PAGE
+        }&search=${search}&orderBy=${sortOptions.sortBy}&orderType=${
+          sortOptions.sortType
+        }`,
+      });
+
+      /*({
+        url: `/segments?take=${ITEMS_PER_PAGE}&skip=${
+          (currentPage - 1) * ITEMS_PER_PAGE
+        }&search=${search}&orderBy=${sortOptions.sortBy}&orderType=${
+          sortOptions.sortType
+        }`,
+      });
+      */
+
+      setRows(
+        data.map((segment) => ({
+          id: segment.id,
+          name: segment.name,
+          type: segment.type,
+          lastUpdate: new Date().toUTCString(),
+        }))
+      );
+      setPagesCount(totalPages);
+      setIsLoaded(true);
+    } catch (e) {
+      toast.error("Failed to load data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSegmentData();
+  }, [currentPage, sortOptions]);
+
   /*
   useEffect(() => {
     uploadEvents();
   }, [page]);
   */
 
-  useEffect(() => {
-    (async () => {
-      try {
-        await loadPossibleKeys();
-        const { data: personData } = await ApiService.get({
-          url: "/customers/" + id,
-        });
+  const loadData = async () => {
+    try {
+      await loadPossibleKeys();
+      const { data: personData } = await ApiService.get({
+        url: "/customers/" + id,
+      });
 
-        setPersonInfo(personData);
-        //uploadEvents();
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    })();
+      setPersonInfo(personData);
+      //uploadEvents();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   useEffect(() => {
     setEditingPersonInfo(personInfo);
   }, [isEditing]);
 
+  const validateAllFields = () => {
+    let allValid = true;
+    const newValidationErrors: Record<string, string> = {};
+
+    Object.entries(editingPersonInfo).forEach(([key, value]) => {
+      if (key === "createdAt") {
+        return;
+      }
+      const foundAttribute = possibleAttributes.find(
+        (attr) => attr.key === key
+      );
+      const isValid = validateType(value, foundAttribute?.type);
+      if (!isValid) {
+        allValid = false;
+        newValidationErrors[key] = `Value must be a ${foundAttribute?.type}`;
+      }
+    });
+
+    setValidationErrors(newValidationErrors);
+    return allValid;
+  };
+
   const handleSave = async () => {
+    const allFieldsValid = validateAllFields();
+
+    // If not all fields are valid, show a toast and abort the save operation
+    // if (!allFieldsValid) {
+    //   toast.error(
+    //     "Cannot save - make sure the data you entered matches the type."
+    //   );
+    //   return;
+    // }
+
+    const enforcedData = Object.entries(editingPersonInfo).reduce<
+      Record<string, any>
+    >((acc, [key, value]) => {
+      if (key === "createdAt") {
+        acc[key] = value; // Skip enforcing and keep 'createdAt' as is
+      } else {
+        const foundAttribute = possibleAttributes.find(
+          (attr) => attr.key === key
+        );
+        if (foundAttribute) {
+          acc[key] = enforceType(value, foundAttribute.type);
+        } else {
+          acc[key] = value; // Keep as is if no specific type is found
+        }
+      }
+      return acc;
+    }, {});
+
+    //console.log("old cust is", JSON.stringify(editingPersonInfo, null, 2));
+    //console.log("enforced cust is",JSON.stringify(enforcedData, null, 2));
+
     setIsSaving(true);
     try {
-      await ApiService.put({ url: "/customers/" + id, options: personInfo });
+      await ApiService.put({
+        url: "/customers/" + id,
+        options: enforcedData,
+      });
+      setIsEditing(false);
     } catch (e) {
       let message = "Error while saving";
-      if (e instanceof AxiosError) message = e.response?.data?.message;
+      //if (e instanceof AxiosError) message = e.response?.data?.message;
+      toast.error(message);
+      if (e instanceof AxiosError && e.response) {
+        message = e.response.data.message || message; // Ensure we don't overwrite message with undefined
+      }
       toast.error(message);
     } finally {
       setIsSaving(false);
+      await loadData();
     }
   };
-
-  useEffect(() => {
-    if (isFirstRenderSave) {
-      setIsFirstRenderSave(false);
-      return;
-    }
-
-    handleSave();
-  }, [personInfo]);
 
   const handleDeletePerson = () => {
     confirmAlert({
@@ -226,6 +424,14 @@ const Personv2 = () => {
         >
           Journeys
         </button>
+        <button
+          className={`border-[#4338CA] ${
+            currentTab === PersonTab.SEGMENTS ? "border-b-2 text-[#4338CA]" : ""
+          }`}
+          onClick={() => setCurrentTab(PersonTab.SEGMENTS)}
+        >
+          Segments
+        </button>
       </div>
       <div className="w-full h-[calc(100vh-188px)] p-5 flex gap-5">
         {currentTab === PersonTab.OVERVIEW ? (
@@ -257,10 +463,10 @@ const Personv2 = () => {
                     const foundAttribute = possibleAttributes.find(
                       (attr) => attr.key === key
                     );
-
                     return {
                       key,
-                      type: foundAttribute?.type,
+                      type: foundAttribute?.type || StatementValueType.STRING,
+                      isArray: foundAttribute?.isArray || false,
                       dateFormat: [
                         StatementValueType.DATE,
                         StatementValueType.DATE_TIME,
@@ -269,24 +475,25 @@ const Personv2 = () => {
                         : undefined,
                     };
                   })
-                  .map(({ key, type, dateFormat }) =>
+                  .map(({ key, type, isArray, dateFormat }) =>
                     isEditing ? (
                       <div className="flex flex-col gap-[10px]" key={key}>
                         <div className="text-[#18181B]">
-                          {key} ({type}){" "}
+                          {key} ({type}
+                          {isArray ? "[]" : ""}){" "}
                           {dateFormat ? <>[{dateFormat}]</> : <></>}
                         </div>
                         <div className="flex gap-4 items-center">
-                          <Input
-                            className="w-full"
-                            wrapperClassName="w-full"
+                          <DynamicInput
+                            type={type}
+                            isArray={isArray}
                             value={personInfoToShow[key]}
-                            onChange={(val) =>
+                            onChange={(value) => {
                               setEditingPersonInfo({
                                 ...editingPersonInfo,
-                                [key]: val,
-                              })
-                            }
+                                [key]: value,
+                              });
+                            }}
                             placeholder="Input value"
                           />
                           <button
@@ -305,7 +512,8 @@ const Personv2 = () => {
                     ) : (
                       <div className="" key={key}>
                         <div className="text-[#6B7280] text-[12px] leading-[20px]">
-                          {key} ({type}){" "}
+                          {key} ({type}
+                          {isArray ? "[]" : ""}){" "}
                           {dateFormat ? <>[{dateFormat}]</> : <></>}
                         </div>
                         <div>
@@ -369,13 +577,7 @@ const Personv2 = () => {
                 <>
                   <div className="h-[1px] w-full bg-[#E5E7EB]" />
                   <div className="flex gap-[10px]">
-                    <Button
-                      type={ButtonType.PRIMARY}
-                      onClick={() => {
-                        setPersonInfo(editingPersonInfo);
-                        setIsEditing(false);
-                      }}
-                    >
+                    <Button type={ButtonType.PRIMARY} onClick={handleSave}>
                       Save
                     </Button>
                     <Button
@@ -425,7 +627,9 @@ const Personv2 = () => {
 
                           return {
                             key,
-                            type: foundAttribute?.type,
+                            type:
+                              foundAttribute?.type || StatementValueType.STRING,
+                            isArray: foundAttribute?.isArray || false,
                             dateFormat: [
                               StatementValueType.DATE,
                               StatementValueType.DATE_TIME,
@@ -436,24 +640,25 @@ const Personv2 = () => {
                               : undefined,
                           };
                         })
-                        .map(({ key, type, dateFormat }) =>
+                        .map(({ key, type, isArray, dateFormat }) =>
                           isEditing ? (
                             <div className="flex flex-col gap-[10px]" key={key}>
                               <div className="text-[#18181B]">
-                                {key} ({type}){" "}
+                                {key} ({type}
+                                {isArray ? "[]" : ""}){" "}
                                 {dateFormat ? <>[{dateFormat}]</> : <></>}
                               </div>
                               <div className="flex gap-4 items-center">
-                                <Input
-                                  className="w-full"
-                                  wrapperClassName="w-full"
+                                <DynamicInput
+                                  type={type}
+                                  isArray={isArray}
                                   value={personInfoToShow[key]}
-                                  onChange={(val) =>
+                                  onChange={(value) => {
                                     setEditingPersonInfo({
                                       ...editingPersonInfo,
-                                      [key]: val,
-                                    })
-                                  }
+                                      [key]: value,
+                                    });
+                                  }}
                                   placeholder="Input value"
                                 />
                               </div>
@@ -461,7 +666,8 @@ const Personv2 = () => {
                           ) : (
                             <div className="" key={key}>
                               <div className="text-[#6B7280] text-[12px] leading-[20px]">
-                                {key} ({type}){" "}
+                                {key} ({type}
+                                {isArray ? "[]" : ""}){" "}
                                 {dateFormat ? <>[{dateFormat}]</> : <></>}
                               </div>
                               <div>
@@ -545,11 +751,77 @@ const Personv2 = () => {
               </div>
             )}
           </>
-        ) : (
+        ) : currentTab === PersonTab.JOURNEY ? (
           <div className="w-full h-full bg-white rounded-lg p-5">
             <PeopleInJourneyTable />
           </div>
-        )}
+        ) : currentTab === PersonTab.SEGMENTS ? (
+          <div className="w-full h-full bg-white rounded-lg p-5">
+            {/* Segments tab content here */}
+            <Table
+              isLoading={isLoading}
+              headings={[
+                <div className="px-5 py-[10px] select-none">Name</div>,
+                <div className="px-5 py-[10px] select-none">Type</div>,
+                <div
+                  className="px-5 py-[10px] select-none flex gap-[2px] items-center cursor-pointer"
+                  onClick={() => {
+                    if (sortOptions.sortBy !== SortProperty.UPDATED_AT) {
+                      setSortOptions({
+                        sortBy: SortProperty.UPDATED_AT,
+                        sortType: SortType.DESC,
+                      });
+
+                      return;
+                    }
+
+                    if (sortOptions.sortType === SortType.ASC) {
+                      setSortOptions({
+                        sortBy: SortProperty.UPDATED_AT,
+                        sortType: SortType.DESC,
+                      });
+
+                      return;
+                    }
+
+                    setSortOptions({
+                      sortBy: SortProperty.UPDATED_AT,
+                      sortType: SortType.ASC,
+                    });
+                  }}
+                >
+                  <div>Last update</div>
+                  <div>
+                    <img
+                      src={
+                        sortOptions.sortBy === SortProperty.UPDATED_AT
+                          ? sortOptions.sortType === SortType.ASC
+                            ? sortAscChevronsImage
+                            : sortDescChevronsImage
+                          : sortNoneChevronsImage
+                      }
+                    />
+                  </div>
+                </div>,
+                ,
+                <div className="px-5 py-[10px] select-none"></div>,
+              ]}
+              rowsData={rows}
+              rows={rows.map((row) => [
+                <button
+                  className="text-[#6366F1]"
+                  onClick={() => navigate(`/segment/${row.id}`)}
+                >
+                  {row.name}
+                </button>,
+                <div>{row.type}</div>,
+                <div>
+                  {format(new Date(row.lastUpdate), "MM/dd/yyyy HH:mm")}
+                </div>,
+              ])}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );

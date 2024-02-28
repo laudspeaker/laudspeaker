@@ -77,3 +77,7 @@ KAFKA_BROKERS_LIST=''
 # KAFKA SSL connection related params, when both specified default to using SSL connections
 # KAFKA_SASL_USERNAME=''
 # KAFKA_SASL_PASSWORD=''
+
+# Mock message sending env variables
+# MOCK_MESSAGE_SEND=true
+# MOCK_MESSAGE_SEND_URL=http://mock-200-endpoint.com/endpoint

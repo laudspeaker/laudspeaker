@@ -81,4 +81,13 @@ export class Journey {
 
   @Column('jsonb', { nullable: true })
   journeySettings?: JourneySettings;
+
+  // How many times reenrollment has occurred
+  @Column('bigint', { default: 0 })
+  enrollment_count: number;
+
+  // This is actually a timestamp using ECMAScript's native Date object; will yield
+  // the same number across any timezone
+  @Column('bigint', { nullable: true })
+  last_enrollment_timestamp?: number;
 }

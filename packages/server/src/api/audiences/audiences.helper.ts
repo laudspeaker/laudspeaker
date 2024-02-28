@@ -169,8 +169,6 @@ export class AudiencesHelper {
     session: string,
     account?: Account
   ): Promise<boolean> {
-    if (cust.isFreezed) return false;
-
     if (
       !inclusionCriteria ||
       inclusionCriteria.type === 'allCustomers' ||

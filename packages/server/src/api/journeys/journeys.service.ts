@@ -766,19 +766,11 @@ export class JourneysService {
         );
         continue;
       }
-      await this.journeyLocationsService.createAndLock(
-        journey,
-        customer,
-        step,
-        session,
-        account,
-        queryRunner
-      );
       const job = {
         name: 'start',
         data: {
-          ownerID: account.id,
-          journeyID: journey.id,
+          owner: account,
+          journey: journey,
           step: step,
           session: session,
           customerID: customer.id ?? customer._id.toString(),
@@ -872,13 +864,6 @@ export class JourneysService {
           )) &&
           customer.journeys.indexOf(journey.id) < 0
         ) {
-          // await this.stepsService.addToStart(
-          //   account,
-          //   journey.id,
-          //   customer,
-          //   queryRunner,
-          //   session
-          // );
           await this.CustomerModel.updateOne(
             { _id: customer._id },
             {
@@ -1469,6 +1454,7 @@ export class JourneysService {
 
   /**
    * Start a journey.
+   *
    * @param account
    * @param workflowID
    * @param session
@@ -1511,25 +1497,11 @@ export class JourneysService {
       if (!journey.inclusionCriteria)
         throw new Error('To start journey a filter should be defined');
 
-      this.debug(
-        `${JSON.stringify({ journey })}`,
-        this.start.name,
-        session,
-        account.email
-      );
-
       const graph = new Graph();
       const steps = await this.stepsService.transactionalfindByJourneyID(
         account,
         journey.id,
         queryRunner
-      );
-
-      this.debug(
-        `${JSON.stringify({ steps: steps })}`,
-        this.start.name,
-        session,
-        account.email
       );
 
       for (let i = 0; i < steps.length; i++) {
@@ -1565,24 +1537,32 @@ export class JourneysService {
         journey.journeyEntrySettings.entryTiming.type ===
         EntryTiming.WhenPublished
       ) {
+        await queryRunner.manager.save(Journey, {
+          ...journey,
+          enrollment_count: journey.enrollment_count + 1,
+          last_enrollment_timestamp: Date.now(),
+          isActive: true,
+          startedAt: new Date(Date.now()),
+        });
         await this.stepsService.triggerStart(
           account,
-          journeyID,
+          journey,
           journey.inclusionCriteria,
-          audienceSize,
+          journey?.journeySettings?.maxEntries?.enabled &&
+            audienceSize >
+              parseInt(journey?.journeySettings?.maxEntries?.maxEntries)
+            ? parseInt(journey?.journeySettings?.maxEntries?.maxEntries)
+            : audienceSize,
           queryRunner,
           session
         );
+      } else {
+        await queryRunner.manager.save(Journey, {
+          ...journey,
+          isActive: true,
+          startedAt: new Date(Date.now()),
+        });
       }
-
-      // TODO: update to remove dev mode on start
-      // await this.
-
-      await queryRunner.manager.save(Journey, {
-        ...journey,
-        isActive: true,
-        startedAt: new Date(Date.now()),
-      });
 
       await this.trackChange(account, journeyID, queryRunner);
 

@@ -1,7 +1,7 @@
 import { Inject, Injectable, LoggerService } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import {
   Customer,
   CustomerDocument,
@@ -53,7 +53,11 @@ import { Lock } from 'redlock';
 import * as _ from 'lodash';
 import { JourneyLocationsService } from './api/journeys/journey-locations.service';
 import { Journey } from './api/journeys/entities/journey.entity';
-import { EntryTiming } from './api/journeys/types/additional-journey-settings.interface';
+import {
+  EntryTiming,
+  EntryTimingFrequency,
+  RecurrenceEndsOptions,
+} from './api/journeys/types/additional-journey-settings.interface';
 import { OrganizationInvites } from './api/organizations/entities/organization-invites.entity';
 import { JourneyLocation } from './api/journeys/entities/journey-location.entity';
 import { Requeue } from './api/steps/entities/requeue.entity';
@@ -116,7 +120,8 @@ export class CronService {
     private journeyLocationsService: JourneyLocationsService,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
     @Inject(RedlockService)
-    private readonly redlockService: RedlockService
+    private readonly redlockService: RedlockService,
+    @InjectConnection() private readonly connection: mongoose.Connection
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -262,7 +267,7 @@ export class CronService {
     let queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    let timeBasedJobs: any[] = [];
+    const timeBasedJobs: any[] = [];
     try {
       const journeys = await this.journeysService.allActiveTransactional(
         queryRunner
@@ -764,14 +769,14 @@ export class CronService {
     // to do change this to organisations rather than
     const accounts = await this.accountsService.findAll();
     for (let j = 0; j < accounts.length; j++) {
-      let queryRunner = this.dataSource.createQueryRunner();
+      const queryRunner = this.dataSource.createQueryRunner();
       await queryRunner.connect();
       await queryRunner.startTransaction();
-      let segmentPrefixes: string[] = [];
+      const segmentPrefixes: string[] = [];
       //we keep for logging
       let segmentError: string;
       try {
-        let segments = await this.segmentsService.getSegments(
+        const segments = await this.segmentsService.getSegments(
           accounts[j],
           undefined,
           queryRunner
@@ -782,7 +787,7 @@ export class CronService {
             continue; // Skip to the next iteration of the loop
           }
 
-          let doInclude = this.checkSegmentHasMessageFilters(
+          const doInclude = this.checkSegmentHasMessageFilters(
             segment.inclusionCriteria.query,
             accounts[j].id,
             session
@@ -1261,28 +1266,120 @@ export class CronService {
     }
   }
 
-  // @Cron(CronExpression.EVERY_MINUTE)
-  // async handleEntryTiming() {
-  //   const session = randomUUID();
-  //   const queryRunner = this.dataSource.createQueryRunner();
-  //   await queryRunner.connect();
-  //   await queryRunner.startTransaction();
-  //   try {
-  //     const delayedJourneys = await queryRunner.manager
-  //       .createQueryBuilder(Journey, 'journey')
-  //       .where(
-  //         'journey."journeyEntrySettings"->\'entryTiming\'->>\'type\' = :type AND journey."isActive" = true',
-  //         {
-  //           type: EntryTiming.SpecificTime,
-  //         }
-  //       )
-  //       .getMany();
-  //     await queryRunner.commitTransaction();
-  //   } catch (e) {
-  //     this.error(e, this.handleEntryTiming.name, session);
-  //     await queryRunner.rollbackTransaction();
-  //   } finally {
-  //     queryRunner.release();
-  //   }
-  // }
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleEntryTiming() {
+    const session = randomUUID();
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    const transactionSession = await this.connection.startSession();
+    transactionSession.startTransaction();
+    try {
+      // Step 1: Find all journeys that are delayed
+      const delayedJourneys = await queryRunner.manager
+        .createQueryBuilder(Journey, 'journey')
+        .leftJoinAndSelect('journey.workspace', 'workspace') // Assuming 'owner' is the relation property in the Journey entity
+        .leftJoinAndSelect('workspace.organization', 'organization') // Assuming 'owner' is the relation property in the Journey entity
+        .leftJoinAndSelect('organization.owner', 'account') // Assuming 'owner' is the relation property in the Journey entity
+        .leftJoinAndSelect('account.teams', 'teams') // Assuming 'owner' is the relation property in the Journey entity
+        .leftJoinAndSelect('teams.organization', 'organization_two') // Assuming 'owner' is the relation property in the Journey entity
+        .leftJoinAndSelect('organization_two.workspaces', 'workspaces') // Assuming 'owner' is the relation property in the Journey entity
+        .where(
+          'journey."journeyEntrySettings"->\'entryTiming\'->>\'type\' = :type AND journey."isActive" = true',
+          {
+            type: EntryTiming.SpecificTime,
+          }
+        )
+        .getMany();
+      // Step 2: Filter all journeys that are eligible to be re-enrolled
+      for (
+        let journeysIndex = 0;
+        journeysIndex < delayedJourneys.length;
+        journeysIndex++
+      ) {
+        let enroll = false;
+        if (
+          delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time
+            .frequency === EntryTimingFrequency.Once
+        ) {
+          if (
+            new Date(
+              delayedJourneys[
+                journeysIndex
+              ].journeyEntrySettings?.entryTiming.time.startDate
+            ).getTime() < Date.now() &&
+            +delayedJourneys[journeysIndex].enrollment_count === 0
+          ) {
+            enroll = true;
+          }
+        } else if (
+          delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time
+            .recurrence.endsOn === RecurrenceEndsOptions.After &&
+          +delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time
+            .recurrence.endAdditionalValue <=
+            delayedJourneys[journeysIndex].enrollment_count - 1
+        ) {
+          continue;
+        } else if (
+          delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time
+            .recurrence.endsOn === RecurrenceEndsOptions.SpecificDate &&
+          new Date(
+            delayedJourneys[
+              journeysIndex
+            ].journeyEntrySettings?.entryTiming.time.recurrence.endAdditionalValue
+          ).getTime() <= Date.now()
+        ) {
+          continue;
+        } else {
+          // TODO: Recurring enrollment
+        }
+        if (enroll) {
+          this.log(
+            `Starting enrollment for journey ${delayedJourneys[journeysIndex].id}`,
+            this.handleEntryTiming.name,
+            session
+          );
+          const audienceSize = await this.customersService.getAudienceSize(
+            delayedJourneys[journeysIndex].workspace.organization.owner,
+            delayedJourneys[journeysIndex].inclusionCriteria,
+            session,
+            transactionSession
+          );
+          // Step 3: Edit journey details
+          await queryRunner.manager.save(Journey, {
+            ...delayedJourneys[journeysIndex],
+            enrollment_count:
+              delayedJourneys[journeysIndex].enrollment_count + 1,
+            last_enrollment_timestamp: Date.now(),
+          });
+          // Step 4: Reenroll customers that have been unenrolled
+          await this.stepsService.triggerStart(
+            delayedJourneys[journeysIndex].workspace.organization.owner,
+            delayedJourneys[journeysIndex],
+            delayedJourneys[journeysIndex].inclusionCriteria,
+            delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
+              ?.enabled &&
+              audienceSize >
+                parseInt(
+                  delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
+                    ?.maxEntries
+                )
+              ? parseInt(
+                  delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
+                    ?.maxEntries
+                )
+              : audienceSize,
+            queryRunner,
+            session
+          );
+        }
+      }
+      await queryRunner.commitTransaction();
+    } catch (e) {
+      this.error(e, this.handleEntryTiming.name, session);
+      await queryRunner.rollbackTransaction();
+    } finally {
+      queryRunner.release();
+    }
+  }
 }

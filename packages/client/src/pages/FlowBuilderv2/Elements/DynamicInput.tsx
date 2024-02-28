@@ -1,9 +1,12 @@
+import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Input from "components/Elements/Inputv2";
+import Modal from "components/Elements/Modalv2";
 import Select from "components/Elements/Selectv2";
-import React, { FC, ReactNode, useEffect, useState } from "react";
+import React, { FC, ReactNode, useEffect, useMemo, useState } from "react";
 import { StatementValueType } from "reducers/flow-builder.reducer";
+import { ArrayComponent } from "./ArrayComponent";
 
-interface ValueChanger {
+export interface ValueChanger {
   value: string;
   placeholder?: string;
   onChange: (value: string) => void;
@@ -88,7 +91,7 @@ export const DateComponent: FC<ValueChanger & { isRelativeDate?: boolean }> = ({
         value={relativeValue}
         onChange={(e) => onChange(new Date(e.target.value).toUTCString())}
         type="datetime-local"
-        className="w-[200px] h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
+        className="w-[250px] h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
         placeholder="Select time"
       />
     );
@@ -166,13 +169,15 @@ const StringComponent: FC<ValueChanger> = ({
   );
 };
 
-interface FlowBuilderDynamicInputProps extends ValueChanger {
+interface DynamicInputProps extends ValueChanger {
   type: StatementValueType;
+  isArray?: boolean;
   isRelativeDate?: boolean;
 }
 
-const FlowBuilderDynamicInput: FC<FlowBuilderDynamicInputProps> = ({
+const DynamicInput: FC<DynamicInputProps> = ({
   type,
+  isArray,
   value,
   placeholder,
   onChange,
@@ -187,7 +192,7 @@ const FlowBuilderDynamicInput: FC<FlowBuilderDynamicInputProps> = ({
     [StatementValueType.EMAIL]: "email@gmail.com",
     [StatementValueType.NUMBER]: "0",
     [StatementValueType.STRING]: "",
-    [StatementValueType.ARRAY]: "",
+    [StatementValueType.ARRAY]: JSON.stringify([]),
     [StatementValueType.OBJECT]: "",
   };
 
@@ -247,7 +252,22 @@ const FlowBuilderDynamicInput: FC<FlowBuilderDynamicInputProps> = ({
     onChange(defaultValuesMap[type]);
   }, [type]);
 
-  return <>{valueTypeToComponentMap[type]}</>;
+  const dynamicComponent = valueTypeToComponentMap[type];
+
+  return (
+    <>
+      {isArray ? (
+        <ArrayComponent
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+        />
+      ) : (
+        dynamicComponent
+      )}
+    </>
+  );
 };
 
-export default FlowBuilderDynamicInput;
+export default DynamicInput;

@@ -1,5 +1,5 @@
 import Select from "components/Elements/Selectv2";
-import FlowBuilderDynamicInput from "pages/FlowBuilderv2/Elements/FlowBuilderDynamicInput";
+import DynamicInput from "pages/FlowBuilderv2/Elements/DynamicInput";
 import { NodeType } from "pages/FlowBuilderv2/FlowEditor";
 import {
   TrackerNodeData,
@@ -201,7 +201,7 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
                       <div className="text-[#4B5563]">({field.type})</div>
                     </div>
                     <div className="bg-white rounded-sm">
-                      <FlowBuilderDynamicInput
+                      <DynamicInput
                         type={field.type}
                         value={field.value}
                         onChange={(value) => handleChangeField(i, value)}

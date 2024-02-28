@@ -10,7 +10,7 @@ import { useState } from "react";
 import { useDebounce } from "react-use";
 import { StatementValueType } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
-import FilterBuilderDynamicInput from "../../Elements/FlowBuilderDynamicInput";
+import FilterBuilderDynamicInput from "../../Elements/DynamicInput";
 import { ConditionEditorError, errorToMessageMap } from "./ConditionEditor";
 
 interface WUAttributeEditorProps {
@@ -50,7 +50,7 @@ const WUAttributeEditor = ({
         isArray: boolean;
       }[]
     >({
-      url: `/customers/possible-attributes?key=${q}&isArray=false`,
+      url: `/customers/possible-attributes?key=${q}`,
     });
 
     setPossibleKeys(data);

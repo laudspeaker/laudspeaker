@@ -1,6 +1,6 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2/Button";
 import FlowBuilderAutoComplete from "components/AutoCompletev2/AutoCompletev2";
-import FlowBuilderDynamicInput from "pages/FlowBuilderv2/Elements/FlowBuilderDynamicInput";
+import DynamicInput from "pages/FlowBuilderv2/Elements/DynamicInput";
 import {
   AttributeCondition,
   LogicRelation,
@@ -200,7 +200,7 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
             </select>
           </div>
           <div>
-            <FlowBuilderDynamicInput
+            <DynamicInput
               type={statement.valueType}
               value={statement.value}
               onChange={(value) => {

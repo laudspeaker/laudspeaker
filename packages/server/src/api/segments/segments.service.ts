@@ -162,6 +162,44 @@ export class SegmentsService {
     return { data: segments, totalPages };
   }
 
+  async findAllSegmentsForCustomer(
+    account: Account,
+    id: string,
+    take = 100,
+    skip = 0,
+    search = '',
+    session: string
+  ) {
+    //this.debug(`In findAllSegmentsForCustomer`, this.findAllSegmentsForCustomer.name, session, account.id);
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    const totalPages = Math.ceil(
+      (await this.segmentCustomersRepository.count({
+        where: {
+          workspace: {
+            id: workspace.id,
+          },
+          customerId: id,
+        },
+      })) / take || 1
+    );
+
+    const records = await this.segmentCustomersRepository.find({
+      where: {
+        workspace: {
+          id: workspace.id,
+        },
+        customerId: id,
+      },
+      take: take < 100 ? take : 100,
+      skip,
+      relations: ['segment'],
+    });
+
+    const segments = records.map((record) => record.segment);
+    return { data: segments, totalPages };
+  }
+
   /**
    * Get all segements for an account. Optionally filter by type
    * If @param type is undefined, return all types.
@@ -504,7 +542,7 @@ export class SegmentsService {
     const mongoCollection = this.connection.db.collection(collectionName);
 
     let processedCount = 0;
-    let totalDocuments = await mongoCollection.countDocuments();
+    const totalDocuments = await mongoCollection.countDocuments();
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     //console.log("looks like top level segment is created in mongo");
@@ -1182,7 +1220,7 @@ export class SegmentsService {
     segmentId: string,
     session: string,
     queryRunner: QueryRunner,
-    batchSize: number = 500 // default batch size
+    batchSize = 500 // default batch size
   ) {
     // Start transaction
     //await queryRunner.startTransaction();

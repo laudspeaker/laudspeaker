@@ -257,7 +257,7 @@ export class CustomersService {
 
   async create(
     account: Account,
-    createCustomerDto: CreateCustomerDto,
+    createCustomerDto: any,
     session: string,
     transactionSession?: ClientSession
   ): Promise<
@@ -429,7 +429,6 @@ export class CustomersService {
             [key]: new RegExp(`.*${search}.*`, 'i'),
           }
         : {}),
-      ...(showFreezed ? {} : { isFreezed: { $ne: true } }),
     })
       .skip(skip)
       .limit(take <= 100 ? take : 100)
@@ -721,40 +720,8 @@ export class CustomersService {
     const customer = await this.findOne(account, id, session);
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    if (customer.isFreezed)
-      throw new BadRequestException('Customer is freezed');
-
     if (customer.workspaceId != workspace.id) {
       throw new HttpException("You can't update this customer.", 400);
-    }
-
-    for (const key of Object.keys(newCustomerData).filter(
-      (item) => !KEYS_TO_SKIP.includes(item)
-    )) {
-      const value = newCustomerData[key];
-      if (value === '' || value === undefined || value === null) continue;
-
-      const keyType = getType(value);
-      const isArray = keyType.isArray();
-      let type = isArray ? getType(value[0]).name : keyType.name;
-
-      if (type === 'String') {
-        if (isEmail(value)) type = 'Email';
-        if (isDateString(value)) type = 'Date';
-      }
-
-      await this.CustomerKeysModel.updateOne(
-        { key, workspaceId: workspace.id },
-        {
-          $set: {
-            key,
-            type,
-            isArray,
-            workspaceId: workspace.id,
-          },
-        },
-        { upsert: true }
-      ).exec();
     }
 
     delete customer._id;
@@ -788,7 +755,6 @@ export class CustomersService {
       delete newCustomerData._id;
       delete newCustomerData.__v;
       delete newCustomerData.audiences;
-      delete newCustomerData.isFreezed;
       delete newCustomerData.id;
       const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -797,9 +763,6 @@ export class CustomersService {
         id,
         transactionSession
       );
-
-      if (customer.isFreezed)
-        throw new BadRequestException('Customer is freezed');
 
       if (customer.workspaceId != workspace.id) {
         throw new HttpException("You can't update this customer.", 400);
@@ -1224,6 +1187,7 @@ export class CustomersService {
     let query: any;
     this.accountsRepository;
     let collectionPrefix: string;
+    let collectionName: string;
     const foundAccount = await this.accountsRepository.findOne({
       where: {
         id: account,
@@ -1252,7 +1216,7 @@ export class CustomersService {
         0,
         collectionPrefix
       );
-      const collectionName = customersInSegment; // Name of the MongoDB collection
+      collectionName = customersInSegment; // Name of the MongoDB collection
 
       const pipeline = [
         {
@@ -1282,6 +1246,7 @@ export class CustomersService {
     if (limit) query.limit(limit);
     if (skip) query.skip(skip);
     const res = await query.exec();
+    if (collectionName) await this.connection.dropCollection(collectionName);
     return res;
   }
 
@@ -1345,8 +1310,14 @@ export class CustomersService {
     session: string,
     transactionSession?: ClientSession
   ): Promise<number> {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-
+    const foundAccount = await this.accountsRepository.findOne({
+      where: {
+        id: account.id,
+      },
+      relations: ['teams.organization.workspaces'],
+    });
+    const workspace = foundAccount?.teams?.[0]?.organization?.workspaces?.[0];
+    let collectionPrefix: string;
     let count = 0;
     if (
       !criteria ||
@@ -1363,6 +1334,20 @@ export class CustomersService {
     } else {
       //TODO: We need to translate segment builder condiitons
       // into a mongo query
+
+      collectionPrefix = this.segmentsService.generateRandomString();
+      const customersInSegment = await this.getSegmentCustomersFromQuery(
+        criteria.query,
+        foundAccount,
+        session,
+        true,
+        0,
+        collectionPrefix
+      );
+      const collectionName = customersInSegment; // Name of the MongoDB collection
+      const coll = this.connection.collection(collectionName);
+      count = await coll.countDocuments({});
+      await coll.drop();
     }
 
     this.debug(
@@ -1424,7 +1409,6 @@ export class CustomersService {
     } else {
       queryParam[correlationKey] = correlationValue;
     }
-    queryParam.isFreezed = { $ne: true };
     try {
       if (transactionSession) {
         customer = await this.CustomerModel.findOne(queryParam)
@@ -1446,13 +1430,11 @@ export class CustomersService {
   }
 
   async findOrCreateByCorrelationKVPair(
-    account: Account,
+    workspace: Workspaces,
     dto: EventDto,
     transactionSession: ClientSession
   ): Promise<Correlation> {
     let customer: CustomerDocument; // Found customer
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-
     const queryParam = { workspaceId: workspace.id };
     queryParam[dto.correlationKey] = dto.correlationValue;
     try {
@@ -1506,7 +1488,7 @@ export class CustomersService {
           HttpStatus.BAD_REQUEST
         );
 
-      let ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
+      const ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
         {
           workspaceId: auth.workspace.id,
           [primaryKey.key]: upsertCustomerDto.primary_key,
@@ -1556,7 +1538,7 @@ export class CustomersService {
         HttpStatus.BAD_REQUEST
       );
 
-    let ret: CustomerDocument = await this.CustomerModel.findOneAndDelete(
+    const ret: CustomerDocument = await this.CustomerModel.findOneAndDelete(
       {
         workspaceId: auth.workspace.id,
         [primaryKey.key]: deleteCustomerDto.primary_key,
@@ -1682,8 +1664,6 @@ export class CustomersService {
       session,
       account.id
     );
-
-    if (cust.isFreezed) throw new BadRequestException('Customer is freezed');
 
     const res = await this.CustomerModel.deleteOne({
       _id: new mongoose.Types.ObjectId(cust.id),
@@ -4183,7 +4163,7 @@ export class CustomersService {
         pipeline1
       );
 
-      let mobileMongoQuery = cloneDeep(mongoQuery);
+      const mobileMongoQuery = cloneDeep(mongoQuery);
       mobileMongoQuery.source = 'mobile';
 
       const pipeline2 = [
@@ -5413,7 +5393,8 @@ export class CustomersService {
     key: string,
     type: AttributeType,
     dateFormat: unknown,
-    session?: string
+    session?: string,
+    isArray?: boolean
   ) {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -5429,7 +5410,7 @@ export class CustomersService {
       const previousKey = await this.CustomerKeysModel.findOne({
         key: key.trim(),
         type,
-        isArray: false,
+        isArray: isArray || false,
         workspaceId: workspace.id,
       }).exec();
 
@@ -5444,7 +5425,7 @@ export class CustomersService {
         key: key.trim(),
         type,
         dateFormat,
-        isArray: false,
+        isArray: isArray || false,
         workspaceId: workspace.id,
       });
       return newKey;
@@ -5526,7 +5507,14 @@ export class CustomersService {
       try {
         const { key, type, isArray, dateFormat } = createdAttribute; // TODO: arrays handling
 
-        await this.createAttribute(account, key, type, dateFormat);
+        await this.createAttribute(
+          account,
+          key,
+          type,
+          dateFormat,
+          undefined,
+          isArray
+        );
       } catch (e) {
         console.error(e);
       }
