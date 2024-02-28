@@ -15,6 +15,7 @@ export interface ModalProps {
   hasBottomActionButtons?: boolean;
   onClose?: () => void;
   onEnterPress?: (e: KeyboardEvent<HTMLDivElement>) => void;
+  onRetest?: () => void;
 }
 
 const Modal: FC<ModalProps> = ({
@@ -29,6 +30,7 @@ const Modal: FC<ModalProps> = ({
   closeButtonNeed = true,
   hasBottomActionButtons = false,
   onEnterPress,
+  onRetest = () => null,
 }) => {
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -88,10 +90,10 @@ const Modal: FC<ModalProps> = ({
                   </button>
                 )}
                 {hasBottomActionButtons && (
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-2 mt-8">
                     <Button
                       type={ButtonType.SECONDARY}
-                      onClick={() => undefined}
+                      onClick={onRetest}
                       className="text-black border-gray-200 hover:border-gray-400 hover:text-black focus:border-gray-500 focus:text-black"
                     >
                       Retest

@@ -333,7 +333,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
       <>
         {headers.map((header, index) => (
           <div
-            key={index}
+            key={header}
             className="flex items-center bg-gray-200 gap-8 p-2.5 rounded"
           >
             <div className="text-[16px] font-semibold leading-[24px]">
@@ -452,7 +452,6 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
           testCustomerEmail: selectedCustomer?.email,
         },
       });
-
       setTestResponseData(data);
       toast.success("Successfully sent test request");
     } catch (e) {
@@ -641,6 +640,9 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
                           "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm cursor-pointer"
                         )}
                         onClick={() => setCurrentTab(tab)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") setCurrentTab(tab);
+                        }}
                       >
                         {tab}
                       </div>
@@ -659,62 +661,38 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
         isOpen={!!testResponseData}
         onClose={() => setTestResponseData(undefined)}
         dialogClass="!z-[9999999999]"
-        panelClass="rounded-none"
+        panelClass="rounded-none p-8 pb-6 !max-w-[800px] overflow-x-auto"
         closeButtonNeed={false}
         hasBottomActionButtons
+        onRetest={handleTest}
       >
         {testResponseData && (
-          <div>
-            <div className="relative mb-[6px] ">
+          <>
+            <div className="text-xl	font-semibold mb-2">
+              Status: {testResponseData.status}
+            </div>
+            <div>
+              <div className="text-base mb-2">Headers</div>
               <div
-                className="absolute inset-0 flex items-center"
-                aria-hidden="true"
+                className={`${
+                  Object.keys(testResponseData.headers).length ? "mb-2" : ""
+                } w-max-full max-h-[60vh] overflow-y-auto text-base leading-[22px]`}
               >
-                <div className="w-full border-t border-gray-300" />
+                {Object.entries(testResponseData.headers).map(
+                  ([key, value]) => (
+                    <div key={key}>
+                      {key}: {value}
+                    </div>
+                  )
+                )}
               </div>
-              <div className="relative flex justify-center">
-                <span className="bg-white border border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
-                  Status: {testResponseData.status}
-                </span>
-              </div>
-            </div>
-            <div className="relative mb-[6px] ">
-              <div
-                className="absolute inset-0 flex items-center"
-                aria-hidden="true"
-              >
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-white border border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
-                  Headers
-                </span>
+              <hr className="h-px border-[#E5E7EB] mb-2" />
+              <div className="text-base mb-2">Body</div>
+              <div className="w-max-full max-h-[60vh] overflow-y-auto whitespace-pre-wrap text-base leading-[22px] mb-2">
+                {JSON.parse(JSON.stringify(testResponseData.body, null, 10))}
               </div>
             </div>
-            <div className="w-max-full max-h-[60vh] overflow-y-auto">
-              {Object.entries(testResponseData.headers).map(([key, value]) => (
-                <div>
-                  {key}: {value}
-                </div>
-              ))}
-            </div>
-            <div className="relative mb-[6px] ">
-              <div
-                className="absolute inset-0 flex items-center"
-                aria-hidden="true"
-              >
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-white border border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
-                  Body
-                </span>
-              </div>
-            </div>
-            <div className="w-max-full max-h-[60vh] overflow-y-auto whitespace-pre-wrap">
-              {JSON.parse(JSON.stringify(testResponseData.body, null, 10))}
-            </div>
-          </div>
+          </>
         )}
       </Modal>
     </>

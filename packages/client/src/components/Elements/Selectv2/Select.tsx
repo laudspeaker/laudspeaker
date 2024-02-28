@@ -72,13 +72,11 @@ const Select = <T, U = any>({
       {({ close }) => (
         <>
           <Popover.Button
-            className={`${buttonClassName || ""}`}
+            className={`${buttonClassName ?? ""}`}
             id={id}
             disabled={disabled}
           >
-            {customBTN ? (
-              customBTN
-            ) : (
+            {customBTN ?? (
               <div
                 className={`${
                   buttonInnerWrapperClassName || ""
