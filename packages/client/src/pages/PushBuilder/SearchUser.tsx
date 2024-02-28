@@ -18,6 +18,7 @@ interface SearchUserProps {
     React.SetStateAction<CustomerResponse | undefined>
   >;
   previewFieldKey?: CustomerResponseKey;
+  buttonClassName?: string;
 }
 
 const capitalizeString = (str: string) => {
@@ -28,6 +29,7 @@ export const SearchUser = ({
   selectedCustomer,
   setSelectedCustomer,
   previewFieldKey = "id",
+  buttonClassName = "",
 }: SearchUserProps) => {
   const [customers, setCustomers] = useState<CustomerResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -78,7 +80,8 @@ export const SearchUser = ({
           : "Search user’s id, email or phone number"
       }
       value={selectedCustomer?.id}
-      className="mb-[10px] max-w-[800px]"
+      className="max-w-[800px] min-w-full"
+      buttonClassName={buttonClassName}
       isLoading={isLoading}
       noDataPlaceholder={search ? "No matching users" : "No users"}
       searchPlaceholder="Search"

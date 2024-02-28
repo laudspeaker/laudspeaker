@@ -1,12 +1,14 @@
-import { GenericButton, Input, Select } from "components/Elements";
 import Modal from "components/Elements/Modal";
-import MergeTagInput from "components/MergeTagInput";
-import MergeTagTextarea from "components/MergeTagTextarea";
 import React, { FC, ReactNode, RefObject, useEffect, useState } from "react";
 import ApiService from "services/api.service";
 import { Buffer } from "buffer";
 import { toast } from "react-toastify";
 import { AxiosError } from "axios";
+import Button, { ButtonType } from "components/Elements/Buttonv2";
+import Select from "components/Elements/Selectv2";
+import Input from "components/Elements/Inputv2";
+import { Textarea } from "components/Elements";
+import { CustomerResponse, SearchUser } from "pages/PushBuilder/SearchUser";
 
 export enum WebhookMethod {
   GET = "GET",
@@ -99,7 +101,6 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
   setWebhookState,
   webhookProps,
   setWebhookProps,
-  possibleAttributes,
   setSelectedRef,
   onSave,
   urlRef,
@@ -108,47 +109,17 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
   basicPasswordRef,
   customHeaderRef,
   bodyRef,
-  headersRef,
   selectedRef,
   setSelectedRefValueSetter,
   className,
 }) => {
   const [authType, setAuthType] = useState<AuthType>(AuthType.CUSTOM);
   const [bodyType, setBodyType] = useState(BodyType.JSON);
-  const [headersString, setHeadersString] = useState(
-    Object.entries(webhookState.headers || {})
-      .filter(([key]) => key !== "Authorization")
-      .map(([key, value]) => `${key}: ${value}`)
-      .join("\n") || ""
-  );
-
-  const [isURLPreview, setIsURLPreview] = useState(true);
-  const [isBearerTokenPreview, setIsBearerTokenPreview] = useState(true);
-  const [isBasicUserNamePreview, setIsBasicUserNamePreview] = useState(true);
-  const [isBasicPasswordPreview, setIsBasicPasswordPreview] = useState(true);
-  const [isCustomHeaderPreview, setIsCustomHeaderPreview] = useState(true);
-  const [isBodyPreview, setIsBodyPreview] = useState(true);
-  const [isHeadersPreview, setIsHeadersPreview] = useState(true);
-  const [testCustomerEmail, setTestCustomerEmail] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerResponse>();
   const [testResponseData, setTestResponseData] = useState<TestResponseData>();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
-  useEffect(() => {
-    setWebhookState({
-      ...webhookState,
-      headers: {
-        Authorization: webhookState.headers.Authorization,
-        ...Object.fromEntries(
-          headersString
-            .split("\n")
-            .map((row) => row.split(":").map((el) => el.trim()))
-            .filter((entry) => entry.length === 2)
-        ),
-      },
-    });
-  }, [headersString]);
 
   useEffect(() => {
     if (!username || !password) return;
@@ -191,7 +162,35 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
   const handleBody = (value: string) =>
     setWebhookState({ ...webhookState, body: value });
 
-  const handleHeaders = (value: string) => setHeadersString(value);
+  const [headers, setHeaders] = useState<
+    {
+      id: number;
+      value: string;
+    }[]
+  >([]);
+  const customHeaders = headers.reduce(
+    (acc: Record<string, string>, header) => {
+      const [key, value] = header.value.split(":");
+      if (key && value) acc[key.trim()] = value.trim();
+      return acc;
+    },
+    {}
+  );
+
+  const handleAddHeader = () => {
+    setHeaders((prevHeaders) => [
+      ...prevHeaders,
+      { id: Date.now(), value: "" },
+    ]);
+  };
+
+  const handleHeaderChange = (id: number, updatedValue: string) => {
+    setHeaders((prevHeaders) =>
+      prevHeaders.map((header) =>
+        header.id === id ? { ...header, value: updatedValue } : header
+      )
+    );
+  };
 
   const refSetterMap = new Map<
     RefObject<HTMLInputElement | HTMLTextAreaElement> | undefined,
@@ -203,7 +202,6 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
     [basicPasswordRef, handleBasicPassword],
     [customHeaderRef, handleCustomHeader],
     [bodyRef, handleBody],
-    [headersRef, handleHeaders],
   ]);
 
   useEffect(() => {
@@ -213,95 +211,66 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
       });
   }, [selectedRef]);
 
-  const authComonents: Record<AuthType, ReactNode> = {
+  const authComponents: Record<AuthType, ReactNode> = {
     [AuthType.BEARER]: (
-      <div className="flex justify-between items-center">
-        <div>Token</div>
-        <div>
-          <MergeTagInput
-            value={
-              webhookState.headers.Authorization?.replace("Bearer ", "") || ""
-            }
-            onChange={(e) => handleBearerToken(e.target.value)}
-            inputRef={bearerTokenRef}
-            onFocus={() => setSelectedRef?.(bearerTokenRef)}
-            name="bearer-token"
-            id="bearer-token"
-            isPreview={isBearerTokenPreview}
-            setIsPreview={setIsBearerTokenPreview}
-            placeholder="Bearer token"
-            possibleAttributes={possibleAttributes || []}
-            setValue={handleBearerToken}
-            inputClassNames="!bg-white max-h-[36px] !p-[8px_12px] !text-[1rem]"
-            viewerClassNames="max-h-[60px] !p-[8px_12px] !text-[1rem] !max-w-[310px] !min-w-[310px]"
-          />
-        </div>
+      <div className="flex items-center bg-gray-200 gap-8 p-2.5 rounded">
+        <div className="font-semibold">Token</div>
+        <Input
+          value={
+            webhookState.headers.Authorization?.replace("Bearer ", "") || ""
+          }
+          onChange={handleBearerToken}
+          onFocus={() => setSelectedRef?.(bearerTokenRef)}
+          name="bearer-token"
+          id="bearer-token"
+          placeholder="Header"
+          className="w-full"
+          wrapperClassName="w-full"
+        />
       </div>
     ),
     [AuthType.BASIC]: (
       <>
-        <div className="flex justify-between items-center">
-          <div>Username</div>
-          <div>
-            <MergeTagInput
-              name="basic-username"
-              id="basic-username"
-              inputRef={basicUserNameRef}
-              onFocus={() => setSelectedRef?.(basicUserNameRef)}
-              value={username}
-              onChange={(e) => handleBasicUserName(e.target.value)}
-              isPreview={isBasicUserNamePreview}
-              placeholder="Username"
-              possibleAttributes={possibleAttributes || []}
-              setIsPreview={setIsBasicUserNamePreview}
-              setValue={handleBasicUserName}
-              inputClassNames="!bg-white max-h-[36px] !p-[8px_12px] !text-[1rem]"
-              viewerClassNames="max-h-[60px] !p-[8px_12px] !text-[1rem] !max-w-[310px] !min-w-[310px]"
-            />
-          </div>
+        <div className="flex items-center rounded-t-[4px] bg-gray-200 gap-8 px-2.5 pt-2.5">
+          <div className="min-w-[70px] font-semibold">Username</div>
+          <Input
+            className="w-full"
+            wrapperClassName="w-full"
+            name="basic-username"
+            id="basic-username"
+            onFocus={() => setSelectedRef?.(basicUserNameRef)}
+            value={username}
+            onChange={handleBasicUserName}
+            placeholder="Username"
+          />
         </div>
-        <div className="flex justify-between items-center">
-          <div>Password</div>
-          <div>
-            <MergeTagInput
-              name="basic-password"
-              id="basic-password"
-              inputRef={basicPasswordRef}
-              onFocus={() => setSelectedRef?.(basicPasswordRef)}
-              value={password}
-              onChange={(e) => handleBasicPassword(e.target.value)}
-              isPreview={isBasicPasswordPreview}
-              placeholder="Password"
-              possibleAttributes={possibleAttributes || []}
-              setIsPreview={setIsBasicPasswordPreview}
-              setValue={handleBasicPassword}
-              inputClassNames="!bg-white max-h-[36px] !p-[8px_12px] !text-[1rem]"
-              viewerClassNames="max-h-[60px] !p-[8px_12px] !text-[1rem] !max-w-[310px] !min-w-[310px]"
-            />
-          </div>
+        <div className="flex items-center rounded-b-[4px] bg-gray-200 gap-8 p-2.5">
+          <div className="min-w-[70px] font-semibold">Password</div>
+          <Input
+            wrapperClassName="w-full"
+            className="w-full"
+            name="basic-password"
+            id="basic-password"
+            value={password}
+            onChange={handleBasicPassword}
+            placeholder="Password"
+          />
         </div>
       </>
     ),
     [AuthType.CUSTOM]: (
-      <div className="flex justify-between items-center">
-        <div>Header</div>
-        <div>
-          <MergeTagInput
-            name="custom-header"
-            id="custom-header"
-            value={webhookState.headers.Authorization || ""}
-            onChange={(e) => handleCustomHeader(e.target.value)}
-            inputRef={customHeaderRef}
-            onFocus={() => setSelectedRef?.(customHeaderRef)}
-            isPreview={isCustomHeaderPreview}
-            placeholder="Custom header"
-            possibleAttributes={possibleAttributes || []}
-            setIsPreview={setIsCustomHeaderPreview}
-            setValue={handleCustomHeader}
-            inputClassNames="!bg-white max-h-[36px] !p-[8px_12px] !text-[1rem]"
-            viewerClassNames="max-h-[60px] !p-[8px_12px] !text-[1rem] !max-w-[310px] !min-w-[310px]"
-          />
-        </div>
+      <div className="flex items-center bg-gray-200 gap-8 p-2.5 rounded">
+        <div className="w-[70px] font-semibold">Header</div>
+        <Input
+          wrapperClassName="w-full"
+          className="w-full"
+          name="custom-header"
+          id="custom-header"
+          value={webhookState.headers.Authorization || ""}
+          onChange={handleCustomHeader}
+          onFocus={() => setSelectedRef?.(customHeaderRef)}
+          placeholder="Header"
+        />
       </div>
     ),
   };
@@ -329,15 +298,15 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
   };
 
   const tabComponents = {
-    Autorization: (
+    Authorization: (
       <>
-        <div className="flex justify-between items-center select-none">
+        <div className="flex gap-2.5 items-center select-none text-sm	leading-[22px]">
           <div onClick={() => handleAuthType(AuthType.BEARER)}>
             <input
               type="radio"
               name="authtype"
               checked={authType === AuthType.BEARER}
-              className="text-cyan-600 focus:ring-cyan-600 mr-[10px]"
+              className="text-[#6366F1] focus:ring-[#6366F1] mr-2"
               readOnly
             />
             <label htmlFor="authtype">Bearer Token</label>
@@ -348,7 +317,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
               name="authtype"
               value="Basic auth"
               checked={authType === AuthType.BASIC}
-              className="text-cyan-600 focus:ring-cyan-600 mr-[10px]"
+              className="text-[#6366F1] focus:ring-[#6366F1] mr-2"
               readOnly
             />
             Basic Auth
@@ -359,65 +328,80 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
               name="authtype"
               value="Custom"
               checked={authType === AuthType.CUSTOM}
-              className="text-cyan-600 focus:ring-cyan-600 mr-[10px]"
+              className="text-[#6366F1] focus:ring-[#6366F1] mr-2"
               readOnly
             />
             Custom
           </div>
         </div>
-        <div>{authComonents[authType]}</div>
-      </>
-    ),
-    Content: (
-      <>
-        <Select
-          value={bodyType}
-          options={[
-            { value: BodyType.JSON },
-            { value: BodyType.HTML },
-            { value: BodyType.XML },
-          ]}
-          onChange={(val) => handleBodyType(val)}
-        />
-        <MergeTagTextarea
-          id="webhook-body"
-          name="webhook-body"
-          value={webhookState.body}
-          onChange={(e) => handleBody(e.target.value)}
-          textareaRef={bodyRef}
-          onFocus={() => setSelectedRef?.(bodyRef)}
-          isPreview={isBodyPreview}
-          placeholder="Content"
-          possibleAttributes={possibleAttributes || []}
-          setIsPreview={setIsBodyPreview}
-          setValue={handleBody}
-          inputClassNames="!bg-white !p-[8px_12px] !text-[1rem]"
-          viewerClassNames="!p-[8px_12px] !text-[1rem]"
-        />
+        <div className="text-sm leading-[22px] flex flex-col">
+          {authComponents[authType]}
+        </div>
       </>
     ),
     Headers: (
       <>
-        <MergeTagTextarea
-          id="webhook-headers"
-          name="webhook-headers"
-          value={headersString}
-          onChange={(e) => handleHeaders(e.target.value)}
-          textareaRef={headersRef}
-          onFocus={() => setSelectedRef?.(headersRef)}
-          isPreview={isHeadersPreview}
-          placeholder="Headers"
-          possibleAttributes={possibleAttributes || []}
-          setIsPreview={setIsHeadersPreview}
-          setValue={handleHeaders}
-          inputClassNames="!bg-white !p-[8px_12px] !text-[1rem]"
-          viewerClassNames="!p-[8px_12px] !text-[1rem]"
-        />
+        {headers.map(({ id, value }) => (
+          <div
+            key={id}
+            className="flex items-center bg-gray-200 gap-8 p-2.5 rounded"
+          >
+            <div className="text-[16px] font-semibold leading-[24px]">
+              Header
+            </div>
+
+            <Input
+              // key={`input-${index}`} // Set a constant key for the Input
+              wrapperClassName="w-full"
+              className="w-full"
+              name={`custom-header-${id}`}
+              id={`custom-header-${id}`}
+              value={value || ""}
+              onChange={(e) => handleHeaderChange(id, e)}
+              onFocus={() => setSelectedRef?.(customHeaderRef)}
+              placeholder="Header"
+            />
+          </div>
+        ))}
+        <Button
+          type={ButtonType.SECONDARY}
+          className="w-fit"
+          onClick={handleAddHeader}
+        >
+          Add header
+        </Button>
       </>
+    ),
+    Content: (
+      <div className="p-2 bg-[#F3F4F6] gap-[10px] flex flex-col w-full rounded">
+        <Select
+          value={bodyType}
+          options={[
+            { key: BodyType.JSON, title: BodyType.JSON },
+            { key: BodyType.HTML, title: BodyType.HTML },
+            { key: BodyType.XML, title: BodyType.XML },
+          ]}
+          onChange={(val) => handleBodyType(val)}
+          buttonClassName="w-fit"
+        />
+        <div className="w-full flex">
+          <div className="w-[50px] bg-[#E5E7EB] rounded-l-[4px]" />
+          <Textarea
+            className="w-full rounded-l-none border-0"
+            id="webhook-body"
+            name="webhook-body"
+            value={webhookState.body}
+            onChange={(e) => handleBody(e.target.value)}
+            textareaRef={bodyRef}
+            onFocus={() => setSelectedRef?.(bodyRef)}
+            placeholder="Content"
+          />
+        </div>
+      </div>
     ),
   };
   const [currentTab, setCurrentTab] =
-    useState<keyof typeof tabComponents>("Autorization");
+    useState<keyof typeof tabComponents>("Authorization");
 
   const urlRegExp = new RegExp(
     /^(http(s):\/\/.)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$/
@@ -437,7 +421,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
 
   const rawRequest = `${webhookState.method} ${path} HTTP/1.1
     Host: ${host}
-    ${Object.entries(webhookState.headers)
+    ${Object.entries({ ...webhookState.headers, ...customHeaders })
       .map(([key, value]) => `${key || ""}: ${value || ""}`)
       .join("\n")}
     ${
@@ -471,9 +455,14 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
 
       const { data } = await ApiService.post<TestResponseData>({
         url: `/templates/test-webhook`,
-        options: { webhookData: webhookState, testCustomerEmail },
+        options: {
+          webhookData: {
+            ...webhookState,
+            headers: { ...webhookState.headers, ...customHeaders },
+          },
+          testCustomerEmail: selectedCustomer?.email,
+        },
       });
-
       setTestResponseData(data);
       toast.success("Successfully sent test request");
     } catch (e) {
@@ -487,166 +476,195 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
 
   return (
     <>
-      <div className={`w-[490px] m-auto ${className}`}>
-        <div className="flex justify-center items-center gap-[10px]">
-          <MergeTagInput
-            name="webhookURL"
-            id="webhookURL"
-            placeholder="URL"
-            inputRef={urlRef}
-            onFocus={() => setSelectedRef?.(urlRef)}
-            value={webhookState.url}
-            onChange={(e) => handleUrl(e.target.value)}
-            isPreview={isURLPreview}
-            possibleAttributes={possibleAttributes || []}
-            setIsPreview={setIsURLPreview}
-            setValue={handleUrl}
-            inputClassNames="!bg-white max-h-[36px] !p-[8px_12px] !text-[1rem]"
-            viewerClassNames="max-h-[60px] !p-[8px_12px] !text-[1rem] !max-w-[310px] !min-w-[310px]"
-          />
-          <Select
-            value={webhookState.method}
-            options={[
-              { value: WebhookMethod.GET },
-              { value: WebhookMethod.POST },
-              { value: WebhookMethod.PUT },
-              { value: WebhookMethod.PATCH },
-              { value: WebhookMethod.DELETE },
-              { value: WebhookMethod.HEAD },
-              { value: WebhookMethod.OPTIONS },
-            ]}
-            onChange={(val) =>
-              setWebhookState({ ...webhookState, method: val })
-            }
-          />
-          <GenericButton customClasses="!h-[36px]" onClick={handleTest}>
-            Test
-          </GenericButton>
+      <div
+        className={`h-full flex flex-col md:flex-row w-full m-auto font-inter ${className}`}
+      >
+        <div className="h-full w-full md:w-[380px] overflow-y-hidden break-words order-2  md:order-1">
+          <div className="h-[calc(100%-40px)] bg-white m-5 p-5">
+            {isValidURL ? (
+              <div className="whitespace-pre-line">{rawRequest}</div>
+            ) : (
+              <div>Enter valid url to see raw request</div>
+            )}
+          </div>
         </div>
-        <div className="flex flex-col gap-[10px]">
-          <div className="flex justify-between items-center">
-            <div>Test customer email:</div>
-            <div>
-              <Input
-                name="testCustomerEmail"
-                id="testCustomerEmail"
-                value={testCustomerEmail}
-                onChange={(e) => setTestCustomerEmail(e.target.value)}
+        <div className="w-full h-full bg-white order-1 md:order-2">
+          <div className="px-5 flex w-full flex-col gap-2.5">
+            <div className="w-full flex flex-col gap-2.5">
+              <p className="text-[16px] font-semibold pt-[20px] leading-[24px]">
+                URL
+              </p>
+              <div className="flex items-center gap-[10px] w-full">
+                <Select
+                  value={webhookState.method}
+                  options={[
+                    { key: WebhookMethod.GET, title: WebhookMethod.GET },
+                    { key: WebhookMethod.POST, title: WebhookMethod.POST },
+                    { key: WebhookMethod.PUT, title: WebhookMethod.PUT },
+                    { key: WebhookMethod.PATCH, title: WebhookMethod.PATCH },
+                    { key: WebhookMethod.DELETE, title: WebhookMethod.DELETE },
+                    { key: WebhookMethod.HEAD, title: WebhookMethod.HEAD },
+                    {
+                      key: WebhookMethod.OPTIONS,
+                      title: WebhookMethod.OPTIONS,
+                    },
+                  ]}
+                  buttonClassName="w-full"
+                  className="w-fit max-w-[100px]"
+                  onChange={(val) =>
+                    setWebhookState({ ...webhookState, method: val })
+                  }
+                />
+                <Input
+                  wrapperClassName="w-full"
+                  placeholder="Enter webhook URL"
+                  className="w-full"
+                  name="webhookURL"
+                  id="webhookURL"
+                  onFocus={() => setSelectedRef?.(urlRef)}
+                  value={webhookState.url}
+                  onChange={handleUrl}
+                />
+                <Button
+                  type={ButtonType.PRIMARY}
+                  onClick={handleTest}
+                  className="min-w-[100px]"
+                >
+                  Send test
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-[10px]">
+              {webhookProps && setWebhookProps && (
+                <div className="flex justify-between items-center">
+                  <div>Data to retrieve:</div>
+                  <div>
+                    <Input
+                      name="webhookProps"
+                      id="webhookProps"
+                      value={webhookProps}
+                      onChange={(e) => {
+                        const event =
+                          e as unknown as React.ChangeEvent<HTMLInputElement>;
+                        if (
+                          /^response\..*/.test(event.target.value) &&
+                          setWebhookProps
+                        )
+                          setWebhookProps(event.target.value);
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="flex w-full justify-between gap-2">
+                <div className="flex flex-col w-full gap-[5px]">
+                  <p className="text-[16px] font-semibold leading-[24px]">
+                    Retries
+                  </p>
+                  <div>
+                    <Input
+                      name="retries"
+                      id="retries"
+                      type="number"
+                      max={5}
+                      min={0}
+                      value={webhookState.retries.toString()}
+                      onChange={(e) => handleRetriesChange(parseInt(e))}
+                      wrapperClassName="w-full"
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col w-full gap-[5px]">
+                  <p className="text-[16px] font-semibold leading-[24px]">
+                    Fallback action
+                  </p>
+                  <div>
+                    <Select
+                      id="fallbackAction"
+                      value={webhookState.fallBackAction}
+                      options={[
+                        { key: FallBackAction.NOTHING, title: "Do nothing" },
+                      ]}
+                      onChange={(val) =>
+                        setWebhookState({
+                          ...webhookState,
+                          fallBackAction: val,
+                        })
+                      }
+                      className="w-full"
+                      buttonClassName="w-full"
+                      panelClassName="w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="border-y-[1px] pb-5 w-full mt-5 ">
+            <div className="px-5 flex flex-col gap-2.5 pt-2.5">
+              <p className="text-[16px] font-semibold leading-[24px]">
+                Preview with sample user
+              </p>
+              <SearchUser
+                selectedCustomer={selectedCustomer}
+                setSelectedCustomer={setSelectedCustomer}
+                previewFieldKey="email"
+                buttonClassName="w-full"
               />
             </div>
           </div>
-          {webhookProps && setWebhookProps && (
-            <div className="flex justify-between items-center">
-              <div>Data to retrieve:</div>
-              <div>
-                <Input
-                  name="webhookProps"
-                  id="webhookProps"
-                  value={webhookProps}
-                  onChange={(e) => {
-                    if (/^response\..*/.test(e.target.value) && setWebhookProps)
-                      setWebhookProps(e.target.value);
-                  }}
+          <div className="px-5">
+            <div className="pt-2.5 md:pt-0">
+              <div className="md:hidden">
+                <label htmlFor="selected-tab" className="sr-only">
+                  Select a tab
+                </label>
+                <Select
+                  id="selected-tab"
+                  options={[
+                    { key: "Authorization", title: "Authorization" },
+                    { key: "Headers", title: "Headers" },
+                    { key: "Content", title: "Content" },
+                  ]}
+                  value={currentTab}
+                  onChange={(val) =>
+                    setCurrentTab(val as keyof typeof tabComponents)
+                  }
                 />
               </div>
-            </div>
-          )}
-
-          <div className="flex justify-between items-center">
-            <div>Retries:</div>
-            <div>
-              <Input
-                name="retries"
-                id="retries"
-                type="number"
-                max={5}
-                min={0}
-                value={webhookState.retries}
-                onChange={(e) => handleRetriesChange(+e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex justify-between items-center">
-            <div>Fallback action:</div>
-            <div>
-              <Select
-                name="fallbackAction"
-                id="fallbackAction"
-                value={webhookState.fallBackAction}
-                options={[
-                  { value: FallBackAction.NOTHING, title: "Do nothing" },
-                ]}
-                onChange={(val) =>
-                  setWebhookState({ ...webhookState, fallBackAction: val })
-                }
-              />
-            </div>
-          </div>
-        </div>
-        <div className="px-4 sm:px-6 md:px-0">
-          <div className="lg:hidden">
-            <label htmlFor="selected-tab" className="sr-only">
-              Select a tab
-            </label>
-            <Select
-              id="selected-tab"
-              name="selected-tab"
-              options={[
-                { value: "Autorization" },
-                { value: "Content" },
-                { value: "Headers" },
-              ]}
-              wrapperClassnames="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
-              value={currentTab}
-              onChange={(val) => setCurrentTab(val)}
-            />
-          </div>
-          <div className="hidden lg:block">
-            <div className="border-b border-gray-200">
-              <nav className="-mb-px flex space-x-8">
-                {(
-                  Object.keys(tabComponents) as (keyof typeof tabComponents)[]
-                ).map((tab) => (
-                  <div
-                    key={tab}
-                    className={classNames(
-                      tab === currentTab
-                        ? "border-cyan-500 text-cyan-600"
-                        : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
-                      "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm cursor-pointer"
-                    )}
-                    onClick={() => setCurrentTab(tab)}
-                  >
-                    {tab}
-                  </div>
-                ))}
-              </nav>
-            </div>
-          </div>
-          <div className="my-5 flex flex-col gap-[10px]">
-            {tabComponents[currentTab]}
-          </div>
-          <div>
-            <div className="relative mb-[6px] ">
-              <div
-                className="absolute inset-0 flex items-center"
-                aria-hidden="true"
-              >
-                <div className="w-full border-t border-gray-300" />
+              <div className="hidden md:block">
+                <div className="border-b border-gray-200">
+                  <nav className="-mb-px flex space-x-8">
+                    {(
+                      Object.keys(
+                        tabComponents
+                      ) as (keyof typeof tabComponents)[]
+                    ).map((tab) => (
+                      <div
+                        key={tab}
+                        className={classNames(
+                          tab === currentTab
+                            ? "border-[#6366F1] text-[#6366F1]"
+                            : "border-transparent text-black-500 hover:border-black-300 hover:text-black-700",
+                          "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm cursor-pointer"
+                        )}
+                        onClick={() => setCurrentTab(tab)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") setCurrentTab(tab);
+                        }}
+                      >
+                        {tab}
+                      </div>
+                    ))}
+                  </nav>
+                </div>
               </div>
-              <div className="relative flex justify-center">
-                <span className="bg-white border border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
-                  Raw
-                </span>
+              <div className="my-2.5 flex flex-col gap-2.5">
+                {tabComponents[currentTab]}
               </div>
             </div>
-            {isValidURL ? (
-              <div className="whitespace-pre-line border-2 border-cyan-200 p-[10px] rounded-md bg-white">
-                {rawRequest}
-              </div>
-            ) : (
-              <div>Type valid url to see raw request</div>
-            )}
           </div>
         </div>
       </div>
@@ -654,60 +672,38 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
         isOpen={!!testResponseData}
         onClose={() => setTestResponseData(undefined)}
         dialogClass="!z-[9999999999]"
-        panelClass="max-w-[70vw]"
+        panelClass="rounded-none p-8 pb-6 !max-w-[800px] overflow-x-auto"
+        closeButtonNeed={false}
+        hasBottomActionButtons
+        onRetest={handleTest}
       >
         {testResponseData && (
-          <div>
-            <div className="relative mb-[6px] ">
+          <>
+            <div className="text-xl	font-semibold mb-2">
+              Status: {testResponseData.status}
+            </div>
+            <div>
+              <div className="text-base mb-2">Headers</div>
               <div
-                className="absolute inset-0 flex items-center"
-                aria-hidden="true"
+                className={`${
+                  Object.keys(testResponseData.headers).length ? "mb-2" : ""
+                } w-max-full max-h-[60vh] overflow-y-auto text-base leading-[22px]`}
               >
-                <div className="w-full border-t border-gray-300" />
+                {Object.entries(testResponseData.headers).map(
+                  ([key, value]) => (
+                    <div key={key}>
+                      {key}: {value}
+                    </div>
+                  )
+                )}
               </div>
-              <div className="relative flex justify-center">
-                <span className="bg-white border border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
-                  Status: {testResponseData.status}
-                </span>
-              </div>
-            </div>
-            <div className="relative mb-[6px] ">
-              <div
-                className="absolute inset-0 flex items-center"
-                aria-hidden="true"
-              >
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-white border border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
-                  Headers
-                </span>
+              <hr className="h-px border-[#E5E7EB] mb-2" />
+              <div className="text-base mb-2">Body</div>
+              <div className="w-max-full max-h-[60vh] overflow-y-auto whitespace-pre-wrap text-base leading-[22px] mb-2">
+                {JSON.parse(JSON.stringify(testResponseData.body, null, 10))}
               </div>
             </div>
-            <div className="w-max-full max-h-[60vh] overflow-y-scroll">
-              {Object.entries(testResponseData.headers).map(([key, value]) => (
-                <div>
-                  {key}: {value}
-                </div>
-              ))}
-            </div>
-            <div className="relative mb-[6px] ">
-              <div
-                className="absolute inset-0 flex items-center"
-                aria-hidden="true"
-              >
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-white border border-cyan-100 px-3 text-base rounded-md font-semibold leading-6 text-gray-700">
-                  Body
-                </span>
-              </div>
-            </div>
-            <div className="w-max-full max-h-[60vh] overflow-y-scroll whitespace-pre-wrap">
-              {JSON.parse(JSON.stringify(testResponseData.body, null, 10))}
-            </div>
-          </div>
+          </>
         )}
       </Modal>
     </>

@@ -1,12 +1,6 @@
 import { FC, Fragment } from "react";
 import { Menu, Transition } from "@headlessui/react";
-import { Bars3CenterLeftIcon, BellIcon } from "@heroicons/react/24/outline";
-import {
-  ChevronDownIcon,
-  MagnifyingGlassIcon,
-} from "@heroicons/react/20/solid";
-import { useDispatch } from "react-redux";
-import { toggleNavbar } from "reducers/settings.reducer";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { Link } from "react-router-dom";
 import { useAppSelector } from "store/hooks";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +15,6 @@ interface HeaderProps {
 }
 
 const Header: FC<HeaderProps> = ({ crumbs }) => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleLogout = () => {

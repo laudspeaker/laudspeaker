@@ -1,6 +1,7 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { FC, Fragment, KeyboardEvent } from "react";
 import { XMarkIcon } from "@heroicons/react/20/solid";
+import Button, { ButtonType } from "../Buttonv2";
 
 export interface ModalProps {
   isOpen: boolean;
@@ -11,8 +12,10 @@ export interface ModalProps {
   panelClass?: string;
   dialogClass?: string;
   closeButtonNeed?: boolean;
+  hasBottomActionButtons?: boolean;
   onClose?: () => void;
   onEnterPress?: (e: KeyboardEvent<HTMLDivElement>) => void;
+  onRetest?: () => void;
 }
 
 const Modal: FC<ModalProps> = ({
@@ -25,7 +28,9 @@ const Modal: FC<ModalProps> = ({
   panelClass = "",
   titleClass = "",
   closeButtonNeed = true,
+  hasBottomActionButtons = false,
   onEnterPress,
+  onRetest = () => null,
 }) => {
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -68,7 +73,7 @@ const Modal: FC<ModalProps> = ({
                 {title && (
                   <Dialog.Title className={titleClass}>{title}</Dialog.Title>
                 )}
-                <div className="mt-2 pr-[10px]">
+                <div className="mt-2">
                   <Dialog.Description
                     className={`${childrenClass} max-h-[80vh] overflow-visible pr-[10px]`}
                   >
@@ -83,6 +88,20 @@ const Modal: FC<ModalProps> = ({
                   >
                     <XMarkIcon className="h-[30px] w-[30px]" />
                   </button>
+                )}
+                {hasBottomActionButtons && (
+                  <div className="flex justify-end gap-2 mt-8">
+                    <Button
+                      type={ButtonType.SECONDARY}
+                      onClick={onRetest}
+                      className="text-black border-gray-200 hover:border-gray-400 hover:text-black focus:border-gray-500 focus:text-black"
+                    >
+                      Retest
+                    </Button>
+                    <Button type={ButtonType.PRIMARY} onClick={onClose}>
+                      OK
+                    </Button>
+                  </div>
                 )}
               </Dialog.Panel>
             </Transition.Child>
