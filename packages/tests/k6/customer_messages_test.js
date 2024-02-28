@@ -293,7 +293,7 @@ export default function main() {
   reporter.setStep(`CLEANUP`);
   reporter.log(`Deleting account ${email}`);
   response = httpxWrapper.deleteOrFail(
-    `/api/auth/accounts`,
+    `/api/accounts`,
     `{"password":"${password}"}`
   );
   reporter.log(`Account deleted.`);
