@@ -196,11 +196,16 @@ const Select = <T, U = any>({
                   {options.map((option, i) => {
                     const props = {
                       className: `${
-                        option.groupLabel &&
-                        "bg-[#F3F4F6] !py-[2px] !cursor-auto !text-[#4B5563] leading-5 font-inter !text-[12px]"
+                        option.groupLabel
+                          ? "bg-[#F3F4F6] !py-[2px] !cursor-auto !text-[#4B5563] leading-5 font-inter !text-[12px]"
+                          : ""
                       }
-                      ${option.nonSelectable && "hover:bg-white !cursor-auto"}
-                      max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap px-[12px] py-[5px] hover:bg-[#F3F4F6] select-none cursor-pointer`,
+                      ${
+                        option.nonSelectable
+                          ? "hover:bg-white !cursor-auto"
+                          : ""
+                      }
+                      overflow-hidden text-ellipsis whitespace-nowrap px-[12px] py-[5px] hover:bg-[#F3F4F6] select-none cursor-pointer`,
                       onClick: () => {
                         if (option.groupLabel || option.nonSelectable) return;
 
