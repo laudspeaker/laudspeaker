@@ -289,10 +289,16 @@ const Personv2 = () => {
   const validateAllFields = () => {
     let allValid = true;
     const newValidationErrors: Record<string, string> = {};
+    const skipValidationFor = [
+      "createdAt",
+      "isAnonymous",
+      "iosDeviceToken",
+      "androidToken",
+    ]; // Fields to skip
 
     Object.entries(editingPersonInfo).forEach(([key, value]) => {
-      if (key === "createdAt") {
-        return;
+      if (skipValidationFor.includes(key)) {
+        return; // Skip validation for specified keys
       }
       const foundAttribute = possibleAttributes.find(
         (attr) => attr.key === key
@@ -789,12 +795,12 @@ const Personv2 = () => {
             <PeopleInJourneyTable />
           </div>
         ) : currentTab === PersonTab.SEGMENTS ? (
-          <div className="w-full h-full bg-white rounded-lg p-5">
+          <div className="w-full h-full bg-white rounded-lg p-5 rounded-lg flex flex-col gap-10">
             {/* Segments tab content here */}
             <Table
               isLoading={isLoading}
               headings={[
-                <div className="px-5 py-[10px] select-none">Name</div>,
+                <div className="pr-30 py-[10px] select-none">me</div>,
                 <div className="px-5 py-[10px] select-none">Type</div>,
                 <div
                   className="px-5 py-[10px] select-none flex gap-[2px] items-center cursor-pointer"
