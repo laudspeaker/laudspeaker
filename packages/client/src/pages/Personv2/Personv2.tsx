@@ -1,5 +1,5 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2";
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, ReactNode, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import ApiService from "services/api.service";
 import UserIcon from "./icons/UserIcon";
@@ -27,6 +27,7 @@ import sortDescChevronsImage from "./svg/sort-desc-chevrons.svg";
 import sortNoneChevronsImage from "./svg/sort-none-chevrons.svg";
 import { Menu, Transition } from "@headlessui/react";
 import threeDotsIconImage from "./svg/three-dots-icon.svg";
+import { AttributeType } from "pages/PeopleImport/PeopleImport";
 
 export interface EventObject {
   event: string;
@@ -75,20 +76,18 @@ interface SortOptions {
 }
 
 function validateType(value: any, type: any) {
-  //console.log("in validateType");
-  //console.log(value, type);
-  //console.log("ok");
   switch (type) {
     case "Number":
-      return !isNaN(parseFloat(value)) && isFinite(value);
+      return !isNaN(+value) && isFinite(+value);
     case "String":
       return typeof value === "string";
     case "Date":
+    case "DateTime":
       // Example of date validation; implement as needed
       return !isNaN(Date.parse(value));
     case "Boolean":
       // Considering boolean input as string 'true' or 'false'
-      return value === "true" || value === "false";
+      return value === true || value === false;
     // Add other type validations as needed
     case "Email":
       // Simple email validation using regex
@@ -99,18 +98,14 @@ function validateType(value: any, type: any) {
   }
 }
 
-function enforceType(value: any, type: any) {
-  console.log("in enforce type");
-  console.log("value is", value);
-  console.log("type is", type);
+function enforceType(value: any, type: AttributeType) {
   switch (type) {
-    case "Number":
+    case StatementValueType.NUMBER:
       return Number(value);
-    case "String":
+    case StatementValueType.STRING:
       return String(value);
-    case "Boolean":
-      return String(value).toLowerCase() === "true"; // Assuming boolean values are represented as strings 'true' or 'false'
-    case "Date":
+    case StatementValueType.DATE:
+    case StatementValueType.DATE_TIME:
       // Assuming the value is in a format that can be parsed by the Date constructor
       return new Date(value);
     // Add more cases as needed for other types
@@ -118,6 +113,32 @@ function enforceType(value: any, type: any) {
       return value;
   }
 }
+
+export const generateAttributeView = (
+  value: any,
+  type: AttributeType,
+  isArray?: boolean,
+  dateFormat?: string
+): ReactNode => {
+  if (isArray) {
+    return (value as any[])
+      .map((item) => generateAttributeView(item, type, false, dateFormat))
+      .join(", ");
+  }
+
+  switch (type) {
+    case StatementValueType.BOOLEAN:
+      return value ? "true" : "false";
+      break;
+    case StatementValueType.DATE:
+    case StatementValueType.DATE_TIME:
+      return value && dateFormat ? format(new Date(value), dateFormat) : value;
+    default:
+      return value;
+  }
+
+  return value;
+};
 
 const Personv2 = () => {
   const navigate = useNavigate();
@@ -276,8 +297,13 @@ const Personv2 = () => {
       const foundAttribute = possibleAttributes.find(
         (attr) => attr.key === key
       );
-      const isValid = validateType(value, foundAttribute?.type);
+      const isValid = foundAttribute?.isArray
+        ? (value as any[]).every((item) =>
+            validateType(item, foundAttribute?.type)
+          )
+        : validateType(value, foundAttribute?.type);
       if (!isValid) {
+        console.error(`${foundAttribute?.key} is invalid`);
         allValid = false;
         newValidationErrors[key] = `Value must be a ${foundAttribute?.type}`;
       }
@@ -291,12 +317,12 @@ const Personv2 = () => {
     const allFieldsValid = validateAllFields();
 
     // If not all fields are valid, show a toast and abort the save operation
-    // if (!allFieldsValid) {
-    //   toast.error(
-    //     "Cannot save - make sure the data you entered matches the type."
-    //   );
-    //   return;
-    // }
+    if (!allFieldsValid) {
+      toast.error(
+        "Cannot save - make sure the data you entered matches the type."
+      );
+      return;
+    }
 
     const enforcedData = Object.entries(editingPersonInfo).reduce<
       Record<string, any>
@@ -308,7 +334,11 @@ const Personv2 = () => {
           (attr) => attr.key === key
         );
         if (foundAttribute) {
-          acc[key] = enforceType(value, foundAttribute.type);
+          acc[key] = foundAttribute.isArray
+            ? (value as any[]).map((item) =>
+                enforceType(item, foundAttribute.type)
+              )
+            : enforceType(value, foundAttribute.type);
         } else {
           acc[key] = value; // Keep as is if no specific type is found
         }
@@ -495,6 +525,7 @@ const Personv2 = () => {
                               });
                             }}
                             placeholder="Input value"
+                            dateFormat={dateFormat}
                           />
                           <button
                             onClick={() => {
@@ -517,11 +548,12 @@ const Personv2 = () => {
                           {dateFormat ? <>[{dateFormat}]</> : <></>}
                         </div>
                         <div>
-                          {["object", "boolean"].includes(
-                            typeof personInfoToShow[key]
-                          )
-                            ? JSON.stringify(personInfoToShow[key])
-                            : personInfoToShow[key]}
+                          {generateAttributeView(
+                            personInfoToShow[key],
+                            type,
+                            isArray,
+                            dateFormat
+                          )}
                         </div>
                       </div>
                     )
@@ -535,7 +567,7 @@ const Personv2 = () => {
                     if (!attr) return;
                     setEditingPersonInfo({
                       ...editingPersonInfo,
-                      [attr.key]: "",
+                      [attr.key]: attr.isArray ? [] : "",
                     });
                   }}
                   options={possibleAttributes
@@ -660,6 +692,7 @@ const Personv2 = () => {
                                     });
                                   }}
                                   placeholder="Input value"
+                                  dateFormat={dateFormat}
                                 />
                               </div>
                             </div>
@@ -671,11 +704,11 @@ const Personv2 = () => {
                                 {dateFormat ? <>[{dateFormat}]</> : <></>}
                               </div>
                               <div>
-                                {["object", "boolean"].includes(
-                                  typeof personInfoToShow[key]
-                                )
-                                  ? JSON.stringify(personInfoToShow[key])
-                                  : personInfoToShow[key]}
+                                {generateAttributeView(
+                                  personInfoToShow[key],
+                                  type,
+                                  isArray
+                                )}
                               </div>
                             </div>
                           )
