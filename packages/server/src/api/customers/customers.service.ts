@@ -1187,6 +1187,7 @@ export class CustomersService {
     let query: any;
     this.accountsRepository;
     let collectionPrefix: string;
+    let collectionName: string;
     const foundAccount = await this.accountsRepository.findOne({
       where: {
         id: account,
@@ -1215,7 +1216,7 @@ export class CustomersService {
         0,
         collectionPrefix
       );
-      const collectionName = customersInSegment; // Name of the MongoDB collection
+      collectionName = customersInSegment; // Name of the MongoDB collection
 
       const pipeline = [
         {
@@ -1245,6 +1246,7 @@ export class CustomersService {
     if (limit) query.limit(limit);
     if (skip) query.skip(skip);
     const res = await query.exec();
+    if (collectionName) await this.connection.dropCollection(collectionName);
     return res;
   }
 
@@ -1345,6 +1347,7 @@ export class CustomersService {
       const collectionName = customersInSegment; // Name of the MongoDB collection
       const coll = this.connection.collection(collectionName);
       count = await coll.countDocuments({});
+      await coll.drop();
     }
 
     this.debug(

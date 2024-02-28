@@ -204,27 +204,29 @@ export class JourneyLocationsService {
     account: Account,
     queryRunner: QueryRunner
   ) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-    const valuesPlaceholder = customers
-      .map(
-        (_, index) =>
-          `($1, $${index + 2}, $${customers.length + 2}, $${
-            customers.length + 3
-          }, $${customers.length + 4}, $${customers.length + 5})`
-      )
-      .join(', ');
-    const query = `
-      INSERT INTO journey_location ("journeyId", customer, "stepId", "workspaceId", "stepEntry", "moveStarted")
-      VALUES ${valuesPlaceholder}
-    `;
-    await queryRunner.query(query, [
-      journeyId,
-      ...customers,
-      step.id,
-      workspace.id,
-      Date.now(),
-      Date.now(),
-    ]);
+    if (customers.length) {
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+      const valuesPlaceholder = customers
+        .map(
+          (_, index) =>
+            `($1, $${index + 2}, $${customers.length + 2}, $${
+              customers.length + 3
+            }, $${customers.length + 4}, $${customers.length + 5})`
+        )
+        .join(', ');
+      const query = `
+        INSERT INTO journey_location ("journeyId", customer, "stepId", "workspaceId", "stepEntry", "moveStarted")
+        VALUES ${valuesPlaceholder}
+      `;
+      await queryRunner.query(query, [
+        journeyId,
+        ...customers,
+        step.id,
+        workspace.id,
+        Date.now(),
+        Date.now(),
+      ]);
+    } 
   }
 
   /**
