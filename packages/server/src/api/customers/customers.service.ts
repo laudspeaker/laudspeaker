@@ -5346,8 +5346,8 @@ export class CustomersService {
 
     const deviceTokenConditions = {
       $or: [
-        { androidDeviceToken: { $exists: true, $ne: '' } },
-        { iosDeviceToken: { $exists: true, $ne: '' } },
+        { androidFCMTokens: { $exists: true, $size: { $gt: 0 } } },
+        { iosFCMTokens: { $exists: true, $size: { $gt: 0 } } },
       ],
     };
 

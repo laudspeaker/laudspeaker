@@ -834,76 +834,96 @@ export class TransitionProcessor extends WorkerHost {
         case TemplateType.PUSH:
           switch (currentStep.metadata.selectedPlatform) {
             case 'All':
-              await this.webhooksService.insertMessageStatusToClickhouse(
-                await sender.process({
-                  name: 'android',
-                  accountID: owner.id,
-                  stepID: currentStep.id,
-                  customerID: customerID,
-                  firebaseCredentials:
-                    workspace.pushPlatforms.Android.credentials,
-                  deviceToken: customer.androidDeviceToken,
-                  pushTitle: template.pushObject.settings.Android.title,
-                  pushText: template.pushObject.settings.Android.description,
-                  trackingEmail: email,
-                  filteredTags: filteredTags,
-                  templateID: template.id,
-                }),
-                session
+              const tokenStorage = [
+                ...customer.androidFCMTokens,
+                ...customer.iosFCMTokens,
+              ].reduce(
+                (acc, el) => (acc.includes(el) ? acc : [...acc, el]),
+                [] as string[]
               );
-              await this.webhooksService.insertMessageStatusToClickhouse(
-                await sender.process({
-                  name: 'ios',
-                  accountID: owner.id,
-                  stepID: currentStep.id,
-                  customerID: customerID,
-                  firebaseCredentials: workspace.pushPlatforms.iOS.credentials,
-                  deviceToken: customer.iosDeviceToken,
-                  pushTitle: template.pushObject.settings.iOS.title,
-                  pushText: template.pushObject.settings.iOS.description,
-                  trackingEmail: email,
-                  filteredTags: filteredTags,
-                  templateID: template.id,
-                }),
-                session
-              );
+              for (const token of tokenStorage) {
+                await this.webhooksService.insertMessageStatusToClickhouse(
+                  await sender.process({
+                    name: 'android',
+                    accountID: owner.id,
+                    stepID: currentStep.id,
+                    customerID: customerID,
+                    firebaseCredentials:
+                      workspace.pushPlatforms.Android.credentials,
+                    deviceToken: token,
+                    pushTitle: template.pushObject.settings.Android.title,
+                    pushText: template.pushObject.settings.Android.description,
+                    trackingEmail: email,
+                    filteredTags: filteredTags,
+                    templateID: template.id,
+                  }),
+                  session
+                );
+                await this.webhooksService.insertMessageStatusToClickhouse(
+                  await sender.process({
+                    name: 'ios',
+                    accountID: owner.id,
+                    stepID: currentStep.id,
+                    customerID: customerID,
+                    firebaseCredentials:
+                      workspace.pushPlatforms.iOS.credentials,
+                    deviceToken: token,
+                    pushTitle: template.pushObject.settings.iOS.title,
+                    pushText: template.pushObject.settings.iOS.description,
+                    trackingEmail: email,
+                    filteredTags: filteredTags,
+                    templateID: template.id,
+                  }),
+                  session
+                );
+              }
+
               break;
             case 'iOS':
-              await this.webhooksService.insertMessageStatusToClickhouse(
-                await sender.process({
-                  name: 'ios',
-                  accountID: owner.id,
-                  stepID: currentStep.id,
-                  customerID: customerID,
-                  firebaseCredentials: workspace.pushPlatforms.iOS.credentials,
-                  deviceToken: customer.iosDeviceToken,
-                  pushTitle: template.pushObject.settings.iOS.title,
-                  pushText: template.pushObject.settings.iOS.description,
-                  trackingEmail: email,
-                  filteredTags: filteredTags,
-                  templateID: template.id,
-                }),
-                session
-              );
+              const iosTokenStorage = customer.iosFCMTokens;
+              for (const token of iosTokenStorage) {
+                await this.webhooksService.insertMessageStatusToClickhouse(
+                  await sender.process({
+                    name: 'ios',
+                    accountID: owner.id,
+                    stepID: currentStep.id,
+                    customerID: customerID,
+                    firebaseCredentials:
+                      workspace.pushPlatforms.iOS.credentials,
+                    deviceToken: token,
+                    pushTitle: template.pushObject.settings.iOS.title,
+                    pushText: template.pushObject.settings.iOS.description,
+                    trackingEmail: email,
+                    filteredTags: filteredTags,
+                    templateID: template.id,
+                  }),
+                  session
+                );
+              }
               break;
             case 'Android':
-              await this.webhooksService.insertMessageStatusToClickhouse(
-                await sender.process({
-                  name: 'android',
-                  accountID: owner.id,
-                  stepID: currentStep.id,
-                  customerID: customerID,
-                  firebaseCredentials:
-                    workspace.pushPlatforms.Android.credentials,
-                  deviceToken: customer.androidDeviceToken,
-                  pushTitle: template.pushObject.settings.Android.title,
-                  pushText: template.pushObject.settings.Android.description,
-                  trackingEmail: email,
-                  filteredTags: filteredTags,
-                  templateID: template.id,
-                }),
-                session
-              );
+              const androidTokenStorage = customer.androidFCMTokens;
+
+              for (const token of androidTokenStorage) {
+                await this.webhooksService.insertMessageStatusToClickhouse(
+                  await sender.process({
+                    name: 'android',
+                    accountID: owner.id,
+                    stepID: currentStep.id,
+                    customerID: customerID,
+                    firebaseCredentials:
+                      workspace.pushPlatforms.Android.credentials,
+                    deviceToken: token,
+                    pushTitle: template.pushObject.settings.Android.title,
+                    pushText: template.pushObject.settings.Android.description,
+                    trackingEmail: email,
+                    filteredTags: filteredTags,
+                    templateID: template.id,
+                  }),
+                  session
+                );
+              }
+
               break;
           }
           break;
