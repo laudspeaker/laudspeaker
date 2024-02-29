@@ -612,7 +612,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
                 setSelectedCustomer={setSelectedCustomer}
                 previewFieldKey="email"
                 buttonClassName="w-full"
-                requirement={true}
+                webhook={true}
               />
             </div>
           </div>
