@@ -73,7 +73,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
             </span>
           </div>
           <div className="text-[#4B5563] font-inter text-[12px] leading-5 font-normal">
-            Send messages only during certain hours
+            No messages sent during these specified hours
           </div>
           {journeySettings.quietHours.enabled && (
             <div className="p-[10px] border border-[#E5E7EB] bg-[#F3F4F6] rounded max-w-[800px] flex flex-col gap-[10px]">
