@@ -153,6 +153,23 @@ export class CustomersController {
     );
   }
 
+  @Get('/search-for-webhook')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async searchForWebhook(
+    @Req() { user }: Request,
+    @Query('take') take = 100,
+    @Query('skip') skip = 0,
+    @Query('search') search = ''
+  ) {
+    return await this.customersService.searchForWebhook(
+      <Account>user,
+      take,
+      skip,
+      search
+    );
+  }
+
   @Put('/primary-key')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
