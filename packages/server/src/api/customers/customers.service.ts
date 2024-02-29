@@ -1416,7 +1416,7 @@ export class CustomersService {
   }
 
   async findOrCreateByCorrelationKVPair(
-    workspace: Workspaces,
+    workspace: Workspace,
     dto: EventDto,
     transactionSession: ClientSession
   ): Promise<Correlation> {
