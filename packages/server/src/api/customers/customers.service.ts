@@ -3351,7 +3351,7 @@ export class CustomersService {
         return value;
       case 'Boolean':
         // Convert to boolean
-        return value.toLowerCase() === 'true';
+        return String(value).toLowerCase() === 'true';
       case 'Date':
         // Convert to a date
         return new Date(value);
