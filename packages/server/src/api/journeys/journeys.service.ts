@@ -1578,10 +1578,10 @@ export class JourneysService {
         await this.connection.dropCollection(collectionNameFromTrigger);
       }
     } catch (e) {
-      await transactionSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
       err = e;
       this.error(e, this.start.name, session, account.email);
+      await transactionSession.abortTransaction();
+      await queryRunner.rollbackTransaction();
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
