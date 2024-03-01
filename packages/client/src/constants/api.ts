@@ -23,6 +23,7 @@ export default {
   getAllTemplates: "/templates",
   getAllPeople: "/customers",
   searchCustomersForTest: "/customers/search-for-test",
+  searchCustomersForWebhook: "/customers/search-for-webhook",
   customerCreate: "/customers/create",
   customerDelete: "/customers/delete/",
   flow: "/workflows",
