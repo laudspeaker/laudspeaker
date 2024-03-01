@@ -4929,13 +4929,19 @@ export class CustomersService {
     const mongoQuery: any = {
       event: eventName,
       workspaceId: workspace.id,
+      $or: [],
     };
 
     let currentPK: string = await this.CustomerKeysModel.findOne({
       workspaceId: workspace.id,
       isPrimary: true,
     });
-
+    if (currentPK && customer[currentPK]) {
+      const pkCondition = {};
+      pkCondition[`correlationKey`] = currentPK;
+      pkCondition[`correlationValue`] = customer[currentPK];
+      mongoQuery.$or.push(pkCondition);
+    /*
     if (currentPK) {
       this.debug(
         `current pk is: ${currentPK}`,
@@ -4945,6 +4951,7 @@ export class CustomersService {
       );
       mongoQuery.correlationKey = currentPK;
       mongoQuery.correlationValue = customer[currentPK];
+      */
     } else {
       // Handle case where currentPK is null
       //uncomment when primary key thing is working correctly
@@ -4954,13 +4961,23 @@ export class CustomersService {
         HttpStatus.BAD_REQUEST
       );
       */
-
       //to do just for testing
+      /*
       console.log('pk isnt working so set as email');
+      const pkCondition = {};
       currentPK = 'email';
-      mongoQuery.correlationKey = currentPK;
-      mongoQuery.correlationValue = customer[currentPK];
+      pkCondition[`correlationKey`] = currentPK;
+      pkCondition[`correlationValue`] = customer[currentPK];
+      mongoQuery.$or.push(pkCondition);
+      */
     }
+
+    //we need this condition to handle our mobile sdk since we save events with customer ID not customer primary key as the correlationKey
+      const idCondition = {
+        correlationKey: '_id',
+        correlationValue: customer.id, // Assuming customer.id stores the MongoDB _id
+      };
+    mongoQuery.$or.push(idCondition);
 
     if (time) {
       switch (time.comparisonType) {
