@@ -28,7 +28,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Job, Queue, UnrecoverableError } from 'bullmq';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import mongoose, { ClientSession, Model } from 'mongoose';
+import mongoose, { ClientSession, FilterQuery, Model, isValidObjectId } from 'mongoose';
 import { EventDocument, Event } from './schemas/event.schema';
 import mockData from '../../fixtures/mockData';
 import { EventKeys, EventKeysDocument } from './schemas/event-keys.schema';
@@ -458,7 +458,8 @@ export class EventsService {
     session: string,
     take = 100,
     skip = 0,
-    search = ''
+    search = '',
+    customerId?: string
   ) {
     this.debug(
       ` in customEvents`,
@@ -467,18 +468,37 @@ export class EventsService {
       account.id
     );
 
+    let customer: CustomerDocument | undefined;
+    if (customerId && isValidObjectId(customerId)) {
+      customer = await this.customersService.CustomerModel.findById(
+        customerId
+      ).exec();
+    }
+
+    const pk: string | undefined = await this.customersService.getPrimaryKey(
+      account,
+      ''
+    );
+
     //console.log("in customEvents")
     const searchRegExp = new RegExp(`.*${search}.*`, 'i');
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
+    const filterObject: FilterQuery<EventDocument> = {
+      event: searchRegExp,
+      workspaceId: workspace.id,
+      ...(customer
+        ? {
+            $or: [
+              { correlationKey: '_id', correlationValue: customerId },
+              { correlationKey: pk, correlationValue: customer[pk] },
+            ],
+          }
+        : {}),
+    };
+
     const totalPages =
-      Math.ceil(
-        (await this.EventModel.count({
-          event: searchRegExp,
-          workspaceId: workspace.id,
-          //ownerId: (<Account>account).id,
-        }).exec()) / take
-      ) || 1;
+      Math.ceil((await this.EventModel.count(filterObject).exec()) / take) || 1;
 
     //console.log("regex", searchRegExp );
     //console.log("ownderId", (<Account>account).id );
@@ -498,11 +518,7 @@ export class EventsService {
     */
     const customEvents = await this.EventModel.aggregate([
       {
-        $match: {
-          event: searchRegExp,
-          workspaceId: workspace.id,
-          //ownerId: (<Account>account).id,
-        },
+        $match: filterObject,
       },
       {
         $addFields: {
