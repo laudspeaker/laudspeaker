@@ -961,14 +961,31 @@ export class WebsocketGateway implements OnGatewayConnection {
       socket.emit('customerId', customer.id);
     }
 
-    const conflictingCustomersCount =
-      await this.customersService.CustomerModel.count({
+    const conflictingCustomer =
+      await this.customersService.CustomerModel.findOne({
         workspaceId: workspace.id,
         [type === PushPlatforms.ANDROID ? 'androidFCMTokens' : 'iosFCMTokens']:
           token,
+      }).exec();
+
+    if (conflictingCustomer) {
+      if (!customer.isAnonymous)
+        throw new WsException(
+          'Non-anonymous conflicting customers with this FCM token found'
+        );
+
+      socket.emit('log', 'Conflicting customer found, merging...');
+
+      const pk = await this.CustomerKeysModel.findOne({
+        workspaceId: workspace.id,
+        isPrimary: true,
       });
-    if (conflictingCustomersCount > 0)
-      throw new WsException('Conflicting customers with this FCM token found');
+
+      await this.handleIdentify(socket, {
+        __PrimaryKey: conflictingCustomer[pk.key],
+      });
+      return;
+    }
 
     const tokenStorage =
       customer[

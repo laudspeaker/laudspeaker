@@ -160,6 +160,12 @@ const Personv2 = () => {
       type: StatementValueType.STRING,
       isArray: true,
     },
+    {
+      id: uuid(),
+      key: "isAnonymous",
+      type: StatementValueType.BOOLEAN,
+      isArray: false,
+    },
   ];
 
   const navigate = useNavigate();
@@ -610,7 +616,7 @@ const Personv2 = () => {
                       [attr.key]: attr.isArray ? [] : "",
                     });
                   }}
-                  options={possibleAttributesToShow
+                  options={possibleAttributes
                     .filter(
                       (attr) =>
                         !Object.keys(editingPersonInfo).includes(attr.key) &&

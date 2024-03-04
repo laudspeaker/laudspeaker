@@ -54,10 +54,13 @@ import {
   ElementCondition,
   EventBranch,
   MessageEvent,
+  CommonMultiBranchMetadata,
   PropertyCondition,
   StartStepMetadata,
   StepType,
   TimeWindowTypes,
+  ExperimentMetadata,
+  ExperimentBranch,
 } from '../steps/types/step.interface';
 import { MessageStepMetadata } from '../steps/types/step.interface';
 import { WaitUntilStepMetadata } from '../steps/types/step.interface';
@@ -2176,6 +2179,24 @@ export class JourneysService {
                 })[0].data.stepId;
                 metadata.branches.push(branch);
               }
+            }
+            break;
+          case NodeType.EXPERIMENT:
+            metadata = new ExperimentMetadata();
+            metadata.branches = [];
+
+            for (let j = 0; j < relevantEdges.length; j++) {
+              const edge = relevantEdges[j];
+
+              const branch = new ExperimentBranch();
+
+              branch.index = j;
+              branch.ratio = nodes[i].data.branches[j]?.ratio || 0;
+
+              const edgeTarget = nodes.find((node) => node.id === edge.target);
+              branch.destination = edgeTarget.data.stepId;
+
+              metadata.branches.push(branch);
             }
             break;
         }
