@@ -19,7 +19,6 @@ interface SearchUserProps {
   >;
   previewFieldKey?: CustomerResponseKey;
   buttonClassName?: string;
-  webhook?: boolean;
 }
 
 const capitalizeString = (str: string) => {
@@ -31,7 +30,6 @@ export const SearchUser = ({
   setSelectedCustomer,
   previewFieldKey = "id",
   buttonClassName = "",
-  webhook = false,
 }: SearchUserProps) => {
   const [customers, setCustomers] = useState<CustomerResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,29 +40,16 @@ export const SearchUser = ({
   const handleSearchForTest = async () => {
     setIsLoading(true);
     try {
-      if (webhook) {
-        //console.log("searching for webhook users");
-        const { data: ResData } = await ApiService.get<{
-          data: CustomerResponse[];
-          totalPages: number;
-        }>({
-          url: `${ApiConfig.searchCustomersForWebhook}?take=10&skip=${skip}&search=${search}`,
-        });
-        if (skip === 0) setCustomers(ResData.data);
-        else setCustomers((prev) => [...prev, ...ResData.data]);
-        setTotalPages(ResData.totalPages);
-      } else {
-        //console.log("non webhook users");
-        const { data: ResData } = await ApiService.get<{
-          data: CustomerResponse[];
-          totalPages: number;
-        }>({
-          url: `${ApiConfig.searchCustomersForTest}?take=10&skip=${skip}&search=${search}`,
-        });
-        if (skip === 0) setCustomers(ResData.data);
-        else setCustomers((prev) => [...prev, ...ResData.data]);
-        setTotalPages(ResData.totalPages);
-      }
+      const { data: ResData } = await ApiService.get<{
+        data: CustomerResponse[];
+        totalPages: number;
+      }>({
+        url: `${ApiConfig.searchCustomersForTest}?take=10&skip=${skip}&search=${search}`,
+      });
+      if (skip === 0) setCustomers(ResData.data);
+      else setCustomers((prev) => [...prev, ...ResData.data]);
+
+      setTotalPages(ResData.totalPages);
     } catch {}
     setIsLoading(false);
   };

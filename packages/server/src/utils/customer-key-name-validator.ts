@@ -16,7 +16,6 @@ export const KEYS_TO_SKIP = [
   'workflows',
   'posthogId',
   'slackTeamId',
-  'previousAnonymousIds',
 ];
 
 export const validateKeyForMutations = (val: any) => {
