@@ -16,6 +16,8 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Step } from '../steps/entities/step.entity';
 import { JourneyLocation } from './entities/journey-location.entity';
 import { StepType } from '../steps/types/step.interface';
+import { date } from 'liquidjs/dist/builtin/filters';
+import { randomUUID } from 'crypto';
 
 const LOCATION_LOCK_TIMEOUT_MS = +process.env.LOCATION_LOCK_TIMEOUT_MS;
 
@@ -203,30 +205,31 @@ export class JourneyLocationsService {
     session: string,
     account: Account,
     queryRunner: QueryRunner
-  ) {
-    if (customers.length) {
-      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-      const valuesPlaceholder = customers
-        .map(
-          (_, index) =>
-            `($1, $${index + 2}, $${customers.length + 2}, $${
-              customers.length + 3
-            }, $${customers.length + 4}, $${customers.length + 5})`
-        )
-        .join(', ');
-      const query = `
+  ): Promise<JourneyLocation[]> {
+    if (!customers.length) return [];
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const valuesPlaceholder = customers
+      .map(
+        (_, index) =>
+          `($1, $${index + 2}, $${customers.length + 2}, $${
+            customers.length + 3
+          }, $${customers.length + 4}, $${customers.length + 5})`
+      )
+      .join(', ');
+    const query = `
         INSERT INTO journey_location ("journeyId", customer, "stepId", "workspaceId", "stepEntry", "moveStarted")
         VALUES ${valuesPlaceholder}
+        RETURNING *
       `;
-      await queryRunner.query(query, [
-        journeyId,
-        ...customers,
-        step.id,
-        workspace.id,
-        Date.now(),
-        Date.now(),
-      ]);
-    }
+    const result = await queryRunner.query(query, [
+      journeyId,
+      ...customers,
+      step.id,
+      workspace.id,
+      Date.now(),
+      Date.now(),
+    ]);
+    return result;
   }
 
   /**
@@ -286,8 +289,7 @@ export class JourneyLocationsService {
           workspace: workspace ? { id: workspace.id } : undefined,
           customer: customer.id,
         },
-        loadRelationIds: true,
-        lock: { mode: 'pessimistic_write' },
+        relations: ['step'],
       });
     } else {
       return await this.journeyLocationsRepository.findOne({
@@ -297,9 +299,36 @@ export class JourneyLocationsService {
 
           customer: customer.id,
         },
-        loadRelationIds: true,
-        lock: { mode: 'pessimistic_write' },
+        relations: ['step'],
       });
+    }
+  }
+
+  async findForWriteBulk(
+    journey: Journey,
+    customers: string[],
+    queryRunner?: QueryRunner
+  ): Promise<JourneyLocation[]> {
+    if (queryRunner) {
+      return await queryRunner.manager
+        .createQueryBuilder(JourneyLocation, 'journeyLocation')
+        .where('journeyLocation.journeyId = :journeyId', {
+          journeyId: journey.id,
+        })
+        .andWhere('journeyLocation.customer IN (:...customerIds)', {
+          customerIds: customers,
+        })
+        .getMany();
+    } else {
+      return await this.journeyLocationsRepository
+        .createQueryBuilder('journeyLocation')
+        .where('journeyLocation.journeyId = :journeyId', {
+          journeyId: journey.id,
+        })
+        .andWhere('journeyLocation.customer IN (:...customerIds)', {
+          customerIds: customers,
+        })
+        .getMany();
     }
   }
 
@@ -407,7 +436,7 @@ export class JourneyLocationsService {
       JSON.stringify({
         info: `Finding JourneyLocation (${journey.id}, ${customer.id})`,
       }),
-      this.findAndUnlock.name,
+      this.find.name,
       session,
       account?.email
     );
@@ -470,7 +499,6 @@ export class JourneyLocationsService {
           ],
           moveStarted: IsNull(),
         },
-        lock: { mode: 'pessimistic_write' },
         loadRelationIds: true,
       });
     } else {
@@ -502,41 +530,56 @@ export class JourneyLocationsService {
    */
   async unlock(
     location: JourneyLocation,
-    session: string,
-    account?: Account,
+    step: Step,
     queryRunner?: QueryRunner
   ) {
-    this.log(
-      JSON.stringify({
-        info: `Unlocking JourneyLocation (${location.journey}, ${location.customer})`,
-      }),
-      this.unlock.name,
-      session,
-      account?.email
-    );
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const updateFields = {
+      journey: location.journey,
+      customer: location.customer,
+      moveStarted: null,
+      stepEntry: Date.now(),
+      step: { id: step.id },
+      messageSent: location.messageSent,
+    };
+    let err, res;
 
-    if (queryRunner) {
-      await queryRunner.manager.update(
-        JourneyLocation,
-        {
-          journey: location.journey,
-          workspace: workspace ? { id: workspace.id } : undefined,
-          customer: location.customer,
-        },
-        {
-          moveStarted: null,
-        }
-      );
+    if (!queryRunner) {
+      queryRunner = await this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      try {
+        res = await queryRunner.manager.update(
+          JourneyLocation,
+          { journey: location.journey, customer: location.customer },
+          {
+            journey: location.journey,
+            customer: location.customer,
+            moveStarted: null,
+            stepEntry: Date.now(),
+            step: { id: step.id },
+            messageSent: location.messageSent,
+          }
+        );
+        await queryRunner.commitTransaction();
+      } catch (e) {
+        this.error(e, this.unlock.name, randomUUID());
+        err = e;
+        await queryRunner.rollbackTransaction();
+      } finally {
+        await queryRunner.release();
+        if (err) throw err;
+      }
     } else {
-      await this.journeyLocationsRepository.update(
+      res = await queryRunner.manager.update(
+        JourneyLocation,
+        { journey: location.journey, customer: location.customer },
         {
           journey: location.journey,
-          workspace: workspace ? { id: workspace.id } : undefined,
           customer: location.customer,
-        },
-        {
           moveStarted: null,
+          stepEntry: Date.now(),
+          step: { id: step.id },
+          messageSent: location.messageSent,
         }
       );
     }
@@ -551,26 +594,26 @@ export class JourneyLocationsService {
    * @param {String} session
    * @param {QueryRunner} [queryRunner]
    */
-  async findAndUnlock(
-    journey: Journey,
-    customer: CustomerDocument,
-    session: string,
-    account?: Account,
-    queryRunner?: QueryRunner
-  ) {
-    const location = await this.findForWrite(
-      journey,
-      customer,
-      session,
-      account,
-      queryRunner
-    );
-    if (!location)
-      throw new Error(
-        `Customer ${location.customer} is not in journey ${location.journey}`
-      );
-    await this.unlock(location, session, account, queryRunner);
-  }
+  // async findAndUnlock(
+  //   journey: Journey,
+  //   customer: CustomerDocument,
+  //   session: string,
+  //   account?: Account,
+  //   queryRunner?: QueryRunner
+  // ) {
+  //   const location = await this.findForWrite(
+  //     journey,
+  //     customer,
+  //     session,
+  //     account,
+  //     queryRunner
+  //   );
+  //   if (!location)
+  //     throw new Error(
+  //       `Customer ${location.customer} is not in journey ${location.journey}`
+  //     );
+  //   await this.unlock(location, session, account, queryRunner);
+  // }
 
   /**
    * Mark a customer as no longer moving through a journey.
@@ -663,16 +706,9 @@ export class JourneyLocationsService {
     }
   }
 
-  async setMessageSent(
-    location: JourneyLocation,
-    account?: Account,
-    queryRunner?: QueryRunner
-  ) {
+  async setMessageSent(location: JourneyLocation, queryRunner?: QueryRunner) {
     const findCriteria: FindOptionsWhere<JourneyLocation> = {
       journey: location.journey,
-      workspace: account.teams?.[0]?.organization?.workspaces?.[0]?.id
-        ? { id: account.teams[0].organization.workspaces[0].id }
-        : undefined,
       customer: location.customer,
     };
     const updateData: Partial<JourneyLocation> = {

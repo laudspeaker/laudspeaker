@@ -4941,7 +4941,7 @@ export class CustomersService {
       pkCondition[`correlationKey`] = currentPK;
       pkCondition[`correlationValue`] = customer[currentPK];
       mongoQuery.$or.push(pkCondition);
-    /*
+      /*
     if (currentPK) {
       this.debug(
         `current pk is: ${currentPK}`,
@@ -4973,10 +4973,10 @@ export class CustomersService {
     }
 
     //we need this condition to handle our mobile sdk since we save events with customer ID not customer primary key as the correlationKey
-      const idCondition = {
-        correlationKey: '_id',
-        correlationValue: customer.id, // Assuming customer.id stores the MongoDB _id
-      };
+    const idCondition = {
+      correlationKey: '_id',
+      correlationValue: customer.id, // Assuming customer.id stores the MongoDB _id
+    };
     mongoQuery.$or.push(idCondition);
 
     if (time) {

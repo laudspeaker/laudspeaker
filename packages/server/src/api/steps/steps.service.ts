@@ -43,6 +43,8 @@ export class StepsService {
     @InjectConnection() private readonly connection: mongoose.Connection,
     @InjectRepository(Step)
     public stepsRepository: Repository<Step>,
+    @InjectRepository(Requeue)
+    public requeueRepository: Repository<Requeue>,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
     @InjectQueue('start') private readonly startQueue: Queue,
     @Inject(JourneyLocationsService)
@@ -153,7 +155,7 @@ export class StepsService {
     queryRunner: QueryRunner,
     transactionSession: ClientSession,
     session: string
-  ): Promise<string> {
+  ): Promise<{ collectionName: string; job: { name: string; data: any } }> {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const startStep = await queryRunner.manager.find(Step, {
@@ -176,28 +178,33 @@ export class StepsService {
       audienceSize
     );
 
-    await this.journeyLocationsService.createAndLockBulk(
-      journey.id,
-      customers.map((document) => {
-        return document._id.toString();
-      }),
-      startStep[0],
-      session,
-      account,
-      queryRunner
-    );
+    const journeyLocations =
+      await this.journeyLocationsService.createAndLockBulk(
+        journey.id,
+        customers.map((document) => {
+          return document._id.toString();
+        }),
+        startStep[0],
+        session,
+        account,
+        queryRunner
+      );
 
-    await this.startQueue.add('start', {
-      owner: account,
-      step: startStep[0],
-      journey,
-      session: session,
-      query,
-      skip: 0,
-      limit: audienceSize,
-    });
-
-    return collectionName;
+    return {
+      collectionName,
+      job: {
+        name: 'start',
+        data: {
+          owner: account,
+          step: startStep[0],
+          journey,
+          session: session,
+          query,
+          skip: 0,
+          limit: audienceSize,
+        },
+      },
+    };
   }
 
   /**
@@ -457,6 +464,31 @@ export class StepsService {
   }
 
   /**
+   * Find a step by its ID, dont load any relations
+   * @param id
+   * @param queryRunner
+   * @returns
+   */
+  async lazyFindByID(
+    id: string,
+    queryRunner?: QueryRunner
+  ): Promise<Step | null> {
+    if (queryRunner) {
+      return await queryRunner.manager.findOne(Step, {
+        where: {
+          id: id,
+        },
+      });
+    } else {
+      return await this.stepsRepository.findOne({
+        where: {
+          id: id,
+        },
+      });
+    }
+  }
+
+  /**
    * Insert a new step.
    * TODO: Check step metadata matches step type
    * @param account
@@ -706,16 +738,25 @@ export class StepsService {
     customerId: string,
     requeueTime: Date,
     session: string,
-    queryRunner: QueryRunner
+    queryRunner?: QueryRunner
   ) {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    await queryRunner.manager.save(Requeue, {
-      workspace: workspace,
-      step,
-      customerId,
-      requeueAt: requeueTime.toISOString(),
-    });
+    if (queryRunner) {
+      await queryRunner.manager.save(Requeue, {
+        workspace: workspace,
+        step,
+        customerId,
+        requeueAt: requeueTime.toISOString(),
+      });
+    } else {
+      await this.requeueRepository.save({
+        workspace: workspace,
+        step,
+        customerId,
+        requeueAt: requeueTime.toISOString(),
+      });
+    }
   }
 
   async deleteRequeueMessage(

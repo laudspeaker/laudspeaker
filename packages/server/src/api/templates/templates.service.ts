@@ -583,7 +583,7 @@ export class TemplatesService extends QueueEventsHost {
     });
   }
 
-  transactionalFindOneById(
+  async transactionalFindOneById(
     account: Account,
     id: string,
     queryRunner: QueryRunner
@@ -591,6 +591,31 @@ export class TemplatesService extends QueueEventsHost {
     return queryRunner.manager.findOneBy(Template, {
       id: id,
     });
+  }
+
+  /**
+   * Find a template by its ID, dont load any relations
+   * @param id
+   * @param queryRunner
+   * @returns
+   */
+  async lazyFindByID(
+    id: string,
+    queryRunner?: QueryRunner
+  ): Promise<Template | null> {
+    if (queryRunner) {
+      return await queryRunner.manager.findOne(Template, {
+        where: {
+          id: id,
+        },
+      });
+    } else {
+      return await this.templatesRepository.findOne({
+        where: {
+          id: id,
+        },
+      });
+    }
   }
 
   findBy(account: Account, type: TemplateType): Promise<Template[]> {

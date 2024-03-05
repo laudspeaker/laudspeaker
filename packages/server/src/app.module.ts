@@ -237,6 +237,9 @@ export const formatMongoConnectionString = (mongoConnectionString: string) => {
     BullModule.registerQueue({
       name: 'imports',
     }),
+    BullModule.registerQueue({
+      name: 'start',
+    }),
     IntegrationsModule,
     CustomersModule,
     TemplatesModule,
