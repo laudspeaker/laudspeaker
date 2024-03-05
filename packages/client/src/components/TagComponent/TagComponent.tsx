@@ -9,6 +9,7 @@ interface TagComponentProps {
   possibleTags?: string[];
   onInputChange?: (val: string) => void;
   onTagChange: (tags: string[]) => void;
+  className?: string;
 }
 
 export default function TagComponent({
@@ -16,6 +17,7 @@ export default function TagComponent({
   possibleTags = [],
   onTagChange,
   onInputChange = () => {},
+  className = "",
 }: TagComponentProps) {
   const [focused, setFocused] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -60,7 +62,7 @@ export default function TagComponent({
         )}
         className={`${
           !tags.length && "pl-[12px]"
-        } rounded-sm border border-gray-300 bg-white overflow-hidden p-1 react-tagsinput`}
+        } ${className} rounded-sm border border-gray-300 bg-white overflow-hidden p-1 react-tagsinput`}
         renderTag={(tag) => (
           <div
             className="rounded-sm h-[24px] mb-0 mr-[4px] bg-[#E5E7EB] inline-flex items-center py-[2px] pl-2 pr-[4px] select-none cursor-pointer text-[#111827]"

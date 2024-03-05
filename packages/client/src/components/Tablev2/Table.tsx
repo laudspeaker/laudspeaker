@@ -11,6 +11,7 @@ interface TableProps<T> {
   bodyClassName?: string;
   selectedRow?: number;
   onRowClick?: (i: number) => void;
+  trHeadingClassName?: string;
 }
 
 const Table = <T,>({
@@ -22,13 +23,16 @@ const Table = <T,>({
   headClassName = "",
   bodyClassName = "",
   selectedRow,
+  trHeadingClassName = "",
   onRowClick,
 }: TableProps<T>) => {
   return (
     <table className={`rounded ${className ? className : ""}`}>
       {headings && (
         <thead className={headClassName}>
-          <tr className="border-b-[1px] border-[#E5E7EB] ">
+          <tr
+            className={`${trHeadingClassName} border-b-[1px] border-[#E5E7EB]`}
+          >
             {headings.map((heading, i) => (
               <th className="text-left" key={i}>
                 {heading}

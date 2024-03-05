@@ -484,11 +484,16 @@ export interface JourneySettingsMaxMessageSends {
   maxSendRate?: MaxOptions;
 }
 
+export interface JourneySettingsEnableFrequencyCapping {
+  enabled: boolean;
+}
+
 export interface JourneySettings {
   tags: string[];
   quietHours: JourneySettingsQuietHours;
   maxEntries: JourneySettingsMaxUserEntries;
   maxMessageSends: JourneySettingsMaxMessageSends;
+  frequencyCapping: JourneySettingsEnableFrequencyCapping;
 }
 
 export interface TemplateInlineEditor {
@@ -589,6 +594,9 @@ export const defaultJourneySettings = {
     enabled: false,
     maxSendRate: undefined,
     maxUsersReceive: undefined,
+  },
+  frequencyCapping: {
+    enabled: false,
   },
 };
 
@@ -1352,6 +1360,13 @@ const flowBuilderSlice = createSlice({
     ) {
       state.journeySettings.quietHours = action.payload;
     },
+    setJourneyFrequencyCappingRules(
+      state,
+      action: PayloadAction<JourneySettingsEnableFrequencyCapping>
+    ) {
+      state.journeySettings.frequencyCapping = action.payload;
+    },
+
     setMaxMessageSends(
       state,
       action: PayloadAction<JourneySettingsMaxMessageSends>
@@ -1561,6 +1576,7 @@ export const {
   setMaxMessageSends,
   setAvailableTags,
   setTemplateInlineCreator,
+  setJourneyFrequencyCappingRules,
 } = flowBuilderSlice.actions;
 
 export { defaultDevMode };

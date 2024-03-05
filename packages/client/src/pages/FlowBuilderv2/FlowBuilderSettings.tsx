@@ -6,6 +6,7 @@ import RadioOption from "components/Radio/RadioOption";
 import TagComponent from "components/TagComponent/TagComponent";
 import { FC, useState } from "react";
 import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
   JourneySettingsQuietFallbackBehavior,
   setJourneySettingsQuietHours,
@@ -13,6 +14,7 @@ import {
   setJourneySettingsMaxEntries,
   setMaxMessageSends,
   setJourneySettingsTags,
+  setJourneyFrequencyCappingRules,
 } from "reducers/flow-builder.reducer";
 import { useAppSelector } from "store/hooks";
 
@@ -30,6 +32,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
     (store) => store.flowBuilder
   );
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   return (
     <div className="m-5 max-h-full overflow-y-scroll w-full bg-white rounded p-5 text-[#111827] font-inter">
@@ -335,6 +338,48 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                 </div>
               )}
             </div>
+          )}
+        </div>
+        <div className="w-[calc(100%+40px)] h-[1px] bg-[#E5E7EB] -translate-x-[20px]" />
+        <div className="flex flex-col gap-[10px]">
+          <div className="flex items-center">
+            <span
+              className="flex cursor-pointer select-none"
+              onClick={() => {
+                dispatch(
+                  setJourneyFrequencyCappingRules({
+                    ...journeySettings.frequencyCapping,
+                    enabled: !journeySettings.frequencyCapping.enabled,
+                  })
+                );
+              }}
+            >
+              <ToggleSwitch
+                checked={journeySettings.frequencyCapping.enabled}
+                iconRequired={false}
+              />
+              <div className="ml-[10px] font-semibold text-base">
+                Frequency capping
+              </div>
+            </span>
+          </div>
+          <div className="text-[#4B5563] font-inter text-[12px] leading-5 font-normal">
+            Specify frequency capping settings
+          </div>
+          {journeySettings.frequencyCapping.enabled && (
+            <Button
+              type={ButtonType.SECONDARY}
+              onClick={() => {
+                window.open(
+                  "/settings?tab=FREQUENCY_CAPPING",
+                  "_blank",
+                  "noopener,noreferrer"
+                );
+              }}
+              className="w-fit"
+            >
+              Frequency capping rules
+            </Button>
           )}
         </div>
 
