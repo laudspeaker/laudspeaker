@@ -814,7 +814,7 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/settings/sms"
+          path="/settings/twilio/:id"
           element={
             <Protected>
               <VerificationProtected>
@@ -826,7 +826,7 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/settings/push"
+          path="/settings/push/:id"
           element={
             <Protected>
               <VerificationProtected>

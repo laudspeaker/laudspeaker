@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Account } from '../accounts/entities/accounts.entity';
 import { MessageChannel } from './entities/message-channel.enum';
 import { Workspace } from './entities/workspace.entity';
@@ -18,6 +22,11 @@ import { UpdateSendgridChannelDto } from './dto/sendgrid/update-sendgrid-channel
 import { WebhooksService } from '../webhooks/webhooks.service';
 import { MailService } from '@sendgrid/mail';
 import { Client } from '@sendgrid/client';
+import { CreateTwilioChannelDto } from './dto/twilio/create-twilio-channel.dto';
+import { UpdateTwilioChannelDto } from './dto/twilio/update-twilio-channel.dto';
+import { CreatePushChannelDto } from './dto/push/create-push-channel.dto';
+import { UpdatePushChannelDto } from './dto/push/update-push-channel.dto';
+import { AccountsService } from '../accounts/accounts.service';
 
 export type WorkspaceConnection =
   | WorkspaceMailgunConnection
@@ -58,7 +67,12 @@ export class WorkspacesService {
     @InjectRepository(WorkspaceSendgridConnection)
     private workspaceSendgridConnectionRepository: Repository<WorkspaceSendgridConnection>,
     @InjectRepository(SendgridSendingOption)
-    private sendgridSendingOptionRepository: Repository<SendgridSendingOption>
+    private sendgridSendingOptionRepository: Repository<SendgridSendingOption>,
+    @InjectRepository(WorkspaceTwilioConnection)
+    private workspaceTwilioConnectionRepository: Repository<WorkspaceTwilioConnection>,
+    @InjectRepository(WorkspacePushConnection)
+    private workspacePushConnectionRepository: Repository<WorkspacePushConnection>,
+    private accountsService: AccountsService
   ) {}
 
   public async getChannels(account: Account): Promise<WorkspaceConnections> {
@@ -276,5 +290,95 @@ export class WorkspacesService {
         sendgridConnection: { id: channel.id },
       }))
     );
+  }
+
+  public async createTwilioChannel(
+    account: Account,
+    createTwilioChannelDto: CreateTwilioChannelDto
+  ) {
+    const workspace = account.teams[0].organization.workspaces[0];
+
+    await this.workspaceTwilioConnectionRepository.save({
+      ...createTwilioChannelDto,
+      workspace: { id: workspace.id },
+    });
+  }
+
+  public async updateTwilioChannel(
+    account: Account,
+    id: string,
+    updateTwilioChannelDto: UpdateTwilioChannelDto
+  ) {
+    const workspace = account.teams[0].organization.workspaces[0];
+
+    const channel = await this.workspaceTwilioConnectionRepository.findOneBy({
+      id,
+      workspace: { id: workspace.id },
+    });
+    if (!channel) throw new NotFoundException('Channel not found');
+
+    await this.workspaceTwilioConnectionRepository.save({
+      ...channel,
+      ...updateTwilioChannelDto,
+      id: channel.id,
+      workspace: { id: workspace.id },
+    });
+  }
+
+  public async createPushChannel(
+    account: Account,
+    createPushChannelDto: CreatePushChannelDto
+  ) {
+    const workspace = account.teams[0].organization.workspaces[0];
+
+    const platform =
+      createPushChannelDto.pushPlatforms?.Android ||
+      createPushChannelDto.pushPlatforms?.iOS;
+    if (!platform) throw new BadRequestException('No platform given');
+
+    await this.accountsService.validateFirebase(
+      account,
+      platform.credentials,
+      ''
+    );
+
+    await this.workspacePushConnectionRepository.save({
+      ...createPushChannelDto,
+      workspace: { id: workspace.id },
+    });
+  }
+
+  public async updatePushChannel(
+    account: Account,
+    id: string,
+    updatePushChannelDto: UpdatePushChannelDto
+  ) {
+    const workspace = account.teams[0].organization.workspaces[0];
+
+    const channel = await this.workspacePushConnectionRepository.findOneBy({
+      id,
+      workspace: { id: workspace.id },
+    });
+    if (!channel) throw new NotFoundException('Channel not found');
+
+    if (updatePushChannelDto.pushPlatforms) {
+      const platform =
+        updatePushChannelDto.pushPlatforms?.Android ||
+        updatePushChannelDto.pushPlatforms?.iOS;
+      if (!platform) throw new BadRequestException('No platform given');
+
+      await this.accountsService.validateFirebase(
+        account,
+        platform.credentials,
+        ''
+      );
+    }
+
+    await this.workspacePushConnectionRepository.save({
+      ...channel,
+      ...updatePushChannelDto,
+      id: channel.id,
+      workspace: { id: workspace.id },
+    });
   }
 }

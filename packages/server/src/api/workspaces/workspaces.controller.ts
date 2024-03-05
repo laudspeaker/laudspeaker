@@ -21,6 +21,10 @@ import { CreateMailgunChannelDto } from './dto/mailgun/create-mailgun-channel.dt
 import { UpdateMailgunChannelDto } from './dto/mailgun/update-mailgun-channel.dto';
 import { UpdateSendgridChannelDto } from './dto/sendgrid/update-sendgrid-channel.dto';
 import { CreateSendgridChannelDto } from './dto/sendgrid/create-sendgrid-channel.dto';
+import { UpdateTwilioChannelDto } from './dto/twilio/update-twilio-channel.dto';
+import { CreateTwilioChannelDto } from './dto/twilio/create-twilio-channel.dto';
+import { UpdatePushChannelDto } from './dto/push/update-push-channel.dto';
+import { CreatePushChannelDto } from './dto/push/create-push-channel.dto';
 
 @Controller('workspaces')
 export class WorkspacesController {
@@ -95,6 +99,62 @@ export class WorkspacesController {
     return this.workspacesService.createSendgridChannel(
       <Account>user,
       createMailgunChannelDto
+    );
+  }
+
+  @Patch('/channels/twilio/:id')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async updateTwilioChannel(
+    @Req() { user }: Request,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateTwilioChannelDto: UpdateTwilioChannelDto
+  ) {
+    return this.workspacesService.updateTwilioChannel(
+      <Account>user,
+      id,
+      updateTwilioChannelDto
+    );
+  }
+
+  @Post('/channels/twilio')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async createTwilioChannel(
+    @Req() { user }: Request,
+    @Body() createTwilioChannelDto: CreateTwilioChannelDto
+  ) {
+    return this.workspacesService.createTwilioChannel(
+      <Account>user,
+      createTwilioChannelDto
+    );
+  }
+
+  @Patch('/channels/push/:id')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async updatePushChannel(
+    @Req() { user }: Request,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updatePushChannelDto: UpdatePushChannelDto
+  ) {
+    return this.workspacesService.updatePushChannel(
+      <Account>user,
+      id,
+      updatePushChannelDto
+    );
+  }
+
+  @Post('/channels/push')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async createPushChannel(
+    @Req() { user }: Request,
+    @Body() createPushChannelDto: CreatePushChannelDto
+  ) {
+    return this.workspacesService.createPushChannel(
+      <Account>user,
+      createPushChannelDto
     );
   }
 

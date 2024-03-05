@@ -138,6 +138,18 @@ const MessageChannelTab = () => {
       title: connection.name,
       icon: emailCardIconImage,
     })) || []),
+    ...(account?.workspace.twilioConnections.map((connection) => ({
+      id: connection.id,
+      channel: MessageChannel.TWILIO,
+      title: connection.name,
+      icon: twilioCardIconImage,
+    })) || []),
+    ...(account?.workspace.pushConnections.map((connection) => ({
+      id: connection.id,
+      channel: MessageChannel.PUSH,
+      title: connection.name,
+      icon: pushLogoIcon,
+    })) || []),
   ];
 
   const supportedFixtures = Object.values(supportedMessageChannelCardsFixtures);

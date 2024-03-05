@@ -11,6 +11,7 @@ import { ResendSendingOption } from './entities/resend-sending-option.entity';
 import { WorkspaceTwilioConnection } from './entities/workspace-twilio-connection.entity';
 import { WorkspacePushConnection } from './entities/workspace-push-connection.entity';
 import { WebhooksModule } from '../webhooks/webhooks.module';
+import { AccountsModule } from '../accounts/accounts.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
       WorkspacePushConnection,
     ]),
     forwardRef(() => WebhooksModule),
+    forwardRef(() => AccountsModule),
   ],
   controllers: [WorkspacesController],
   providers: [WorkspacesService],
