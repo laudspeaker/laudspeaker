@@ -2418,6 +2418,303 @@ export class CustomersService {
     return ''; // Default: Return an empty set
   }
 
+
+  /*
+  * 
+  * 
+  * Takes in a segment query (inclusion criteria) and returns a string that is the name of a mongo collection of customers not customerIds
+  * 
+  * @remarks
+  * This has been initially optimized, but can likely be more optimized
+  *
+  */
+  //to do create intermediate collection
+  async getCustomersFromQuery(
+    query: any,
+    account: Account,
+    session: string,
+    topLevel: boolean,
+    count: number,
+    intermediateCollection?: string
+  ): Promise<string> {
+    this.debug(
+      'Creating segment from query',
+      this.getSegmentCustomersFromQuery.name,
+      session
+    );
+
+    this.debug(
+      `top level query is: ${JSON.stringify(query, null, 2)}`,
+      this.getSegmentCustomersFromQuery.name,
+      session,
+      account.id
+    );
+
+    //create collectionName
+    let collectionName: string;
+    let thisCollectionName: string;
+    if (count == 0) {
+      collectionName = intermediateCollection;
+    } else {
+      collectionName = intermediateCollection + count;
+    }
+    thisCollectionName = collectionName;
+    this.connection.db.collection(thisCollectionName);
+    count = count + 1;
+    //collectionName = collectionName + count;
+
+    if (query.type === 'all') {
+      console.log('the query has all (AND)');
+      if (!query.statements || query.statements.length === 0) {
+        return; //new Set<string>(); // Return an empty set
+      }
+      const sets = await Promise.all(
+        query.statements.map(async (statement) => {
+          return await this.getSegmentCustomersFromSubQuery(
+            statement,
+            account,
+            session,
+            count++,
+            collectionName + count
+          );
+        })
+      );
+      this.debug(
+        `the sets are: ${sets}`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `about to reduce the sets`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `the sets length: ${sets.length}`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      const unionAggregation: any[] = [];
+      //if (sets.length > 1) {
+      // Add each additional collection to the pipeline for union
+      sets.forEach((collName) => {
+        //console.log("the set is", collName);
+        unionAggregation.push({ $unionWith: { coll: collName } });
+      });
+      // Group by customerId and count occurrences
+      unionAggregation.push(
+        { $group: { _id: '$_id', count: { $sum: 1 } } },
+        //{ $group: { _id: "$customerId", count: { $sum: 1 } } },
+        { $match: { count: sets.length } } // Match only IDs present in all subqueries
+      );
+      //} else if (sets.length === 1) {
+      //  console.log("sets length 1");
+      // If there's only one collection, no matching
+      //} else {
+      //  console.log("No collections to process.");
+      //  return; // Exit if there are no collections
+      //}
+      unionAggregation.push({ $out: thisCollectionName });
+
+      //console.log("the first collection is", thisCollectionName);
+      //console.log("union aggreagation is", JSON.stringify(unionAggregation,null,2));
+
+      // Perform the aggregation on the first collection
+      const collectionHandle =
+        this.connection.db.collection(thisCollectionName);
+      await collectionHandle.aggregate(unionAggregation).toArray();
+
+      if (topLevel) {
+        //for each count drop the collections up to the last one
+        sets.map(async (collection) => {
+          try {
+            this.debug(
+              `trying to release collection`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
+            //toggle for testing segments
+            await this.connection.db.collection(collection).drop();
+            this.debug(
+              `dropped successfully`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
+          } catch (e) {
+            this.debug(
+              `error dropping collection: ${e}`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
+          }
+        });
+      }
+
+      const fullDetailsCollectionName = `${thisCollectionName}_FullDetails`;
+
+      // Step 2-4: Perform a lookup aggregation to join and transfer to the new collection
+      const finalAggregationPipeline = [
+        {
+          $lookup: {
+            from: "fullCustomerDetailsCollection", // Replace with your actual collection name containing full details
+            localField: "_id", // Adjust if necessary to match the linking field
+            foreignField: "_id", // Adjust if necessary to match the linking field
+            as: "customerDetails"
+          }
+        },
+        {
+          $unwind: "$customerDetails" // Optional, to flatten the results if each ID maps to exactly one customer
+        },
+        {
+          $project: {
+            // Adjust this according to the fields you want to include or exclude
+            _id: 1,
+            // Include additional fields here
+            ... // Add your fields according to the structure of full customer details
+          }
+        },
+        {
+          $out: fullDetailsCollectionName // Output the results into the new collection
+        }
+      ];
+
+      return thisCollectionName; // mergedSet;
+    } else if (query.type === 'any') {
+      console.log('the query has any (OR)');
+      if (!query.statements || query.statements.length === 0) {
+        return ''; //new Set<string>(); // Return an empty set
+      }
+
+      const sets = await Promise.all(
+        query.statements.map(async (statement) => {
+          //console.log("collectionName is", collectionName);
+          return await this.getSegmentCustomersFromSubQuery(
+            statement,
+            account,
+            session,
+            count++,
+            collectionName + count
+          );
+        })
+      );
+
+      const unionAggregation: any[] = [];
+      /*
+      [
+        { $group: { _id: "$customerId" } }
+      ];
+      */
+
+      this.debug(
+        `the sets are: ${sets}`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `about to union the sets`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `the sets length: ${sets.length}`,
+        this.getSegmentCustomersFromQuery.name,
+        session,
+        account.id
+      );
+
+      // Add each additional collection to the pipeline
+      if (sets.length > 1) {
+        sets.forEach((collName) => {
+          unionAggregation.push({ $unionWith: { coll: collName } });
+          //unionAggregation.push({ $unionWith: { coll: collName, pipeline: [{ $group: { _id: "$customerId" } }] } });
+        });
+      }
+      //unique users
+      //unionAggregation.push({ $group: { _id: "$customerId" } });
+      unionAggregation.push({ $group: { _id: '$_id' } });
+
+      // dump results to thisCollectionName
+      unionAggregation.push({ $out: thisCollectionName });
+
+      //console.log("the first collection is", sets[0]);
+      // Perform the aggregation on the first collection
+      const collectionHandle = this.connection.db.collection(sets[0]);
+      await collectionHandle.aggregate(unionAggregation).toArray();
+
+      if (topLevel) {
+        //for each count drop the collections up to the last one
+        sets.map(async (collection) => {
+          try {
+            this.debug(
+              `trying to release collection`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
+            //toggle for testing segments
+            await this.connection.db.collection(collection).drop();
+            this.debug(
+              `dropped successfully`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
+          } catch (e) {
+            this.debug(
+              `error dropping collection: ${e}`,
+              this.getSegmentCustomersFromQuery.name,
+              session,
+              account.id
+            );
+          }
+        });
+      }
+
+      const fullDetailsCollectionName = `${thisCollectionName}_FullDetails`;
+
+      // Step 2-4: Perform a lookup aggregation to join and transfer to the new collection
+      const finalAggregationPipeline = [
+        {
+          $lookup: {
+            from: "fullCustomerDetailsCollection", // Replace with your actual collection name containing full details
+            localField: "_id", // Adjust if necessary to match the linking field
+            foreignField: "_id", // Adjust if necessary to match the linking field
+            as: "customerDetails"
+          }
+        },
+        {
+          $unwind: "$customerDetails" // Optional, to flatten the results if each ID maps to exactly one customer
+        },
+        {
+          $project: {
+            // Adjust this according to the fields you want to include or exclude
+            _id: 1,
+            // Include additional fields here
+            ... // Add your fields according to the structure of full customer details
+          }
+        },
+        {
+          $out: fullDetailsCollectionName // Output the results into the new collection
+        }
+      ];
+
+
+
+      return thisCollectionName; // mergedSet;
+    }
+    //shouldn't get here;
+    return ''; // Default: Return an empty set
+  }
+
+
   /*
   * 
   * 
