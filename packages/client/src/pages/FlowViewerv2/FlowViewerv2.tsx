@@ -41,8 +41,10 @@ import FlowViewerCancelConfirmationModal from "./Modals/FlowViewerCancelConfirma
 import JourneyEntrySettingsViewer from "./JourneyEntrySettingsViewer";
 import JourneySettingsViewer from "./JourneySettingsViewer";
 import ActivityHistoryViewer from "./ActivityHistoryViewer";
+import FlowBuilderOverview from "./FlowViewerOverview";
 
 export enum FlowViewerTab {
+  OVERVIEW = "Overview",
   JOURNEY = "Journey",
   ENTRY = "Entry",
   SETTINGS = "Settings",
@@ -59,7 +61,7 @@ const FlowViewerv2 = () => {
   const { id } = useParams();
   const { state: locationState } = useLocation();
   const [isLoading, setIsLoading] = useState(true);
-  const [currentTab, setCurrentTab] = useState(FlowViewerTab.JOURNEY);
+  const [currentTab, setCurrentTab] = useState(FlowViewerTab.OVERVIEW);
   const [onConfirmNextTab, setOnConfirmNextTab] = useState<FlowViewerTab>();
 
   const dispatch = useAppDispatch();
@@ -277,6 +279,11 @@ const FlowViewerv2 = () => {
   };
 
   const tabs: Record<FlowViewerTab, ReactNode> = {
+    [FlowViewerTab.OVERVIEW]: (
+      <div className="w-full h-full flex">
+        <FlowBuilderOverview />
+      </div>
+    ),
     [FlowViewerTab.JOURNEY]: (
       <div className="w-full h-full flex">
         <FlowEditor isViewMode={true} className="bg-[#F9FAFB]" />
