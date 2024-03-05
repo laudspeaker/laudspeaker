@@ -247,8 +247,7 @@ export class EventsController {
     @Req() { user }: Request,
     @Query('take') take?: string,
     @Query('skip') skip?: string,
-    @Query('search') search?: string,
-    @Query('customerId') customerId?: string
+    @Query('search') search?: string
   ) {
     const session = randomUUID();
     return this.eventsService.getCustomEvents(
@@ -256,8 +255,7 @@ export class EventsController {
       session,
       take && +take,
       skip && +skip,
-      search,
-      customerId
+      search
     );
   }
 

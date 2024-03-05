@@ -5348,66 +5348,6 @@ export class CustomersService {
     */
   }
 
-  public async searchForWebhook(
-    account: Account,
-    take = 100,
-    skip = 0,
-    search = ''
-  ): Promise<{
-    data: { id: string; email: string; phone: string }[];
-    totalPages: number;
-  }> {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-
-    const query: any = { workspaceId: workspace.id };
-
-    const pk = await this.CustomerKeysModel.findOne({
-      isPrimary: true,
-      workspaceId: workspace.id,
-    });
-
-    if (search) {
-      const findRegexp = new RegExp(`.*${search}.*`, 'i');
-
-      const searchConditions = {
-        $or: [
-          ...(isValidObjectId(search) ? [{ _id: search }] : []),
-          { email: findRegexp },
-          { phone: findRegexp },
-          ...(pk ? [{ [pk.key]: findRegexp }] : []),
-        ],
-      };
-
-      query['$and'] = [searchConditions];
-    } else {
-      //query['$or'] = deviceTokenConditions['$or'];
-    }
-
-    const totalCustomers = await this.CustomerModel.count(query).exec();
-    const totalPages = Math.ceil(totalCustomers / take) || 1;
-
-    const customers = await this.CustomerModel.find(query)
-      .skip(skip)
-      .limit(take <= 100 ? take : 100)
-      .lean()
-      .exec();
-
-    return {
-      data: customers.map((cust) => {
-        const info: { id: string; email: string; phone: string } = {
-          id: '',
-          email: '',
-          phone: '',
-        };
-        info['id'] = cust['_id'].toString();
-        info['email'] = cust['email']?.toString() || '';
-        info['phone'] = cust['phone']?.toString() || '';
-        return info;
-      }),
-      totalPages,
-    };
-  }
-
   public async searchForTest(
     account: Account,
     take = 100,
@@ -5423,15 +5363,9 @@ export class CustomersService {
 
     const deviceTokenConditions = {
       $or: [
-        { "androidFCMTokens.0": { $exists: true } },
-        { "iosFCMTokens.0": { $exists: true } },
+        { androidDeviceToken: { $exists: true, $ne: '' } },
+        { iosDeviceToken: { $exists: true, $ne: '' } },
       ],
-      /*
-      $or: [
-        { androidFCMTokens: { $exists: true, $size: { $gt: 0 } } },
-        { iosFCMTokens: { $exists: true, $size: { $gt: 0 } } },
-      ],
-      */
     };
 
     const pk = await this.CustomerKeysModel.findOne({
@@ -5450,17 +5384,13 @@ export class CustomersService {
           ...(pk ? [{ [pk.key]: findRegexp }] : []),
         ],
       };
-      //console.log("and--")
+
       query['$and'] = [deviceTokenConditions, searchConditions];
     } else {
-      //console.log("or--")
       query['$or'] = deviceTokenConditions['$or'];
     }
 
-    //console.log("query to execute is", JSON.stringify(query,null,2));
-
     const totalCustomers = await this.CustomerModel.count(query).exec();
-    //console.log("totalCustomers are", totalCustomers);
     const totalPages = Math.ceil(totalCustomers / take) || 1;
 
     const customers = await this.CustomerModel.find(query)
