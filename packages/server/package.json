@@ -7,7 +7,7 @@
     "prebuild": "rimraf dist",
     "build": "nest build",
     "start": "nest start",
-    "start:dev": "env-cmd -f .env npm run prebuild && env-cmd -f .env nest start --watch",
+    "start:dev": "env-cmd -f .env npm run prebuild && env-cmd -f .env nest start",
     "start:dev:db": "./src/common/scripts/start-db.sh",
     "start:debug": "npm run prebuild && nest start --debug --watch",
     "start:prod": "env-cmd -f .env  node dist/src/main.js",

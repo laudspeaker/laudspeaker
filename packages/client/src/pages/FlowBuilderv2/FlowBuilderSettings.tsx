@@ -6,7 +6,6 @@ import RadioOption from "components/Radio/RadioOption";
 import TagComponent from "components/TagComponent/TagComponent";
 import { FC, useState } from "react";
 import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import {
   JourneySettingsQuietFallbackBehavior,
   setJourneySettingsQuietHours,
@@ -32,7 +31,6 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
     (store) => store.flowBuilder
   );
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   return (
     <div className="m-5 max-h-full overflow-y-scroll w-full bg-white rounded p-5 text-[#111827] font-inter">

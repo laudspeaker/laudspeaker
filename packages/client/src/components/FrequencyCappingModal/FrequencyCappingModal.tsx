@@ -126,12 +126,20 @@ export const FrequencyCappingModal: React.FC<{
             className="w-full text-[14px] leading-[22px]"
             trHeadingClassName="bg-[#F3F4F6]"
             headings={[
-              <div className="px-5 py-[10px] select-none">Name</div>,
-              <div className="px-5 py-[10px] select-none">Status</div>,
-              <div className="px-5 py-[10px] select-none">
+              <div key="name" className="px-5 py-[10px] select-none">
+                Name
+              </div>,
+              <div key="status" className="px-5 py-[10px] select-none">
+                Status
+              </div>,
+              <div
+                key="enrolled customer"
+                className="px-5 py-[10px] select-none"
+              >
                 Enrolled customer
               </div>,
               <div
+                key="sort"
                 className="px-5 py-[10px] select-none flex gap-[2px] items-center cursor-pointer"
                 onClick={() => {
                   if (sortOptions.sortBy !== SortProperty.LAST_UPDATE) {
@@ -175,19 +183,21 @@ export const FrequencyCappingModal: React.FC<{
             rowsData={rows}
             rows={rows.map((row) => [
               <button
+                key={`${row.id}-name`}
                 className="text-[#6366F1]"
                 onClick={() => navigate("/flow/" + row.id)}
               >
                 {row.name}
               </button>,
               <div
+                key={`${row.id}-status`}
                 className={`px-[10px] py-[2px] rounded-[14px] w-fit ${
                   journeyStatusClassName[row.status]
                 }`}
               >
                 {row.status}
               </div>,
-              <div>
+              <div key={`${row.id}-enrolled customer`}>
                 {row.status === JourneyStatus.DRAFT ? (
                   "-"
                 ) : (
