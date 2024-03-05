@@ -296,6 +296,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     {
       key: string;
       type: StatementValueType;
+      isArray?: boolean;
     }[]
   >([]);
 
@@ -1007,13 +1008,29 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         }}
                         retrieveLabel={(item) => item}
                         onQueryChange={(q) => {
-                          handleChangeStatement(i, { ...statement, key: q });
+                          const attribute = possibleKeys.find(
+                            (attr) => attr.key === q
+                          );
+
+                          handleChangeStatement(i, {
+                            ...statement,
+                            key: q,
+                            valueType: attribute?.isArray
+                              ? StatementValueType.ARRAY
+                              : attribute?.type || StatementValueType.STRING,
+                          });
                           setKeysQuery(q);
                         }}
                         onSelect={(value) => {
+                          const attribute = possibleKeys.find(
+                            (attr) => attr.key === value
+                          );
                           handleChangeStatement(i, {
                             ...statement,
                             key: value,
+                            valueType: attribute?.isArray
+                              ? StatementValueType.ARRAY
+                              : attribute?.type || StatementValueType.STRING,
                           });
                           setKeysQuery(value);
                         }}
@@ -1039,8 +1056,13 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           });
                         }}
                       >
-                        {Object.values(StatementValueType).map(
-                          (comparisonType, j) => (
+                        {Object.values(StatementValueType)
+                          .filter((valueType) =>
+                            statement.valueType
+                              ? statement.valueType === valueType
+                              : true
+                          )
+                          .map((comparisonType, j) => (
                             <optgroup key={j} label={comparisonType}>
                               {valueTypeToComparisonTypesMap[
                                 comparisonType
@@ -1053,8 +1075,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                 </option>
                               ))}
                             </optgroup>
-                          )
-                        )}
+                          ))}
                       </select>
                     </div>
 
