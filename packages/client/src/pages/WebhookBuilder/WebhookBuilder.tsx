@@ -126,7 +126,7 @@ const WebhookBuilder = () => {
   if (isLoading) return <Progress />;
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full">
       <SlackTemplateHeader
         onPersonalizeClick={onPersonalizeClick}
         onAddTemplateClick={onAddTemplateClick}
@@ -150,6 +150,7 @@ const WebhookBuilder = () => {
         headersRef={headersRef}
         setSelectedRefValueSetter={setSelectedRefValueSetter}
         selectedRef={selectedRef}
+        className="h-full w-full overflow-x-scroll"
       />
     </div>
   );

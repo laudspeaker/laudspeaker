@@ -240,7 +240,7 @@ const EmailBuilder = () => {
           />
           <MergeTagInput
             value={cc}
-            placeholder={"email@email.com,email_two@email.com"}
+            placeholder={"cc: email@email.com,email_two@email.com"}
             name="cc"
             id="title"
             fullWidth

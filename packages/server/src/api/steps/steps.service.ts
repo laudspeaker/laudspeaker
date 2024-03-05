@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, LessThanOrEqual, QueryRunner, Repository } from 'typeorm';
 import { Step } from './entities/step.entity';
@@ -13,6 +13,11 @@ import { Queue } from 'bullmq';
 import { StepType } from './types/step.interface';
 import { createClient } from '@clickhouse/client';
 import { Requeue } from './entities/requeue.entity';
+import { JourneyLocationsService } from '../journeys/journey-locations.service';
+import { CustomersService } from '../customers/customers.service';
+import { Journey } from '../journeys/entities/journey.entity';
+import { InjectConnection } from '@nestjs/mongoose';
+import mongoose, { ClientSession } from 'mongoose';
 
 @Injectable()
 export class StepsService {
@@ -35,10 +40,15 @@ export class StepsService {
     private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
+    @InjectConnection() private readonly connection: mongoose.Connection,
     @InjectRepository(Step)
     public stepsRepository: Repository<Step>,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
-    @InjectQueue('start') private readonly startQueue: Queue
+    @InjectQueue('start') private readonly startQueue: Queue,
+    @Inject(JourneyLocationsService)
+    private readonly journeyLocationsService: JourneyLocationsService,
+    @Inject(forwardRef(() => CustomersService))
+    private readonly customersService: CustomersService
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -137,41 +147,57 @@ export class StepsService {
    */
   async triggerStart(
     account: Account,
-    journeyID: string,
+    journey: Journey,
     query: any,
     audienceSize: number,
     queryRunner: QueryRunner,
+    transactionSession: ClientSession,
     session: string
-  ) {
+  ): Promise<string> {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const startStep = await queryRunner.manager.find(Step, {
       where: {
         workspace: { id: workspace.id },
-        journey: { id: journeyID },
+        journey: { id: journey.id },
         type: StepType.START,
       },
     });
 
-    if (startStep.length != 1)
+    if (startStep.length !== 1)
       throw new Error('Can only have one start step per journey.');
 
-    this.log(
-      JSON.stringify({ journeyID: journeyID }),
-      this.triggerStart.name,
+    const { collectionName, customers } = await this.customersService.find(
+      account,
+      query,
       session,
-      account.email
+      transactionSession,
+      0,
+      audienceSize
+    );
+
+    await this.journeyLocationsService.createAndLockBulk(
+      journey.id,
+      customers.map((document) => {
+        return document._id.toString();
+      }),
+      startStep[0],
+      session,
+      account,
+      queryRunner
     );
 
     await this.startQueue.add('start', {
-      ownerID: account.id,
-      stepID: startStep[0].id,
-      journeyID,
+      owner: account,
+      step: startStep[0],
+      journey,
       session: session,
       query,
       skip: 0,
       limit: audienceSize,
     });
+
+    return collectionName;
   }
 
   /**

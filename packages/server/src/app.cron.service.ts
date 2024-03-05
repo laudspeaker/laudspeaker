@@ -1,7 +1,7 @@
 import { Inject, Injectable, LoggerService } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import {
   Customer,
   CustomerDocument,
@@ -53,7 +53,11 @@ import { Lock } from 'redlock';
 import * as _ from 'lodash';
 import { JourneyLocationsService } from './api/journeys/journey-locations.service';
 import { Journey } from './api/journeys/entities/journey.entity';
-import { EntryTiming } from './api/journeys/types/additional-journey-settings.interface';
+import {
+  EntryTiming,
+  EntryTimingFrequency,
+  RecurrenceEndsOptions,
+} from './api/journeys/types/additional-journey-settings.interface';
 import { OrganizationInvites } from './api/organizations/entities/organization-invites.entity';
 import { JourneyLocation } from './api/journeys/entities/journey-location.entity';
 import { Requeue } from './api/steps/entities/requeue.entity';
@@ -116,7 +120,8 @@ export class CronService {
     private journeyLocationsService: JourneyLocationsService,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
     @Inject(RedlockService)
-    private readonly redlockService: RedlockService
+    private readonly redlockService: RedlockService,
+    @InjectConnection() private readonly connection: mongoose.Connection
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -178,81 +183,82 @@ export class CronService {
     );
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
-  async handleCustomerKeysCron() {
-    const session = randomUUID();
-    try {
-      let current = 0;
-      const documentsCount = await this.customerModel
-        .estimatedDocumentCount()
-        .exec();
+  // TODO: might be deleted after clarification
+  // @Cron(CronExpression.EVERY_HOUR)
+  // async handleCustomerKeysCron() {
+  //   const session = randomUUID();
+  //   try {
+  //     let current = 0;
+  //     const documentsCount = await this.customerModel
+  //       .estimatedDocumentCount()
+  //       .exec();
 
-      const keys: Record<string, any[]> = {};
-      const keyCustomerMap: Record<string, Set<string>> = {};
+  //     const keys: Record<string, any[]> = {};
+  //     const keyCustomerMap: Record<string, Set<string>> = {};
 
-      while (current < documentsCount) {
-        const batch = await this.customerModel
-          .find()
-          .skip(current)
-          .limit(BATCH_SIZE)
-          .exec();
+  //     while (current < documentsCount) {
+  //       const batch = await this.customerModel
+  //         .find()
+  //         .skip(current)
+  //         .limit(BATCH_SIZE)
+  //         .exec();
 
-        batch.forEach((customer) => {
-          const obj = customer.toObject();
-          for (const key of Object.keys(obj)) {
-            if (KEYS_TO_SKIP.includes(key)) continue;
+  //       batch.forEach((customer) => {
+  //         const obj = customer.toObject();
+  //         for (const key of Object.keys(obj)) {
+  //           if (KEYS_TO_SKIP.includes(key)) continue;
 
-            if (keys[key]) {
-              keys[key].push(obj[key]);
-              keyCustomerMap[key].add(customer.workspaceId);
-              continue;
-            }
+  //           if (keys[key]) {
+  //             keys[key].push(obj[key]);
+  //             keyCustomerMap[key].add(customer.workspaceId);
+  //             continue;
+  //           }
 
-            keys[key] = [obj[key]];
-            keyCustomerMap[key] = new Set([customer.workspaceId]);
-          }
-        });
-        current += BATCH_SIZE;
-      }
+  //           keys[key] = [obj[key]];
+  //           keyCustomerMap[key] = new Set([customer.workspaceId]);
+  //         }
+  //       });
+  //       current += BATCH_SIZE;
+  //     }
 
-      for (const key of Object.keys(keys)) {
-        const validItem = keys[key].find(
-          (item) => item !== '' && item !== undefined && item !== null
-        );
+  //     for (const key of Object.keys(keys)) {
+  //       const validItem = keys[key].find(
+  //         (item) => item !== '' && item !== undefined && item !== null
+  //       );
 
-        if (validItem === '' || validItem === undefined || validItem === null)
-          continue;
+  //       if (validItem === '' || validItem === undefined || validItem === null)
+  //         continue;
 
-        const keyType = getType(validItem);
-        const isArray = keyType.isArray();
-        let type = isArray ? getType(validItem[0]).name : keyType.name;
+  //       const keyType = getType(validItem);
+  //       const isArray = keyType.isArray();
+  //       let type = isArray ? getType(validItem[0]).name : keyType.name;
 
-        if (type === 'String') {
-          if (isEmail(validItem)) type = 'Email';
-          if (isDateString(validItem)) type = 'Date';
-        }
+  //       if (type === 'String') {
+  //         if (isEmail(validItem)) type = 'Email';
+  //         if (isDateString(validItem)) type = 'Date';
+  //       }
 
-        for (const workspaceId of keyCustomerMap[key].values()) {
-          await this.customerKeysModel
-            .updateOne(
-              { key, workspaceId },
-              {
-                $set: {
-                  key,
-                  type,
-                  isArray,
-                  workspaceId,
-                },
-              },
-              { upsert: true }
-            )
-            .exec();
-        }
-      }
-    } catch (e) {
-      this.error(e, this.handleCustomerKeysCron.name, session);
-    }
-  }
+  //       for (const workspaceId of keyCustomerMap[key].values()) {
+  //         await this.customerKeysModel
+  //           .updateOne(
+  //             { key, workspaceId },
+  //             {
+  //               $set: {
+  //                 key,
+  //                 type,
+  //                 isArray,
+  //                 workspaceId,
+  //               },
+  //             },
+  //             { upsert: true }
+  //           )
+  //           .exec();
+  //       }
+  //     }
+  //   } catch (e) {
+  //     this.error(e, this.handleCustomerKeysCron.name, session);
+  //   }
+  // }
 
   @Cron(CronExpression.EVERY_MINUTE)
   async minuteTasks() {
@@ -262,7 +268,7 @@ export class CronService {
     let queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    let timeBasedJobs: any[] = [];
+    const timeBasedJobs: any[] = [];
     try {
       const journeys = await this.journeysService.allActiveTransactional(
         queryRunner
@@ -1261,28 +1267,133 @@ export class CronService {
     }
   }
 
-  // @Cron(CronExpression.EVERY_MINUTE)
-  // async handleEntryTiming() {
-  //   const session = randomUUID();
-  //   const queryRunner = this.dataSource.createQueryRunner();
-  //   await queryRunner.connect();
-  //   await queryRunner.startTransaction();
-  //   try {
-  //     const delayedJourneys = await queryRunner.manager
-  //       .createQueryBuilder(Journey, 'journey')
-  //       .where(
-  //         'journey."journeyEntrySettings"->\'entryTiming\'->>\'type\' = :type AND journey."isActive" = true',
-  //         {
-  //           type: EntryTiming.SpecificTime,
-  //         }
-  //       )
-  //       .getMany();
-  //     await queryRunner.commitTransaction();
-  //   } catch (e) {
-  //     this.error(e, this.handleEntryTiming.name, session);
-  //     await queryRunner.rollbackTransaction();
-  //   } finally {
-  //     queryRunner.release();
-  //   }
-  // }
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleEntryTiming() {
+    const session = randomUUID();
+    const collectionNames: string[] = [];
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    const transactionSession = await this.connection.startSession();
+    transactionSession.startTransaction();
+    try {
+      // Step 1: Find all journeys that are delayed
+      const delayedJourneys = await queryRunner.manager
+        .createQueryBuilder(Journey, 'journey')
+        .leftJoinAndSelect('journey.workspace', 'workspace') // Assuming 'owner' is the relation property in the Journey entity
+        .leftJoinAndSelect('workspace.organization', 'organization') // Assuming 'owner' is the relation property in the Journey entity
+        .leftJoinAndSelect('organization.owner', 'account') // Assuming 'owner' is the relation property in the Journey entity
+        .leftJoinAndSelect('account.teams', 'teams') // Assuming 'owner' is the relation property in the Journey entity
+        .leftJoinAndSelect('teams.organization', 'organization_two') // Assuming 'owner' is the relation property in the Journey entity
+        .leftJoinAndSelect('organization_two.workspaces', 'workspaces') // Assuming 'owner' is the relation property in the Journey entity
+        .where(
+          'journey."journeyEntrySettings"->\'entryTiming\'->>\'type\' = :type AND journey."isActive" = true',
+          {
+            type: EntryTiming.SpecificTime,
+          }
+        )
+        .getMany();
+      // Step 2: Filter all journeys that are eligible to be re-enrolled
+      for (
+        let journeysIndex = 0;
+        journeysIndex < delayedJourneys.length;
+        journeysIndex++
+      ) {
+        let enroll = false;
+        if (
+          delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time
+            .frequency === EntryTimingFrequency.Once
+        ) {
+          if (
+            new Date(
+              delayedJourneys[
+                journeysIndex
+              ].journeyEntrySettings?.entryTiming.time.startDate
+            ).getTime() < Date.now() &&
+            +delayedJourneys[journeysIndex].enrollment_count === 0
+          ) {
+            enroll = true;
+          }
+        } else if (
+          delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time
+            .recurrence.endsOn === RecurrenceEndsOptions.After &&
+          +delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time
+            .recurrence.endAdditionalValue <=
+            delayedJourneys[journeysIndex].enrollment_count - 1
+        ) {
+          continue;
+        } else if (
+          delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time
+            .recurrence.endsOn === RecurrenceEndsOptions.SpecificDate &&
+          new Date(
+            delayedJourneys[
+              journeysIndex
+            ].journeyEntrySettings?.entryTiming.time.recurrence.endAdditionalValue
+          ).getTime() <= Date.now()
+        ) {
+          continue;
+        } else {
+          // TODO: Recurring enrollment
+        }
+        if (enroll) {
+          this.log(
+            `Starting enrollment for journey ${delayedJourneys[journeysIndex].id}`,
+            this.handleEntryTiming.name,
+            session
+          );
+          const { collectionName, count } =
+            await this.customersService.getAudienceSize(
+              delayedJourneys[journeysIndex].workspace.organization.owner,
+              delayedJourneys[journeysIndex].inclusionCriteria,
+              session,
+              transactionSession
+            );
+          if (collectionName) collectionNames.push(collectionName);
+          // Step 3: Edit journey details
+          await queryRunner.manager.save(Journey, {
+            ...delayedJourneys[journeysIndex],
+            enrollment_count:
+              delayedJourneys[journeysIndex].enrollment_count + 1,
+            last_enrollment_timestamp: Date.now(),
+          });
+          // Step 4: Reenroll customers that have been unenrolled
+          const collectionNameFromTrigger =
+            await this.stepsService.triggerStart(
+              delayedJourneys[journeysIndex].workspace.organization.owner,
+              delayedJourneys[journeysIndex],
+              delayedJourneys[journeysIndex].inclusionCriteria,
+              delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
+                ?.enabled &&
+                count >
+                  parseInt(
+                    delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
+                      ?.maxEntries
+                  )
+                ? parseInt(
+                    delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
+                      ?.maxEntries
+                  )
+                : count,
+              queryRunner,
+              transactionSession,
+              session
+            );
+          if (collectionNameFromTrigger)
+            collectionNames.push(collectionNameFromTrigger);
+        }
+      }
+      await transactionSession.commitTransaction();
+      await queryRunner.commitTransaction();
+      for (const collection of collectionNames) {
+        await this.connection.dropCollection(collection);
+      }
+    } catch (e) {
+      this.error(e, this.handleEntryTiming.name, session);
+      await queryRunner.rollbackTransaction();
+      await transactionSession.abortTransaction();
+    } finally {
+      await transactionSession.endSession();
+      await queryRunner.release();
+    }
+  }
 }

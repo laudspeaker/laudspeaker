@@ -177,6 +177,59 @@ export class JourneyLocationsService {
   }
 
   /**
+   * Creates a Journey Location.
+   *
+   * This method should only be called by the start processor when
+   * a customer is added to the start step of a journey.
+   *
+   * Takes a write lock on
+   * (journey, customer) and sets row
+   * to (journey, customer, step), marking the
+   * time when it's finished updating the
+   * step.
+   *
+   * @param {Account} account Associated Account
+   * @param {Journey} journey Associated Journey
+   * @param {Step} step Step customer is located in
+   * @param {CustomerDocument} customer Associated Customer
+   * @param {string} session HTTP session token
+   * @param {QueryRunner} [queryRunner]  Postgres Transaction
+   * @returns
+   */
+  async createAndLockBulk(
+    journeyId: string,
+    customers: string[],
+    step: Step,
+    session: string,
+    account: Account,
+    queryRunner: QueryRunner
+  ) {
+    if (customers.length) {
+      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+      const valuesPlaceholder = customers
+        .map(
+          (_, index) =>
+            `($1, $${index + 2}, $${customers.length + 2}, $${
+              customers.length + 3
+            }, $${customers.length + 4}, $${customers.length + 5})`
+        )
+        .join(', ');
+      const query = `
+        INSERT INTO journey_location ("journeyId", customer, "stepId", "workspaceId", "stepEntry", "moveStarted")
+        VALUES ${valuesPlaceholder}
+      `;
+      await queryRunner.query(query, [
+        journeyId,
+        ...customers,
+        step.id,
+        workspace.id,
+        Date.now(),
+        Date.now(),
+      ]);
+    }
+  }
+
+  /**
    *
    * @param journey
    * @param customer

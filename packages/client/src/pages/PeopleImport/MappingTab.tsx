@@ -57,7 +57,7 @@ const MappingTab = ({
 
   const loadPossibleKeys = async () => {
     const { data } = await ApiService.get<any[]>({
-      url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Boolean&type=Email&type=Date&type=DateTime&isArray=false`,
+      url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Boolean&type=Email&type=Date&type=DateTime`,
     });
 
     if (

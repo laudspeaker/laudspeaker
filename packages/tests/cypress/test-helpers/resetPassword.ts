@@ -1,7 +1,5 @@
 import "@4tw/cypress-drag-drop";
-export const resetPassword = (
-  password: string,
-) => {
+export const resetPassword = (password: string) => {
   cy.clearCookies();
   cy.visit("/");
   cy.url().should("include", "/login");

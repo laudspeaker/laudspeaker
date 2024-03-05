@@ -11,12 +11,12 @@ export const KEYS_TO_SKIP = [
   'journeyEnrollmentsDates',
   'verified',
   'isAnonymous',
-  'isFreezed',
   'customComponents',
   'createdAt',
   'workflows',
   'posthogId',
   'slackTeamId',
+  'previousAnonymousIds',
 ];
 
 export const validateKeyForMutations = (val: any) => {

@@ -153,6 +153,23 @@ export class CustomersController {
     );
   }
 
+  @Get('/search-for-webhook')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async searchForWebhook(
+    @Req() { user }: Request,
+    @Query('take') take = 100,
+    @Query('skip') skip = 0,
+    @Query('search') search = ''
+  ) {
+    return await this.customersService.searchForWebhook(
+      <Account>user,
+      take,
+      skip,
+      search
+    );
+  }
+
   @Put('/primary-key')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
@@ -252,6 +269,7 @@ export class CustomersController {
       posthogId,
       workflows,
       customComponents,
+      previousAnonymousIds,
       ...customer
     } = await this.customersService.findOne(<Account>user, id, session);
     const createdAt = new Date(parseInt(_id.slice(0, 8), 16) * 1000).getTime();
@@ -275,13 +293,11 @@ export class CustomersController {
     );
   }
 
+  // TODO: rewrite in order to pass primary key value in @Param()
   @Post('/create/')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  async create(
-    @Req() { user }: Request,
-    @Body() createCustomerDto: CreateCustomerDto
-  ) {
+  async create(@Req() { user }: Request, @Body() createCustomerDto: any) {
     const session = randomUUID();
     const cust = await this.customersService.create(
       <Account>user,

@@ -1,6 +1,6 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Input from "components/Elements/Inputv2";
-import FlowBuilderDynamicInput from "pages/FlowBuilderv2/Elements/FlowBuilderDynamicInput";
+import DynamicInput from "pages/FlowBuilderv2/Elements/DynamicInput";
 import React, { FC, useState } from "react";
 import { StatementValueType } from "reducers/flow-builder.reducer";
 import { TrackerData, TrackerField } from "../TrackerTemplateBuilder";
@@ -120,7 +120,7 @@ const TrackerTemplateEditor: FC<TrackerTemplateEditorProps> = ({
                   </option>
                 ))}
               </select>
-              <FlowBuilderDynamicInput
+              <DynamicInput
                 type={field.type}
                 value={field.defaultValue}
                 onChange={(value) =>

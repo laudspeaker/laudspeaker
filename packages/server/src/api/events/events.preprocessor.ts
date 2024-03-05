@@ -341,35 +341,18 @@ export class EventsPreProcessor extends WorkerHost {
     let err: any;
 
     try {
-      //finding the owner of th workspace for the event
-      const owner = await queryRunner.manager.findOne(Account, {
-        where: { id: job.data.account.id },
-        relations: ['teams.organization.workspaces'],
-      });
-      const workspace = owner.teams?.[0]?.organization?.workspaces?.[0];
-
       //find customer associated with event or create new customer if not found
       const correlation: Correlation =
         await this.customersService.findOrCreateByCorrelationKVPair(
-          owner,
+          job.data.workspace,
           job.data.event,
           transactionSession
         );
-
-      //enroll new customers in journeys that might be to relevant to them (but not existing customers)
-      await this.journeysService.enrollCustomer(
-        owner,
-        correlation.cust,
-        queryRunner,
-        transactionSession,
-        job.data.session
-      );
-
       //get all the journeys that are active, and pipe events to each journey in case they are listening for event
       const journeys = await queryRunner.manager.find(Journey, {
         where: {
           workspace: {
-            id: workspace.id,
+            id: job.data.workspace.id,
           },
           isActive: true,
           isPaused: false,
@@ -381,7 +364,7 @@ export class EventsPreProcessor extends WorkerHost {
         await this.eventsQueue.add(
           EventType.EVENT,
           {
-            accountID: job.data.account.id,
+            accountID: job.data.owner.id,
             event: job.data.event,
             journeyID: journeys[i].id,
           },
@@ -395,7 +378,7 @@ export class EventsPreProcessor extends WorkerHost {
       if (job.data.event) {
         await this.eventModel.create({
           ...job.data.event,
-          workspaceId: workspace.id,
+          workspaceId: job.data.workspace.id,
           //we should really standardize on .toISOString() or .toUTCString()
           //createdAt: new Date().toUTCString(),
           createdAt: new Date().toISOString(),
@@ -407,7 +390,7 @@ export class EventsPreProcessor extends WorkerHost {
     } catch (e) {
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.error(e, this.handleCustom.name, job.data.session, job.data.account);
+      this.error(e, this.handleCustom.name, job.data.session, job.data.owner);
       err = e;
     } finally {
       await transactionSession.endSession();
@@ -420,7 +403,7 @@ export class EventsPreProcessor extends WorkerHost {
         })}`,
         this.handleCustom.name,
         job.data.session,
-        job.data.account.id
+        job.data.owner?.id
       );
       throw err;
     } else if (err) {
@@ -428,7 +411,7 @@ export class EventsPreProcessor extends WorkerHost {
         err,
         this.handleCustom.name,
         job.data.session,
-        job.data.account.id
+        job.data.owner?.id
       );
       throw err;
     }

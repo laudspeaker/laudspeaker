@@ -72,13 +72,11 @@ const Select = <T, U = any>({
       {({ close }) => (
         <>
           <Popover.Button
-            className={`w-full ${buttonClassName || ""}`}
+            className={`${buttonClassName ?? ""}`}
             id={id}
             disabled={disabled}
           >
-            {customBTN ? (
-              customBTN
-            ) : (
+            {customBTN ?? (
               <div
                 className={`${
                   buttonInnerWrapperClassName || ""
@@ -86,7 +84,11 @@ const Select = <T, U = any>({
                   disabled ? "bg-[#F3F4F6] select-none" : "bg-white"
                 } px-[12px] py-[4px] flex items-center justify-between gap-[6px]`}
               >
-                <div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                <div
+                  className={`${
+                    value ? "text-ellipsis" : "text-muted"
+                  } max-w-full overflow-hidden  whitespace-nowrap`}
+                >
                   {options.find((option) => option.key === value)?.title ||
                     placeholder}
                 </div>
@@ -194,11 +196,16 @@ const Select = <T, U = any>({
                   {options.map((option, i) => {
                     const props = {
                       className: `${
-                        option.groupLabel &&
-                        "bg-[#F3F4F6] !py-[2px] !cursor-auto !text-[#4B5563] leading-5 font-inter !text-[12px]"
+                        option.groupLabel
+                          ? "bg-[#F3F4F6] !py-[2px] !cursor-auto !text-[#4B5563] leading-5 font-inter !text-[12px]"
+                          : ""
                       }
-                      ${option.nonSelectable && "hover:bg-white !cursor-auto"}
-                      max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap px-[12px] py-[5px] hover:bg-[#F3F4F6] select-none cursor-pointer`,
+                      ${
+                        option.nonSelectable
+                          ? "hover:bg-white !cursor-auto"
+                          : ""
+                      }
+                      overflow-hidden text-ellipsis whitespace-nowrap px-[12px] py-[5px] hover:bg-[#F3F4F6] select-none cursor-pointer`,
                       onClick: () => {
                         if (option.groupLabel || option.nonSelectable) return;
 

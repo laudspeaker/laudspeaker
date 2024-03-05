@@ -188,11 +188,7 @@ export class WebsocketGateway implements OnGatewayConnection {
           customerId
         );
 
-        if (
-          !customer ||
-          customer.isFreezed ||
-          customer.workspaceId !== workspace.id
-        ) {
+        if (!customer || customer.workspaceId !== workspace.id) {
           socket.emit(
             'log',
             'Customer id is not valid. Creating new anonymous customer.'
@@ -344,6 +340,7 @@ export class WebsocketGateway implements OnGatewayConnection {
         return;
       }
       socket.emit('log', 'Connection procedure complete.');
+      socket.emit('flush');
 
       await this.accountsService.accountsRepository.save({
         id: account.id,
@@ -458,7 +455,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       workspaceId: workspace.id,
     });
 
-    if (!customer || customer.isFreezed || customer.isAnonymous) {
+    if (!customer || customer.isAnonymous) {
       socket.emit('error', 'Invalid customer id. Please call identify first');
       return;
     }
@@ -499,7 +496,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       workspaceId: workspace.id,
     });
 
-    if (!customer || customer.isFreezed) {
+    if (!customer) {
       socket.emit(
         'error',
         'Invalid customer id. Creating new anonymous customer...'
@@ -533,9 +530,10 @@ export class WebsocketGateway implements OnGatewayConnection {
     if (identifiedCustomer) {
       await this.customersService.deleteEverywhere(customer.id);
 
-      await this.customersService.CustomerModel.findByIdAndUpdate(customer.id, {
-        isFreezed: true,
-      });
+      identifiedCustomer.previousAnonymousIds.push(customer.id);
+
+      await identifiedCustomer.save();
+      await customer.deleteOne();
 
       socket.data.customerId = identifiedCustomer.id;
       socket.emit('customerId', identifiedCustomer.id);
@@ -606,12 +604,6 @@ export class WebsocketGateway implements OnGatewayConnection {
         );
         err = true;
         //Customer is frozen.
-      } else if (customer.isFreezed) {
-        socket.emit(
-          'error',
-          'Customer is frozen and cannot accept any new events.'
-        );
-        err = true;
       }
 
       const trackerId = event.trackerId;
@@ -834,7 +826,6 @@ export class WebsocketGateway implements OnGatewayConnection {
     @MessageBody()
     fullPayload: { eventName: string; payload: string; customerId: string }
   ) {
-    //console.log("in websocket fire");
     try {
       const {
         account: { teams },
@@ -848,7 +839,7 @@ export class WebsocketGateway implements OnGatewayConnection {
         workspaceId: workspace.id,
       });
 
-      if (!customer || customer.isFreezed) {
+      if (!customer) {
         socket.emit(
           'error',
           'Invalid customer id. Creating new anonymous customer...'
@@ -862,49 +853,28 @@ export class WebsocketGateway implements OnGatewayConnection {
         socket.emit('customerId', customer.id);
       }
 
-      /*
-      return this.eventsService.customPayload(
-      <{ account: Account; workspace: Workspaces }>user,
-      body,
-      session
-    );
-      */
-
       const { eventName, payload } = fullPayload;
 
       // Parse the JSON string payload to an object
       let payloadObj = {};
       payloadObj = JSON.parse(payload);
 
-      let eventStruct: EventDto = {
+      const eventStruct: EventDto = {
         correlationKey: '_id',
         correlationValue: customer.id,
         source: AnalyticsProviderTypes.MOBILE,
-        //payload: payload,
         payload: payloadObj,
         event: eventName,
       };
-
-      //console.log("event struct is", JSON.stringify(eventStruct, null, 2));
-      //auth: { account: Account; workspace: Workspaces },
-
       await this.eventsService.customPayload(
         { account: socket.data.account, workspace: workspace },
         eventStruct,
-        /*
-        {
-          correlationKey: '_id',
-          correlationValue: customer.id,
-          source: AnalyticsProviderTypes.MOBILE,
-          event: eventName,
-          payload: payloadObj,
-        },
-        */
         socket.data.session
       );
 
       socket.emit('log', 'Successful fire');
     } catch (e) {
+      this.error(e, this.handleFire.name, randomUUID());
       socket.emit('error', e);
     }
   }
@@ -977,7 +947,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       workspaceId: workspace.id,
     });
 
-    if (!customer || customer.isFreezed) {
+    if (!customer) {
       socket.emit(
         'error',
         'Invalid customer id. Creating new anonymous customer...'
@@ -991,13 +961,39 @@ export class WebsocketGateway implements OnGatewayConnection {
       socket.emit('customerId', customer.id);
     }
 
-    await this.customersService.CustomerModel.updateOne(
-      { _id: customerId },
-      {
-        [type === PushPlatforms.ANDROID
-          ? 'androidDeviceToken'
-          : 'iosDeviceToken']: token,
-      }
-    );
+    const conflictingCustomer =
+      await this.customersService.CustomerModel.findOne({
+        workspaceId: workspace.id,
+        [type === PushPlatforms.ANDROID ? 'androidFCMTokens' : 'iosFCMTokens']:
+          token,
+      }).exec();
+
+    if (conflictingCustomer) {
+      if (!customer.isAnonymous)
+        throw new WsException(
+          'Non-anonymous conflicting customers with this FCM token found'
+        );
+
+      socket.emit('log', 'Conflicting customer found, merging...');
+
+      const pk = await this.CustomerKeysModel.findOne({
+        workspaceId: workspace.id,
+        isPrimary: true,
+      });
+
+      await this.handleIdentify(socket, {
+        __PrimaryKey: conflictingCustomer[pk.key],
+      });
+      return;
+    }
+
+    const tokenStorage =
+      customer[
+        type === PushPlatforms.ANDROID ? 'androidFCMTokens' : 'iosFCMTokens'
+      ];
+    if (tokenStorage.includes(token)) return;
+
+    tokenStorage.push(token);
+    await customer.save();
   }
 }

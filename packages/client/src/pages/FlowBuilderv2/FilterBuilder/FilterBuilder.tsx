@@ -37,7 +37,7 @@ import Button, {
   ButtonType,
 } from "../../../components/Elements/Buttonv2/Button";
 import FlowBuilderAutoComplete from "../../../components/AutoCompletev2/AutoCompletev2";
-import FilterBuilderDynamicInput from "../Elements/FlowBuilderDynamicInput";
+import FilterBuilderDynamicInput from "../Elements/DynamicInput";
 import { isBefore } from "date-fns";
 import { useDispatch } from "react-redux";
 import { SegmentsSettings } from "reducers/segment.reducer";
@@ -660,6 +660,14 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     });
   };
 
+  const loadPossibleEvents = async (query: string) => {
+    const { data } = await ApiService.get<string[]>({
+      url: `/events/possible-names?search=${query}`,
+    });
+
+    return data;
+  };
+
   const statementsErrors: QueryStatementError[][] = [];
 
   for (const statement of settings.query.statements) {
@@ -1229,16 +1237,26 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                   <>
                     <div className="flex gap-[10px]">
                       <div>
-                        <FilterBuilderDynamicInput
-                          type={StatementValueType.STRING}
+                        <FlowBuilderAutoComplete
                           value={statement.eventName}
-                          placeholder="Name"
-                          onChange={(value) =>
+                          includedItems={{
+                            type: "setter",
+                            getItems: loadPossibleEvents,
+                          }}
+                          retrieveLabel={(item) => item}
+                          onQueryChange={(query) => {
+                            handleChangeStatement(i, {
+                              ...statement,
+                              eventName: query,
+                            });
+                          }}
+                          onSelect={(value) => {
                             handleChangeStatement(i, {
                               ...statement,
                               eventName: value,
-                            })
-                          }
+                            });
+                          }}
+                          placeholder="Name"
                         />
                       </div>
                       <div className="flex items-center">

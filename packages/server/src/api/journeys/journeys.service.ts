@@ -54,10 +54,13 @@ import {
   ElementCondition,
   EventBranch,
   MessageEvent,
+  CommonMultiBranchMetadata,
   PropertyCondition,
   StartStepMetadata,
   StepType,
   TimeWindowTypes,
+  ExperimentMetadata,
+  ExperimentBranch,
 } from '../steps/types/step.interface';
 import { MessageStepMetadata } from '../steps/types/step.interface';
 import { WaitUntilStepMetadata } from '../steps/types/step.interface';
@@ -766,19 +769,11 @@ export class JourneysService {
         );
         continue;
       }
-      await this.journeyLocationsService.createAndLock(
-        journey,
-        customer,
-        step,
-        session,
-        account,
-        queryRunner
-      );
       const job = {
         name: 'start',
         data: {
-          ownerID: account.id,
-          journeyID: journey.id,
+          owner: account,
+          journey: journey,
           step: step,
           session: session,
           customerID: customer.id ?? customer._id.toString(),
@@ -872,13 +867,6 @@ export class JourneysService {
           )) &&
           customer.journeys.indexOf(journey.id) < 0
         ) {
-          // await this.stepsService.addToStart(
-          //   account,
-          //   journey.id,
-          //   customer,
-          //   queryRunner,
-          //   session
-          // );
           await this.CustomerModel.updateOne(
             { _id: customer._id },
             {
@@ -1469,13 +1457,16 @@ export class JourneysService {
 
   /**
    * Start a journey.
+   *
    * @param account
    * @param workflowID
    * @param session
    * @returns
    */
   async start(account: Account, journeyID: string, session: string) {
-    let journey: Journey; // Workflow to update
+    let journey: Journey;
+    let err: any;
+    let collectionNameFromTrigger: string;
     this.debug(
       `${JSON.stringify({ account, journeyID })}`,
       this.start.name,
@@ -1511,25 +1502,11 @@ export class JourneysService {
       if (!journey.inclusionCriteria)
         throw new Error('To start journey a filter should be defined');
 
-      this.debug(
-        `${JSON.stringify({ journey })}`,
-        this.start.name,
-        session,
-        account.email
-      );
-
       const graph = new Graph();
       const steps = await this.stepsService.transactionalfindByJourneyID(
         account,
         journey.id,
         queryRunner
-      );
-
-      this.debug(
-        `${JSON.stringify({ steps: steps })}`,
-        this.start.name,
-        session,
-        account.email
       );
 
       for (let i = 0; i < steps.length; i++) {
@@ -1555,47 +1532,63 @@ export class JourneysService {
       if (!alg.isAcyclic(graph))
         throw new Error('Flow has infinite loops, cannot start.');
 
-      const audienceSize = await this.customersService.getAudienceSize(
-        account,
-        journey.inclusionCriteria,
-        session,
-        transactionSession
-      );
+      const { collectionName, count } =
+        await this.customersService.getAudienceSize(
+          account,
+          journey.inclusionCriteria,
+          session,
+          transactionSession
+        );
       if (
         journey.journeyEntrySettings.entryTiming.type ===
         EntryTiming.WhenPublished
       ) {
-        await this.stepsService.triggerStart(
+        await queryRunner.manager.save(Journey, {
+          ...journey,
+          enrollment_count: journey.enrollment_count + 1,
+          last_enrollment_timestamp: Date.now(),
+          isActive: true,
+          startedAt: new Date(Date.now()),
+        });
+        collectionNameFromTrigger = await this.stepsService.triggerStart(
           account,
-          journeyID,
+          journey,
           journey.inclusionCriteria,
-          audienceSize,
+          journey?.journeySettings?.maxEntries?.enabled &&
+            count > parseInt(journey?.journeySettings?.maxEntries?.maxEntries)
+            ? parseInt(journey?.journeySettings?.maxEntries?.maxEntries)
+            : count,
           queryRunner,
+          transactionSession,
           session
         );
+      } else {
+        await queryRunner.manager.save(Journey, {
+          ...journey,
+          isActive: true,
+          startedAt: new Date(Date.now()),
+        });
       }
-
-      // TODO: update to remove dev mode on start
-      // await this.
-
-      await queryRunner.manager.save(Journey, {
-        ...journey,
-        isActive: true,
-        startedAt: new Date(Date.now()),
-      });
 
       await this.trackChange(account, journeyID, queryRunner);
 
       await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
-    } catch (err) {
+      if (collectionName) {
+        await this.connection.dropCollection(collectionName);
+      }
+      if (collectionNameFromTrigger) {
+        await this.connection.dropCollection(collectionNameFromTrigger);
+      }
+    } catch (e) {
+      err = e;
+      this.error(e, this.start.name, session, account.email);
       await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
-      this.logger.error('Error:  ' + err);
-      throw err;
     } finally {
       await transactionSession.endSession();
       await queryRunner.release();
+      if (err) throw err;
     }
   }
 
@@ -2190,6 +2183,24 @@ export class JourneysService {
                 })[0].data.stepId;
                 metadata.branches.push(branch);
               }
+            }
+            break;
+          case NodeType.EXPERIMENT:
+            metadata = new ExperimentMetadata();
+            metadata.branches = [];
+
+            for (let j = 0; j < relevantEdges.length; j++) {
+              const edge = relevantEdges[j];
+
+              const branch = new ExperimentBranch();
+
+              branch.index = j;
+              branch.ratio = nodes[i].data.branches[j]?.ratio || 0;
+
+              const edgeTarget = nodes.find((node) => node.id === edge.target);
+              branch.destination = edgeTarget.data.stepId;
+
+              metadata.branches.push(branch);
             }
             break;
         }

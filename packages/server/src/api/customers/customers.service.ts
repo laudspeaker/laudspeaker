@@ -257,7 +257,7 @@ export class CustomersService {
 
   async create(
     account: Account,
-    createCustomerDto: CreateCustomerDto,
+    createCustomerDto: any,
     session: string,
     transactionSession?: ClientSession
   ): Promise<
@@ -429,7 +429,6 @@ export class CustomersService {
             [key]: new RegExp(`.*${search}.*`, 'i'),
           }
         : {}),
-      ...(showFreezed ? {} : { isFreezed: { $ne: true } }),
     })
       .skip(skip)
       .limit(take <= 100 ? take : 100)
@@ -721,40 +720,8 @@ export class CustomersService {
     const customer = await this.findOne(account, id, session);
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    if (customer.isFreezed)
-      throw new BadRequestException('Customer is freezed');
-
     if (customer.workspaceId != workspace.id) {
       throw new HttpException("You can't update this customer.", 400);
-    }
-
-    for (const key of Object.keys(newCustomerData).filter(
-      (item) => !KEYS_TO_SKIP.includes(item)
-    )) {
-      const value = newCustomerData[key];
-      if (value === '' || value === undefined || value === null) continue;
-
-      const keyType = getType(value);
-      const isArray = keyType.isArray();
-      let type = isArray ? getType(value[0]).name : keyType.name;
-
-      if (type === 'String') {
-        if (isEmail(value)) type = 'Email';
-        if (isDateString(value)) type = 'Date';
-      }
-
-      await this.CustomerKeysModel.updateOne(
-        { key, workspaceId: workspace.id },
-        {
-          $set: {
-            key,
-            type,
-            isArray,
-            workspaceId: workspace.id,
-          },
-        },
-        { upsert: true }
-      ).exec();
     }
 
     delete customer._id;
@@ -788,7 +755,6 @@ export class CustomersService {
       delete newCustomerData._id;
       delete newCustomerData.__v;
       delete newCustomerData.audiences;
-      delete newCustomerData.isFreezed;
       delete newCustomerData.id;
       const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -797,9 +763,6 @@ export class CustomersService {
         id,
         transactionSession
       );
-
-      if (customer.isFreezed)
-        throw new BadRequestException('Customer is freezed');
 
       if (customer.workspaceId != workspace.id) {
         throw new HttpException("You can't update this customer.", 400);
@@ -1214,23 +1177,17 @@ export class CustomersService {
    *
    */
   async find(
-    account: string,
+    account: Account,
     criteria: any,
     session: string,
     transactionSession?: ClientSession,
     skip?: number,
     limit?: number
-  ): Promise<CustomerDocument[]> {
+  ): Promise<{ collectionName: string; customers: CustomerDocument[] }> {
     let query: any;
-    this.accountsRepository;
     let collectionPrefix: string;
-    const foundAccount = await this.accountsRepository.findOne({
-      where: {
-        id: account,
-      },
-      relations: ['teams.organization.workspaces'],
-    });
-    const workspace = foundAccount?.teams?.[0]?.organization?.workspaces?.[0];
+    let collectionName: string;
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     if (
       !criteria ||
@@ -1246,13 +1203,13 @@ export class CustomersService {
       collectionPrefix = this.segmentsService.generateRandomString();
       const customersInSegment = await this.getSegmentCustomersFromQuery(
         criteria.query,
-        foundAccount,
+        account,
         session,
         true,
         0,
         collectionPrefix
       );
-      const collectionName = customersInSegment; // Name of the MongoDB collection
+      collectionName = customersInSegment; // Name of the MongoDB collection
 
       const pipeline = [
         {
@@ -1282,7 +1239,7 @@ export class CustomersService {
     if (limit) query.limit(limit);
     if (skip) query.skip(skip);
     const res = await query.exec();
-    return res;
+    return { collectionName, customers: res };
   }
 
   /**
@@ -1344,9 +1301,10 @@ export class CustomersService {
     criteria: any,
     session: string,
     transactionSession?: ClientSession
-  ): Promise<number> {
+  ): Promise<{ collectionName: string; count: number }> {
+    let collectionName: string;
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-
+    let collectionPrefix: string;
     let count = 0;
     if (
       !criteria ||
@@ -1363,6 +1321,19 @@ export class CustomersService {
     } else {
       //TODO: We need to translate segment builder condiitons
       // into a mongo query
+
+      collectionPrefix = this.segmentsService.generateRandomString();
+      const customersInSegment = await this.getSegmentCustomersFromQuery(
+        criteria.query,
+        account,
+        session,
+        true,
+        0,
+        collectionPrefix
+      );
+      collectionName = customersInSegment; // Name of the MongoDB collection
+      const coll = this.connection.collection(collectionName);
+      count = await coll.countDocuments({});
     }
 
     this.debug(
@@ -1372,7 +1343,7 @@ export class CustomersService {
       account.email
     );
 
-    return count;
+    return { collectionName, count };
   }
 
   checkInclusion(
@@ -1424,7 +1395,6 @@ export class CustomersService {
     } else {
       queryParam[correlationKey] = correlationValue;
     }
-    queryParam.isFreezed = { $ne: true };
     try {
       if (transactionSession) {
         customer = await this.CustomerModel.findOne(queryParam)
@@ -1446,13 +1416,11 @@ export class CustomersService {
   }
 
   async findOrCreateByCorrelationKVPair(
-    account: Account,
+    workspace: Workspaces,
     dto: EventDto,
     transactionSession: ClientSession
   ): Promise<Correlation> {
     let customer: CustomerDocument; // Found customer
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-
     const queryParam = { workspaceId: workspace.id };
     queryParam[dto.correlationKey] = dto.correlationValue;
     try {
@@ -1682,8 +1650,6 @@ export class CustomersService {
       session,
       account.id
     );
-
-    if (cust.isFreezed) throw new BadRequestException('Customer is freezed');
 
     const res = await this.CustomerModel.deleteOne({
       _id: new mongoose.Types.ObjectId(cust.id),
@@ -3385,7 +3351,7 @@ export class CustomersService {
         return value;
       case 'Boolean':
         // Convert to boolean
-        return value.toLowerCase() === 'true';
+        return String(value).toLowerCase() === 'true';
       case 'Date':
         // Convert to a date
         return new Date(value);
@@ -4963,13 +4929,19 @@ export class CustomersService {
     const mongoQuery: any = {
       event: eventName,
       workspaceId: workspace.id,
+      $or: [],
     };
 
     let currentPK: string = await this.CustomerKeysModel.findOne({
       workspaceId: workspace.id,
       isPrimary: true,
     });
-
+    if (currentPK && customer[currentPK]) {
+      const pkCondition = {};
+      pkCondition[`correlationKey`] = currentPK;
+      pkCondition[`correlationValue`] = customer[currentPK];
+      mongoQuery.$or.push(pkCondition);
+    /*
     if (currentPK) {
       this.debug(
         `current pk is: ${currentPK}`,
@@ -4979,6 +4951,7 @@ export class CustomersService {
       );
       mongoQuery.correlationKey = currentPK;
       mongoQuery.correlationValue = customer[currentPK];
+      */
     } else {
       // Handle case where currentPK is null
       //uncomment when primary key thing is working correctly
@@ -4988,13 +4961,23 @@ export class CustomersService {
         HttpStatus.BAD_REQUEST
       );
       */
-
       //to do just for testing
+      /*
       console.log('pk isnt working so set as email');
+      const pkCondition = {};
       currentPK = 'email';
-      mongoQuery.correlationKey = currentPK;
-      mongoQuery.correlationValue = customer[currentPK];
+      pkCondition[`correlationKey`] = currentPK;
+      pkCondition[`correlationValue`] = customer[currentPK];
+      mongoQuery.$or.push(pkCondition);
+      */
     }
+
+    //we need this condition to handle our mobile sdk since we save events with customer ID not customer primary key as the correlationKey
+      const idCondition = {
+        correlationKey: '_id',
+        correlationValue: customer.id, // Assuming customer.id stores the MongoDB _id
+      };
+    mongoQuery.$or.push(idCondition);
 
     if (time) {
       switch (time.comparisonType) {
@@ -5170,11 +5153,17 @@ export class CustomersService {
           this.correctValueType(valueType, value, account, session)
         ); //value;
       case 'contains':
+        if (Array.isArray(customerValue)) {
+          return customerValue.includes(value);
+        }
         if (typeof customerValue === 'string' && typeof value === 'string') {
           return customerValue.includes(value);
         }
         return false;
       case 'does not contain':
+        if (Array.isArray(customerValue)) {
+          return !customerValue.includes(value);
+        }
         if (typeof customerValue === 'string' && typeof value === 'string') {
           return !customerValue.includes(value);
         }
@@ -5201,6 +5190,24 @@ export class CustomersService {
           ); //value;;
         }
         return false;
+      case 'after':
+        return new Date(customerValue) > new Date(value);
+      case 'before':
+        return new Date(customerValue) < new Date(value);
+      case 'during':
+        return (
+          new Date(customerValue) > new Date(value) &&
+          new Date(customerValue) < new Date(subComparisonValue)
+        );
+      case 'length is greater than':
+        if (!customerValue.length || isNaN(+value)) return false;
+        return customerValue.length > +value;
+      case 'length is less than':
+        if (!customerValue.length || isNaN(+value)) return false;
+        return customerValue.length < +value;
+      case 'length is equal to':
+        if (!customerValue.length || isNaN(+value)) return false;
+        return customerValue.length === +value;
       //not checked
       // nested object
       case 'key':
@@ -5341,7 +5348,7 @@ export class CustomersService {
     */
   }
 
-  public async searchForTest(
+  public async searchForWebhook(
     account: Account,
     take = 100,
     skip = 0,
@@ -5353,13 +5360,6 @@ export class CustomersService {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const query: any = { workspaceId: workspace.id };
-
-    const deviceTokenConditions = {
-      $or: [
-        { androidDeviceToken: { $exists: true, $ne: '' } },
-        { iosDeviceToken: { $exists: true, $ne: '' } },
-      ],
-    };
 
     const pk = await this.CustomerKeysModel.findOne({
       isPrimary: true,
@@ -5378,12 +5378,89 @@ export class CustomersService {
         ],
       };
 
-      query['$and'] = [deviceTokenConditions, searchConditions];
+      query['$and'] = [searchConditions];
     } else {
-      query['$or'] = deviceTokenConditions['$or'];
+      //query['$or'] = deviceTokenConditions['$or'];
     }
 
     const totalCustomers = await this.CustomerModel.count(query).exec();
+    const totalPages = Math.ceil(totalCustomers / take) || 1;
+
+    const customers = await this.CustomerModel.find(query)
+      .skip(skip)
+      .limit(take <= 100 ? take : 100)
+      .lean()
+      .exec();
+
+    return {
+      data: customers.map((cust) => {
+        const info: { id: string; email: string; phone: string } = {
+          id: '',
+          email: '',
+          phone: '',
+        };
+        info['id'] = cust['_id'].toString();
+        info['email'] = cust['email']?.toString() || '';
+        info['phone'] = cust['phone']?.toString() || '';
+        return info;
+      }),
+      totalPages,
+    };
+  }
+
+  public async searchForTest(
+    account: Account,
+    take = 100,
+    skip = 0,
+    search = ''
+  ): Promise<{
+    data: { id: string; email: string; phone: string }[];
+    totalPages: number;
+  }> {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    const query: any = { workspaceId: workspace.id };
+
+    const deviceTokenConditions = {
+      $or: [
+        { "androidFCMTokens.0": { $exists: true } },
+        { "iosFCMTokens.0": { $exists: true } },
+      ],
+      /*
+      $or: [
+        { androidFCMTokens: { $exists: true, $size: { $gt: 0 } } },
+        { iosFCMTokens: { $exists: true, $size: { $gt: 0 } } },
+      ],
+      */
+    };
+
+    const pk = await this.CustomerKeysModel.findOne({
+      isPrimary: true,
+      workspaceId: workspace.id,
+    });
+
+    if (search) {
+      const findRegexp = new RegExp(`.*${search}.*`, 'i');
+
+      const searchConditions = {
+        $or: [
+          ...(isValidObjectId(search) ? [{ _id: search }] : []),
+          { email: findRegexp },
+          { phone: findRegexp },
+          ...(pk ? [{ [pk.key]: findRegexp }] : []),
+        ],
+      };
+      //console.log("and--")
+      query['$and'] = [deviceTokenConditions, searchConditions];
+    } else {
+      //console.log("or--")
+      query['$or'] = deviceTokenConditions['$or'];
+    }
+
+    //console.log("query to execute is", JSON.stringify(query,null,2));
+
+    const totalCustomers = await this.CustomerModel.count(query).exec();
+    //console.log("totalCustomers are", totalCustomers);
     const totalPages = Math.ceil(totalCustomers / take) || 1;
 
     const customers = await this.CustomerModel.find(query)
@@ -5413,7 +5490,8 @@ export class CustomersService {
     key: string,
     type: AttributeType,
     dateFormat: unknown,
-    session?: string
+    session?: string,
+    isArray?: boolean
   ) {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -5429,7 +5507,7 @@ export class CustomersService {
       const previousKey = await this.CustomerKeysModel.findOne({
         key: key.trim(),
         type,
-        isArray: false,
+        isArray: isArray || false,
         workspaceId: workspace.id,
       }).exec();
 
@@ -5444,7 +5522,7 @@ export class CustomersService {
         key: key.trim(),
         type,
         dateFormat,
-        isArray: false,
+        isArray: isArray || false,
         workspaceId: workspace.id,
       });
       return newKey;
@@ -5526,7 +5604,14 @@ export class CustomersService {
       try {
         const { key, type, isArray, dateFormat } = createdAttribute; // TODO: arrays handling
 
-        await this.createAttribute(account, key, type, dateFormat);
+        await this.createAttribute(
+          account,
+          key,
+          type,
+          dateFormat,
+          undefined,
+          isArray
+        );
       } catch (e) {
         console.error(e);
       }
