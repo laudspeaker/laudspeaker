@@ -1,5 +1,11 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2";
-import React, { Fragment, ReactNode, useEffect, useState } from "react";
+import React, {
+  Fragment,
+  ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useParams } from "react-router-dom";
 import ApiService from "services/api.service";
 import UserIcon from "./icons/UserIcon";
@@ -28,6 +34,8 @@ import sortNoneChevronsImage from "./svg/sort-none-chevrons.svg";
 import { Menu, Transition } from "@headlessui/react";
 import threeDotsIconImage from "./svg/three-dots-icon.svg";
 import { AttributeType } from "pages/PeopleImport/PeopleImport";
+import EventTracker from "pages/EventTracker";
+import { v4 as uuid } from "uuid";
 
 export interface EventObject {
   event: string;
@@ -52,6 +60,7 @@ enum PersonTab {
   OVERVIEW = "Overview",
   JOURNEY = "Journey",
   SEGMENTS = "Segments",
+  EVENTS = "Events",
 }
 
 interface SegmentRowData {
@@ -129,18 +138,30 @@ export const generateAttributeView = (
   switch (type) {
     case StatementValueType.BOOLEAN:
       return value ? "true" : "false";
-      break;
     case StatementValueType.DATE:
     case StatementValueType.DATE_TIME:
       return value && dateFormat ? format(new Date(value), dateFormat) : value;
     default:
       return value;
   }
-
-  return value;
 };
 
 const Personv2 = () => {
+  const predefinedAttributes: Attribute[] = [
+    {
+      id: uuid(),
+      key: "androidFCMTokens",
+      type: StatementValueType.STRING,
+      isArray: true,
+    },
+    {
+      id: uuid(),
+      key: "iosFCMTokens",
+      type: StatementValueType.STRING,
+      isArray: true,
+    },
+  ];
+
   const navigate = useNavigate();
 
   const { id } = useParams();
@@ -178,8 +199,6 @@ const Personv2 = () => {
   });
   const [search, setSearch] = useState("");
 
-  //
-
   const [isFirstRenderSave, setIsFirstRenderSave] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [currentTab, setCurrentTab] = useState(PersonTab.OVERVIEW);
@@ -187,8 +206,13 @@ const Personv2 = () => {
   const [possibleAttributes, setPossibleAttributes] = useState<Attribute[]>([]);
   const [attributeSearch, setAttributeSearch] = useState("");
 
+  const possibleAttributesToShow = useMemo(
+    () => [...predefinedAttributes, ...possibleAttributes],
+    [predefinedAttributes, possibleAttributes]
+  );
+
   const loadPossibleKeys = async () => {
-    const { data } = await ApiService.get<any[]>({
+    const { data } = await ApiService.get<Attribute[]>({
       url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Email&type=Boolean&type=Date&type=DateTime`,
     });
 
@@ -300,7 +324,7 @@ const Personv2 = () => {
       if (skipValidationFor.includes(key)) {
         return; // Skip validation for specified keys
       }
-      const foundAttribute = possibleAttributes.find(
+      const foundAttribute = possibleAttributesToShow.find(
         (attr) => attr.key === key
       );
       const isValid = foundAttribute?.isArray
@@ -336,7 +360,7 @@ const Personv2 = () => {
       if (key === "createdAt") {
         acc[key] = value; // Skip enforcing and keep 'createdAt' as is
       } else {
-        const foundAttribute = possibleAttributes.find(
+        const foundAttribute = possibleAttributesToShow.find(
           (attr) => attr.key === key
         );
         if (foundAttribute) {
@@ -410,11 +434,13 @@ const Personv2 = () => {
   const personInfoToShow = isEditing ? editingPersonInfo : personInfo;
 
   const notPosthogKeys = Object.keys(personInfoToShow).filter(
-    (key) => !possibleAttributes.find((attr) => attr.key === key)?.isPosthog
+    (key) =>
+      !possibleAttributesToShow.find((attr) => attr.key === key)?.isPosthog
   );
 
   const posthogKeys = Object.keys(personInfoToShow).filter(
-    (key) => !!possibleAttributes.find((attr) => attr.key === key)?.isPosthog
+    (key) =>
+      !!possibleAttributesToShow.find((attr) => attr.key === key)?.isPosthog
   );
 
   if (isLoading) return <Progress />;
@@ -468,6 +494,14 @@ const Personv2 = () => {
         >
           Segments
         </button>
+        <button
+          className={`border-[#4338CA] ${
+            currentTab === PersonTab.EVENTS ? "border-b-2 text-[#4338CA]" : ""
+          }`}
+          onClick={() => setCurrentTab(PersonTab.EVENTS)}
+        >
+          Event
+        </button>
       </div>
       <div className="w-full h-[calc(100vh-188px)] p-5 flex gap-5">
         {currentTab === PersonTab.OVERVIEW ? (
@@ -496,7 +530,7 @@ const Personv2 = () => {
               >
                 {notPosthogKeys
                   .map((key) => {
-                    const foundAttribute = possibleAttributes.find(
+                    const foundAttribute = possibleAttributesToShow.find(
                       (attr) => attr.key === key
                     );
                     return {
@@ -576,7 +610,7 @@ const Personv2 = () => {
                       [attr.key]: attr.isArray ? [] : "",
                     });
                   }}
-                  options={possibleAttributes
+                  options={possibleAttributesToShow
                     .filter(
                       (attr) =>
                         !Object.keys(editingPersonInfo).includes(attr.key) &&
@@ -659,7 +693,7 @@ const Personv2 = () => {
 
                       {posthogKeys
                         .map((key) => {
-                          const foundAttribute = possibleAttributes.find(
+                          const foundAttribute = possibleAttributesToShow.find(
                             (attr) => attr.key === key
                           );
 
@@ -859,6 +893,10 @@ const Personv2 = () => {
                 </div>,
               ])}
             />
+          </div>
+        ) : currentTab === PersonTab.EVENTS ? (
+          <div className="w-full">
+            <EventTracker customerId={id} />
           </div>
         ) : null}
       </div>
