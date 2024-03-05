@@ -155,6 +155,7 @@ export class StartProcessor extends WorkerHost {
           job.data.skip,
           job.data.limit
         );
+        console.log("these are the cusomters", JSON.stringify(customers, null, 2));
         // Retreive locations from Postgres
         const locations = await this.journeyLocationsService.findForWriteBulk(
           job.data.journey,
@@ -174,8 +175,8 @@ export class StartProcessor extends WorkerHost {
         );
         await transactionSession.commitTransaction();
         await queryRunner.commitTransaction();
-        if (collectionName)
-          await this.connection.dropCollection(collectionName);
+        //if (collectionName)
+          //await this.connection.dropCollection(collectionName);
         if (jobs && jobs.length) await this.transitionQueue.addBulk(jobs);
       } catch (e) {
         this.error(e, this.process.name, job.data.session, job.data.owner.id);
