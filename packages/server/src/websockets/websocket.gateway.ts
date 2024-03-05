@@ -962,11 +962,17 @@ export class WebsocketGateway implements OnGatewayConnection {
       await this.customersService.CustomerModel.findOne({
         workspaceId: workspace.id,
         [type === PushPlatforms.ANDROID ? 'androidFCMTokens' : 'iosFCMTokens']:
-          token,
+          token, 
+          _id: {
+            $ne: customerId
+           }
       }).exec();
 
+    //console.log("printing conflicting customer");
+    //console.log(JSON.stringify(conflictingCustomer, null, 2));
+
     if (conflictingCustomer) {
-      if (!customer.isAnonymous)
+      if (!customer.isAnonymous)//&&(!conflictingCustomer.isAnonymous))
         throw new WsException(
           'Non-anonymous conflicting customers with this FCM token found'
         );
