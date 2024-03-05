@@ -660,14 +660,6 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     });
   };
 
-  const loadPossibleEvents = async (query: string) => {
-    const { data } = await ApiService.get<string[]>({
-      url: `/events/possible-names?search=${query}`,
-    });
-
-    return data;
-  };
-
   const statementsErrors: QueryStatementError[][] = [];
 
   for (const statement of settings.query.statements) {
@@ -1237,26 +1229,16 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                   <>
                     <div className="flex gap-[10px]">
                       <div>
-                        <FlowBuilderAutoComplete
+                        <FilterBuilderDynamicInput
+                          type={StatementValueType.STRING}
                           value={statement.eventName}
-                          includedItems={{
-                            type: "setter",
-                            getItems: loadPossibleEvents,
-                          }}
-                          retrieveLabel={(item) => item}
-                          onQueryChange={(query) => {
-                            handleChangeStatement(i, {
-                              ...statement,
-                              eventName: query,
-                            });
-                          }}
-                          onSelect={(value) => {
+                          placeholder="Name"
+                          onChange={(value) =>
                             handleChangeStatement(i, {
                               ...statement,
                               eventName: value,
-                            });
-                          }}
-                          placeholder="Name"
+                            })
+                          }
                         />
                       </div>
                       <div className="flex items-center">

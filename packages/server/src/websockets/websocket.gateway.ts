@@ -530,9 +530,6 @@ export class WebsocketGateway implements OnGatewayConnection {
     if (identifiedCustomer) {
       await this.customersService.deleteEverywhere(customer.id);
 
-      identifiedCustomer.previousAnonymousIds.push(customer.id);
-
-      await identifiedCustomer.save();
       await customer.deleteOne();
 
       socket.data.customerId = identifiedCustomer.id;

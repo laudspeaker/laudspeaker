@@ -140,11 +140,11 @@ export class StartProcessor extends WorkerHost {
     //base case: get documents, set them as moving in location table, and batch add the jobs to the transition queue
     if (job.data.limit <= BATCH_SIZE) {
       let err: any;
-      const queryRunner = this.dataSource.createQueryRunner();
+      const queryRunner = await this.dataSource.createQueryRunner();
       await queryRunner.connect();
       await queryRunner.startTransaction();
       const transactionSession = await this.connection.startSession();
-      transactionSession.startTransaction();
+      await transactionSession.startTransaction();
       try {
         // Retrieve customers from mongo
         const { collectionName, customers } = await this.customersService.find(
@@ -155,24 +155,28 @@ export class StartProcessor extends WorkerHost {
           job.data.skip,
           job.data.limit
         );
-
-        await this.customersService.updateJourneyList(
-          customers,
-          job.data.journey.id,
-          job.data.session,
-          transactionSession
+        // Retreive locations from Postgres
+        const locations = await this.journeyLocationsService.findForWriteBulk(
+          job.data.journey,
+          customers.map((document) => {
+            return document._id.toString();
+          }),
+          queryRunner
         );
-        await this.journeysService.enrollCustomersInJourney(
+        const jobs = await this.journeysService.enrollCustomersInJourney(
           job.data.owner,
           job.data.journey,
           customers,
+          locations,
           job.data.session,
           queryRunner,
           transactionSession
         );
         await transactionSession.commitTransaction();
         await queryRunner.commitTransaction();
-        if (collectionName) this.connection.dropCollection(collectionName);
+        if (collectionName)
+          await this.connection.dropCollection(collectionName);
+        if (jobs && jobs.length) await this.transitionQueue.addBulk(jobs);
       } catch (e) {
         this.error(e, this.process.name, job.data.session, job.data.owner.id);
         await transactionSession.abortTransaction();

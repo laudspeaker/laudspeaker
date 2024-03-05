@@ -519,7 +519,7 @@ export class EventsProcessor extends WorkerHost {
     if (stepsToQueue.length) {
       let stepToQueue: Step;
       for (let i = 0; i < stepsToQueue.length; i++) {
-        if (String(location.step) === stepsToQueue[i].id) {
+        if (String(location.step.id) === stepsToQueue[i].id) {
           stepToQueue = stepsToQueue[i];
           break;
         }
@@ -528,17 +528,17 @@ export class EventsProcessor extends WorkerHost {
         await this.transitionQueue.add(stepToQueue.type, {
           step: stepToQueue,
           branch: branch,
-          customerID: customer.id,
-          ownerID: stepToQueue.workspace.organization.owner.id,
+          customer: customer,
+          owner: account, //stepToQueue.workspace.organization.owner.id,
+          location,
           session: job.data.session,
-          journeyID: journey.id,
+          journey: journey,
           event: job.data.event.event,
         });
       } else {
         await this.journeyLocationsService.unlock(
           location,
-          session,
-          account,
+          location.step,
           queryRunner
         );
         this.warn(
@@ -565,8 +565,7 @@ export class EventsProcessor extends WorkerHost {
     } else {
       await this.journeyLocationsService.unlock(
         location,
-        session,
-        account,
+        location.step,
         queryRunner
       );
       this.warn(
@@ -751,12 +750,7 @@ export class EventsProcessor extends WorkerHost {
           journeyID: journey.id,
         });
       } else {
-        await this.journeyLocationsService.unlock(
-          location,
-          session,
-          account,
-          queryRunner
-        );
+        await this.journeyLocationsService.unlock(location, location.step);
         this.warn(
           `${JSON.stringify({
             warning: 'Customer not in step',
@@ -770,12 +764,7 @@ export class EventsProcessor extends WorkerHost {
         return;
       }
     } else {
-      await this.journeyLocationsService.unlock(
-        location,
-        session,
-        account,
-        queryRunner
-      );
+      await this.journeyLocationsService.unlock(location, location.step);
       this.warn(
         `${JSON.stringify({ warning: 'No step matches event' })}`,
         this.process.name,

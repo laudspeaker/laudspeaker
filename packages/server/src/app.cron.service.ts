@@ -119,6 +119,7 @@ export class CronService {
     @Inject(JourneyLocationsService)
     private journeyLocationsService: JourneyLocationsService,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
+    @InjectQueue('start') private readonly startQueue: Queue,
     @Inject(RedlockService)
     private readonly redlockService: RedlockService,
     @InjectConnection() private readonly connection: mongoose.Connection
@@ -449,10 +450,17 @@ export class CronService {
               name: String(step.type),
               data: {
                 step: step,
-                ownerID: step.workspace.organization.owner.id,
+                owner:
+                  await this.accountsService.findOrganizationOwnerByWorkspaceId(
+                    step.workspace.id,
+                    session
+                  ),
                 session: session,
-                journeyID: journeys[journeyIndex].id,
-                customerID: locations[locationsIndex].customer,
+                journey: journeys[journeyIndex],
+                customer: await this.customerModel
+                  .findById(locations[locationsIndex].customer)
+                  .exec(),
+                location: locations[locationsIndex],
                 branch,
               },
               opts: {
@@ -556,8 +564,8 @@ export class CronService {
         await bulkJobs.push({
           name: StepType.MESSAGE,
           data: {
-            ownerId: requeue.workspace?.organization?.owner.id,
-            journeyID: requeue.step.journey.id,
+            owner: requeue.workspace?.organization?.owner,
+            journey: requeue.step.journey,
             step: requeue.step,
             session,
             customerID: requeue.customerId,
@@ -1270,6 +1278,7 @@ export class CronService {
   @Cron(CronExpression.EVERY_MINUTE)
   async handleEntryTiming() {
     const session = randomUUID();
+    let triggerStartTasks;
     const collectionNames: string[] = [];
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -1357,29 +1366,28 @@ export class CronService {
             last_enrollment_timestamp: Date.now(),
           });
           // Step 4: Reenroll customers that have been unenrolled
-          const collectionNameFromTrigger =
-            await this.stepsService.triggerStart(
-              delayedJourneys[journeysIndex].workspace.organization.owner,
-              delayedJourneys[journeysIndex],
-              delayedJourneys[journeysIndex].inclusionCriteria,
-              delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
-                ?.enabled &&
-                count >
-                  parseInt(
-                    delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
-                      ?.maxEntries
-                  )
-                ? parseInt(
-                    delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
-                      ?.maxEntries
-                  )
-                : count,
-              queryRunner,
-              transactionSession,
-              session
-            );
-          if (collectionNameFromTrigger)
-            collectionNames.push(collectionNameFromTrigger);
+          triggerStartTasks = await this.stepsService.triggerStart(
+            delayedJourneys[journeysIndex].workspace.organization.owner,
+            delayedJourneys[journeysIndex],
+            delayedJourneys[journeysIndex].inclusionCriteria,
+            delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
+              ?.enabled &&
+              count >
+                parseInt(
+                  delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
+                    ?.maxEntries
+                )
+              ? parseInt(
+                  delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
+                    ?.maxEntries
+                )
+              : count,
+            queryRunner,
+            transactionSession,
+            session
+          );
+          if (triggerStartTasks.collectionName)
+            collectionNames.push(triggerStartTasks.collectionName);
         }
       }
       await transactionSession.commitTransaction();
@@ -1387,6 +1395,11 @@ export class CronService {
       for (const collection of collectionNames) {
         await this.connection.dropCollection(collection);
       }
+      if (triggerStartTasks?.job)
+        await this.startQueue.add(
+          triggerStartTasks.job.name,
+          triggerStartTasks.job.data
+        );
     } catch (e) {
       this.error(e, this.handleEntryTiming.name, session);
       await queryRunner.rollbackTransaction();

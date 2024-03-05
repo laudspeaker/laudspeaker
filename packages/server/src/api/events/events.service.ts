@@ -28,7 +28,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Job, Queue, UnrecoverableError } from 'bullmq';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import mongoose, { ClientSession, FilterQuery, Model, isValidObjectId } from 'mongoose';
+import mongoose, { ClientSession, Model } from 'mongoose';
 import { EventDocument, Event } from './schemas/event.schema';
 import mockData from '../../fixtures/mockData';
 import { EventKeys, EventKeysDocument } from './schemas/event-keys.schema';
@@ -458,8 +458,7 @@ export class EventsService {
     session: string,
     take = 100,
     skip = 0,
-    search = '',
-    customerId?: string
+    search = ''
   ) {
     this.debug(
       ` in customEvents`,
@@ -468,37 +467,18 @@ export class EventsService {
       account.id
     );
 
-    let customer: CustomerDocument | undefined;
-    if (customerId && isValidObjectId(customerId)) {
-      customer = await this.customersService.CustomerModel.findById(
-        customerId
-      ).exec();
-    }
-
-    const pk: string | undefined = await this.customersService.getPrimaryKey(
-      account,
-      ''
-    );
-
     //console.log("in customEvents")
     const searchRegExp = new RegExp(`.*${search}.*`, 'i');
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    const filterObject: FilterQuery<EventDocument> = {
-      event: searchRegExp,
-      workspaceId: workspace.id,
-      ...(customer
-        ? {
-            $or: [
-              { correlationKey: '_id', correlationValue: customerId },
-              { correlationKey: pk, correlationValue: customer[pk] },
-            ],
-          }
-        : {}),
-    };
-
     const totalPages =
-      Math.ceil((await this.EventModel.count(filterObject).exec()) / take) || 1;
+      Math.ceil(
+        (await this.EventModel.count({
+          event: searchRegExp,
+          workspaceId: workspace.id,
+          //ownerId: (<Account>account).id,
+        }).exec()) / take
+      ) || 1;
 
     //console.log("regex", searchRegExp );
     //console.log("ownderId", (<Account>account).id );
@@ -518,7 +498,11 @@ export class EventsService {
     */
     const customEvents = await this.EventModel.aggregate([
       {
-        $match: filterObject,
+        $match: {
+          event: searchRegExp,
+          workspaceId: workspace.id,
+          //ownerId: (<Account>account).id,
+        },
       },
       {
         $addFields: {
@@ -599,65 +583,69 @@ export class EventsService {
       (el) => !!el
     );
 
-    if (!hasConnected) {
-      throw new HttpException(
-        "You don't have platform's connected",
-        HttpStatus.NOT_ACCEPTABLE
-      );
-    }
+    try {
+      if (!hasConnected) {
+        throw new HttpException(
+          "You don't have platform's connected",
+          HttpStatus.NOT_ACCEPTABLE
+        );
+      }
 
-    await Promise.all(
-      Object.keys(workspace.pushPlatforms)
-        .filter((el) => !!workspace.pushPlatforms[el])
-        .map(async (el) => {
-          if (workspace.pushPlatforms[el].credentials) {
-            let firebaseApp: admin.app.App;
+      await Promise.all(
+        Object.keys(workspace.pushPlatforms)
+          .filter((el) => !!workspace.pushPlatforms[el])
+          .map(async (el) => {
+            if (workspace.pushPlatforms[el].credentials) {
+              let firebaseApp: admin.app.App;
 
-            try {
-              firebaseApp = admin.app(foundAcc.id + ';;' + el);
-            } catch (e: any) {
-              if (e.code == 'app/no-app') {
-                firebaseApp = admin.initializeApp(
-                  {
-                    credential: admin.credential.cert(
-                      workspace.pushPlatforms[el].credentials
-                    ),
-                  },
-                  `${foundAcc.id};;${el}`
-                );
-              } else {
-                throw new HttpException(
-                  `Error while using credentials for ${el}.`,
-                  HttpStatus.FAILED_DEPENDENCY
-                );
+              try {
+                firebaseApp = admin.app(foundAcc.id + ';;' + el);
+              } catch (e: any) {
+                if (e.code == 'app/no-app') {
+                  firebaseApp = admin.initializeApp(
+                    {
+                      credential: admin.credential.cert(
+                        workspace.pushPlatforms[el].credentials
+                      ),
+                    },
+                    `${foundAcc.id};;${el}`
+                  );
+                } else {
+                  throw new HttpException(
+                    `Error while using credentials for ${el}.`,
+                    HttpStatus.FAILED_DEPENDENCY
+                  );
+                }
               }
-            }
 
-            const messaging = admin.messaging(firebaseApp);
+              const messaging = admin.messaging(firebaseApp);
 
-            await messaging.send({
-              token: token,
-              notification: {
-                title: `Laudspeaker ${el} test`,
-                body: 'Testing push notifications',
-              },
-              android: {
+              await messaging.send({
+                token: token,
                 notification: {
-                  sound: 'default',
+                  title: `Laudspeaker ${el} test`,
+                  body: 'Testing push notifications',
                 },
-              },
-              apns: {
-                payload: {
-                  aps: {
-                    badge: 1,
+                android: {
+                  notification: {
                     sound: 'default',
                   },
                 },
-              },
-            });
-          }
-        })
-    );
+                apns: {
+                  payload: {
+                    aps: {
+                      badge: 1,
+                      sound: 'default',
+                    },
+                  },
+                },
+              });
+            }
+          })
+      );
+    } catch (e) {
+      throw e;
+    }
   }
 
   async sendTestPushByCustomer(account: Account, body: CustomerPushTest) {
@@ -674,95 +662,86 @@ export class EventsService {
       (el) => !!el
     );
 
-    if (!hasConnected) {
-      throw new HttpException(
-        "You don't have platform's connected",
-        HttpStatus.NOT_ACCEPTABLE
+    try {
+      if (!hasConnected) {
+        throw new HttpException(
+          "You don't have platform's connected",
+          HttpStatus.NOT_ACCEPTABLE
+        );
+      }
+
+      const customer = await this.customersService.findById(
+        account,
+        body.customerId
       );
-    }
 
-    const customer = await this.customersService.findById(
-      account,
-      body.customerId
-    );
+      if (!customer.androidDeviceToken && !customer.iosDeviceToken) {
+        throw new HttpException(
+          "Selected customer don't have androidDeviceToken nor iosDeviceToken.",
+          HttpStatus.NOT_ACCEPTABLE
+        );
+      }
 
-    if (
-      (!customer.androidFCMTokens || customer.androidFCMTokens.length === 0) &&
-      (!customer.iosFCMTokens || customer.iosFCMTokens.length === 0)
-    ) {
-      throw new HttpException(
-        "Selected customer don't have androidFCMTokens nor iosFCMTokens.",
-        HttpStatus.NOT_ACCEPTABLE
-      );
-    }
-
-    await Promise.all(
-      Object.entries(body.pushObject.platform)
-        .filter(
-          ([platform, isEnabled]) =>
-            isEnabled && workspace.pushPlatforms[platform]
-        )
-        .map(async ([platform]) => {
-          if (!workspace.pushPlatforms[platform]) {
-            throw new HttpException(
-              `Platform ${platform} is not connected.`,
-              HttpStatus.NOT_ACCEPTABLE
-            );
-          }
-
-          if (
-            platform === PushPlatforms.ANDROID &&
-            (!customer.androidFCMTokens ||
-              customer.androidFCMTokens.length === 0)
-          ) {
-            this.logger.warn(
-              `Customer ${body.customerId} don't have androidDeviceToken to test push notification. Skipping.`
-            );
-            return;
-          }
-
-          if (
-            platform === PushPlatforms.IOS &&
-            (!customer.iosFCMTokens || customer.iosFCMTokens.length === 0)
-          ) {
-            this.logger.warn(
-              `Customer ${body.customerId} don't have iosDeviceToken to test push notification. Skipping.`
-            );
-            return;
-          }
-
-          const settings: PlatformSettings = body.pushObject.settings[platform];
-          let firebaseApp;
-          try {
-            firebaseApp = admin.app(foundAcc.id + ';;' + platform);
-          } catch (e: any) {
-            if (e.code == 'app/no-app') {
-              firebaseApp = admin.initializeApp(
-                {
-                  credential: admin.credential.cert(
-                    workspace.pushPlatforms[platform].credentials
-                  ),
-                },
-                `${foundAcc.id};;${platform}`
-              );
-            } else {
+      await Promise.all(
+        Object.entries(body.pushObject.platform)
+          .filter(
+            ([platform, isEnabled]) =>
+              isEnabled && workspace.pushPlatforms[platform]
+          )
+          .map(async ([platform]) => {
+            if (!workspace.pushPlatforms[platform]) {
               throw new HttpException(
-                `Error while using credentials for ${platform}.`,
-                HttpStatus.FAILED_DEPENDENCY
+                `Platform ${platform} is not connected.`,
+                HttpStatus.NOT_ACCEPTABLE
               );
             }
-          }
 
-          const messaging = admin.messaging(firebaseApp);
+            if (
+              platform === PushPlatforms.ANDROID &&
+              !customer.androidDeviceToken
+            ) {
+              this.logger.warn(
+                `Customer ${body.customerId} don't have androidDeviceToken property to test push notification. Skipping.`
+              );
+              return;
+            }
 
-          const tokenStorage =
-            platform === PushPlatforms.ANDROID
-              ? customer.androidFCMTokens
-              : customer.iosFCMTokens;
+            if (platform === PushPlatforms.IOS && !customer.iosDeviceToken) {
+              this.logger.warn(
+                `Customer ${body.customerId} don't have iosDeviceToken property to test push notification. Skipping.`
+              );
+              return;
+            }
 
-          for (const token of tokenStorage) {
+            const settings: PlatformSettings =
+              body.pushObject.settings[platform];
+            let firebaseApp;
+            try {
+              firebaseApp = admin.app(foundAcc.id + ';;' + platform);
+            } catch (e: any) {
+              if (e.code == 'app/no-app') {
+                firebaseApp = admin.initializeApp(
+                  {
+                    credential: admin.credential.cert(
+                      workspace.pushPlatforms[platform].credentials
+                    ),
+                  },
+                  `${foundAcc.id};;${platform}`
+                );
+              } else {
+                throw new HttpException(
+                  `Error while using credentials for ${platform}.`,
+                  HttpStatus.FAILED_DEPENDENCY
+                );
+              }
+            }
+
+            const messaging = admin.messaging(firebaseApp);
             await messaging.send({
-              token,
+              token:
+                platform === PushPlatforms.ANDROID
+                  ? customer.androidDeviceToken
+                  : customer.iosDeviceToken,
               notification: {
                 title: settings.title,
                 body: settings.description,
@@ -798,8 +777,10 @@ export class EventsService {
                 return acc;
               }, {}),
             });
-          }
-        })
-    );
+          })
+      );
+    } catch (e) {
+      throw e;
+    }
   }
 }

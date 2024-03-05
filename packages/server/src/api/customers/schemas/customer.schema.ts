@@ -46,15 +46,9 @@ export class Customer {
   @Prop()
   phDeviceToken: string;
 
-  /**
-   * @deprecated use androidFCMTokens property instead
-   */
   @Prop()
   androidDeviceToken: string;
 
-  /**
-   * @deprecated use iosFCMTokens property instead
-   */
   @Prop()
   iosDeviceToken: string;
 
@@ -106,17 +100,14 @@ export class Customer {
   @Prop()
   isAnonymous?: boolean;
 
-  @Prop({ default: [] })
-  androidFCMTokens: string[];
+  @Prop()
+  device_token_android?: string;
 
-  @Prop({ default: [] })
-  iosFCMTokens: string[];
+  @Prop()
+  device_token_ios?: string;
 
   @Prop(raw({}))
   customComponents: Record<string, any>;
-
-  @Prop({ default: [] })
-  previousAnonymousIds: string[];
 }
 
 export const CustomerSchema = SchemaFactory.createForClass(Customer);
