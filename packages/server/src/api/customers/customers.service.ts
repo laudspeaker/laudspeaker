@@ -1188,6 +1188,7 @@ export class CustomersService {
     let collectionPrefix: string;
     let collectionName: string;
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    let customers: CustomerDocument[] = [];
 
     if (
       !criteria ||
@@ -1199,6 +1200,10 @@ export class CustomersService {
       query = this.CustomerModel.find({
         workspaceId: workspace.id,
       });
+      if (transactionSession) query.session(transactionSession);
+      if (limit) query.limit(limit);
+      if (skip) query.skip(skip);
+      customers = await query.exec();
     } else {
       collectionPrefix = this.segmentsService.generateRandomString();
       const customersInSegment = await this.getSegmentCustomersFromQuery(
@@ -1210,36 +1215,34 @@ export class CustomersService {
         collectionPrefix
       );
       collectionName = customersInSegment; // Name of the MongoDB collection
+      const intermediateCollection =
+        this.connection.db.collection(collectionName);
 
       const pipeline = [
         {
           $lookup: {
-            from: collectionName, // The name of the intermediate collection
+            from: 'customers', // The name of the intermediate collection
             localField: '_id', // Field from the customers collection
             foreignField: '_id', // Assuming intermediateCollection uses _id for customer IDs
-            as: 'matchedInIntermediate',
+            as: 'customer',
           },
         },
         {
           $match: {
-            'matchedInIntermediate.0': { $exists: true }, // Filters for customers present in intermediateCollection
+            'customer.0': { $exists: true }, // Filters for customers present in intermediateCollection
           },
         },
-        {
-          $project: {
-            matchedInIntermediate: 0, // Optionally remove the matchedInIntermediate array from results
-          },
-        },
+        { $replaceRoot: { newRoot: { $arrayElemAt: ['$customer', 0] } } },
       ];
-
-      query = this.CustomerModel.aggregate(pipeline);
+      const aggregate = intermediateCollection.aggregate(pipeline, {
+        session: transactionSession,
+      });
+      if (limit) aggregate.limit(limit);
+      if (skip) aggregate.skip(skip);
+      customers = (await aggregate.toArray()) as CustomerDocument[];
     }
 
-    if (transactionSession) query.session(transactionSession);
-    if (limit) query.limit(limit);
-    if (skip) query.skip(skip);
-    const res = await query.exec();
-    return { collectionName, customers: res };
+    return { collectionName, customers };
   }
 
   /**
