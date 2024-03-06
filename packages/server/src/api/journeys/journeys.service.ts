@@ -82,6 +82,7 @@ import { Queue } from 'bullmq';
 import { RedisService } from '@liaoliaots/nestjs-redis';
 import { JourneyChange } from './entities/journey-change.entity';
 import isObjectDeepEqual from '@/utils/isObjectDeepEqual';
+import { JourneyLocation } from './entities/journey-location.entity';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -244,7 +245,8 @@ export class JourneysService {
     @Inject(JourneyLocationsService)
     private readonly journeyLocationsService: JourneyLocationsService,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
-    @Inject(RedisService) private redisService: RedisService
+    @Inject(RedisService) private redisService: RedisService,
+    @InjectQueue('start') private readonly startQueue: Queue
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -712,6 +714,7 @@ export class JourneysService {
             account,
             journey,
             [customer],
+            [],
             session,
             queryRunner,
             clientSession
@@ -741,10 +744,11 @@ export class JourneysService {
     account: Account,
     journey: Journey,
     customers: CustomerDocument[],
+    locations: JourneyLocation[],
     session: string,
     queryRunner: QueryRunner,
     clientSession: ClientSession
-  ): Promise<void> {
+  ): Promise<{ name: string; data: any }[]> {
     const jobs: { name: string; data: any }[] = [];
     const step = await this.stepsService.findByJourneyAndType(
       account,
@@ -775,8 +779,14 @@ export class JourneysService {
           owner: account,
           journey: journey,
           step: step,
+          location: locations.find((location: JourneyLocation) => {
+            return (
+              location.customer === (customer.id ?? customer._id.toString()) &&
+              location.journey === journey.id
+            );
+          }),
           session: session,
-          customerID: customer.id ?? customer._id.toString(),
+          customer, //customer.id ?? customer._id.toString(),
         },
       };
       jobs.push(job);
@@ -787,9 +797,10 @@ export class JourneysService {
         clientSession
       );
     }
-    if (jobs.length) {
-      await this.transitionQueue.addBulk(jobs);
-    }
+    // if (jobs.length) {
+    //   await this.transitionQueue.addBulk(jobs);
+    // }
+    return jobs;
   }
 
   /**
@@ -1466,7 +1477,10 @@ export class JourneysService {
   async start(account: Account, journeyID: string, session: string) {
     let journey: Journey;
     let err: any;
-    let collectionNameFromTrigger: string;
+    let triggerStartTasks: {
+      collectionName: string;
+      job: { name: string; data: any };
+    };
     this.debug(
       `${JSON.stringify({ account, journeyID })}`,
       this.start.name,
@@ -1550,7 +1564,7 @@ export class JourneysService {
           isActive: true,
           startedAt: new Date(Date.now()),
         });
-        collectionNameFromTrigger = await this.stepsService.triggerStart(
+        triggerStartTasks = await this.stepsService.triggerStart(
           account,
           journey,
           journey.inclusionCriteria,
@@ -1577,8 +1591,16 @@ export class JourneysService {
       if (collectionName) {
         await this.connection.dropCollection(collectionName);
       }
-      if (collectionNameFromTrigger) {
-        await this.connection.dropCollection(collectionNameFromTrigger);
+      if (triggerStartTasks) {
+        if (triggerStartTasks.collectionName) {
+          await this.connection.dropCollection(
+            triggerStartTasks.collectionName
+          );
+        }
+        await this.startQueue.add(
+          triggerStartTasks.job.name,
+          triggerStartTasks.job.data
+        );
       }
     } catch (e) {
       err = e;

@@ -63,6 +63,9 @@ import { JourneyChange } from './entities/journey-change.entity';
     BullModule.registerQueue({
       name: 'events',
     }),
+    BullModule.registerQueue({
+      name: 'start',
+    }),
     AudiencesModule,
     forwardRef(() => CustomersModule),
     forwardRef(() => StepsModule),
