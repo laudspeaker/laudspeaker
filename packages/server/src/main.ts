@@ -18,7 +18,7 @@ import cluster from 'cluster';
 import * as os from 'os';
 
 const morgan = require('morgan');
-
+/*
 const numCPUs = os.cpus().length;
 
 if (cluster.isPrimary) {
@@ -33,6 +33,7 @@ if (cluster.isPrimary) {
     console.log(`worker ${worker.process.pid} died`);
   });
 } else {
+  */
   const expressApp = express();
 
   Sentry.init({
@@ -190,4 +191,4 @@ if (cluster.isPrimary) {
   }
 
   bootstrap();
-}
+//}
