@@ -1753,18 +1753,7 @@ export class TransitionProcessor extends WorkerHost {
   }
 
   async handleExperiment(job: Job) {
-    const { ownerID, journeyID, session, step, customerID, event } = job.data;
-
-    const owner = await this.accountRepository.findOne({
-      where: { id: ownerID },
-      relations: ['teams.organization.workspaces'],
-    });
-
-    const journey = await this.journeysService.findByID(
-      owner,
-      journeyID,
-      session
-    );
+    const { owner, journey, session, step, customer, event } = job.data;
 
     const currentStep = await this.stepsService.stepsRepository.findOne({
       where: {
@@ -1772,8 +1761,6 @@ export class TransitionProcessor extends WorkerHost {
         type: StepType.EXPERIMENT,
       },
     });
-
-    const customer = await this.customersService.findById(owner, customerID);
 
     const location = await this.journeyLocationsService.findForWrite(
       journey,
@@ -1786,7 +1773,7 @@ export class TransitionProcessor extends WorkerHost {
       this.warn(
         `${JSON.stringify({
           warning: 'Customer not in step',
-          customerID,
+          customer,
           currentStep,
         })}`,
         this.handleMessage.name,
@@ -1835,11 +1822,11 @@ export class TransitionProcessor extends WorkerHost {
         nextStep.type !== StepType.WAIT_UNTIL_BRANCH
       ) {
         await this.transitionQueue.add(nextStep.type, {
-          ownerID,
-          journeyID,
+          owner,
+          journey,
           step: nextStep,
           session: session,
-          customerID,
+          customer,
           event,
         });
       } else {
