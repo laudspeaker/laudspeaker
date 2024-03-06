@@ -6,7 +6,11 @@ import TrashIcon from "assets/icons/TrashIcon";
 import { useAppSelector } from "store/hooks";
 import { useDispatch } from "react-redux";
 import TagComponent from "components/TagComponent/TagComponent";
-import { setJourneySettingsTags } from "reducers/flow-builder.reducer";
+import {
+  MessageFromJourney,
+  QueryStatementType,
+  setJourneySettingsTags,
+} from "reducers/flow-builder.reducer";
 
 type AddConditionProps = {
   removeCondition: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
@@ -58,20 +62,20 @@ const AddCondition = ({
             buttonInnerWrapperClassName="border-none rounded-none h-[32px] w-[100px]"
             options={[
               {
-                title: "Email",
-                key: "Email",
+                title: QueryStatementType.EMAIL,
+                key: QueryStatementType.EMAIL,
               },
               {
-                title: "Push",
-                key: "Push",
+                title: QueryStatementType.PUSH,
+                key: QueryStatementType.PUSH,
               },
               {
-                title: "SMS",
-                key: "SMS",
+                title: QueryStatementType.SMS,
+                key: QueryStatementType.SMS,
               },
               {
-                title: "In-app message",
-                key: "In-app message",
+                title: QueryStatementType.IN_APP,
+                key: QueryStatementType.IN_APP,
               },
             ]}
             placeholder="Email"
@@ -92,11 +96,11 @@ const AddCondition = ({
             options={[
               {
                 title: "Any journeys",
-                key: "Any journeys",
+                key: MessageFromJourney.ANY,
               },
               {
                 title: "Journeys with a tag",
-                key: "Journeys with a tag",
+                key: MessageFromJourney.WITH_TAG,
               },
             ]}
             value={frequencyCappingRules.from}
@@ -107,7 +111,7 @@ const AddCondition = ({
               });
             }}
           />
-          {frequencyCappingRules.from === "Journeys with a tag" && (
+          {frequencyCappingRules.from === MessageFromJourney.WITH_TAG && (
             <TagComponent
               className="border-none w-[120px]"
               tags={journeySettings.tags}
@@ -174,6 +178,7 @@ const FrequencyCappingTab = ({
 }: {
   handleShowModal: () => void;
 }) => {
+  // TODO: Retrieve the current frequency capping settings from the API
   const [conditions, setConditions] = useState<
     { id: number; frequencyCappingRules: FrequencyCappingRules }[]
   >([]);
@@ -225,9 +230,15 @@ const FrequencyCappingTab = ({
         are included under this frequency capping setting.
       </h2>
       {conditions.map((condition) => (
-        <div className="flex gap-2.5 items-center" key={condition.id}>
+        <div
+          className="flex max-w-[924px] gap-2.5 relative w-full flex-nowrap items-center"
+          key={condition.id}
+        >
+          {condition.id > 1 && (
+            <div className="absolute bottom-[100px] md:bottom-[75px] lg:bottom-[50px] xl:bottom-[35px] left-[23px] z-[0] h-full w-[1px] bg-[#E5E7EB]" />
+          )}
           <div>
-            <div className="rounded-[14px] bg-[#F3F4F6] py-0.5 px-2.5 text-xs leading-5">
+            <div className="rounded-[14px] bg-[#F3F4F6] z-[1] py-0.5 px-2.5 text-xs leading-5 relative font-semibold">
               AND
             </div>
           </div>
@@ -251,6 +262,7 @@ const FrequencyCappingTab = ({
       </Button>
       <Divider />
       <div className="flex gap-2.5">
+        {/* TODO: Make API call to save the Frequency capping settings */}
         <Button type={ButtonType.PRIMARY} onClick={() => console.log("save")}>
           Save
         </Button>
