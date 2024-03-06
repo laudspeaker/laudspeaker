@@ -18,6 +18,8 @@ import { JourneyLocation } from './entities/journey-location.entity';
 import { StepType } from '../steps/types/step.interface';
 import { date } from 'liquidjs/dist/builtin/filters';
 import { randomUUID } from 'crypto';
+import { Readable } from 'node:stream';
+import * as copyFrom from 'pg-copy-streams';
 
 const LOCATION_LOCK_TIMEOUT_MS = +process.env.LOCATION_LOCK_TIMEOUT_MS;
 
@@ -204,32 +206,49 @@ export class JourneyLocationsService {
     step: Step,
     session: string,
     account: Account,
-    queryRunner: QueryRunner
-  ): Promise<JourneyLocation[]> {
-    if (!customers.length) return [];
+    queryRunner: QueryRunner,
+    client: any
+  ): Promise<void> {
+    if (!customers.length) return;
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-    const valuesPlaceholder = customers
-      .map(
-        (_, index) =>
-          `($1, $${index + 2}, $${customers.length + 2}, $${
-            customers.length + 3
-          }, $${customers.length + 4}, $${customers.length + 5})`
+    let moveStarted = Date.now(),
+      stepEntry = Date.now(),
+      journeyEntry = Date.now();
+
+    // Create a readable stream from your customers array
+    const readableStream = new Readable({
+      read() {
+        customers.forEach((customerId) => {
+          this.push(
+            `${journeyId}\t${customerId}\t${step.id}\t${workspace.id}\t${moveStarted}\t${stepEntry}\t${journeyEntry}\n`
+          );
+        });
+        this.push(null); // No more data
+      },
+    });
+
+    const stream = client.query(
+      copyFrom.from(
+        `COPY journey_location ("journeyId", "customer", "stepId", "workspaceId", "moveStarted", "stepEntry", "journeyEntry") FROM STDIN WITH (FORMAT text)`
       )
-      .join(', ');
-    const query = `
-        INSERT INTO journey_location ("journeyId", customer, "stepId", "workspaceId", "stepEntry", "moveStarted")
-        VALUES ${valuesPlaceholder}
-        RETURNING *
-      `;
-    const result = await queryRunner.query(query, [
-      journeyId,
-      ...customers,
-      step.id,
-      workspace.id,
-      Date.now(),
-      Date.now(),
-    ]);
-    return result;
+    );
+
+    // Error handling
+    stream.on('error', (error) => {
+      this.error(error, this.createAndLockBulk.name, session, account.email);
+      throw error;
+    });
+    stream.on('finish', () => {
+      this.debug(
+        `Finished creating journey location rows for ${journeyId}`,
+        this.createAndLockBulk.name,
+        session,
+        account.email
+      );
+    });
+
+    // Pipe the readable stream to the COPY command
+    readableStream.pipe(stream);
   }
 
   /**
@@ -309,6 +328,7 @@ export class JourneyLocationsService {
     customers: string[],
     queryRunner?: QueryRunner
   ): Promise<JourneyLocation[]> {
+    if (!customers.length) return [];
     if (queryRunner) {
       return await queryRunner.manager
         .createQueryBuilder(JourneyLocation, 'journeyLocation')

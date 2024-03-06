@@ -3,6 +3,7 @@ import mongoose, {
   ClientSession,
   isValidObjectId,
   Model,
+  Query,
   Types,
 } from 'mongoose';
 import {
@@ -1182,13 +1183,12 @@ export class CustomersService {
     session: string,
     transactionSession?: ClientSession,
     skip?: number,
-    limit?: number
-  ): Promise<{ collectionName: string; customers: CustomerDocument[] }> {
+    limit?: number,
+    collectionName?: string
+  ): Promise<CustomerDocument[]> {
     let query: any;
-    let collectionPrefix: string;
-    let collectionName: string;
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-    let customers : any[];
+    let customers: any[];
 
     if (
       !criteria ||
@@ -1204,69 +1204,16 @@ export class CustomersService {
       if (limit) query.limit(limit);
       if (skip) query.skip(skip);
       customers = await query.exec();
-      //const res = await query.exec();
-
     } else {
-      collectionPrefix = this.segmentsService.generateRandomString();
-
-      /*
-      const customersInSegment = await this.getSegmentCustomersFromQuery(
-        criteria.query,
-        account,
-        session,
-        true,
-        0,
-        collectionPrefix
-      );
-      collectionName = customersInSegment; // Name of the MongoDB collection
-      */
-
-      const customersInSegment = await this.getCustomersFromQuery(
-        criteria.query,
-        account,
-        session,
-        true,
-        0,
-        collectionPrefix
-      );
-      collectionName = customersInSegment; // Name of the MongoDB collection
-      customers = await this.connection.db.collection(collectionName).find({},{session: transactionSession})
+      customers = await this.connection.db
+        .collection(collectionName)
+        .find({}, { session: transactionSession })
+        .sort({ _id: 1 })
         .skip(skip) // Skip the specified number of documents
         .limit(limit) // Limit the number of documents to return
         .toArray();
-
-      /*
-
-      const pipeline = [
-        {
-          $lookup: {
-            from: collectionName, // The name of the intermediate collection
-            localField: '_id', // Field from the customers collection
-            foreignField: '_id', // Assuming intermediateCollection uses _id for customer IDs
-            as: 'matchedInIntermediate',
-          },
-        },
-        {
-          $match: {
-            'matchedInIntermediate.0': { $exists: true }, // Filters for customers present in intermediateCollection
-          },
-        },
-        {
-          $project: {
-            matchedInIntermediate: 0, // Optionally remove the matchedInIntermediate array from results
-          },
-        },
-      ];
-    
-      query = this.CustomerModel.aggregate(pipeline);
-      */
     }
-
-    // if (transactionSession) query.session(transactionSession);
-    // if (limit) query.limit(limit);
-    // if (skip) query.skip(skip);
-    // const res = await query.exec();
-    return { collectionName, customers };
+    return customers;
   }
 
   /**
@@ -1333,6 +1280,7 @@ export class CustomersService {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     let collectionPrefix: string;
     let count = 0;
+    let query: any;
     if (
       !criteria ||
       criteria.type === 'allCustomers' ||
@@ -1340,17 +1288,14 @@ export class CustomersService {
       !criteria.query.statements ||
       !criteria.query.statements.length
     ) {
-      count = await this.CustomerModel.countDocuments({
+      query = this.CustomerModel.countDocuments({
         workspaceId: workspace.id,
-      })
-        .session(transactionSession)
-        .exec();
+      });
+      if (transactionSession) query.session(transactionSession);
+      count = await query.exec();
     } else {
-      //TODO: We need to translate segment builder condiitons
-      // into a mongo query
-
       collectionPrefix = this.segmentsService.generateRandomString();
-      const customersInSegment = await this.getSegmentCustomersFromQuery(
+      const customersInSegment = await this.getCustomersFromQuery(
         criteria.query,
         account,
         session,
@@ -1359,16 +1304,10 @@ export class CustomersService {
         collectionPrefix
       );
       collectionName = customersInSegment; // Name of the MongoDB collection
-      const coll = this.connection.collection(collectionName);
-      count = await coll.countDocuments({});
+      count = await this.connection.db
+        .collection(collectionName)
+        .countDocuments({}, { session: transactionSession });
     }
-
-    this.debug(
-      `${JSON.stringify({ audienceSize: count })}`,
-      this.getAudienceSize.name,
-      session,
-      account.email
-    );
 
     return { collectionName, count };
   }
@@ -2445,16 +2384,15 @@ export class CustomersService {
     return ''; // Default: Return an empty set
   }
 
-
   /*
-  * 
-  * 
-  * Takes in a segment query (inclusion criteria) and returns a string that is the name of a mongo collection of customers not customerIds
-  * 
-  * @remarks
-  * This has been initially optimized, but can likely be more optimized
-  *
-  */
+   *
+   *
+   * Takes in a segment query (inclusion criteria) and returns a string that is the name of a mongo collection of customers not customerIds
+   *
+   * @remarks
+   * This has been initially optimized, but can likely be more optimized
+   *
+   */
   //to do create intermediate collection
   async getCustomersFromQuery(
     query: any,
@@ -2589,32 +2527,30 @@ export class CustomersService {
       const finalAggregationPipeline = [
         {
           $lookup: {
-            from: "customers", // Replace with your actual collection name containing full details
-            localField: "_id", // Adjust if necessary to match the linking field
-            foreignField: "_id", // Adjust if necessary to match the linking field
-            as: "customerDetails"
-          }
+            from: 'customers', // Replace with your actual collection name containing full details
+            localField: '_id', // Adjust if necessary to match the linking field
+            foreignField: '_id', // Adjust if necessary to match the linking field
+            as: 'customerDetails',
+          },
         },
         {
-          $unwind: "$customerDetails" // Optional, to flatten the results if each ID maps to exactly one customer
+          $unwind: '$customerDetails', // Optional, to flatten the results if each ID maps to exactly one customer
         },
         {
-          $replaceRoot: { newRoot: "$customerDetails" } // Promotes customerDetails to the top level
+          $replaceRoot: { newRoot: '$customerDetails' }, // Promotes customerDetails to the top level
         },
         {
-          $out: fullDetailsCollectionName // Output the results into the new collection
-        }
+          $out: fullDetailsCollectionName, // Output the results into the new collection
+        },
       ];
 
       //return thisCollectionName; // mergedSet;
 
-      let something = await collectionHandle.aggregate(finalAggregationPipeline).toArray();
-      console.log("this is something", something);
+      let something = await collectionHandle
+        .aggregate(finalAggregationPipeline)
+        .toArray();
 
-      console.log("collection name is ", fullDetailsCollectionName);
-
-      return fullDetailsCollectionName
-
+      return fullDetailsCollectionName;
     } else if (query.type === 'any') {
       console.log('the query has any (OR)');
       if (!query.statements || query.statements.length === 0) {
@@ -2714,35 +2650,32 @@ export class CustomersService {
       const finalAggregationPipeline = [
         {
           $lookup: {
-            from: "customers", // Replace with your actual collection name containing full details
-            localField: "_id", // Adjust if necessary to match the linking field
-            foreignField: "_id", // Adjust if necessary to match the linking field
-            as: "customerDetails"
-          }
+            from: 'customers', // Replace with your actual collection name containing full details
+            localField: '_id', // Adjust if necessary to match the linking field
+            foreignField: '_id', // Adjust if necessary to match the linking field
+            as: 'customerDetails',
+          },
         },
         {
-          $unwind: "$customerDetails" // Optional, to flatten the results if each ID maps to exactly one customer
+          $unwind: '$customerDetails', // Optional, to flatten the results if each ID maps to exactly one customer
         },
         {
-          $replaceRoot: { newRoot: "$customerDetails" } // Promotes customerDetails to the top level
+          $replaceRoot: { newRoot: '$customerDetails' }, // Promotes customerDetails to the top level
         },
         {
-          $out: fullDetailsCollectionName // Output the results into the new collection
-        }
+          $out: fullDetailsCollectionName, // Output the results into the new collection
+        },
       ];
 
       //return thisCollectionName; // mergedSet;
-      let something = await collectionHandle.aggregate(finalAggregationPipeline).toArray();
-      console.log("this is something", something);
-
-      console.log("collection name is ", fullDetailsCollectionName);
-
-      return fullDetailsCollectionName
+      let something = await collectionHandle
+        .aggregate(finalAggregationPipeline)
+        .toArray();
+      return fullDetailsCollectionName;
     }
     //shouldn't get here;
     return ''; // Default: Return an empty set
   }
-
 
   /*
   * 

@@ -177,16 +177,7 @@ export class TransitionProcessor extends WorkerHost {
       string
     >
   ): Promise<any> {
-    this.debug(
-      `${JSON.stringify({ job })}`,
-      this.process.name,
-      randomUUID(),
-      ''
-    );
     let err: any;
-    // const queryRunner = this.dataSource.createQueryRunner();
-    // await queryRunner.connect();
-    // await queryRunner.startTransaction();
     try {
       switch (job.data.step.type) {
         case StepType.START:
