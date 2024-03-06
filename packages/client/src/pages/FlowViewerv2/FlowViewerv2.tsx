@@ -280,7 +280,7 @@ const FlowViewerv2 = () => {
 
   const tabs: Record<FlowViewerTab, ReactNode> = {
     [FlowViewerTab.OVERVIEW]: (
-      <div className="w-full h-full flex">
+      <div className="w-full h-full p-5">
         <FlowBuilderOverview />
       </div>
     ),

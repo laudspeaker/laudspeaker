@@ -9,6 +9,7 @@ import {
   OverviewUserTable,
 } from "components/FlowViewerOverview";
 import { legendValues } from "utils/flowBuilderOverviewMockData";
+import Button, { ButtonType } from "components/Elements/Buttonv2/Button";
 
 const { RangePicker } = DatePicker;
 
@@ -44,24 +45,30 @@ const FlowBuilderOverview = () => {
   );
 
   return (
-    <div className="py-5 pl-5 flex flex-col gap-4">
-      <div className="flex gap-2">
-        <RangePicker
-          defaultValue={[dayjs(last30Days), dayjs(new Date())]}
-          format={dateFormat}
-          needConfirm
-          presets={rangePresets}
-          onChange={onRangeChange}
-          className="rounded font-inter"
-        />
+    <div className="flex flex-col gap-5">
+      <div className="flex justify-between">
+        <div className="flex gap-2">
+          <RangePicker
+            defaultValue={[dayjs(last30Days), dayjs(new Date())]}
+            format={dateFormat}
+            needConfirm
+            presets={rangePresets}
+            onChange={onRangeChange}
+            className="rounded font-inter"
+          />
 
-        <BasicSelect
-          defaultValue="daily"
-          options={[
-            { value: "daily", label: "Daily" },
-            { value: "weekly", label: "Weekly" },
-          ]}
-        />
+          <BasicSelect
+            defaultValue="daily"
+            options={[
+              { value: "daily", label: "Daily" },
+              { value: "weekly", label: "Weekly" },
+            ]}
+          />
+        </div>
+
+        <Button type={ButtonType.SECONDARY} onClick={() => {}}>
+          Export
+        </Button>
       </div>
 
       <div className="flex gap-5 font-inter">
@@ -93,7 +100,7 @@ const FlowBuilderOverview = () => {
           />
         </div>
 
-        <div className="bg-white rounded-lg p-5 flex flex-col gap-5">
+        <div className="bg-white rounded-lg p-5 flex flex-col gap-5 flex-1">
           <div className="flex gap-4 items-center">
             <span className="text-xl font-semibold">Conversion rate</span>
             <span className="text-sm font-normal text-[#4B5563]">
@@ -101,7 +108,7 @@ const FlowBuilderOverview = () => {
             </span>
           </div>
 
-          <div className="flex gap-4 justify-stretch">
+          <div className="flex gap-16 justify-stretch">
             {legendValues.map((value) => (
               <Popover
                 key={value.title}
