@@ -56,6 +56,13 @@ import {
 } from '../templates/entities/template.entity';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { ProviderType } from './events.preprocessor';
+import { SendFCMDto } from './dto/send-fcm.dto';
+import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
+import {
+  CustomerKeys,
+  CustomerKeysDocument,
+} from '../customers/schemas/customer-keys.schema';
+import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
 
 @Injectable()
 export class EventsService {
@@ -63,6 +70,8 @@ export class EventsService {
     private dataSource: DataSource,
     @Inject(forwardRef(() => CustomersService))
     private readonly customersService: CustomersService,
+    @InjectModel(CustomerKeys.name)
+    public CustomerKeysModel: Model<CustomerKeysDocument>,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
     @InjectQueue('message') private readonly messageQueue: Queue,
@@ -646,6 +655,151 @@ export class EventsService {
     } catch (e) {
       throw e;
     }
+  }
+
+  async sendFCMToken(
+    auth: { account: Account; workspace: Workspaces },
+    body: SendFCMDto,
+    session: string
+  ) {
+    if (!body.type)
+      throw new HttpException('No type given', HttpStatus.BAD_REQUEST);
+    if (!body.token)
+      throw new HttpException('No FCM token given', HttpStatus.BAD_REQUEST);
+
+    const workspace = auth.workspace;
+
+    let customer = await this.customersService.CustomerModel.findOne({
+      _id: body.customerId,
+      workspaceId: workspace.id,
+    });
+
+    if (!customer) {
+      this.error('Customer not found', this.sendFCMToken.name, session);
+
+      customer = await this.customersService.CustomerModel.create({
+        isAnonymous: true,
+        workspaceId: workspace.id,
+      });
+    }
+
+    await this.customersService.CustomerModel.updateOne(
+      { _id: customer.id },
+      {
+        [body.type === PushPlatforms.ANDROID
+          ? 'androidDeviceToken'
+          : 'iosDeviceToken']: body.token,
+      }
+    );
+
+    return customer.id;
+  }
+
+  async identifyCustomer(
+    auth: { account: Account; workspace: Workspaces },
+    body: IdentifyCustomerDTO,
+    session: string
+  ) {
+    if (!body.__PrimaryKey)
+      throw new HttpException(
+        'No Primary Key given',
+        HttpStatus.NOT_ACCEPTABLE
+      );
+
+    if (!auth?.account || !body?.customerId) {
+      return;
+    }
+
+    const workspace = auth.workspace;
+
+    let customer = await this.customersService.CustomerModel.findOne({
+      _id: body.customerId,
+      workspaceId: workspace.id,
+    });
+
+    if (!customer) {
+      this.error(
+        'Invalid customer id. Creating new anonymous customer...',
+        this.identifyCustomer.name,
+        session
+      );
+      customer = await this.customersService.CustomerModel.create({
+        isAnonymous: true,
+        workspaceId: workspace.id,
+      });
+    }
+
+    if (!customer.isAnonymous) {
+      throw new HttpException(
+        'Failed to identify: already identified',
+        HttpStatus.NOT_ACCEPTABLE
+      );
+    }
+
+    const primaryKey = await this.CustomerKeysModel.findOne({
+      workspaceId: workspace.id,
+      isPrimary: true,
+    });
+
+    const identifiedCustomer =
+      await this.customersService.CustomerModel.findOne({
+        workspaceId: workspace.id,
+        [primaryKey.key]: body.__PrimaryKey,
+      });
+
+    if (identifiedCustomer) {
+      await this.customersService.deleteEverywhere(customer.id);
+
+      await customer.deleteOne();
+
+      return identifiedCustomer.id;
+    } else {
+      await this.customersService.CustomerModel.findByIdAndUpdate(customer.id, {
+        ...customer.toObject(),
+        ...body.optionalProperties,
+        //...uniqueProperties,
+        [primaryKey.key]: body.__PrimaryKey,
+        workspaceId: workspace.id,
+        isAnonymous: false,
+      });
+    }
+
+    return customer.id;
+  }
+
+  async setCustomerProperties(
+    auth: { account: Account; workspace: Workspaces },
+    body: SetCustomerPropsDTO,
+    session: string
+  ) {
+    if (!auth.account || !body.customerId) {
+      return;
+    }
+
+    const workspace = auth.workspace;
+
+    const customer = await this.customersService.CustomerModel.findOne({
+      _id: body.customerId,
+      workspaceId: workspace.id,
+    });
+
+    if (!customer || customer.isAnonymous) {
+      this.error(
+        'Invalid customer id. Please call identify first',
+        this.setCustomerProperties.name,
+        session
+      );
+      throw new HttpException(
+        'Invalid customer id. Please call identify first',
+        HttpStatus.NOT_FOUND
+      );
+    }
+
+    await this.customersService.CustomerModel.findByIdAndUpdate(customer.id, {
+      ...customer.toObject(),
+      ...body.optionalProperties,
+      workspaceId: workspace.id,
+    });
   }
 
   async sendTestPushByCustomer(account: Account, body: CustomerPushTest) {
