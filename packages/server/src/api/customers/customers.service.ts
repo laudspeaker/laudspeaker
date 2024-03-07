@@ -404,6 +404,13 @@ export class CustomersService {
     }
   }
 
+  async getFieldType(key: string, workspaceId: string): Promise<string | null> {
+    const customerKey = await this.CustomerKeysModel.findOne({ key, workspaceId }).exec();
+
+    // If the customerKey is found, return its type; otherwise, return null
+    return customerKey ? customerKey.type : null;
+  }
+
   async findAll(
     account: Account,
     take = 100,
@@ -422,14 +429,37 @@ export class CustomersService {
         }).exec()) / take
       ) || 1;
 
-    const customers = await this.CustomerModel.find({
-      workspaceId: workspace.id,
-      ...(key && search
-        ? {
-            [key]: new RegExp(`.*${search}.*`, 'i'),
+      const fieldType = await this.getFieldType(key, workspace.id);
+
+      let queryCondition;
+      switch (fieldType) {
+        case 'String':
+          queryCondition = { [key]: new RegExp(`.*${search}.*`, 'i') };
+          break;
+        case 'Email':
+          queryCondition = { [key]: new RegExp(`.*${search}.*`, 'i') };
+          break;
+        case 'Number':
+          // Convert search to a number and search for equality (you can extend this to range queries)
+          const searchNumber = Number(search);
+          if (!isNaN(searchNumber)) {
+            queryCondition = { [key]: searchNumber };
           }
-        : {}),
-    })
+          break;
+        case 'Boolean':
+          // Convert search to a boolean
+          queryCondition = { [key]: search === 'true' };
+          break;
+        // Handle other types as needed
+        default:
+          queryCondition = {};
+          break;
+      }
+    
+      const customers = await this.CustomerModel.find({
+        workspaceId: workspace.id,
+        ...queryCondition,
+      })
       .skip(skip)
       .limit(take <= 100 ? take : 100)
       .sort({ _id: createdAtSortType === 'asc' ? 1 : -1 })
