@@ -1,9 +1,9 @@
 import React, { FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { JourneyType } from "reducers/flow-builder.reducer";
+import { JourneyType, setIsStarting } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
-import { useAppSelector } from "store/hooks";
+import { useAppDispatch, useAppSelector } from "store/hooks";
 import Button, {
   ButtonType,
 } from "../../../components/Elements/Buttonv2/Button";
@@ -28,11 +28,23 @@ const FlowBuilderStartModal: FC<FlowBuilderStartModalProps> = ({
     journeyType,
     journeyEntrySettings,
     journeySettings,
+    isStarting,
   } = useAppSelector((state) => state.flowBuilder);
+  const dispatch = useAppDispatch();
 
   const navigate = useNavigate();
 
   const handleStartJourney = async () => {
+    if (isStarting) {
+      toast.error("Journey is already starting");
+      return;
+    }
+
+    dispatch(setIsStarting(true));
+    toast.info(
+      "Please remain on page until journey has started this can take a few minutes"
+    );
+
     try {
       await ApiService.patch({
         url: "/journeys/visual-layout",
@@ -45,6 +57,7 @@ const FlowBuilderStartModal: FC<FlowBuilderStartModalProps> = ({
     } catch (e) {
       console.error(e);
       toast.error("Error: failed to save layout");
+      dispatch(setIsStarting(false));
       return;
     }
 
@@ -63,6 +76,7 @@ const FlowBuilderStartModal: FC<FlowBuilderStartModalProps> = ({
     } catch (e) {
       console.error(e);
       toast.error("Error: failed to save journey properties");
+      dispatch(setIsStarting(false));
       return;
     }
 
@@ -77,6 +91,8 @@ const FlowBuilderStartModal: FC<FlowBuilderStartModalProps> = ({
       toast.error("Failed to start journey");
       posthog.capture("journey_started_fail");
     }
+
+    dispatch(setIsStarting(false));
   };
 
   return (

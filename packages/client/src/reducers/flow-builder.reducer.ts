@@ -507,7 +507,7 @@ export interface TemplateInlineEditor {
   };
 }
 
-interface FlowBuilderState {
+export interface FlowBuilderState {
   flowId: string;
   flowName: string;
   nodes: Node<NodeData>[];
@@ -533,6 +533,7 @@ interface FlowBuilderState {
   journeyEntrySettings: JourneyEntrySettings;
   journeySettings: JourneySettings;
   availableTags: string[];
+  isStarting: boolean;
 }
 
 const startNodeUUID = uuid();
@@ -626,6 +627,7 @@ const initialState: FlowBuilderState = {
   availableTags: [],
   journeyEntrySettings: defaultJourneyEntrySettings,
   journeySettings: defaultJourneySettings,
+  isStarting: false,
 };
 
 const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
@@ -1522,6 +1524,9 @@ const flowBuilderSlice = createSlice({
       state.jumpToTargettingNode = undefined;
       state.isDrawerDisabled = false;
     },
+    setIsStarting(state, action: PayloadAction<boolean>) {
+      state.isStarting = action.payload;
+    },
   },
 });
 
@@ -1577,6 +1582,7 @@ export const {
   setAvailableTags,
   setTemplateInlineCreator,
   setJourneyFrequencyCappingRules,
+  setIsStarting,
 } = flowBuilderSlice.actions;
 
 export { defaultDevMode };
