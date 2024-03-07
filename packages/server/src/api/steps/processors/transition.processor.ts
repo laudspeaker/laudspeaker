@@ -66,9 +66,7 @@ import { JourneyLocation } from '@/api/journeys/entities/journey-location.entity
   concurrency: 5,
 })
 export class TransitionProcessor extends WorkerHost {
-  private phClient = new PostHog(process.env.POSTHOG_KEY, {
-    host: process.env.POSTHOG_HOST,
-  });
+  private phClient = new PostHog('RxdBl8vjdTwic7xTzoKTdbmeSC1PCzV6sw-x-FKSB-k');
 
   constructor(
     private dataSource: DataSource,
@@ -613,6 +611,18 @@ export class TransitionProcessor extends WorkerHost {
         utcNowString
       );
 
+      this.phClient.capture({
+        distinctId: owner.email,
+        event: 'logging_quiet_hours',
+        properties: {
+          now: Date.now(),
+          utcNowString,
+          utcStartTime,
+          utcEndTime,
+          isQuietHour,
+        },
+      });
+
       if (isQuietHour) {
         switch (quietHours.fallbackBehavior) {
           case JourneySettingsQuietFallbackBehavior.NextAvailableTime:
@@ -944,6 +954,19 @@ export class TransitionProcessor extends WorkerHost {
       location = { ...location, messageSent: true };
       await this.journeysService.rateLimitByMinuteIncrement(owner, journey);
     } else if (messageSendType === 'QUIET_ABORT') {
+      this.phClient.capture({
+        distinctId: owner.email,
+        event: 'message_aborted',
+        properties: {
+          now: Date.now(),
+          step,
+          customer,
+          workspace,
+          journey,
+          location,
+          owner,
+        },
+      });
       // Record that the message was aborted
       await this.webhooksService.insertMessageStatusToClickhouse(
         [
