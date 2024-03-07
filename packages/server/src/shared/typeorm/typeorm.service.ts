@@ -22,7 +22,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       extra: {
         max: 100,
         options:
-          '-c lock_timeout=16000ms -c statement_timeout=32000ms -c idle_in_transaction_session_timeout=32000ms',
+          '-c lock_timeout=240000ms -c statement_timeout=240000ms -c idle_in_transaction_session_timeout=240000ms',
       },
       // migrationsRun: true,
     };

@@ -41,6 +41,11 @@ export class JourneyLocation {
 
   // This is actually a timestamp using ECMAScript's native Date object; will yield
   // the same number across any timezone
+  @Column({ type: 'bigint', nullable: false, default: 0 })
+  journeyEntry!: number;
+
+  // This is actually a timestamp using ECMAScript's native Date object; will yield
+  // the same number across any timezone
   @Column({
     type: 'bigint',
     nullable: true,
