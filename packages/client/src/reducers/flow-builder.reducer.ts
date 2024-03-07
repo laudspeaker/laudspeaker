@@ -502,7 +502,7 @@ export interface TemplateInlineEditor {
   };
 }
 
-interface FlowBuilderState {
+export interface FlowBuilderState {
   flowId: string;
   flowName: string;
   nodes: Node<NodeData>[];
