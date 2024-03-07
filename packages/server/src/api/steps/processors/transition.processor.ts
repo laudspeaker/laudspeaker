@@ -14,7 +14,11 @@ import {
 } from '@nestjs/bullmq';
 import { Job, MetricsTime, Queue } from 'bullmq';
 import { cpus } from 'os';
-import { CustomComponentAction, StepType } from '../types/step.interface';
+import {
+  CustomComponentAction,
+  ExperimentBranch,
+  StepType,
+} from '../types/step.interface';
 import { Step } from '../entities/step.entity';
 import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
@@ -290,6 +294,9 @@ export class TransitionProcessor extends WorkerHost {
             job.data.event,
             job.data.branch
           );
+          break;
+        case StepType.EXPERIMENT:
+          await this.handleExperiment(job);
           break;
         default:
           break;
@@ -1688,6 +1695,88 @@ export class TransitionProcessor extends WorkerHost {
       await this.journeyLocationsService.unlock(location, step);
     }
     if (nextStep && job) await this.transitionQueue.add(nextStep.type, job);
+  }
+
+  async handleExperiment(job: Job) {
+    const { owner, journey, session, step, customer, event } = job.data;
+
+    const location = await this.journeyLocationsService.findForWrite(
+      journey,
+      customer,
+      session,
+      owner
+    );
+
+    if (!location) {
+      this.warn(
+        `${JSON.stringify({
+          warning: 'Customer not in step',
+          customer,
+          step,
+        })}`,
+        this.handleMessage.name,
+        session,
+        owner.email
+      );
+      return;
+    }
+
+    const branches = step.metadata.branches;
+
+    if (!branches || branches.length === 0) return;
+
+    let p = 0;
+    let nextBranch: ExperimentBranch | undefined;
+
+    const random = Math.random();
+    for (const branch of branches) {
+      p += branch.ratio;
+      if (random < p) {
+        nextBranch = branch;
+        break;
+      }
+    }
+
+    if (!nextBranch) return;
+
+    const nextStep = await this.stepsService.stepsRepository.findOne({
+      where: {
+        id: nextBranch.destination,
+      },
+    });
+
+    if (nextStep) {
+      // Destination exists, move customer into destination
+      await this.journeyLocationsService.move(
+        location,
+        step,
+        nextStep,
+        session,
+        owner
+      );
+      if (
+        nextStep.type !== StepType.TIME_DELAY &&
+        nextStep.type !== StepType.TIME_WINDOW &&
+        nextStep.type !== StepType.WAIT_UNTIL_BRANCH
+      ) {
+        await this.transitionQueue.add(nextStep.type, {
+          owner,
+          journey,
+          step: nextStep,
+          session: session,
+          customer,
+          event,
+        });
+      } else {
+        // Destination is time based,
+        // customer has stopped moving so we can release lock
+        await this.journeyLocationsService.unlock(location, session, owner);
+      }
+    } else {
+      // Destination does not exist,
+      // customer has stopped moving so we can release lock
+      await this.journeyLocationsService.unlock(location, session, owner);
+    }
   }
 
   // TODO

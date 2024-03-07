@@ -106,7 +106,7 @@ export enum CustomComponentAction {
 /*
  * Top level interface for a branch.
  */
-export class Branch {
+export class CommonBranch {
   index: number;
   /** Step ID (UUID) */
   destination: string;
@@ -115,14 +115,14 @@ export class Branch {
 /*
  * Extend branch with percentage for random branching.
  */
-export class RandomBranch extends Branch {
-  percentage: number;
+export class ExperimentBranch extends CommonBranch {
+  ratio: number;
 }
 
 /*
  * Top level interface for any type of event that can trigger a step
  */
-export class EventBranch extends Branch {
+export class EventBranch extends CommonBranch {
   events: Event[];
   relation?: string;
 }
@@ -180,7 +180,7 @@ export class AttributeChangeEvent extends Event {
  * Top level interface for any platform data that we are
  * sorting/switching on.
  */
-export class AttributeConditions extends Branch {
+export class AttributeConditions extends CommonBranch {
   conditions: any;
 }
 
@@ -299,24 +299,28 @@ export class TimeDelayStepMetadata extends SingleBranchMetadata {
   delay: Temporal.Duration;
 }
 
-export class MultiBranchMetadata extends StepTypeMetadata {
-  branches: Branch[];
+export class CommonMultiBranchMetadata extends StepTypeMetadata {
+  branches: CommonBranch[];
 }
 
-export class AttributeSplitMetadata extends MultiBranchMetadata {
+export class AttributeSplitMetadata extends CommonMultiBranchMetadata {
   // Step ID of
   allOthers: string;
 }
 
-export class WaitUntilStepMetadata extends MultiBranchMetadata {
+export class WaitUntilStepMetadata extends CommonMultiBranchMetadata {
   timeBranch: TimeWindowStepMetadata | TimeDelayStepMetadata;
+}
+
+export class ExperimentMetadata {
+  branches: ExperimentBranch[];
 }
 
 export type AllStepTypeMetadata =
   | WaitUntilStepMetadata
   | TimeDelayStepMetadata
   | TimeWindowStepMetadata
-  | RandomBranch
+  | ExperimentBranch
   | MessageEvent
   | AttributeChangeEvent
   | AnalyticsEvent
