@@ -368,12 +368,17 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
             <Button
               type={ButtonType.SECONDARY}
               onClick={() => {
+                return void 0;
+              }}
+              /*
+              onClick={() => {
                 window.open(
                   "/settings?tab=FREQUENCY_CAPPING",
                   "_blank",
                   "noopener,noreferrer"
                 );
               }}
+              */
               className="w-fit"
             >
               Frequency capping rules
