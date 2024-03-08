@@ -195,7 +195,14 @@ export class EventsProcessor extends WorkerHost {
     //Account associated with event
     const account: Account = await queryRunner.manager.findOne(Account, {
       where: { id: job.data.accountID },
-      relations: ['teams.organization.workspaces'],
+      relations: [
+        'teams.organization.workspaces',
+        'teams.organization.workspaces.mailgunConnections.sendingOptions',
+        'teams.organization.workspaces.sendgridConnections.sendingOptions',
+        'teams.organization.workspaces.resendConnections.sendingOptions',
+        'teams.organization.workspaces.twilioConnections',
+        'teams.organization.workspaces.pushConnections',
+      ],
     });
     // Multiple journeys can consume the same event, but only one step per journey,
     // so we create an event job for every journey

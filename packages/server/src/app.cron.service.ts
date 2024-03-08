@@ -65,6 +65,7 @@ import { KEYS_TO_SKIP } from './utils/customer-key-name-validator';
 import { SegmentsService } from './api/segments/segments.service';
 import { CustomersService } from './api/customers/customers.service';
 import { Temporal } from '@js-temporal/polyfill';
+import { Account } from './api/accounts/entities/accounts.entity';
 
 const BATCH_SIZE = 500;
 
@@ -1363,8 +1364,23 @@ export class CronService {
             last_enrollment_timestamp: Date.now(),
           });
           // Step 4: Reenroll customers that have been unenrolled
+          const accountWithConnections: Account =
+            await queryRunner.manager.findOne(Account, {
+              where: {
+                id: delayedJourneys[journeysIndex].workspace.organization.owner
+                  .id,
+              },
+              relations: [
+                'teams.organization.workspaces',
+                'teams.organization.workspaces.mailgunConnections.sendingOptions',
+                'teams.organization.workspaces.sendgridConnections.sendingOptions',
+                'teams.organization.workspaces.resendConnections.sendingOptions',
+                'teams.organization.workspaces.twilioConnections',
+                'teams.organization.workspaces.pushConnections',
+              ],
+            });
           triggerStartTasks = await this.stepsService.triggerStart(
-            delayedJourneys[journeysIndex].workspace.organization.owner,
+            accountWithConnections,
             delayedJourneys[journeysIndex],
             delayedJourneys[journeysIndex].inclusionCriteria,
             delayedJourneys[journeysIndex]?.journeySettings?.maxEntries

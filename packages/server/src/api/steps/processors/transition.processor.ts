@@ -730,8 +730,7 @@ export class TransitionProcessor extends WorkerHost {
         );
       }
       const { email } = owner;
-      const { _id, workspaceId, workflows, journeys, ...tags } =
-        customer.toObject();
+      const { _id, workspaceId, workflows, journeys, ...tags } = customer;
       const filteredTags = cleanTagsForSending(tags);
       const sender = new MessageSender(this.accountRepository);
 

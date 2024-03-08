@@ -1479,6 +1479,20 @@ export class JourneysService {
     try {
       if (!account) throw new HttpException('User not found', 404);
       const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+      const accountWithConnections = await queryRunner.manager.findOne(
+        Account,
+        {
+          where: { id: account.id },
+          relations: [
+            'teams.organization.workspaces',
+            'teams.organization.workspaces.mailgunConnections.sendingOptions',
+            'teams.organization.workspaces.sendgridConnections.sendingOptions',
+            'teams.organization.workspaces.resendConnections.sendingOptions',
+            'teams.organization.workspaces.twilioConnections',
+            'teams.organization.workspaces.pushConnections',
+          ],
+        }
+      );
 
       journey = await queryRunner.manager.findOne(Journey, {
         where: {
@@ -1548,7 +1562,7 @@ export class JourneysService {
           startedAt: new Date(Date.now()),
         });
         triggerStartTasks = await this.stepsService.triggerStart(
-          account,
+          accountWithConnections,
           journey,
           journey.inclusionCriteria,
           journey?.journeySettings?.maxEntries?.enabled &&
