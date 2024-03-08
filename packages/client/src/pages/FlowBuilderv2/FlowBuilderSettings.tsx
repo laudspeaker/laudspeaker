@@ -367,6 +367,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
           {journeySettings.frequencyCapping.enabled && (
             <Button
               type={ButtonType.SECONDARY}
+              /*
               onClick={() => {
                 window.open(
                   "/settings?tab=FREQUENCY_CAPPING",
@@ -374,6 +375,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                   "noopener,noreferrer"
                 );
               }}
+              */
               className="w-fit"
             >
               Frequency capping rules
