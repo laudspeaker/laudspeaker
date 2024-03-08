@@ -14,7 +14,11 @@ import {
 } from '@nestjs/bullmq';
 import { Job, MetricsTime, Queue } from 'bullmq';
 import { cpus } from 'os';
-import { CustomComponentAction, StepType } from '../types/step.interface';
+import {
+  CustomComponentAction,
+  ExperimentBranch,
+  StepType,
+} from '../types/step.interface';
 import { Step } from '../entities/step.entity';
 import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
@@ -246,8 +250,6 @@ export class TransitionProcessor extends WorkerHost {
           //     job.data.event
           //   );
           break;
-        case StepType.RANDOM_COHORT_BRANCH:
-          break;
         case StepType.TIME_DELAY:
           await this.handleTimeDelay(
             job.data.owner,
@@ -280,6 +282,17 @@ export class TransitionProcessor extends WorkerHost {
             job.data.location,
             job.data.event,
             job.data.branch
+          );
+          break;
+        case StepType.EXPERIMENT:
+          await this.handleExperiment(
+            job.data.owner,
+            job.data.journey,
+            job.data.step,
+            job.data.session,
+            job.data.customer,
+            job.data.location,
+            job.data.event
           );
           break;
         default:
@@ -1666,6 +1679,64 @@ export class TransitionProcessor extends WorkerHost {
           session,
           customer,
           location,
+          event,
+        };
+      } else {
+        // Destination is time based,
+        // customer has stopped moving so we can release lock
+        await this.journeyLocationsService.unlock(location, nextStep);
+      }
+    } else {
+      // Destination does not exist,
+      // customer has stopped moving so we can release lock
+      await this.journeyLocationsService.unlock(location, step);
+    }
+    if (nextStep && job) await this.transitionQueue.add(nextStep.type, job);
+  }
+
+  async handleExperiment(
+    owner: Account,
+    journey: Journey,
+    step: Step,
+    session: string,
+    customer: CustomerDocument,
+    location: JourneyLocation,
+    event?: string
+  ) {
+    let p = 0;
+    let job;
+    let nextStep;
+    let nextBranch: ExperimentBranch | undefined;
+
+    const random = Math.random();
+    for (const branch of step.metadata.branches) {
+      p += branch.ratio;
+      if (random < p) {
+        nextBranch = branch;
+        break;
+      }
+    }
+
+    nextStep = await this.cacheManager.get(`step:${nextBranch.destination}`);
+    if (!nextStep) {
+      nextStep = await this.stepsService.lazyFindByID(nextBranch.destination);
+      if (nextStep)
+        await this.cacheManager.set(`step:${nextBranch.destination}`, nextStep);
+    }
+
+    if (nextStep) {
+      if (
+        nextStep.type !== StepType.TIME_DELAY &&
+        nextStep.type !== StepType.TIME_WINDOW &&
+        nextStep.type !== StepType.WAIT_UNTIL_BRANCH
+      ) {
+        job = {
+          owner,
+          journey,
+          step: nextStep,
+          session,
+          location,
+          customer,
           event,
         };
       } else {
