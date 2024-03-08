@@ -547,7 +547,7 @@ export class EventsService {
   async getEventsByMongo(mongoQuery: any, customer: CustomerDocument) {
     //console.log("In getEvents by mongo");
 
-    const tehevents = await this.EventModel.find(mongoQuery).exec();
+    // const tehevents = await this.EventModel.find(mongoQuery).exec();
     //console.log("events are", JSON.stringify(tehevents, null, 2))
 
     //console.log("events are", JSON.stringify(await this.EventModel.find(mongoQuery).exec(),null, 2));
