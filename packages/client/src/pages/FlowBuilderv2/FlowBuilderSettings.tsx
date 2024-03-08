@@ -367,6 +367,9 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
           {journeySettings.frequencyCapping.enabled && (
             <Button
               type={ButtonType.SECONDARY}
+              onClick={() => {
+                return void 0;
+              }}
               /*
               onClick={() => {
                 window.open(
