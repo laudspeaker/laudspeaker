@@ -259,8 +259,6 @@ export class TransitionProcessor extends WorkerHost {
           //     job.data.event
           //   );
           break;
-        case StepType.RANDOM_COHORT_BRANCH:
-          break;
         case StepType.TIME_DELAY:
           await this.handleTimeDelay(
             job.data.owner,
@@ -296,7 +294,15 @@ export class TransitionProcessor extends WorkerHost {
           );
           break;
         case StepType.EXPERIMENT:
-          await this.handleExperiment(job);
+          await this.handleExperiment(
+            job.data.owner,
+            job.data.journey,
+            job.data.step,
+            job.data.session,
+            job.data.customer,
+            job.data.location,
+            job.data.event
+          );
           break;
         default:
           break;
@@ -1697,39 +1703,22 @@ export class TransitionProcessor extends WorkerHost {
     if (nextStep && job) await this.transitionQueue.add(nextStep.type, job);
   }
 
-  async handleExperiment(job: Job) {
-    const { owner, journey, session, step, customer, event } = job.data;
-
-    const location = await this.journeyLocationsService.findForWrite(
-      journey,
-      customer,
-      session,
-      owner
-    );
-
-    if (!location) {
-      this.warn(
-        `${JSON.stringify({
-          warning: 'Customer not in step',
-          customer,
-          step,
-        })}`,
-        this.handleMessage.name,
-        session,
-        owner.email
-      );
-      return;
-    }
-
-    const branches = step.metadata.branches;
-
-    if (!branches || branches.length === 0) return;
-
+  async handleExperiment(
+    owner: Account,
+    journey: Journey,
+    step: Step,
+    session: string,
+    customer: CustomerDocument,
+    location: JourneyLocation,
+    event?: string
+  ) {
     let p = 0;
+    let job;
+    let nextStep;
     let nextBranch: ExperimentBranch | undefined;
 
     const random = Math.random();
-    for (const branch of branches) {
+    for (const branch of step.metadata.branches) {
       p += branch.ratio;
       if (random < p) {
         nextBranch = branch;
@@ -1737,46 +1726,39 @@ export class TransitionProcessor extends WorkerHost {
       }
     }
 
-    if (!nextBranch) return;
-
-    const nextStep = await this.stepsService.stepsRepository.findOne({
-      where: {
-        id: nextBranch.destination,
-      },
-    });
+    nextStep = await this.cacheManager.get(`step:${nextBranch.destination}`);
+    if (!nextStep) {
+      nextStep = await this.stepsService.lazyFindByID(nextBranch.destination);
+      if (nextStep)
+        await this.cacheManager.set(`step:${nextBranch.destination}`, nextStep);
+    }
 
     if (nextStep) {
-      // Destination exists, move customer into destination
-      await this.journeyLocationsService.move(
-        location,
-        step,
-        nextStep,
-        session,
-        owner
-      );
       if (
         nextStep.type !== StepType.TIME_DELAY &&
         nextStep.type !== StepType.TIME_WINDOW &&
         nextStep.type !== StepType.WAIT_UNTIL_BRANCH
       ) {
-        await this.transitionQueue.add(nextStep.type, {
+        job = {
           owner,
           journey,
           step: nextStep,
-          session: session,
+          session,
+          location,
           customer,
           event,
-        });
+        };
       } else {
         // Destination is time based,
         // customer has stopped moving so we can release lock
-        await this.journeyLocationsService.unlock(location, session, owner);
+        await this.journeyLocationsService.unlock(location, nextStep);
       }
     } else {
       // Destination does not exist,
       // customer has stopped moving so we can release lock
-      await this.journeyLocationsService.unlock(location, session, owner);
+      await this.journeyLocationsService.unlock(location, step);
     }
+    if (nextStep && job) await this.transitionQueue.add(nextStep.type, job);
   }
 
   // TODO
