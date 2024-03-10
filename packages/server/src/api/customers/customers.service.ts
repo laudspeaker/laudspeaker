@@ -75,6 +75,13 @@ import {
 } from './dto/modify-attributes.dto';
 import { parseISO, add, sub, formatISO } from 'date-fns';
 import { cloneDeep } from 'lodash';
+import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
+import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
+import { SendFCMDto } from './dto/send-fcm.dto';
+
+import {
+  PushPlatforms,
+} from '../templates/entities/template.entity';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -6136,5 +6143,150 @@ export class CustomersService {
     }
     await clientSession.commitTransaction();
     await clientSession.endSession();
+  }
+
+  async sendFCMToken(
+    auth: { account: Account; workspace: Workspaces },
+    body: SendFCMDto,
+    session: string
+  ) {
+    if (!body.type)
+      throw new HttpException('No type given', HttpStatus.BAD_REQUEST);
+    if (!body.token)
+      throw new HttpException('No FCM token given', HttpStatus.BAD_REQUEST);
+
+    const workspace = auth.workspace;
+
+    let customer = await this.CustomerModel.findOne({
+      _id: body.customerId,
+      workspaceId: workspace.id,
+    });
+
+    if (!customer) {
+      this.error('Customer not found', this.sendFCMToken.name, session);
+
+      customer = await this.CustomerModel.create({
+        isAnonymous: true,
+        workspaceId: workspace.id,
+      });
+    }
+
+    await this.CustomerModel.updateOne(
+      { _id: customer.id },
+      {
+        [body.type === PushPlatforms.ANDROID
+          ? 'androidDeviceToken'
+          : 'iosDeviceToken']: body.token,
+      }
+    );
+
+    return customer.id;
+  }
+
+  async identifyCustomer(
+    auth: { account: Account; workspace: Workspaces },
+    body: IdentifyCustomerDTO,
+    session: string
+  ) {
+    if (!body.__PrimaryKey)
+      throw new HttpException(
+        'No Primary Key given',
+        HttpStatus.NOT_ACCEPTABLE
+      );
+
+    if (!auth?.account || !body?.customerId) {
+      return;
+    }
+
+    const workspace = auth.workspace;
+
+    let customer = await this.CustomerModel.findOne({
+      _id: body.customerId,
+      workspaceId: workspace.id,
+    });
+
+    if (!customer) {
+      this.error(
+        'Invalid customer id. Creating new anonymous customer...',
+        this.identifyCustomer.name,
+        session
+      );
+      customer = await this.CustomerModel.create({
+        isAnonymous: true,
+        workspaceId: workspace.id,
+      });
+    }
+
+    if (!customer.isAnonymous) {
+      throw new HttpException(
+        'Failed to identify: already identified',
+        HttpStatus.NOT_ACCEPTABLE
+      );
+    }
+
+    const primaryKey = await this.CustomerKeysModel.findOne({
+      workspaceId: workspace.id,
+      isPrimary: true,
+    });
+
+    const identifiedCustomer =
+      await this.CustomerModel.findOne({
+        workspaceId: workspace.id,
+        [primaryKey.key]: body.__PrimaryKey,
+      });
+
+    if (identifiedCustomer) {
+      await this.deleteEverywhere(customer.id);
+
+      await customer.deleteOne();
+
+      return identifiedCustomer.id;
+    } else {
+      await this.CustomerModel.findByIdAndUpdate(customer.id, {
+        ...customer.toObject(),
+        ...body.optionalProperties,
+        //...uniqueProperties,
+        [primaryKey.key]: body.__PrimaryKey,
+        workspaceId: workspace.id,
+        isAnonymous: false,
+      });
+    }
+
+    return customer.id;
+  }
+
+  async setCustomerProperties(
+    auth: { account: Account; workspace: Workspaces },
+    body: SetCustomerPropsDTO,
+    session: string
+  ) {
+    if (!auth.account || !body.customerId) {
+      return;
+    }
+
+    const workspace = auth.workspace;
+
+    const customer = await this.CustomerModel.findOne({
+      _id: body.customerId,
+      workspaceId: workspace.id,
+    });
+
+    if (!customer || customer.isAnonymous) {
+      this.error(
+        'Invalid customer id. Please call identify first',
+        this.setCustomerProperties.name,
+        session
+      );
+      throw new HttpException(
+        'Invalid customer id. Please call identify first',
+        HttpStatus.NOT_FOUND
+      );
+    }
+
+    await this.CustomerModel.findByIdAndUpdate(customer.id, {
+      ...customer.toObject(),
+      ...body.optionalProperties,
+      workspaceId: workspace.id,
+    });
   }
 }
