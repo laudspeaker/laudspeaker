@@ -162,6 +162,13 @@ export class CustomersController {
     await this.customersService.updatePrimaryKey(<Account>user, body, session);
   }
 
+  @Get('/system-attributes')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getSystemAttributes() {
+    return this.customersService.getSystemAttributes();
+  }
+
   @Get('/possible-attributes')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())

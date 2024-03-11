@@ -24,6 +24,7 @@ export interface Attribute {
   isArray: boolean;
   isPrimary?: boolean;
   isPosthog?: boolean;
+  isSystem?: boolean;
 }
 
 interface AttributeChanges {
@@ -61,8 +62,10 @@ const PeopleSettings = () => {
       url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Email&type=Boolean&type=Date&type=DateTime`,
     });
 
-    setPossibleAttributes(data);
-    setInitialAttributes([...data]);
+    const nonSystemAttributes = data.filter((item) => !item.isSystem);
+
+    setPossibleAttributes(nonSystemAttributes);
+    setInitialAttributes([...nonSystemAttributes]);
   };
 
   const loadPK = async () => {

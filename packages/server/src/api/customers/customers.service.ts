@@ -58,7 +58,11 @@ import { JourneyLocationsService } from '../journeys/journey-locations.service';
 import { Journey } from '../journeys/entities/journey.entity';
 import { SegmentType } from '../segments/entities/segment.entity';
 import { UpdatePK_DTO } from './dto/update-pk.dto';
-import { StepType } from '../steps/types/step.interface';
+import {
+  Attribute,
+  CustomerAttribute,
+  StepType,
+} from '../steps/types/step.interface';
 import {
   KEYS_TO_SKIP,
   validateKeyForMutations,
@@ -76,6 +80,8 @@ import {
 } from './dto/modify-attributes.dto';
 import { parseISO, add, sub, formatISO } from 'date-fns';
 import { cloneDeep } from 'lodash';
+import { StatementValueType } from '../journeys/types/visual-layout.interface';
+import { v4 as uuid } from 'uuid';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -122,6 +128,38 @@ const acceptableBooleanConvertable = {
   true: ['TRUE', 'true', 'T', 't'],
   false: ['FALSE', 'false', 'F', 'f'],
 };
+
+export const systemAttributes: {
+  id: string;
+  key: string;
+  type: string;
+  isPrimary?: string;
+  dateFormat?: string;
+  isArray: boolean;
+  isSystem: true;
+}[] = [
+  {
+    id: uuid(),
+    key: 'androidFCMTokens',
+    type: StatementValueType.STRING,
+    isArray: true,
+    isSystem: true,
+  },
+  {
+    id: uuid(),
+    key: 'iosFCMTokens',
+    type: StatementValueType.STRING,
+    isArray: true,
+    isSystem: true,
+  },
+  {
+    id: uuid(),
+    key: 'isAnonymous',
+    type: StatementValueType.BOOLEAN,
+    isArray: false,
+    isSystem: true,
+  },
+];
 
 export interface QueryOptions {
   // ... other properties ...
@@ -2006,6 +2044,10 @@ export class CustomersService {
     );
   }
 
+  public async getSystemAttributes() {
+    return systemAttributes;
+  }
+
   public async getPossibleAttributes(
     account: Account,
     session: string,
@@ -2036,8 +2078,12 @@ export class CustomersService {
     }
     const attributes = await query.exec();
 
+    const filteredSystemAttributes = systemAttributes.filter((attr) =>
+      attr.key.match(new RegExp(`.*${key}.*`))
+    );
+
     return (
-      attributes
+      [...attributes, ...filteredSystemAttributes]
         .map((el) => ({
           id: el.id,
           key: el.key,
@@ -2045,6 +2091,7 @@ export class CustomersService {
           dateFormat: el.dateFormat,
           isArray: el.isArray,
           isPrimary: el.isPrimary,
+          isSystem: el.isSystem,
         }))
         // @ts-ignore
         .filter((el) => el.type !== 'undefined')

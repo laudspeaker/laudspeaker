@@ -1017,7 +1017,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                             key: q,
                             valueType: attribute?.isArray
                               ? StatementValueType.ARRAY
-                              : attribute?.type || StatementValueType.STRING,
+                              : attribute?.type || undefined,
                           });
                           setKeysQuery(q);
                         }}
@@ -1030,7 +1030,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                             key: value,
                             valueType: attribute?.isArray
                               ? StatementValueType.ARRAY
-                              : attribute?.type || StatementValueType.STRING,
+                              : attribute?.type || undefined,
                           });
                           setKeysQuery(value);
                         }}
@@ -1136,7 +1136,9 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         statement.comparisonType !==
                           ComparisonType.NOT_EXIST && (
                           <FilterBuilderDynamicInput
-                            type={statement.valueType}
+                            type={
+                              statement.valueType || StatementValueType.STRING
+                            }
                             value={statement.value}
                             isRelativeDate={
                               statement.dateComparisonType ===
