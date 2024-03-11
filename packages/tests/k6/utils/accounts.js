@@ -12,5 +12,8 @@ export function createAccount(email, httpxWrapper) {
     "/api/organizations",
     '{"name":"Test","timezoneUTCOffset":"UTC-07:00"}'
   );
-  return { email, password, authorization };
+
+  let accountsResponse = httpxWrapper.getOrFail("/api/accounts");
+  const apiKey = accountsResponse.json("workspace.apiKey");
+  return { email, password, authorization, apiKey };
 }
