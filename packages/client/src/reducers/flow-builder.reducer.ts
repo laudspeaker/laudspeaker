@@ -167,6 +167,7 @@ export interface MessageEventQuery {
       | ComparisonType.DURING;
     timeAfter?: string;
     timeBefore?: string;
+    dateComparisonType: DateComparisonType;
   };
 }
 
@@ -320,6 +321,7 @@ export interface EventQueryStatement {
       | ComparisonType.DURING;
     timeAfter?: string;
     timeBefore?: string;
+    dateComparisonType: DateComparisonType;
   };
 }
 
