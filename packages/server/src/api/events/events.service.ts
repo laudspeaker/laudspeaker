@@ -56,6 +56,7 @@ import {
 } from '../templates/entities/template.entity';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { ProviderType } from './events.preprocessor';
+import { EventBatchDto } from './dto/event-batch.dto';
 
 @Injectable()
 export class EventsService {
@@ -272,6 +273,21 @@ export class EventsService {
       event: eventDto,
       session: session,
     });
+  }
+
+  async customBatchPayload(
+    auth: { account: Account; workspace: Workspaces },
+    eventBatchDto: EventBatchDto,
+    session: string
+  ) {
+    for (const eventDto of eventBatchDto.batch) {
+      await this.eventPreprocessorQueue.add(ProviderType.LAUDSPEAKER, {
+        owner: auth.account,
+        workspace: auth.workspace,
+        event: eventDto,
+        session: session,
+      });
+    }
   }
 
   async getOrUpdateAttributes(resourceId: string, session: string) {
