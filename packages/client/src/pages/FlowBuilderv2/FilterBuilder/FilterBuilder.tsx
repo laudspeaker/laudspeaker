@@ -1012,12 +1012,17 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                             (attr) => attr.key === q
                           );
 
+                          const valueType = attribute?.isArray
+                            ? StatementValueType.ARRAY
+                            : attribute?.type || undefined;
+
                           handleChangeStatement(i, {
                             ...statement,
                             key: q,
-                            valueType: attribute?.isArray
-                              ? StatementValueType.ARRAY
-                              : attribute?.type || undefined,
+                            valueType,
+                            comparisonType: valueType
+                              ? valueTypeToComparisonTypesMap[valueType][0]
+                              : ComparisonType.EQUALS,
                           });
                           setKeysQuery(q);
                         }}
@@ -1025,12 +1030,18 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           const attribute = possibleKeys.find(
                             (attr) => attr.key === value
                           );
+
+                          const valueType = attribute?.isArray
+                            ? StatementValueType.ARRAY
+                            : attribute?.type || undefined;
+
                           handleChangeStatement(i, {
                             ...statement,
                             key: value,
-                            valueType: attribute?.isArray
-                              ? StatementValueType.ARRAY
-                              : attribute?.type || undefined,
+                            valueType,
+                            comparisonType: valueType
+                              ? valueTypeToComparisonTypesMap[valueType][0]
+                              : ComparisonType.EQUALS,
                           });
                           setKeysQuery(value);
                         }}
