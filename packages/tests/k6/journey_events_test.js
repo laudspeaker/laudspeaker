@@ -172,31 +172,67 @@ export default function main() {
   );
   reporter.log(`Posting new journey`);
   response = httpxWrapper.postOrFail("/api/journeys", '{"name":"test"}');
-  let visualLayout = response.json("visualLayout");
   const JOURNEY_ID = response.json("id");
-
   reporter.log(`Journey created with id: ${JOURNEY_ID}`);
+  let START_STEP_NODE = response.json("visualLayout.nodes.0");
+  const EMPTY_STEP_NODE = response.json("visualLayout.nodes.1");
 
+  // CREATE WAITUNTIL STEP & NODE
+  response = httpxWrapper.postOrFail(
+    "/api/steps",
+    `{"type":"waitUntil","journeyID":"${JOURNEY_ID}"}`
+  );
+  const WAITUNTIL_STEP_ID = response.json("id");
+  const WAITUNTIL_BRANCH_ID = uuidv4();
+  const WAITUNTIL_NODE_ID = EMPTY_STEP_NODE.id;
+  let waitUntilNode = {
+    id: WAITUNTIL_NODE_ID,
+    type: "waitUntil",
+    position: { x: 0, y: 100 },
+    selected: false,
+    data: {
+      type: "waitUntil",
+      stepId: WAITUNTIL_STEP_ID,
+      showErrors: true,
+      branches: [
+        {
+          id: WAITUNTIL_BRANCH_ID,
+          type: "event",
+          conditions: [
+            {
+              name: "send",
+              providerType: "custom",
+              relationToNext: "or",
+              statements: [],
+            },
+          ],
+        },
+      ],
+    },
+  };
+
+  // CREATE MESSAGE STEP and NODE
   response = httpxWrapper.postOrFail(
     "/api/steps",
     `{"type":"message","journeyID":"${JOURNEY_ID}"}`
   );
-
-  const START_STEP_NODE = visualLayout.nodes[0];
-  const START_STEP_EDGE = visualLayout.edges[0];
   const MESSAGE_STEP_ID = response.json("id");
-
   response = httpxWrapper.getOrFail("/api/templates", {});
   const TEMPLATE_ONE = response.json("data")[0];
-  let messageStepNode = visualLayout.nodes[1];
-  messageStepNode.type = "message";
-  messageStepNode.data = {
-    stepId: MESSAGE_STEP_ID,
+  const MESSAGE_NODE_ID = uuidv4();
+  let messageStepNode = {
+    id: MESSAGE_NODE_ID,
+    position: { x: 0, y: 200 },
+    selected: false,
     type: "message",
-    customName: "Email 1",
-    template: {
-      type: "email",
-      selected: { id: TEMPLATE_ONE.id, name: TEMPLATE_ONE.name },
+    data: {
+      stepId: MESSAGE_STEP_ID,
+      type: "message",
+      customName: "Email 1",
+      template: {
+        type: "email",
+        selected: { id: TEMPLATE_ONE.id, name: TEMPLATE_ONE.name },
+      },
     },
   };
 
@@ -215,22 +251,50 @@ export default function main() {
     },
     position: {
       x: 0,
-      y: 228,
+      y: 300,
     },
     selected: false,
   };
 
-  const EXIT_STEP_EDGE = {
-    id: `${messageStepNode.id}-${EXIT_STEP_NODE_ID}`,
+  // CREATE EDGES
+  const START_STEP_EDGE = {
+    id: `${START_STEP_NODE.id}-${WAITUNTIL_NODE_ID}`,
     type: "primary",
-    source: messageStepNode.id,
+    source: START_STEP_NODE.id,
+    target: WAITUNTIL_NODE_ID,
+  };
+  let WAIT_UNTIL_EDGE = {
+    id: `b${WAITUNTIL_BRANCH_ID}`,
+    type: "branch",
+    data: {
+      type: "branch",
+      branch: {
+        id: WAITUNTIL_BRANCH_ID,
+        type: "event",
+        conditions: [
+          {
+            name: "send",
+            providerType: "custom",
+            relationToNext: "or",
+            statements: [],
+          },
+        ],
+      },
+    },
+    source: WAITUNTIL_NODE_ID,
+    target: MESSAGE_NODE_ID,
+  };
+  const EXIT_STEP_EDGE = {
+    id: `${MESSAGE_NODE_ID}-${EXIT_STEP_NODE_ID}`,
+    type: "primary",
+    source: MESSAGE_NODE_ID,
     target: EXIT_STEP_NODE_ID,
   };
 
   let visualLayoutBody = JSON.stringify({
     id: JOURNEY_ID,
-    nodes: [START_STEP_NODE, messageStepNode, EXIT_STEP_NODE],
-    edges: [START_STEP_EDGE, EXIT_STEP_EDGE],
+    nodes: [START_STEP_NODE, waitUntilNode, messageStepNode, EXIT_STEP_NODE],
+    edges: [START_STEP_EDGE, WAIT_UNTIL_EDGE, EXIT_STEP_EDGE],
   });
 
   response = httpxWrapper.patchOrFail(
@@ -265,40 +329,46 @@ export default function main() {
   let retries = 0; // kill stat checking early if sent count not increasing
   let prevSentCount = 0;
   while (sentCount < NUM_CUSTOMERS || eventsSent < NUM_CUSTOMERS) {
-    sleep(POLLING_MINUTES * 60);
-    response = httpxWrapper.getOrFail(`/api/steps/stats/${MESSAGE_STEP_ID}`);
-    prevSentCount = sentCount;
-    sentCount = parseInt(response.json("sent"));
-    reporter.report(`Current sent messages: ${sentCount} of ${NUM_CUSTOMERS}`);
-    let deltaSent = sentCount - prevSentCount;
-    customersMessaged.add(deltaSent);
-    customersMessagedTime.add(POLLING_MINUTES * 60);
+    if (sentCount < NUM_CUSTOMERS) {
+      response = httpxWrapper.getOrFail(`/api/steps/stats/${MESSAGE_STEP_ID}`);
+      prevSentCount = sentCount;
+      sentCount = parseInt(response.json("sent"));
+      reporter.report(
+        `Current sent messages: ${sentCount} of ${NUM_CUSTOMERS}`
+      );
+      let deltaSent = sentCount - prevSentCount;
+      customersMessaged.add(deltaSent);
+      customersMessagedTime.add(POLLING_MINUTES * 60);
+      if (prevSentCount === sentCount && prevSentCount < NUM_CUSTOMERS) {
+        reporter.log(
+          `Sent count hasn't increased since last poll. Current count: ${sentCount}. number of retries: ${retries}`
+        );
+        if (retries > 5) {
+          reporter.report(
+            `Sent count hasn't increased in 5 retries. Failing test...`
+          );
+          fail(
+            `Message customers has failed after ${sentCount} messages sent, but ${NUM_CUSTOMERS} messages expected.`
+          );
+        }
+        retries = retries + 1;
+      } else {
+        retries = 0;
+      }
+    }
     if (eventsSent < NUM_CUSTOMERS) {
-      let eventsToSend = __ENV.EVENTS_PER_ITERATION;
+      let eventsToSend = parseInt(__ENV.EVENTS_PER_ITERATION);
       if (eventsSent + eventsToSend > NUM_CUSTOMERS) {
         // This is when we don't need to send full events value because we're at the end of the customer list
         eventsToSend = NUM_CUSTOMERS - eventsSent;
       }
-      reporter.report(`Triggering ${eventsToSend} events`);
-      sendEvents("send", apiKey, 10000000 + sentCount, eventsToSend);
-      eventsSent += eventsSent;
-    }
-    if (prevSentCount === sentCount) {
-      reporter.log(
-        `Sent count hasn't increased since last poll. Current count: ${sentCount}. number of retries: ${retries}`
+      reporter.report(
+        `Current # events sent: ${eventsSent}. Triggering ${eventsToSend} more events.`
       );
-      if (retries > 5) {
-        reporter.report(
-          `Sent count hasn't increased in 5 retries. Failing test...`
-        );
-        fail(
-          `Message customers has failed after ${sentCount} messages sent, but ${NUM_CUSTOMERS} messages expected.`
-        );
-      }
-      retries = retries + 1;
-    } else {
-      retries = 0;
+      sendEvents("send", apiKey, 10000000 + eventsSent, eventsToSend);
+      eventsSent += eventsToSend;
     }
+    sleep(POLLING_MINUTES * 60);
   }
   reporter.report(`Test successfully finished.`);
   reporter.log(`Final sentCount: ${sentCount}.`);
@@ -314,7 +384,6 @@ export default function main() {
 }
 
 export function handleSummary(data) {
-  console.log(JSON.stringify(data));
   const imported = data.metrics["customers_imported"]
     ? data.metrics["customers_imported"].values.count
     : undefined;
@@ -362,19 +431,9 @@ export function handleSummary(data) {
 }
 
 function sendEvents(eventName, apiKey, startId, numberEvents) {
-  return;
-  numberEvents = 1;
   let userId = startId;
   let promises = [];
   while (userId < startId + numberEvents) {
-    console.log(
-      JSON.stringify({
-        correlationKey: "user_id",
-        correlationValue: String(userId),
-        event: eventName,
-        source: "custom",
-      })
-    );
     let asyncReq = http.asyncRequest(
       "POST",
       `${__ENV.BASE_URL}/api/events`,
