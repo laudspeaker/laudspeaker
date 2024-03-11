@@ -330,9 +330,17 @@ export default function main() {
   let prevSentCount = 0;
   while (sentCount < NUM_CUSTOMERS || eventsSent < NUM_CUSTOMERS) {
     if (sentCount < NUM_CUSTOMERS) {
-      response = httpxWrapper.getOrFail(`/api/steps/stats/${MESSAGE_STEP_ID}`);
-      prevSentCount = sentCount;
-      sentCount = parseInt(response.json("sent"));
+      response = httpxWrapper.session.get(
+        `/api/steps/stats/${MESSAGE_STEP_ID}`
+      );
+      if (response.status == 200) {
+        prevSentCount = sentCount;
+        sentCount = parseInt(response.json("sent"));
+      } else {
+        reporter.log(
+          `GET /api/steps/stats/${MESSAGE_STEP_ID} bad status_code: ${response.status}. Will retry in next poll`
+        );
+      }
       reporter.report(
         `Current sent messages: ${sentCount} of ${NUM_CUSTOMERS}`
       );
