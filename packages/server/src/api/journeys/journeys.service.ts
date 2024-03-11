@@ -54,10 +54,13 @@ import {
   ElementCondition,
   EventBranch,
   MessageEvent,
+  CommonMultiBranchMetadata,
   PropertyCondition,
   StartStepMetadata,
   StepType,
   TimeWindowTypes,
+  ExperimentMetadata,
+  ExperimentBranch,
 } from '../steps/types/step.interface';
 import { MessageStepMetadata } from '../steps/types/step.interface';
 import { WaitUntilStepMetadata } from '../steps/types/step.interface';
@@ -744,7 +747,7 @@ export class JourneysService {
     locations: JourneyLocation[],
     session: string,
     queryRunner: QueryRunner,
-    clientSession: ClientSession
+    clientSession?: ClientSession
   ): Promise<{ name: string; data: any }[]> {
     const jobs: { name: string; data: any }[] = [];
     const step = await this.stepsService.findByJourneyAndType(
@@ -787,16 +790,7 @@ export class JourneysService {
         },
       };
       jobs.push(job);
-      await this.customersService.updateJourneyList(
-        [customer],
-        journey.id,
-        session,
-        clientSession
-      );
     }
-    // if (jobs.length) {
-    //   await this.transitionQueue.addBulk(jobs);
-    // }
     return jobs;
   }
 
@@ -1478,16 +1472,8 @@ export class JourneysService {
       collectionName: string;
       job: { name: string; data: any };
     };
-    this.debug(
-      `${JSON.stringify({ account, journeyID })}`,
-      this.start.name,
-      session,
-      account.email
-    );
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
     const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
+    const client = await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
@@ -1548,7 +1534,7 @@ export class JourneysService {
           account,
           journey.inclusionCriteria,
           session,
-          transactionSession
+          null
         );
       if (
         journey.journeyEntrySettings.entryTiming.type ===
@@ -1570,8 +1556,9 @@ export class JourneysService {
             ? parseInt(journey?.journeySettings?.maxEntries?.maxEntries)
             : count,
           queryRunner,
-          transactionSession,
-          session
+          client,
+          session,
+          collectionName
         );
       } else {
         await queryRunner.manager.save(Journey, {
@@ -1583,17 +1570,8 @@ export class JourneysService {
 
       await this.trackChange(account, journeyID, queryRunner);
 
-      await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
-      if (collectionName) {
-        await this.connection.dropCollection(collectionName);
-      }
       if (triggerStartTasks) {
-        if (triggerStartTasks.collectionName) {
-          await this.connection.dropCollection(
-            triggerStartTasks.collectionName
-          );
-        }
         await this.startQueue.add(
           triggerStartTasks.job.name,
           triggerStartTasks.job.data
@@ -1602,10 +1580,8 @@ export class JourneysService {
     } catch (e) {
       err = e;
       this.error(e, this.start.name, session, account.email);
-      await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
     } finally {
-      await transactionSession.endSession();
       await queryRunner.release();
       if (err) throw err;
     }
@@ -2198,6 +2174,24 @@ export class JourneysService {
                 })[0].data.stepId;
                 metadata.branches.push(branch);
               }
+            }
+            break;
+          case NodeType.EXPERIMENT:
+            metadata = new ExperimentMetadata();
+            metadata.branches = [];
+
+            for (let j = 0; j < relevantEdges.length; j++) {
+              const edge = relevantEdges[j];
+
+              const branch = new ExperimentBranch();
+
+              branch.index = j;
+              branch.ratio = nodes[i].data.branches[j]?.ratio || 0;
+
+              const edgeTarget = nodes.find((node) => node.id === edge.target);
+              branch.destination = edgeTarget.data.stepId;
+
+              metadata.branches.push(branch);
             }
             break;
         }

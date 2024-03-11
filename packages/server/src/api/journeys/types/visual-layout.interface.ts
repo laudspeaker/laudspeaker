@@ -25,6 +25,7 @@ export enum NodeType {
   INSERT_NODE = 'insertNode',
   TRACKER = 'tracker',
   PUSH = 'push',
+  EXPERIMENT = 'experiment',
 }
 
 export enum MessageType {

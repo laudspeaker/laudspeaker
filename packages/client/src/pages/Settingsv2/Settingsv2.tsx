@@ -11,6 +11,9 @@ import TeamTab from "./tabs/TeamTab";
 import OrganizationTab, { OrganizationTeamData } from "./tabs/OrganizationTab";
 import BackButton from "components/BackButton";
 import Input from "components/Elements/Inputv2";
+import FrequencyCappingTab from "./tabs/FrequecyCappingTab";
+import { FrequencyCappingModal } from "components/FrequencyCappingModal/FrequencyCappingModal";
+import { useLocation } from "react-router-dom";
 
 export enum SettingsTab {
   ACCOUNT,
@@ -21,15 +24,28 @@ export enum SettingsTab {
   BILLING,
   TEAM,
   ORGANIZATION,
+  FREQUENCY_CAPPING,
 }
 
 const Settingsv2 = () => {
-  const [currentTab, setCurrentTab] = useState(SettingsTab.ACCOUNT);
+  const { search } = useLocation();
+  const searchTab: SettingsTab = search?.split("=")[1];
+  const [currentTab, setCurrentTab] = useState(
+    searchTab ? SettingsTab[searchTab] : SettingsTab.ACCOUNT
+  );
   const [viewTeamMember, setViewTeamMember] = useState<OrganizationTeamData>();
+  const [showModal, setShowModal] = useState(false);
+
+  const handleShowModal = () => {
+    setShowModal(!showModal);
+  };
 
   const settingsTabToComponentMap = useMemo<{ [key: number]: ReactNode }>(
     () => ({
       [SettingsTab.ACCOUNT]: <AccountTab />,
+      [SettingsTab.FREQUENCY_CAPPING]: (
+        <FrequencyCappingTab handleShowModal={handleShowModal} />
+      ),
       [SettingsTab.MESSAGE_CHANNEL]: <MessageChannelTab />,
       [SettingsTab.EVENT_PROVIDER]: <EventProviderTab />,
       [SettingsTab.API]: <APITab />,
@@ -106,16 +122,21 @@ const Settingsv2 = () => {
           </div>
           <div className="w-full flex flex-col items-center gap-[10px]">
             <SettingsStepper
-              currentTab={currentTab}
+              currentTab={currentTab as SettingsTab}
               setCurrentTab={setCurrentTab}
             />
 
             <div className="max-w-[970px] w-full rounded-b-[4px] bg-white">
-              {settingsTabToComponentMap[currentTab]}
+              {settingsTabToComponentMap[currentTab as SettingsTab]}
             </div>
           </div>
         </>
       )}
+
+      <FrequencyCappingModal
+        handleShowModal={handleShowModal}
+        showModal={showModal}
+      />
 
       {/* <SetupGuide currentTab={currentTab} setCurrentTab={setCurrentTab} /> */}
     </div>

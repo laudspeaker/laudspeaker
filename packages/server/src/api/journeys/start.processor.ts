@@ -132,6 +132,7 @@ export class StartProcessor extends WorkerHost {
         limit: number;
         query: any;
         session: string;
+        collectionName: string;
       },
       any,
       string
@@ -143,17 +144,16 @@ export class StartProcessor extends WorkerHost {
       const queryRunner = await this.dataSource.createQueryRunner();
       await queryRunner.connect();
       await queryRunner.startTransaction();
-      const transactionSession = await this.connection.startSession();
-      await transactionSession.startTransaction();
       try {
         // Retrieve customers from mongo
-        const { collectionName, customers } = await this.customersService.find(
+        const customers = await this.customersService.find(
           job.data.owner,
           job.data.query,
           job.data.session,
-          transactionSession,
+          null,
           job.data.skip,
-          job.data.limit
+          job.data.limit,
+          job.data.collectionName
         );
         // Retreive locations from Postgres
         const locations = await this.journeyLocationsService.findForWriteBulk(
@@ -170,20 +170,15 @@ export class StartProcessor extends WorkerHost {
           locations,
           job.data.session,
           queryRunner,
-          transactionSession
+          null
         );
-        await transactionSession.commitTransaction();
         await queryRunner.commitTransaction();
-        if (collectionName)
-          await this.connection.dropCollection(collectionName);
         if (jobs && jobs.length) await this.transitionQueue.addBulk(jobs);
       } catch (e) {
         this.error(e, this.process.name, job.data.session, job.data.owner.id);
-        await transactionSession.abortTransaction();
         await queryRunner.rollbackTransaction();
         err = e;
       } finally {
-        await transactionSession.endSession();
         await queryRunner.release();
         if (err) throw err;
       }
@@ -201,6 +196,7 @@ export class StartProcessor extends WorkerHost {
             query: job.data.query,
             skip: job.data.skip,
             limit: Math.floor(job.data.limit / 2),
+            collectionName: job.data.collectionName,
           },
         },
         {
@@ -213,6 +209,7 @@ export class StartProcessor extends WorkerHost {
             query: job.data.query,
             skip: job.data.skip + Math.floor(job.data.limit / 2),
             limit: Math.floor(job.data.limit / 2),
+            collectionName: job.data.collectionName,
           },
         },
       ]);

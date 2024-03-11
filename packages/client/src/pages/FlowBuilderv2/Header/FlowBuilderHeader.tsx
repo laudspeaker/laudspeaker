@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import {
   ConnectionStatus,
   handleDevModeState,
-  Query,
-  QueryStatementType,
   SegmentsSettingsType,
   setShowSegmentsErrors,
   setStepperIndex,
@@ -77,6 +75,7 @@ const FlowBuilderHeader = () => {
     devModeState,
     isViewMode,
     segmentQueryErrors,
+    isStarting,
   } = useAppSelector((state) => state.flowBuilder);
 
   const handleNextStep = () => {
@@ -169,6 +168,7 @@ const FlowBuilderHeader = () => {
           onClick={() => setIsStartModalOpen(true)}
           className="mr-[20px]"
           id="start-journey-button"
+          disabled={isStarting}
         >
           Start journey
         </Button>
