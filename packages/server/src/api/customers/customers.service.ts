@@ -2204,7 +2204,7 @@ export class CustomersService {
           where: { workspace: { id: workspace.id }, customer: customer.id },
           take,
           skip,
-          relations: ['journey'],
+          relations: ['journey', 'step'],
         }
       );
 
@@ -2213,8 +2213,16 @@ export class CustomersService {
     return {
       data: data.map((el) => ({
         ...(el.journey as any),
-        enrollmentTime:
-          customer?.journeyEnrollmentsDates?.[(el.journey as any).id] || null,
+        isFinished: el.step.metadata?.destination
+          ? false
+          : (!el.step.metadata?.branches && !el.step.metadata?.timeBranch) ||
+            (el.step.metadata?.branches?.length === 0 &&
+              !el.step.metadata?.timeBranch) ||
+            (el.step.metadata?.branches?.every(
+              (branch) => !branch?.destination
+            ) &&
+              !el.step.metadata?.timeBranch?.destination),
+        enrollmentTime: +el.journeyEntry,
       })),
       total: totalPages,
     };
