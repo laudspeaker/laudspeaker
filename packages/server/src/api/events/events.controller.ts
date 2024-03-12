@@ -322,4 +322,16 @@ export class EventsController {
       search
     );
   }
+
+  @Post('/testEvent/')
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  @UseGuards(ApiKeyAuthGuard)
+  async testEndpoint(
+    @Req() { user }: Request,
+    @Body() body: any
+  ): Promise<void | HttpException> {
+    const session = randomUUID();
+    console.log("this is the body", JSON.stringify(body, null, 2));
+    return; //this.eventsService.posthogPayload(<Account>user, body, session);
+  }
 }
