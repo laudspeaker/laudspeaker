@@ -2198,76 +2198,25 @@ export class CustomersService {
       throw new HttpException('Such customer not found', HttpStatus.FORBIDDEN);
     }
 
-    const queryText = `
-    SELECT 
-    jr.id, 
-    jr.name, 
-    COALESCE(
-        (
-            SELECT 
-                NOT (
-                    (sp.metadata)::json #>'{destination}' IS NOT NULL 
-                    OR EXISTS (
-                        SELECT 1 
-                        FROM jsonb_array_elements(sp.metadata -> 'branches') AS branch 
-                        WHERE (branch ->> 'destination') IS NOT NULL
-                    )
-                    OR (sp.metadata -> 'timeBranch' ->> 'destination') IS NOT NULL
-                )
-            FROM 
-                step AS sp 
-            WHERE 
-                EXISTS (
-                    SELECT 1 
-                    FROM unnest(sp.customers :: jsonb[]) AS json_text 
-                    WHERE json_text ->> 'customerID' = $1
-                ) 
-                AND sp."journeyId" = jr.id
-        ), true
-        ) as "isFinished",
-              (
-                  SELECT 
-                      sp.id
-                  FROM 
-                      step AS sp 
-                  WHERE 
-                      EXISTS (
-                          SELECT 1 
-                          FROM unnest(sp.customers :: jsonb[]) AS json_text 
-                          WHERE json_text ->> 'customerID' = $1
-                      ) 
-                      AND sp."journeyId" = jr.id
-              ) as "currentStepId"
-          FROM 
-              journey as jr 
-              LEFT JOIN step ON step."journeyId" = jr.id 
-          WHERE 
-              jr.id = ANY($2)
-          GROUP BY 
-              jr.id 
-          LIMIT $3 OFFSET $4`;
+    const [data, count] =
+      await this.journeyLocationsService.journeyLocationsRepository.findAndCount(
+        {
+          where: { workspace: { id: workspace.id }, customer: customer.id },
+          take,
+          skip,
+          relations: ['journey'],
+        }
+      );
 
-    const totalJourneys = await this.dataSource.query(
-      `
-        SELECT COUNT(DISTINCT jr.id) 
-        FROM journey as jr 
-        LEFT JOIN step ON step."journeyId" = jr.id 
-        WHERE jr.id = ANY($1);
-      `,
-      [customer.journeys]
-    );
-
-    const data = await this.dataSource.query<JourneyDataForTimeLine[]>(
-      queryText,
-      [customer.id, customer.journeys, take, skip]
-    );
+    const totalPages = Math.ceil(count / take) || 1;
 
     return {
       data: data.map((el) => ({
-        ...el,
-        enrollmentTime: customer?.journeyEnrollmentsDates?.[el.id] || null,
+        ...(el.journey as any),
+        enrollmentTime:
+          customer?.journeyEnrollmentsDates?.[(el.journey as any).id] || null,
       })),
-      total: Number(totalJourneys[0].count),
+      total: totalPages,
     };
   }
 
