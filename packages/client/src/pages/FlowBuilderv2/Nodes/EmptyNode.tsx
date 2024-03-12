@@ -52,13 +52,15 @@ export const EmptyNode: FC<NodeProps<NodeData>> = ({
         outgoers.length === 0 ? " last-empty-node" : ""
       }`}
       onDragOver={(e) => {
+        console.log("dragover", e);
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
+        console.log("dragover", "setting dropEffect to move");
       }}
       onDragEnter={() => setIsDraggedOver(true)}
       onDragLeave={() => setIsDraggedOver(false)}
       onDrop={async (e) => {
-        const action = e.dataTransfer.getData("action");
+        const action = e.dataTransfer?.getData("action");
 
         const {
           data: { id: stepId },
@@ -73,6 +75,7 @@ export const EmptyNode: FC<NodeProps<NodeData>> = ({
         dispatch(handleDrawerAction({ id, action, stepId }));
         setIsDraggedOver(false);
       }}
+      data-testid="empty-node"
     >
       <Handle
         position={Position.Top}

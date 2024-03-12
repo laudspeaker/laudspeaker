@@ -138,6 +138,7 @@ const MulisplitSettings: FC<
               setEditBranchIndex(-1);
             }}
             className="!text-[#111827] !border-[#E5E7EB]"
+            data-testid="multisplit-add-branch-button"
           >
             Add branch
           </Button>

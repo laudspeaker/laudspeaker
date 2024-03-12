@@ -18,6 +18,7 @@ export const InsertNode: FC<NodeProps<NodeData>> = ({
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
       }}
+      data-testid="insert-node"
     >
       <Handle
         position={Position.Top}

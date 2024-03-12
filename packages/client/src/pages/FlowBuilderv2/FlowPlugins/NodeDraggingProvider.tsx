@@ -63,6 +63,7 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
   const { x: viewX, y: viewY, zoom } = useViewport();
 
   const onDragOver = (e: DragEvent) => {
+    console.log("dragover", e);
     e.stopPropagation();
     if (!isDragging || !flowRef.current || edges.length === 0) return;
 
@@ -174,6 +175,7 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
   };
 
   const onDrop = (e: DragEvent) => {
+    console.log("dropped", e);
     const insertNode = nodes.find((node) => node.type === NodeType.INSERT_NODE);
     const action = e.dataTransfer?.getData("action");
 

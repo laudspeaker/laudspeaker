@@ -10,6 +10,7 @@ module.exports = defineConfig({
     },
     screenshotOnRunFailure: false,
     baseUrl: process.env.TESTS_BASE_URL || "http://localhost:3000",
+    supportFile: "cypress/support/e2e.ts",
   },
   env: {
     TESTS_POSTHOG_PROJECT_ID: process.env.TESTS_POSTHOG_PROJECT_ID,

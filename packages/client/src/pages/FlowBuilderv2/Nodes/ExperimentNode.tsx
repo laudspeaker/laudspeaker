@@ -25,6 +25,7 @@ export const ExperimentNode: FC<NodeProps<ExperimentNodeData>> = ({
       className={`relative wait-until-node w-[260px] h-[80px] rounded bg-white font-inter ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
       } ${selected ? "border-2 border-[#6366F1]" : "border border-[#E5E7EB]"}`}
+      data-testid="experiment-node"
     >
       <Handle
         position={Position.Top}
