@@ -3973,7 +3973,8 @@ export class CustomersService {
         { $match: mongoQuery },
         {
           $addFields: {
-            convertedCorrelationValue: { $toObjectId: '$correlationValue' },
+            //convertedCorrelationValue: { $toObjectId: '$correlationValue' },
+            convertedCorrelationValue: '$correlationValue' ,
           },
         },
         {
@@ -4199,7 +4200,8 @@ export class CustomersService {
         { $match: mobileMongoQuery },
         {
           $addFields: {
-            convertedCorrelationValue: { $toObjectId: '$correlationValue' },
+            //convertedCorrelationValue: { $toObjectId: '$correlationValue' },
+            convertedCorrelationValue: '$correlationValue' ,
           },
         },
         {
