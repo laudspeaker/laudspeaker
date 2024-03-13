@@ -96,19 +96,19 @@ const OverviewUserTable = () => {
     setIsLoading(true);
 
     try {
-      // const {
-      //   data: { data, totalPages },
-      // } = await ApiService.get<GetCustomersDto>({
-      //   url: `/journeys/${id}/customers?take=${ITEMS_PER_PAGE}&skip=${
-      //     ITEMS_PER_PAGE * (currentPage - 1)
-      //   }&search=${search}&sortBy=${sortOptions.sortBy}&sortType=${
-      //     sortOptions.sortType
-      //   }&filter=${
-      //     chosenFilter === FilterOption.ALL ? "all" : chosenFilter.join(",")
-      //   }`,
-      // });
+      const {
+        data: { data, totalPages },
+      } = await ApiService.get<GetCustomersDto>({
+        url: `/journeys/${id}/customers?take=${ITEMS_PER_PAGE}&skip=${
+          ITEMS_PER_PAGE * (currentPage - 1)
+        }&search=${search}&sortBy=${sortOptions.sortBy}&sortType=${
+          sortOptions.sortType
+        }&filter=${
+          chosenFilter === FilterOption.ALL ? "all" : chosenFilter.join(",")
+        }`,
+      });
 
-      // setPagesCount(totalPages);
+      setPagesCount(totalPages);
       setIsLoaded(true);
     } catch (e) {
       toast.error("Failed to load data");

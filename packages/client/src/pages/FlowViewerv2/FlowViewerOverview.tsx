@@ -169,10 +169,10 @@ const FlowBuilderOverview = () => {
         </div>
       </div>
 
-      {/* <div className="bg-white rounded-lg font-inter p-5 flex flex-col gap-4">
+      <div className="bg-white rounded-lg font-inter p-5 flex flex-col gap-4">
         <div className="text-xl font-semibold">User</div>
         <OverviewUserTable />
-      </div> */}
+      </div>
     </div>
   );
 };

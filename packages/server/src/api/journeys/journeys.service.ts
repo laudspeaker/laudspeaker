@@ -1108,9 +1108,54 @@ export class JourneysService {
   async getJourneyCustomers(
     account: Account,
     id: string,
+    take = 100,
+    skip = 0,
+    search?: string,
+    sortBy?: string,
+    sortType?: string,
     filter?: 'all' | 'in-progress' | 'finished'
   ) {
+    const journey = await this.findByID(account, id, '');
+    if (!journey) throw new NotFoundException('Journey not found');
+
+    if (take > 100) take = 100;
     if (!filter) filter = 'all';
+
+    const data =
+      await this.journeyLocationsService.journeyLocationsRepository.query(
+        `
+      SELECT
+        "customer" as "customerId",
+        "journeyEntry" as "lastUpdate",
+        NOT (
+              (step.metadata)::json #>'{destination}' IS NOT NULL 
+              OR EXISTS (
+                  SELECT 1 
+                  FROM jsonb_array_elements(step.metadata -> 'branches') AS branch 
+                  WHERE (branch ->> 'destination') IS NOT NULL
+              )
+              OR (step.metadata -> 'timeBranch' ->> 'destination') IS NOT NULL
+            )
+        as "isFinished"
+      FROM journey_location
+      LEFT JOIN step ON step.id = journey_location."stepId"
+      WHERE journey_location."journeyId" = $1
+      LIMIT $2
+      OFFSET $3;
+    `,
+        [journey.id, take, skip]
+      );
+
+    const customerIds = data.map((item) => item.customerId);
+
+    const customers = await this.CustomerModel.find({
+      _id: { $in: customerIds },
+    }).lean();
+
+    console.dir(data);
+    console.dir(customers);
+
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
   }
 
   async getJourneyChanges(

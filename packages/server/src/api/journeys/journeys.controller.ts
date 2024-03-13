@@ -121,11 +121,21 @@ export class JourneysController {
   async getJourneyCustomers(
     @Req() { user }: Request,
     @Param('id', ParseUUIDPipe) id: string,
+    @Query('take') take?: string,
+    @Query('skip') skip?: string,
+    @Query('search') search?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortType') sortType?: string,
     @Query('filter') filter?: string
   ) {
     return await this.journeysService.getJourneyCustomers(
       <Account>user,
       id,
+      isNaN(+take) ? 100 : +take,
+      isNaN(+skip) ? 0 : +skip,
+      search,
+      sortBy,
+      sortType,
       filter === 'all' || filter === 'in-progress,finished'
         ? 'all'
         : filter === 'in-progress'
