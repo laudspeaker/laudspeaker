@@ -973,7 +973,7 @@ export class EventsService {
               break;
             case '$fcm':
               // Handle $set event
-              console.log('Handling $set event for correlationKey:', thisEvent.correlationValue);
+              console.log('Handling $fcm event for correlationKey:', thisEvent.correlationValue);
               await this.handleFCM(auth, thisEvent, session);
               // Your logic to handle $set event
               break;
