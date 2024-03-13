@@ -1081,7 +1081,12 @@ export class EventsService {
         auth.account.id
       );
       // Optionally, handle the scenario where the customer doesn't exist
-      return;
+      customer = new this.customersService.CustomerModel({
+        _id: event.correlationValue,
+        workspaceId,
+        //isAnonymous: true, // Adjust based on your logic
+      });
+      //return;
     }
   
     // Filter and validate the event payload against CustomerKeys
@@ -1308,8 +1313,13 @@ export class EventsService {
         session,
         auth.account.id
       );
+      customer = new this.customersService.CustomerModel({
+        _id: event.correlationValue,
+        workspaceId,
+        isAnonymous: true, // Adjust based on your logic
+      });
       // Optionally, handle creating a new customer or skipping the update
-      return;
+      //return;
     }
   
     // Update the customer with the provided device token
