@@ -1693,7 +1693,8 @@ export class CustomersService {
     );
 
     const res = await this.CustomerModel.deleteOne({
-      _id: new mongoose.Types.ObjectId(cust.id),
+      _id: cust.id,
+      //_id: new mongoose.Types.ObjectId(cust.id),
     });
     this.debug(
       `Deleted customer ${JSON.stringify(res)}`,
@@ -3290,7 +3291,8 @@ export class CustomersService {
         for (const row of rows) {
           const cleanedText = row.text.replace(/^"(.*)"$/, '$1'); // Removes surrounding quotes
           //console.log("cleaned text is", cleanedText);
-          const objectId = new Types.ObjectId(cleanedText);
+          //const objectId = new Types.ObjectId(cleanedText);
+          const objectId = (cleanedText);
           batch.push({ _id: objectId }); // Convert each ObjectId into an object
 
           if (batch.length >= batchSize) {
