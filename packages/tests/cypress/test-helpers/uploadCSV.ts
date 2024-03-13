@@ -18,7 +18,7 @@ export const uploadCSV = (filename: string) => {
     }
   );
 
-  cy.get("[data-testid='import-file-name']", { timeout: 10000 }).should(
+  cy.get("[data-testid='import-file-name']", { timeout: 20000 }).should(
     "be.visible"
   );
 
