@@ -1086,6 +1086,14 @@ export class EventsService {
         workspaceId,
         //isAnonymous: true, // Adjust based on your logic
       });
+      try {
+        await customer.save(); // Use await if within an async function
+        // Handle success, e.g., logging or further actions
+        console.log('Customer saved successfully.');
+      } catch (error) {
+        // Handle errors, e.g., logging or error responses
+        console.error('Error saving customer:', error);
+      }
       //return;
     }
   
@@ -1198,6 +1206,17 @@ export class EventsService {
         workspaceId,
         isAnonymous: true, // Adjust based on your logic
       });
+      // Save the newly created customer
+      try {
+        await customer.save(); // Use await if within an async function
+        // Handle success, e.g., logging or further actions
+        console.log('Customer saved successfully.');
+      } catch (error) {
+        // Handle errors, e.g., logging or error responses
+        console.error('Error saving customer:', error);
+      }
+
+
     } else if (!customer.isAnonymous) {
 
       if (customer[customersPrimaryKey.key] && customer[customersPrimaryKey.key] !== event.payload[customersPrimaryKey.key]) {
@@ -1318,7 +1337,14 @@ export class EventsService {
         workspaceId,
         isAnonymous: true, // Adjust based on your logic
       });
-      // Optionally, handle creating a new customer or skipping the update
+      try {
+        await customer.save(); // Use await if within an async function
+        // Handle success, e.g., logging or further actions
+        console.log('Customer saved successfully.');
+      } catch (error) {
+        // Handle errors, e.g., logging or error responses
+        console.error('Error saving customer:', error);
+      }
       //return;
     }
   
