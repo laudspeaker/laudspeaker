@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  Between,
   DataSource,
   FindOptionsWhere,
   In,
@@ -83,6 +84,7 @@ import { RedisService } from '@liaoliaots/nestjs-redis';
 import { JourneyChange } from './entities/journey-change.entity';
 import isObjectDeepEqual from '@/utils/isObjectDeepEqual';
 import { JourneyLocation } from './entities/journey-location.entity';
+import { format, eachDayOfInterval, eachWeekOfInterval } from 'date-fns';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -1020,6 +1022,95 @@ export class JourneysService {
       this.error(err, this.findAll.name, session, account.email);
       throw err;
     }
+  }
+
+  async getJourneyStatistics(
+    account: Account,
+    id: string,
+    startTime?: Date,
+    endTime?: Date,
+    frequency?: 'daily' | 'weekly'
+  ) {
+    const journey = await this.findByID(account, id, '');
+    if (!journey) throw new NotFoundException('Journey not found');
+
+    if (!startTime || startTime > endTime) {
+      startTime = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      endTime = new Date();
+    } else {
+      if (!endTime) endTime = new Date();
+    }
+
+    if (!frequency) frequency = 'daily';
+
+    const locations =
+      await this.journeyLocationsService.journeyLocationsRepository.find({
+        where: {
+          journey: journey.id,
+          journeyEntry: Between(startTime.getTime(), endTime.getTime()),
+        },
+        relations: ['journey', 'step'],
+        order: {
+          journeyEntry: 'ASC',
+        },
+      });
+
+    const pointDates =
+      frequency === 'daily'
+        ? eachDayOfInterval({ start: startTime, end: endTime })
+        : eachWeekOfInterval({ start: startTime, end: endTime });
+
+    const totalPoints = pointDates.length;
+
+    const enrolledDataPoints: number[] = new Array(totalPoints).fill(
+      0,
+      0,
+      totalPoints
+    );
+    const finishedDataPoints: number[] = new Array(totalPoints).fill(
+      0,
+      0,
+      totalPoints
+    );
+
+    for (const location of locations) {
+      const isFinished = location.step.metadata?.destination
+        ? false
+        : (!location.step.metadata?.branches &&
+            !location.step.metadata?.timeBranch) ||
+          (location.step.metadata?.branches?.length === 0 &&
+            !location.step.metadata?.timeBranch) ||
+          (location.step.metadata?.branches?.every(
+            (branch) => !branch?.destination
+          ) &&
+            !location.step.metadata?.timeBranch?.destination);
+
+      const dataPoints = isFinished ? finishedDataPoints : enrolledDataPoints;
+      const enrollmentDate = new Date(+location.journeyEntry);
+
+      let isLastPoint = true;
+      for (let i = 1; i < pointDates.length; i++) {
+        const dayDate = pointDates[i];
+
+        if (enrollmentDate < dayDate) {
+          dataPoints[i - 1]++;
+          isLastPoint = false;
+          break;
+        }
+      }
+
+      if (isLastPoint) dataPoints[pointDates.length - 1]++;
+    }
+
+    return { enrolledDataPoints, finishedDataPoints };
+  }
+
+  async getJourneyCustomers(
+    account: Account,
+    id: string,
+    filter?: 'all' | 'in-progress' | 'finished'
+  ) {
+    if (!filter) filter = 'all';
   }
 
   async getJourneyChanges(

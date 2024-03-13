@@ -12,26 +12,25 @@ import sortAscChevronsImage from "../../pages/JourneyTablev2/svg/sort-asc-chevro
 import sortDescChevronsImage from "../../pages/JourneyTablev2/svg/sort-desc-chevrons.svg";
 import sortNoneChevronsImage from "../../pages/JourneyTablev2/svg/sort-none-chevrons.svg";
 import Pagination from "components/Pagination";
+import ApiService from "services/api.service";
+import { useParams } from "react-router-dom";
 
 enum FilterOption {
   ALL,
   IN_PROGRESS,
   FINISHED,
-  STOPPED,
 }
 
 const filterOptionToTextMap: Record<FilterOption, string> = {
   [FilterOption.ALL]: "All",
   [FilterOption.IN_PROGRESS]: "In Progress",
   [FilterOption.FINISHED]: "Finished",
-  [FilterOption.STOPPED]: "Stopped",
 };
 
 const filterOptionsToRender: FilterOption[] = [
   FilterOption.ALL,
   FilterOption.IN_PROGRESS,
   FilterOption.FINISHED,
-  FilterOption.STOPPED,
 ];
 
 export type ChosenFilter =
@@ -65,7 +64,16 @@ interface SortOptions {
   sortType: SortType;
 }
 
+interface GetCustomersDto {
+  data: UserRowData[];
+  totalPages: number;
+}
+
+const ITEMS_PER_PAGE = 10;
+
 const OverviewUserTable = () => {
+  const { id } = useParams();
+
   const [isFirstRender, setIsFirstRender] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -88,12 +96,19 @@ const OverviewUserTable = () => {
     setIsLoading(true);
 
     try {
-      const {
-        data: { data, totalPages },
-      } = getUsers(); // Filter and sort will be integrated into the API call
+      // const {
+      //   data: { data, totalPages },
+      // } = await ApiService.get<GetCustomersDto>({
+      //   url: `/journeys/${id}/customers?take=${ITEMS_PER_PAGE}&skip=${
+      //     ITEMS_PER_PAGE * (currentPage - 1)
+      //   }&search=${search}&sortBy=${sortOptions.sortBy}&sortType=${
+      //     sortOptions.sortType
+      //   }&filter=${
+      //     chosenFilter === FilterOption.ALL ? "all" : chosenFilter.join(",")
+      //   }`,
+      // });
 
-      setRows(data);
-      setPagesCount(totalPages);
+      // setPagesCount(totalPages);
       setIsLoaded(true);
     } catch (e) {
       toast.error("Failed to load data");
@@ -198,7 +213,7 @@ const OverviewUserTable = () => {
               ))}
             </div>
 
-            {showSearch ? (
+            {/* {showSearch ? (
               <div className="flex gap-[10px] items-center">
                 <Input
                   value={search}
@@ -218,7 +233,7 @@ const OverviewUserTable = () => {
               <button onClick={() => setShowSearch(true)}>
                 <img src={searchIconImage} />
               </button>
-            )}
+            )} */}
           </div>
 
           <Table

@@ -2,20 +2,17 @@ import { FC } from "react";
 import { Select } from "antd";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 interface BasicSelectProps {
-  defaultValue: string;
+  value: string;
+  onChange: (value: string) => void;
   options: { value: string; label: string }[];
 }
 
-const BasicSelect: FC<BasicSelectProps> = ({ defaultValue, options }) => {
-  const handleChange = (value: string) => {
-    console.log(`selected ${value}`);
-  };
-
+const BasicSelect: FC<BasicSelectProps> = ({ value, onChange, options }) => {
   return (
     <Select
-      defaultValue={defaultValue}
+      value={value}
       style={{ width: 90, borderRadius: "4px" }}
-      onChange={handleChange}
+      onChange={onChange}
       options={options}
       suffixIcon={<ArrowDropDownIcon style={{ fill: "black" }} />}
     />

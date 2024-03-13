@@ -12,6 +12,8 @@ import {
   Req,
   Post,
   Query,
+  ParseUUIDPipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { JourneysService } from './journeys.service';
@@ -89,6 +91,49 @@ export class JourneysController {
   async findOne(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
     return await this.journeysService.findOne(<Account>user, id, session);
+  }
+
+  @Get(':id/statistics')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getJourneyStatistics(
+    @Req() { user }: Request,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('startTime') startTime?: string,
+    @Query('endTime') endTime?: string,
+    @Query('frequency') frequency?: string
+  ) {
+    const startDate = isNaN(+startTime) ? undefined : new Date(+startTime);
+    const endDate = isNaN(+endTime) ? undefined : new Date(+endTime);
+
+    return await this.journeysService.getJourneyStatistics(
+      <Account>user,
+      id,
+      startDate,
+      endDate,
+      frequency === 'daily' ? 'daily' : 'weekly'
+    );
+  }
+
+  @Get(':id/customers')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getJourneyCustomers(
+    @Req() { user }: Request,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('filter') filter?: string
+  ) {
+    return await this.journeysService.getJourneyCustomers(
+      <Account>user,
+      id,
+      filter === 'all' || filter === 'in-progress,finished'
+        ? 'all'
+        : filter === 'in-progress'
+        ? 'in-progress'
+        : filter === 'finished'
+        ? 'finished'
+        : 'all'
+    );
   }
 
   @Get(':id/changes')
