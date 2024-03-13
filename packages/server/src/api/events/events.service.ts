@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { Correlation, CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
+import { AttributeType } from '../customers/schemas/customer-keys.schema';
 import {
   EventsTable,
   CustomEventTable,
@@ -63,6 +64,8 @@ import {
   CustomerKeysDocument,
 } from '../customers/schemas/customer-keys.schema';
 import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
+import { MobileBatchDto } from './dto/mobile-batch.dto';
+import e from 'express';
 
 @Injectable()
 export class EventsService {
@@ -724,8 +727,11 @@ export class EventsService {
         session
       );
       customer = await this.customersService.CustomerModel.create({
-        isAnonymous: true,
+        _id: body.customerId, // Assuming body.customerId is a valid UUID and unique
         workspaceId: workspace.id,
+        // Set other necessary fields for a new customer
+        isAnonymous: true, // or false, as appropriate for your use case
+        // Include any other properties you need to initialize for a new customer
       });
     }
 
@@ -937,4 +943,237 @@ export class EventsService {
       throw e;
     }
   }
+
+  async batch(
+    auth: { account: Account; workspace: Workspaces },
+    MobileBatchDto: MobileBatchDto,
+    session: string
+  ) {
+    let err: any;
+    //const queryRunner = this.dataSource.createQueryRunner();
+    //await queryRunner.connect();
+    //await queryRunner.startTransaction();
+
+    try {
+      if(MobileBatchDto.batch.length <= 1){
+        for (const thisEvent of MobileBatchDto.batch) {
+          switch (thisEvent.event) {
+            case '$identify':
+              // Handle $identify event
+              // You can add your logic here, for example:
+              console.log('Handling $identify event for correlationKey:', thisEvent.correlationValue);
+              await this.handleIdentify(auth, thisEvent, session);
+              break;
+              // Your logic to handle $identify event
+            case '$set':
+              // Handle $set event
+              console.log('Handling $set event for correlationKey:', thisEvent.correlationValue);
+              await this.handleSet(auth, thisEvent, session);
+              // Your logic to handle $set event
+              break;
+            case '$fcm':
+              // Handle $set event
+              console.log('Handling $set event for correlationKey:', thisEvent.correlationValue);
+              await this.handleSet(auth, thisEvent, session);
+              // Your logic to handle $set event
+              break;
+            default:
+              // Handle any other event
+              /*
+              const eventStruct: EventDto = {
+                correlationKey: '_id',
+                correlationValue: customer.id,
+                source: AnalyticsProviderTypes.MOBILE,
+                payload: payloadObj,
+                event: eventName,
+              };
+              */
+              await this.customPayload(
+                { account: auth.account, workspace: auth.workspace },
+                thisEvent,
+                session
+              );
+              console.log('Handling other event for correlationKey:', thisEvent.event);
+              console.log('Handling other event for correlationKey:', thisEvent.correlationValue);
+              // Your logic to handle other types of events
+              break;
+          }
+        }
+      }
+      else{
+        const chronologicalEvents: EventDto[] = MobileBatchDto.batch.sort(
+          (a, b) =>
+            new Date(a.timestamp).getTime() -
+            new Date(b.timestamp).getTime()
+        );
+        
+        /*
+        for (
+          let numEvent = 0;
+          numEvent < chronologicalEvents.length;
+          numEvent++
+        ) {
+          await this.eventPreprocessorQueue.add(
+            'posthog',
+            {
+              account: account,
+              event: MobileBatchDto,
+              session: session,
+            },
+            {
+              attempts: 10,
+              backoff: { delay: 1000, type: 'exponential' },
+            }
+          );
+        }
+        */
+      }
+
+      
+    } catch (e) {
+      //await queryRunner.rollbackTransaction();
+      err = e;
+    } finally {
+      //await queryRunner.release();
+      if (err) throw err;
+    }
+  }
+
+  async handleSet(
+    auth: { account: Account; workspace: Workspaces },
+    event: EventDto,
+    session: string
+  ) {
+    const customerId = event.correlationValue;
+    const updatePayload = event.payload;
+    const workspaceId = auth.workspace.id;
+  
+    if (!customerId) {
+      throw new Error('Customer ID is missing from the event');
+    }
+  
+    // Retrieve all CustomerKeys for the workspace
+    const customerKeys = await this.CustomerKeysModel.find({ workspaceId });
+  
+    // Filter the payload to include only the keys that match in type
+    const filteredPayload = {};
+    for (const key of Object.keys(updatePayload)) {
+      const customerKey = customerKeys.find(k => k.key === key);
+      if (customerKey && this.isValidType(updatePayload[key], customerKey.type)) {
+        filteredPayload[key] = updatePayload[key];
+      } else {
+        console.warn(`Skipping update for key ${key}: Type mismatch or key not allowed.`);
+      }
+    }
+  
+    // Update the customer with the filtered and type-checked payload
+    const updatedCustomer = await this.customersService.CustomerModel.findOneAndUpdate(
+      { _id: customerId, workspaceId },
+      { $set: filteredPayload },
+      { new: true }
+    );
+  
+    if (!updatedCustomer) {
+      console.error('Failed to update customer:', customerId);
+      return null;
+    }
+  
+    return updatedCustomer;
+  }
+
+  async handleIdentify(
+    auth: { account: Account; workspace: Workspaces },
+    event: EventDto, // Assuming EventDto has all the necessary fields including payload
+    session: string
+  ) {
+    const primaryKeyValue = event.payload?.distinct_id; // Adjust based on your actual primary key field
+    if (!primaryKeyValue) {
+
+      this.debug(
+        ` in handleIdentify`,
+        this.handleIdentify.name,
+        session,
+        auth.account.id
+      );
+      
+      return;
+      /*
+      throw new HttpException(
+        'No Primary Key given in payload',
+        HttpStatus.NOT_ACCEPTABLE
+      );
+      */
+    }
+  
+    const workspaceId = auth.workspace.id;
+  
+    // Retrieve all CustomerKeys for the workspace to validate and filter updates
+    const customerKeys = await this.CustomerKeysModel.find({ workspaceId });
+  
+    let customer = await this.customersService.CustomerModel.findOne({
+      _id: event.correlationValue, // Assuming the correlationValue is the customer ID
+      workspaceId,
+    });
+  
+    if (!customer) {
+      // If no customer is found, create a new one (assuming this is the desired behavior)
+      customer = new this.customersService.CustomerModel({
+        _id: event.correlationValue,
+        workspaceId,
+        isAnonymous: true, // Adjust based on your logic
+      });
+    } else if (!customer.isAnonymous) {
+      // we need to merge the user if its a new uuid then
+
+      /*
+      throw new HttpException(
+        'Failed to identify: already identified',
+        HttpStatus.NOT_ACCEPTABLE
+      );
+      */
+    }
+  
+    // Filter and validate the event payload against CustomerKeys
+    const filteredPayload = {};
+    Object.keys(event.payload).forEach(key => {
+      const customerKey = customerKeys.find(k => k.key === key);
+      if (customerKey && this.isValidType(event.payload[key], customerKey.type)) {
+        filteredPayload[key] = event.payload[key];
+      } else {
+        console.warn(`Skipping update for key ${key}: Type mismatch or key not allowed.`);
+      }
+    });
+  
+    // Update the customer with validated and filtered payload
+    Object.assign(customer, filteredPayload, { isAnonymous: false }); // Assuming setting isAnonymous to false upon identification
+    await customer.save();
+  
+    return customer._id;
+  }
+
+  isValidType(value: any, type: AttributeType): boolean {
+    switch (type) {
+      case AttributeType.STRING:
+        return typeof value === 'string';
+      case AttributeType.NUMBER:
+        return typeof value === 'number';
+      case AttributeType.BOOLEAN:
+        return typeof value === 'boolean';
+      case AttributeType.EMAIL:
+        // Simple regex for email validation, consider a library for production use
+        return typeof value === 'string' && /^\S+@\S+\.\S+$/.test(value);
+      case AttributeType.DATE:
+      case AttributeType.DATE_TIME:
+        // Check if it's a valid Date
+        return !isNaN(Date.parse(value));
+      case AttributeType.ARRAY:
+        return Array.isArray(value);
+      case AttributeType.OBJECT:
+        return typeof value === 'object' && !Array.isArray(value) && value !== null;
+      default:
+        return false;
+    }
+  }
+  
+
 }
