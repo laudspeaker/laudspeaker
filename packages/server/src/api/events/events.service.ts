@@ -1054,31 +1054,58 @@ export class EventsService {
   
     // Retrieve all CustomerKeys for the workspace
     const customerKeys = await this.CustomerKeysModel.find({ workspaceId });
+
+    const customersPrimaryKey = customerKeys.find(k => k.isPrimary);
+
+    if (!customersPrimaryKey) {
+      this.debug(
+        `Primary key not found for workspace --set a primary key first`,
+        this.handleSet.name,
+        session,
+        auth.account.id
+      );
+      // Handle the absence of a primary key definition
+      return;
+    }
+
+    let customer = await this.customersService.CustomerModel.findOne({
+      _id: event.correlationValue, // Assuming the correlationValue is the customer ID
+      workspaceId,
+    });
   
-    // Filter the payload to include only the keys that match in type
-    const filteredPayload = {};
-    for (const key of Object.keys(updatePayload)) {
-      const customerKey = customerKeys.find(k => k.key === key);
-      if (customerKey && this.isValidType(updatePayload[key], customerKey.type)) {
-        filteredPayload[key] = updatePayload[key];
-      } else {
-        console.warn(`Skipping update for key ${key}: Type mismatch or key not allowed.`);
-      }
+    if (!customer) {
+      this.debug(
+        `Customer not found`,
+        this.handleSet.name,
+        session,
+        auth.account.id
+      );
+      // Optionally, handle the scenario where the customer doesn't exist
+      return;
     }
   
-    // Update the customer with the filtered and type-checked payload
-    const updatedCustomer = await this.customersService.CustomerModel.findOneAndUpdate(
-      { _id: customerId, workspaceId },
+    // Filter and validate the event payload against CustomerKeys
+    // Exclude the primary key and 'other_ids' from updates
+    const filteredPayload = {};
+    Object.keys(event.payload).forEach(key => {
+      if (key !== customersPrimaryKey.key && key !== 'other_ids') {
+        const customerKey = customerKeys.find(k => k.key === key);
+        if (customerKey && this.isValidType(event.payload[key], customerKey.type)) {
+          filteredPayload[key] = event.payload[key];
+        } else {
+          console.warn(`Skipping update for key ${key}: Type mismatch or key not allowed.`);
+        }
+      }
+    });
+  
+    // Update the customer with validated and filtered payload
+    await this.customersService.CustomerModel.updateOne(
+      { _id: customer._id },
       { $set: filteredPayload },
       { new: true }
     );
-  
-    if (!updatedCustomer) {
-      console.error('Failed to update customer:', customerId);
-      return null;
-    }
-  
-    return updatedCustomer;
+
+    return customer._id;
   }
 
   async handleIdentify(
@@ -1086,11 +1113,19 @@ export class EventsService {
     event: EventDto, // Assuming EventDto has all the necessary fields including payload
     session: string
   ) {
+
+    this.debug(
+      ` in handleIdentify`,
+      this.handleIdentify.name,
+      session,
+      auth.account.id
+    );
+
     const primaryKeyValue = event.payload?.distinct_id; // Adjust based on your actual primary key field
     if (!primaryKeyValue) {
 
       this.debug(
-        ` in handleIdentify`,
+        ` no primary key provided in identify call --so return`,
         this.handleIdentify.name,
         session,
         auth.account.id
@@ -1109,6 +1144,36 @@ export class EventsService {
   
     // Retrieve all CustomerKeys for the workspace to validate and filter updates
     const customerKeys = await this.CustomerKeysModel.find({ workspaceId });
+
+    // Find the primary key among the CustomerKeys
+    const customersPrimaryKey = customerKeys.find(k => k.isPrimary);
+
+    if (!customersPrimaryKey) {
+      this.debug(
+        `Primary key not found for workspace --go set a primary key`,
+        this.handleIdentify.name,
+        session,
+        auth.account.id
+      );
+      // Handle the absence of a primary key definition
+      return;
+    }
+  
+    // Now you have the primary key's name and type
+    const primaryKeyName = customersPrimaryKey.key;
+    const primaryKeyType = customersPrimaryKey.type;
+
+    // Check if the primary key value matches the expected type
+    if (!this.isValidType(primaryKeyValue, primaryKeyType)) {
+      this.debug(
+        `Primary key value type in identify does not match expected type: ${primaryKeyType}`,
+        this.handleIdentify.name,
+        session,
+        auth.account.id
+      );
+      // Handle the type mismatch as necessary
+      return;
+    }
   
     let customer = await this.customersService.CustomerModel.findOne({
       _id: event.correlationValue, // Assuming the correlationValue is the customer ID
@@ -1116,6 +1181,12 @@ export class EventsService {
     });
   
     if (!customer) {
+      this.debug(
+        ` no customer found`,
+        this.handleIdentify.name,
+        session,
+        auth.account.id
+      );
       // If no customer is found, create a new one (assuming this is the desired behavior)
       customer = new this.customersService.CustomerModel({
         _id: event.correlationValue,
@@ -1123,33 +1194,141 @@ export class EventsService {
         isAnonymous: true, // Adjust based on your logic
       });
     } else if (!customer.isAnonymous) {
-      // we need to merge the user if its a new uuid then
 
-      /*
-      throw new HttpException(
-        'Failed to identify: already identified',
-        HttpStatus.NOT_ACCEPTABLE
-      );
-      */
+      if (customer[customersPrimaryKey.key] && customer[customersPrimaryKey.key] !== event.payload[customersPrimaryKey.key]) {
+        this.debug(
+          `Attempt to update an already identified customer's primary key. Existing value: ${customer[customersPrimaryKey.key]}, New value: ${event.payload[customersPrimaryKey.key]}`,
+          this.handleIdentify.name,
+          session,
+          auth.account.id
+        );
+        // Return early since the customer is already identified and their primary key is set
+        return;
+      }
+      // we need to merge the user if its a new uuid then
     }
   
-    // Filter and validate the event payload against CustomerKeys
+    // Filter and validate the event payload against CustomerKeys, with special handling for distinct_id and $anon_distinct_id
     const filteredPayload = {};
+    const otherIdsUpdates = [];
+
     Object.keys(event.payload).forEach(key => {
-      const customerKey = customerKeys.find(k => k.key === key);
-      if (customerKey && this.isValidType(event.payload[key], customerKey.type)) {
-        filteredPayload[key] = event.payload[key];
+      if (key === 'distinct_id') {
+        // Handle distinct_id: Check if it matches the primary key type and set customer's primary key
+        const isValid = this.isValidType(event.payload[key], primaryKeyType); // Assume primaryKeyType is determined earlier
+        if (isValid) {
+          filteredPayload[primaryKeyName] = event.payload[key]; // Or handle updating the primary key as needed
+        } else {
+          console.warn(`Skipping update for distinct_id: Type mismatch.`);
+        }
+      } else if (key === '$anon_distinct_id') {
+        // Check and add $anon_distinct_id to other_ids if not already present and valid and not equal to the customer's own _id
+        const isValid = this.isValidType(event.payload[key], AttributeType.STRING); // Assuming $anon_distinct_id should always be a string
+        const anonId = event.payload[key];
+        if (isValid && !customer.other_ids.includes(event.payload[key]) && customer._id !== anonId) {
+          otherIdsUpdates.push(anonId);
+        } else {
+          console.warn(`Skipping update for $anon_distinct_id: Type mismatch or already exists.`);
+        }
       } else {
-        console.warn(`Skipping update for key ${key}: Type mismatch or key not allowed.`);
+        // Handle other keys normally
+        const customerKey = customerKeys.find(k => k.key === key);
+        if (customerKey && this.isValidType(event.payload[key], customerKey.type)) {
+          filteredPayload[key] = event.payload[key];
+        } else {
+          console.warn(`Skipping update for key ${key}: Type mismatch or key not allowed.`);
+        }
       }
     });
-  
-    // Update the customer with validated and filtered payload
-    Object.assign(customer, filteredPayload, { isAnonymous: false }); // Assuming setting isAnonymous to false upon identification
-    await customer.save();
+
+    // Add $anon_distinct_id updates if any
+    if (otherIdsUpdates.length > 0) {
+      filteredPayload['other_ids'] = { $each: otherIdsUpdates };
+    }
+
+    // Assuming the merging logic or creation of a new customer has been handled before this
+    // Update the customer with validated and filtered payload, including handling of arrays
+    await this.customersService.CustomerModel.updateOne(
+      { _id: customer._id },
+      {
+        $set: filteredPayload,
+        ...(otherIdsUpdates.length > 0 && {
+          $addToSet: { other_ids: { $each: otherIdsUpdates } }
+        })
+      },
+      { upsert: true }
+    );
   
     return customer._id;
   }
+
+  async handleFCM(
+    auth: { account: Account; workspace: Workspaces },
+    event: EventDto,
+    session: string
+  ) {
+    this.debug(
+      `Handling FCM event`,
+      this.handleFCM.name,
+      session,
+      auth.account.id
+    );
+  
+    // Extract device tokens from the event payload
+    const { iosDeviceToken, androidDeviceToken } = event.payload;
+    const customerId = event.correlationValue; // Or distinct_id, assuming they are meant to represent the same identifier
+  
+    // Determine which device token is provided
+    const deviceTokenField = iosDeviceToken ? 'iosDeviceToken' : 'androidDeviceToken';
+    const deviceTokenValue = iosDeviceToken || androidDeviceToken;
+  
+    // Ensure a device token and customerId are provided
+    if (!deviceTokenValue || !customerId) {
+      this.debug(
+        `Missing device token or customerId in FCM event`,
+        this.handleFCM.name,
+        session,
+        auth.account.id
+      );
+      // Optionally, handle the error condition here
+      return;
+    }
+  
+    // Retrieve the customer based on customerId
+    const workspaceId = auth.workspace.id;
+    let customer = await this.customersService.CustomerModel.findOne({
+      _id: customerId,
+      workspaceId,
+    });
+  
+    if (!customer) {
+      this.debug(
+        `Customer not found for FCM event`,
+        this.handleFCM.name,
+        session,
+        auth.account.id
+      );
+      // Optionally, handle creating a new customer or skipping the update
+      return;
+    }
+  
+    // Update the customer with the provided device token
+    const updatedCustomer = await this.customersService.CustomerModel.findOneAndUpdate(
+      { _id: customerId, workspaceId },
+      { $set: { [deviceTokenField]: deviceTokenValue } },
+      { new: true }
+    );
+  
+    this.debug(
+      `FCM event processed for customer ${customerId}, Device Token Field: ${deviceTokenField}`,
+      this.handleFCM.name,
+      session,
+      auth.account.id
+    );
+  
+    return updatedCustomer;
+  }
+  
 
   isValidType(value: any, type: AttributeType): boolean {
     switch (type) {
