@@ -961,19 +961,37 @@ export class EventsService {
             case '$identify':
               // Handle $identify event
               // You can add your logic here, for example:
-              console.log('Handling $identify event for correlationKey:', thisEvent.correlationValue);
+              this.debug(
+                `Handling $identify event for correlationKey: ${thisEvent.correlationValue}`,
+                this.handleIdentify.name,
+                session,
+                auth.account.id
+              );
+              //console.log('Handling $identify event for correlationKey:', thisEvent.correlationValue);
               await this.handleIdentify(auth, thisEvent, session);
               break;
               // Your logic to handle $identify event
             case '$set':
               // Handle $set event
-              console.log('Handling $set event for correlationKey:', thisEvent.correlationValue);
+              this.debug(
+                `Handling $set event for correlationKey: ${thisEvent.correlationValue}`,
+                this.handleIdentify.name,
+                session,
+                auth.account.id
+              );
+              //console.log('Handling $set event for correlationKey:', thisEvent.correlationValue);
               await this.handleSet(auth, thisEvent, session);
               // Your logic to handle $set event
               break;
             case '$fcm':
               // Handle $set event
-              console.log('Handling $fcm event for correlationKey:', thisEvent.correlationValue);
+              this.debug(
+                `Handling $fcm event for correlationKey: ${thisEvent.correlationValue}`,
+                this.handleIdentify.name,
+                session,
+                auth.account.id
+              );
+              //console.log('Handling $fcm event for correlationKey:', thisEvent.correlationValue);
               await this.handleFCM(auth, thisEvent, session);
               // Your logic to handle $set event
               break;
@@ -1068,6 +1086,9 @@ export class EventsService {
       return;
     }
 
+    let { customer, findType } = await this.findOrCreateCustomer(workspaceId, null, null, event.correlationValue);
+
+    /*
     let customer = await this.customersService.CustomerModel.findOne({
       _id: event.correlationValue, // Assuming the correlationValue is the customer ID
       workspaceId,
@@ -1096,6 +1117,7 @@ export class EventsService {
       }
       //return;
     }
+    */
   
     // Filter and validate the event payload against CustomerKeys
     // Exclude the primary key and 'other_ids' from updates
@@ -1120,6 +1142,145 @@ export class EventsService {
 
     return customer._id;
   }
+
+  async deduplication(customer, correlationValue) {
+    // Step 1: Check if the customer's _id is not equal to the given correlation value
+    if (customer._id.toString() !== correlationValue) {
+      // Step 2: Update the customer's other_ids array with the correlation value if it doesn't already have it
+      const updateResult = await this.customersService.CustomerModel.updateOne({
+        _id: customer._id,
+        other_ids: { $ne: correlationValue } // Ensures we don't add duplicates
+      }, {
+        $push: { other_ids: correlationValue }
+      });
+  
+      //console.log('Update result:', updateResult);
+    }
+
+      // Additional Step: Retrieve the potential duplicate customer to compare deviceTokenSetAt for both device types
+      const duplicateCustomer = await this.customersService.CustomerModel.findOne({
+        _id: correlationValue
+      });
+
+      // Determine which deviceTokenSetAt fields to compare
+      const deviceTypes = ['ios', 'android'];
+      let updateFields = {};
+
+      for (const type of deviceTypes) {
+        const tokenField = `${type}DeviceToken`;
+        const setAtField = `${type}DeviceTokenSetAt`;
+
+        // Check if the duplicate has a more recent deviceToken for each type
+        if (duplicateCustomer && duplicateCustomer[setAtField] && (!customer[setAtField] || duplicateCustomer[setAtField] > customer[setAtField])) {
+          // Prepare update object with the more recent deviceToken and its setAt timestamp
+          updateFields[tokenField] = duplicateCustomer[tokenField];
+          updateFields[setAtField] = duplicateCustomer[setAtField];
+        }
+      }
+
+      // If there are fields to update (i.e., a more recent token was found), perform the update
+      if (Object.keys(updateFields).length > 0) {
+        await this.customersService.CustomerModel.updateOne({
+          _id: customer._id
+        }, {
+          $set: updateFields
+        });
+      }
+  
+    // Step 3: Delete any other customers that have an _id matching the correlation value
+    const deleteResult = await this.customersService.CustomerModel.deleteMany({
+      _id: correlationValue
+    });
+  
+    //console.log('Delete result:', deleteResult);
+  }
+  
+
+  async findOrCreateCustomer(workspaceId: string, primaryKeyValue?: string, primaryKeyName?: string, correlationValue?: string | string[]): Promise<{ customer: any; findType: number }> {
+    let customer;
+    let findType;
+
+    // Try to find by primary key if provided
+    if (primaryKeyValue) {
+
+      this.debug(
+        `searcing for customer by primary key: ${primaryKeyValue}`,
+        this.findOrCreateCustomer.name,
+        "000"
+      );
+      
+      //console.log("searcing for customer by primary key", primaryKeyName, primaryKeyValue)
+      customer = await this.customersService.CustomerModel.findOne({
+        [primaryKeyName]: primaryKeyValue,
+        workspaceId,
+      });
+      //console.log("customer is", JSON.stringify(customer, null, 2))
+      this.debug(
+        `customer is: ${customer}`,
+        this.findOrCreateCustomer.name,
+        "000"
+      );
+      if(customer) findType = 1;
+    }
+  
+    // If not found by primary key, try finding by _id
+    if (!customer && correlationValue) {
+      console.log("searcing for customer by correlationValue", correlationValue)
+      customer = await this.customersService.CustomerModel.findOne({
+        _id: correlationValue,
+        workspaceId,
+      });
+      this.debug(
+        `customer is: ${customer}`,
+        this.findOrCreateCustomer.name,
+        "000"
+      );
+      
+      if(customer) findType = 2;
+    }
+  
+    // If still not found, try finding by other_ids array containing the correlationValue
+    if (!customer && correlationValue) {
+      console.log("searcing for customer by correlationValue in other ids", correlationValue)
+      customer = await this.customersService.CustomerModel.findOne({
+        other_ids: { $in: [correlationValue] },
+        workspaceId,
+      });
+      this.debug(
+        `customer is: ${customer}`,
+        this.findOrCreateCustomer.name,
+        "000"
+      );
+      
+      if(customer) findType = 3;
+    }
+  
+    // If customer still not found, create a new one
+    if (!customer) {
+      customer = new this.customersService.CustomerModel({
+        _id: correlationValue,
+        [primaryKeyName]: primaryKeyValue,
+        workspaceId,
+        isAnonymous: false, // Adjust based on your logic
+      });
+      await customer.save();
+      this.debug(
+        `creating customer is: ${customer}`,
+        this.findOrCreateCustomer.name,
+        "000"
+      );
+      findType = 4;
+    }
+  
+    return {customer, findType};
+  }
+  
+
+  /*
+   * Check to see if a customer found by primary key, if not search by _id
+   *  if found by _id, update the user's primary key and fields
+   *  If found by primary key update by fields
+   */
 
   async handleIdentify(
     auth: { account: Account; workspace: Workspaces },
@@ -1187,49 +1348,24 @@ export class EventsService {
       // Handle the type mismatch as necessary
       return;
     }
-  
-    let customer = await this.customersService.CustomerModel.findOne({
-      _id: event.correlationValue, // Assuming the correlationValue is the customer ID
-      workspaceId,
-    });
-  
-    if (!customer) {
-      this.debug(
-        ` no customer found`,
-        this.handleIdentify.name,
-        session,
-        auth.account.id
-      );
-      // If no customer is found, create a new one (assuming this is the desired behavior)
-      customer = new this.customersService.CustomerModel({
-        _id: event.correlationValue,
-        workspaceId,
-        isAnonymous: true, // Adjust based on your logic
-      });
-      // Save the newly created customer
-      try {
-        await customer.save(); // Use await if within an async function
-        // Handle success, e.g., logging or further actions
-        console.log('Customer saved successfully.');
-      } catch (error) {
-        // Handle errors, e.g., logging or error responses
-        console.error('Error saving customer:', error);
-      }
 
-
-    } else if (!customer.isAnonymous) {
-
-      if (customer[customersPrimaryKey.key] && customer[customersPrimaryKey.key] !== event.payload[customersPrimaryKey.key]) {
+    let { customer, findType } = await this.findOrCreateCustomer(workspaceId, primaryKeyValue, primaryKeyName, event.correlationValue);
+    //check the customer does not have another primary key already if it does this is not supported right now
+    if(findType == 2 ){
+      if(customer.primaryKeyName && customer.primaryKeyName !== primaryKeyValue){
         this.debug(
-          `Attempt to update an already identified customer's primary key. Existing value: ${customer[customersPrimaryKey.key]}, New value: ${event.payload[customersPrimaryKey.key]}`,
+          `found customers primary key: ${customer.primaryKeyName} does not match event primary key`,
           this.handleIdentify.name,
           session,
           auth.account.id
         );
-        // Return early since the customer is already identified and their primary key is set
+        //console.log("found customers primary key", customer.primaryKeyName, "does not match event primary key", primaryKeyValue )
         return;
       }
-      // we need to merge the user if its a new uuid then
+    }
+
+    if(customer.id !== event.correlationValue){
+      await this.deduplication(customer, event.correlationValue)
     }
   
     // Filter and validate the event payload against CustomerKeys, with special handling for distinct_id and $anon_distinct_id
@@ -1243,7 +1379,7 @@ export class EventsService {
         if (isValid) {
           filteredPayload[primaryKeyName] = event.payload[key]; // Or handle updating the primary key as needed
         } else {
-          console.warn(`Skipping update for distinct_id: Type mismatch.`);
+          //console.warn(`Skipping update for distinct_id: Type mismatch.`);
         }
       } else if (key === '$anon_distinct_id') {
         // Check and add $anon_distinct_id to other_ids if not already present and valid and not equal to the customer's own _id
@@ -1252,7 +1388,7 @@ export class EventsService {
         if (isValid && !customer.other_ids.includes(event.payload[key]) && customer._id !== anonId) {
           otherIdsUpdates.push(anonId);
         } else {
-          console.warn(`Skipping update for $anon_distinct_id: Type mismatch or already exists.`);
+          //console.warn(`Skipping update for $anon_distinct_id: Type mismatch or already exists.`);
         }
       } else {
         // Handle other keys normally
@@ -1260,18 +1396,27 @@ export class EventsService {
         if (customerKey && this.isValidType(event.payload[key], customerKey.type)) {
           filteredPayload[key] = event.payload[key];
         } else {
-          console.warn(`Skipping update for key ${key}: Type mismatch or key not allowed.`);
+          //console.warn(`Skipping update for key ${key}: Type mismatch or key not allowed.`);
         }
       }
     });
 
     // Add $anon_distinct_id updates if any
+    /*
     if (otherIdsUpdates.length > 0) {
       filteredPayload['other_ids'] = { $each: otherIdsUpdates };
     }
+    */
 
     // Assuming the merging logic or creation of a new customer has been handled before this
     // Update the customer with validated and filtered payload, including handling of arrays
+    //console.log("about to update customer in identify")
+    this.debug(
+      `about to update customer in identify`,
+      this.handleIdentify.name,
+      session,
+      auth.account.id
+    );
     await this.customersService.CustomerModel.updateOne(
       { _id: customer._id },
       {
@@ -1305,6 +1450,8 @@ export class EventsService {
     // Determine which device token is provided
     const deviceTokenField = iosDeviceToken ? 'iosDeviceToken' : 'androidDeviceToken';
     const deviceTokenValue = iosDeviceToken || androidDeviceToken;
+    const deviceTokenSetAtField = iosDeviceToken ? 'iosDeviceTokenSetAt' : 'androidDeviceTokenSetAt';
+
   
     // Ensure a device token and customerId are provided
     if (!deviceTokenValue || !customerId) {
@@ -1317,13 +1464,17 @@ export class EventsService {
       // Optionally, handle the error condition here
       return;
     }
-  
+
     // Retrieve the customer based on customerId
     const workspaceId = auth.workspace.id;
+    let { customer, findType } = await this.findOrCreateCustomer(workspaceId, null, null, event.correlationValue);
+  
+    /*
     let customer = await this.customersService.CustomerModel.findOne({
       _id: customerId,
       workspaceId,
     });
+    
   
     if (!customer) {
       this.debug(
@@ -1347,11 +1498,17 @@ export class EventsService {
       }
       //return;
     }
+    */
   
     // Update the customer with the provided device token
     const updatedCustomer = await this.customersService.CustomerModel.findOneAndUpdate(
-      { _id: customerId, workspaceId },
-      { $set: { [deviceTokenField]: deviceTokenValue } },
+      { _id: customer._id, workspaceId },
+      { 
+        $set: { 
+          [deviceTokenField]: deviceTokenValue,
+          [deviceTokenSetAtField]: new Date() // Dynamically sets the appropriate deviceTokenSetAt field
+        } 
+      },
       { new: true }
     );
   

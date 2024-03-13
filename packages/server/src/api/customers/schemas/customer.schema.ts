@@ -58,6 +58,12 @@ export class Customer {
 
   @Prop()
   iosDeviceToken: string;
+  
+  @Prop()
+  iosDeviceTokenSetAt: Date;
+
+  @Prop()
+  androidDeviceTokenSetAt: Date;
 
   @Prop()
   phCustom: string;
