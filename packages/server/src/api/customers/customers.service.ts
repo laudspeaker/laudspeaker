@@ -478,13 +478,14 @@ export class CustomersService {
   }
 
   async findOne(account: Account, id: string, session: string) {
-    if (!isValidObjectId(id))
-      throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
+    //if (!isValidObjectId(id))
+      //throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
 
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const customer = await this.CustomerModel.findOne({
-      _id: new Types.ObjectId(id),
+      //_id: new Types.ObjectId(id),
+      _id: id,
       workspaceId: workspace.id,
     }).exec();
     if (!customer)
@@ -1001,8 +1002,8 @@ export class CustomersService {
   }
 
   async findByCustomerId(customerId: string, clientSession?: ClientSession) {
-    if (!isValidObjectId(customerId))
-      throw new BadRequestException('Invalid object id');
+    //if (!isValidObjectId(customerId))
+    //  throw new BadRequestException('Invalid object id');
 
     const query = this.CustomerModel.findById(customerId);
     if (clientSession) {
@@ -1022,8 +1023,8 @@ export class CustomersService {
         _id: Types.ObjectId;
       }
   > {
-    if (!isValidObjectId(customerId))
-      throw new BadRequestException('Invalid object id');
+    //if (!isValidObjectId(customerId))
+      //throw new BadRequestException('Invalid object id');
 
     const query = this.CustomerModel.findById(customerId);
     if (clientSession) {
@@ -5418,7 +5419,8 @@ export class CustomersService {
 
       const searchConditions = {
         $or: [
-          ...(isValidObjectId(search) ? [{ _id: search }] : []),
+          ...(search ? [{ _id: search }] : []),
+          //...(isValidObjectId(search) ? [{ _id: search }] : []),
           { email: findRegexp },
           { phone: findRegexp },
           ...(pk ? [{ [pk.key]: findRegexp }] : []),
