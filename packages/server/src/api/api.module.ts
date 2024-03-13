@@ -53,6 +53,7 @@ import { DevModeModule } from './dev-mode/dev-mode.module';
     SmsModule,
     IntegrationsModule,
     JobsModule,
+    TestsModule,
     FilterModule,
     WebhookJobsModule,
     ModalsModule,

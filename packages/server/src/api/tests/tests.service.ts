@@ -17,7 +17,6 @@ import { Recovery } from '../auth/entities/recovery.entity';
 import { CustomersService } from '../customers/customers.service';
 import { CreateCustomerDto } from '../customers/dto/create-customer.dto';
 import {
-  AttributeType,
   CustomerKeys,
   CustomerKeysDocument,
 } from '../customers/schemas/customer-keys.schema';
@@ -27,11 +26,6 @@ import { Template } from '../templates/entities/template.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { isThursday } from 'date-fns';
-import {
-  CreateAttributeDto,
-  ModifyAttributesDto,
-} from '../customers/dto/modify-attributes.dto';
-import { randomUUID } from 'crypto';
 
 @Injectable()
 export class TestsService {
@@ -274,77 +268,6 @@ export class TestsService {
     } finally {
       queryRunner.release();
     }
-  }
-
-  public async seedTestAudience(account: Account) {
-    const session = randomUUID();
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-
-    const primaryKey: CreateAttributeDto = {
-      key: 'email',
-      type: AttributeType.EMAIL,
-      isArray: false,
-    };
-
-    const created: CreateAttributeDto[] = [
-      primaryKey,
-      {
-        key: 'name',
-        type: AttributeType.STRING,
-        isArray: false,
-      },
-      {
-        key: 'user_id',
-        type: AttributeType.STRING,
-        isArray: false,
-      },
-      {
-        key: 'is_own_car',
-        type: AttributeType.BOOLEAN,
-        isArray: false,
-      },
-      {
-        key: 'is_delete',
-        type: AttributeType.BOOLEAN,
-        isArray: false,
-      },
-      {
-        key: 'credit_score',
-        type: AttributeType.NUMBER,
-        isArray: false,
-      },
-      {
-        key: 'recent_appl_date',
-        type: AttributeType.DATE,
-        isArray: false,
-        dateFormat: 'yyyy-MM-dd',
-      },
-      {
-        key: 'recent_repay_amt',
-        type: AttributeType.NUMBER,
-        isArray: false,
-      },
-      {
-        key: 'androidDeviceToken',
-        type: AttributeType.STRING,
-        isArray: false,
-      },
-      {
-        key: 'iosDeviceToken',
-        type: AttributeType.STRING,
-        isArray: false,
-      },
-    ];
-
-    const modifyAttributes: ModifyAttributesDto = {
-      created,
-      updated: [],
-      deleted: [],
-    };
-
-    await this.customersService.modifyAttributes(account, modifyAttributes);
-    await this.customersService.updatePrimaryKey(account, primaryKey, session);
   }
 
   public async getTestVerification(email: string, session: string) {

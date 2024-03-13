@@ -39,23 +39,103 @@ import "@4tw/cypress-drag-drop";
 declare global {
   namespace Cypress {
     interface Chainable {
-      uploadCSV: (args: any) => void;
+      uploadCSV: (args?: any) => void;
+      modifyAttributes: (args?: any) => void;
     }
   }
 }
 
-Cypress.Commands.add("uploadCSV", (args) => {
+Cypress.Commands.add("modifyAttributes", (args) => {
+  //  set user attributes
   const user = JSON.parse(localStorage.getItem("userData") || "{}");
+
+  const primaryKey = {
+    key: "email",
+    type: "Email",
+    isArray: false,
+  };
+
+  const created = [
+    primaryKey,
+    {
+      key: "name",
+      type: "String",
+      isArray: false,
+    },
+    {
+      key: "user_id",
+      type: "String",
+      isArray: false,
+    },
+    {
+      key: "is_own_car",
+      type: "Boolean",
+      isArray: false,
+    },
+    {
+      key: "is_delete",
+      type: "Boolean",
+      isArray: false,
+    },
+    {
+      key: "credit_score",
+      type: "Number",
+      isArray: false,
+    },
+    {
+      key: "recent_appl_date",
+      type: "Date",
+      isArray: false,
+      dateFormat: "yyyy-MM-dd",
+    },
+    {
+      key: "recent_repay_amt",
+      type: "Number",
+      isArray: false,
+    },
+    {
+      key: "androidDeviceToken",
+      type: "String",
+      isArray: false,
+    },
+    {
+      key: "iosDeviceToken",
+      type: "String",
+      isArray: false,
+    },
+  ];
+
+  const modifyAttributes = {
+    created,
+    updated: [],
+    deleted: [],
+  };
 
   cy.request({
     method: "POST",
-    url: `${Cypress.env("TESTS_API_BASE_URL")}/tests/seed-test-audience`,
+    url: `${Cypress.env("TESTS_API_BASE_URL")}/customers/attributes/modify`,
     headers: {
       Authorization: `Bearer ${user.accessToken}`,
+      "content-type": "application/json",
     },
-  }).then((response) => {
-    expect(response.status).to.eq(201);
+    body: modifyAttributes,
   });
+
+  cy.request({
+    method: "PUT",
+    url: `${Cypress.env("TESTS_API_BASE_URL")}/customers/primary-key`,
+    headers: {
+      Authorization: `Bearer ${user.accessToken}`,
+      "content-type": "application/json",
+    },
+    body: primaryKey,
+  });
+});
+
+Cypress.Commands.add("uploadCSV", (args) => {
+  const user = JSON.parse(localStorage.getItem("userData") || "{}");
+
+  cy.modifyAttributes();
 
   const fileName = "Correctness.csv";
 

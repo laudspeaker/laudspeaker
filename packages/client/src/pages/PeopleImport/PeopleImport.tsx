@@ -410,6 +410,7 @@ const PeopleImport: FC<PeopleImportProps> = ({ inSegment }) => {
                 if (tabIndex === 0) handleDelete();
                 else setTabIndex(tabIndex - 1);
               }}
+              data-testid={tabIndex === 0 ? "cancel-button" : "back-button"}
             >
               {tabIndex === 0 ? "Cancel" : "Back"}
             </Button>
@@ -429,6 +430,7 @@ const PeopleImport: FC<PeopleImportProps> = ({ inSegment }) => {
                 else if (tabIndex === 1) handle2TabValidation();
                 else if (tabIndex === 2) handleStartImport();
               }}
+              data-testid={tabIndex === 2 ? "import-button" : "next-button"}
             >
               {tabIndex === 2 ? "Import" : "Next"}
             </Button>

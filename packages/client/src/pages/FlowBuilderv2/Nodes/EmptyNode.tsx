@@ -52,10 +52,8 @@ export const EmptyNode: FC<NodeProps<NodeData>> = ({
         outgoers.length === 0 ? " last-empty-node" : ""
       }`}
       onDragOver={(e) => {
-        console.log("dragover", e);
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
-        console.log("dragover", "setting dropEffect to move");
       }}
       onDragEnter={() => setIsDraggedOver(true)}
       onDragLeave={() => setIsDraggedOver(false)}

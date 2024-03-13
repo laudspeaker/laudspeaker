@@ -18,7 +18,6 @@ import { TestsService } from './tests.service';
 import { DevelopmentGuard } from '../auth/guards/development.guard';
 import { randomUUID } from 'crypto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { Account } from '../accounts/entities/accounts.entity';
 
 @Controller('tests')
 @UseGuards(DevelopmentGuard)
@@ -166,11 +165,5 @@ export class TestsController {
   async getWorkflowCustomersAmount(@Param('workflowId') workflowId: string) {
     const session = randomUUID();
     return this.testsService.getWorkflowCustomersAmount(workflowId, session);
-  }
-
-  @Post('seed-test-audience')
-  @UseGuards(JwtAuthGuard)
-  async seedTestAudience(@Req() { user }: Request) {
-    return this.testsService.seedTestAudience(<Account>user);
   }
 }

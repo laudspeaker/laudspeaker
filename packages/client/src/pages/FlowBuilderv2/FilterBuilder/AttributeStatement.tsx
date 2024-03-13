@@ -30,7 +30,6 @@ export const AttributeStatement = ({
   setKeysQuery,
   index,
 }: AttributeStatementProps) => {
-  console.log({ statement });
   return (
     <>
       <div>

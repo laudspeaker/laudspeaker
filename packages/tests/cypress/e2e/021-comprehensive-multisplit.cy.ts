@@ -3,7 +3,6 @@ import { loginFunc } from "../test-helpers/loginFunc";
 import signup from "../test-helpers/signup";
 // import {loginFunc} from "../test-helpers/loginFunc";
 import { setupOrganization } from "../test-helpers/setupOrganization";
-import { add } from "cypress/types/lodash";
 
 const { email, password, firstName, lastName, organizationName, timeZone } =
   credentials;
