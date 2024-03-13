@@ -30,6 +30,7 @@ interface SelectProps<T, U = any> {
   customBTN?: React.ReactNode;
   id?: string;
   disabled?: boolean;
+  dataTestId?: string;
 }
 
 const Select = <T, U = any>({
@@ -51,6 +52,7 @@ const Select = <T, U = any>({
   buttonInnerWrapperClassName,
   customBTN,
   disabled,
+  dataTestId,
 }: SelectProps<T, U>) => {
   const scrollableRef = useRef(null);
 
@@ -68,6 +70,7 @@ const Select = <T, U = any>({
       className={`relative w-full font-roboto font-normal text-[14px] leading-[22px] text-[#111827] ${
         className ? className : ""
       }`}
+      data-testid={`${dataTestId}-popover`}
     >
       {({ close }) => (
         <>
@@ -75,6 +78,7 @@ const Select = <T, U = any>({
             className={`${buttonClassName ?? ""}`}
             id={id}
             disabled={disabled}
+            data-testid={`${dataTestId}-button`}
           >
             {customBTN ?? (
               <div
@@ -114,6 +118,7 @@ const Select = <T, U = any>({
             className={`absolute translate-y-[5px] z-10 shadow-[0px_9px_28px_8px_rgba(0,_0,_0,_0.05),_0px_6px_16px_0px_rgba(0,_0,_0,_0.08),_0px_3px_6px_-4px_rgba(0,_0,_0,_0.12)] ${
               panelClassName ? panelClassName : ""
             }`}
+            data-testid={`${dataTestId}-panel`}
           >
             <div className="bg-white py-[4px] max-w-full">
               {searchValue !== undefined && (
@@ -146,6 +151,7 @@ const Select = <T, U = any>({
                       onSearchValueChange?.(e.target.value || "")
                     }
                     className="w-full max-h-[32px] pl-[30px] pr-[26px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] rounded-sm"
+                    data-testid="select-input"
                   />
                   {!!searchValue.length && (
                     <XCircle
@@ -220,7 +226,12 @@ const Select = <T, U = any>({
                         {renderCustomOption ? (
                           renderCustomOption(props, option.additionalData)
                         ) : (
-                          <div {...props}>{option.title}</div>
+                          <div
+                            {...props}
+                            data-testid={`${dataTestId}-option-${option.title}`}
+                          >
+                            {option.title}
+                          </div>
                         )}
                       </React.Fragment>
                     );

@@ -515,6 +515,7 @@ const Personv2 = () => {
                   <Button
                     type={ButtonType.SECONDARY}
                     onClick={() => setIsEditing(true)}
+                    id="edit-attributes"
                   >
                     Edit
                   </Button>
@@ -617,8 +618,13 @@ const Personv2 = () => {
                       key: attr,
                       title: attr.key,
                     }))}
+                  id="options-attributes"
                   customBTN={
-                    <Button type={ButtonType.SECONDARY} onClick={() => {}}>
+                    <Button
+                      type={ButtonType.SECONDARY}
+                      onClick={() => {}}
+                      id="add-attribute-button"
+                    >
                       <div className="flex gap-2 items-center">
                         <div>Add attribute</div>
                         <svg
@@ -646,7 +652,11 @@ const Personv2 = () => {
                 <>
                   <div className="h-[1px] w-full bg-[#E5E7EB]" />
                   <div className="flex gap-[10px]">
-                    <Button type={ButtonType.PRIMARY} onClick={handleSave}>
+                    <Button
+                      type={ButtonType.PRIMARY}
+                      onClick={handleSave}
+                      id="save-attributes-button"
+                    >
                       Save
                     </Button>
                     <Button
