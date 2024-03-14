@@ -9,7 +9,6 @@ const attributesDetails: { name: string; type: string; isPk?: boolean }[] = [
   { name: "credit_score", type: "Number" },
   { name: "bill_org_name", type: "String" },
   { name: "revolving_amt", type: "Number" },
-  { name: "chocolate_pref", type: "String" },
   { name: "recent_3m_appl", type: "Number" },
   { name: "recent_appl_date", type: "Date" },
   { name: "recent_repay_amt", type: "Number" },
