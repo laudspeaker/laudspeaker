@@ -8,6 +8,12 @@ export type JourneyEnrollmentsDates = Record<string, Date>;
 @Schema({ strict: false })
 export class Customer {
   @Prop()
+  _id: string;
+
+  @Prop()
+  other_ids: string[];
+
+  @Prop()
   firstName: string;
 
   @Prop()
@@ -51,6 +57,12 @@ export class Customer {
 
   @Prop()
   iosDeviceToken: string;
+
+  @Prop()
+  iosDeviceTokenSetAt: Date;
+
+  @Prop()
+  androidDeviceTokenSetAt: Date;
 
   @Prop()
   phCustom: string;

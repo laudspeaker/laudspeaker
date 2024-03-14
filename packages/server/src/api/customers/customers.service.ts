@@ -82,6 +82,10 @@ import { parseISO, add, sub, formatISO } from 'date-fns';
 import { cloneDeep } from 'lodash';
 import { StatementValueType } from '../journeys/types/visual-layout.interface';
 import { v4 as uuid } from 'uuid';
+import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
+import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
+import { SendFCMDto } from './dto/send-fcm.dto';
+import { PushPlatforms } from '../templates/entities/template.entity';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -157,6 +161,13 @@ export const systemAttributes: {
     key: 'isAnonymous',
     type: StatementValueType.BOOLEAN,
     isArray: false,
+    isSystem: true,
+  },
+  {
+    id: uuid(),
+    key: 'other_ids',
+    type: StatementValueType.STRING,
+    isArray: true,
     isSystem: true,
   },
 ];
@@ -307,11 +318,18 @@ export class CustomersService {
   > {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
+    this.debug(`in create ok`, this.create.name, session);
+
+    //console.log("this is the create customerDTO", JSON.stringify(createCustomerDto, null, 2));
+
     const createdCustomer = new this.CustomerModel({
+      _id: randomUUID(),
       workspaceId: workspace.id,
       ...createCustomerDto,
     });
     const ret = await createdCustomer.save({ session: transactionSession });
+
+    this.debug(`saved customer`, this.create.name, session);
 
     for (const key of Object.keys(ret.toObject()).filter(
       (item) => !KEYS_TO_SKIP.includes(item)
@@ -341,6 +359,7 @@ export class CustomersService {
         { upsert: true }
       ).exec();
     }
+    this.debug(`customer successfuly created`, this.create.name, session);
 
     return ret;
   }
@@ -510,22 +529,93 @@ export class CustomersService {
   }
 
   async findOne(account: Account, id: string, session: string) {
-    if (!isValidObjectId(id))
-      throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
+    //if (!isValidObjectId(id))
+    //throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
+
+    this.debug(`in customer service findOne`, this.findOne.name, session);
 
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const customer = await this.CustomerModel.findOne({
-      _id: new Types.ObjectId(id),
+      //_id: new Types.ObjectId(id),
+      _id: id,
       workspaceId: workspace.id,
     }).exec();
-    if (!customer)
+    if (!customer) {
+      this.debug(
+        `in customer service validobject id, found no user`,
+        this.findOne.name,
+        session
+      );
       throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
+    }
+
     return {
       ...customer.toObject(),
       _id: id,
     };
   }
+
+  /*
+  async findOne(account: Account, id: string, session: string) {
+    //if (!isValidObjectId(id))
+      //throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
+
+      this.debug(
+        `in customer service findOne`,
+        this.findOne.name,
+        session
+      );
+
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    let customer;
+
+    if (isValidObjectId(id)) {
+      this.debug(
+        `in customer service validobject id, we should be seeing fewer of these`,
+        this.findOne.name,
+        session
+      );
+       customer = await this.CustomerModel.findOne({
+        _id: new Types.ObjectId(id),
+        //_id: id,
+        workspaceId: workspace.id,
+      }).exec();
+      if (!customer){
+        this.debug(
+          `in customer service validobject id, found no user`,
+          this.findOne.name,
+          session
+        );
+        console.log("customer id is", id);
+        console.log("workspaceId is", workspace.id);
+        return null//throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
+      }
+        
+      return {
+        ...customer.toObject(),
+        _id: id,
+      };
+
+    }
+    else{
+       customer = await this.CustomerModel.findOne({
+        //_id: new Types.ObjectId(id),
+        _id: id,
+        workspaceId: workspace.id,
+      }).exec();
+
+    }
+    
+    if (!customer)
+      return null//throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
+    return {
+      ...customer.toObject(),
+      _id: id,
+    };
+  }
+  */
 
   async transactionalFindOne(
     account: Account,
@@ -1033,8 +1123,8 @@ export class CustomersService {
   }
 
   async findByCustomerId(customerId: string, clientSession?: ClientSession) {
-    if (!isValidObjectId(customerId))
-      throw new BadRequestException('Invalid object id');
+    //if (!isValidObjectId(customerId))
+    //  throw new BadRequestException('Invalid object id');
 
     const query = this.CustomerModel.findById(customerId);
     if (clientSession) {
@@ -1054,8 +1144,8 @@ export class CustomersService {
         _id: Types.ObjectId;
       }
   > {
-    if (!isValidObjectId(customerId))
-      throw new BadRequestException('Invalid object id');
+    //if (!isValidObjectId(customerId))
+    //throw new BadRequestException('Invalid object id');
 
     const query = this.CustomerModel.findById(customerId);
     if (clientSession) {
@@ -1458,7 +1548,9 @@ export class CustomersService {
     transactionSession: ClientSession
   ): Promise<Correlation> {
     let customer: CustomerDocument; // Found customer
-    const queryParam = { workspaceId: workspace.id };
+    const queryParam: { workspaceId: string; _id?: string } = {
+      workspaceId: workspace.id,
+    };
     queryParam[dto.correlationKey] = dto.correlationValue;
     try {
       customer = await this.CustomerModel.findOne(queryParam)
@@ -1468,6 +1560,10 @@ export class CustomersService {
       return Promise.reject(err);
     }
     if (!customer) {
+      if (!queryParam._id) {
+        queryParam._id = randomUUID();
+      }
+
       const createdCustomer = new this.CustomerModel(queryParam);
       return {
         cust: await createdCustomer.save({ session: transactionSession }),
@@ -1689,7 +1785,8 @@ export class CustomersService {
     );
 
     const res = await this.CustomerModel.deleteOne({
-      _id: new mongoose.Types.ObjectId(cust.id),
+      _id: cust.id,
+      //_id: new mongoose.Types.ObjectId(cust.id),
     });
     this.debug(
       `Deleted customer ${JSON.stringify(res)}`,
@@ -2626,7 +2723,7 @@ export class CustomersService {
 
       //return thisCollectionName; // mergedSet;
 
-      let something = await collectionHandle
+      const something = await collectionHandle
         .aggregate(finalAggregationPipeline)
         .toArray();
 
@@ -2748,7 +2845,7 @@ export class CustomersService {
       ];
 
       //return thisCollectionName; // mergedSet;
-      let something = await collectionHandle
+      const something = await collectionHandle
         .aggregate(finalAggregationPipeline)
         .toArray();
       return fullDetailsCollectionName;
@@ -3588,7 +3685,8 @@ export class CustomersService {
         for (const row of rows) {
           const cleanedText = row.text.replace(/^"(.*)"$/, '$1'); // Removes surrounding quotes
           //console.log("cleaned text is", cleanedText);
-          const objectId = new Types.ObjectId(cleanedText);
+          //const objectId = new Types.ObjectId(cleanedText);
+          const objectId = cleanedText;
           batch.push({ _id: objectId }); // Convert each ObjectId into an object
 
           if (batch.length >= batchSize) {
@@ -4269,7 +4367,8 @@ export class CustomersService {
         { $match: mongoQuery },
         {
           $addFields: {
-            convertedCorrelationValue: { $toObjectId: '$correlationValue' },
+            //convertedCorrelationValue: { $toObjectId: '$correlationValue' },
+            convertedCorrelationValue: '$correlationValue',
           },
         },
         {
@@ -4495,7 +4594,8 @@ export class CustomersService {
         { $match: mobileMongoQuery },
         {
           $addFields: {
-            convertedCorrelationValue: { $toObjectId: '$correlationValue' },
+            //convertedCorrelationValue: { $toObjectId: '$correlationValue' },
+            convertedCorrelationValue: '$correlationValue',
           },
         },
         {
@@ -5271,7 +5371,7 @@ export class CustomersService {
       $or: [],
     };
 
-    let currentPK: string = await this.CustomerKeysModel.findOne({
+    const currentPK: string = await this.CustomerKeysModel.findOne({
       workspaceId: workspace.id,
       isPrimary: true,
     });
@@ -5717,7 +5817,8 @@ export class CustomersService {
 
       const searchConditions = {
         $or: [
-          ...(isValidObjectId(search) ? [{ _id: search }] : []),
+          ...(search ? [{ _id: search }] : []),
+          //...(isValidObjectId(search) ? [{ _id: search }] : []),
           { email: findRegexp },
           { phone: findRegexp },
           ...(pk ? [{ [pk.key]: findRegexp }] : []),
@@ -6442,5 +6543,149 @@ export class CustomersService {
     }
     await clientSession.commitTransaction();
     await clientSession.endSession();
+  }
+
+  async sendFCMToken(
+    auth: { account: Account; workspace: Workspaces },
+    body: SendFCMDto,
+    session: string
+  ) {
+    if (!body.type)
+      throw new HttpException('No type given', HttpStatus.BAD_REQUEST);
+    if (!body.token)
+      throw new HttpException('No FCM token given', HttpStatus.BAD_REQUEST);
+
+    const workspace = auth.workspace;
+
+    let customer = await this.CustomerModel.findOne({
+      _id: body.customerId,
+      workspaceId: workspace.id,
+    });
+
+    if (!customer) {
+      this.error('Customer not found', this.sendFCMToken.name, session);
+
+      customer = await this.CustomerModel.create({
+        isAnonymous: true,
+        workspaceId: workspace.id,
+      });
+    }
+
+    await this.CustomerModel.updateOne(
+      { _id: customer.id },
+      {
+        [body.type === PushPlatforms.ANDROID
+          ? 'androidDeviceToken'
+          : 'iosDeviceToken']: body.token,
+      }
+    );
+
+    return customer.id;
+  }
+
+  async identifyCustomer(
+    auth: { account: Account; workspace: Workspaces },
+    body: IdentifyCustomerDTO,
+    session: string
+  ) {
+    if (!body.__PrimaryKey)
+      throw new HttpException(
+        'No Primary Key given',
+        HttpStatus.NOT_ACCEPTABLE
+      );
+
+    if (!auth?.account || !body?.customerId) {
+      return;
+    }
+
+    const workspace = auth.workspace;
+
+    let customer = await this.CustomerModel.findOne({
+      _id: body.customerId,
+      workspaceId: workspace.id,
+    });
+
+    if (!customer) {
+      this.error(
+        'Invalid customer id. Creating new anonymous customer...',
+        this.identifyCustomer.name,
+        session
+      );
+      customer = await this.CustomerModel.create({
+        isAnonymous: true,
+        workspaceId: workspace.id,
+      });
+    }
+
+    if (!customer.isAnonymous) {
+      throw new HttpException(
+        'Failed to identify: already identified',
+        HttpStatus.NOT_ACCEPTABLE
+      );
+    }
+
+    const primaryKey = await this.CustomerKeysModel.findOne({
+      workspaceId: workspace.id,
+      isPrimary: true,
+    });
+
+    const identifiedCustomer = await this.CustomerModel.findOne({
+      workspaceId: workspace.id,
+      [primaryKey.key]: body.__PrimaryKey,
+    });
+
+    if (identifiedCustomer) {
+      await this.deleteEverywhere(customer.id);
+
+      await customer.deleteOne();
+
+      return identifiedCustomer.id;
+    } else {
+      await this.CustomerModel.findByIdAndUpdate(customer.id, {
+        ...customer.toObject(),
+        ...body.optionalProperties,
+        //...uniqueProperties,
+        [primaryKey.key]: body.__PrimaryKey,
+        workspaceId: workspace.id,
+        isAnonymous: false,
+      });
+    }
+
+    return customer.id;
+  }
+
+  async setCustomerProperties(
+    auth: { account: Account; workspace: Workspaces },
+    body: SetCustomerPropsDTO,
+    session: string
+  ) {
+    if (!auth.account || !body.customerId) {
+      return;
+    }
+
+    const workspace = auth.workspace;
+
+    const customer = await this.CustomerModel.findOne({
+      _id: body.customerId,
+      workspaceId: workspace.id,
+    });
+
+    if (!customer || customer.isAnonymous) {
+      this.error(
+        'Invalid customer id. Please call identify first',
+        this.setCustomerProperties.name,
+        session
+      );
+      throw new HttpException(
+        'Invalid customer id. Please call identify first',
+        HttpStatus.NOT_FOUND
+      );
+    }
+
+    await this.CustomerModel.findByIdAndUpdate(customer.id, {
+      ...customer.toObject(),
+      ...body.optionalProperties,
+      workspaceId: workspace.id,
+    });
   }
 }

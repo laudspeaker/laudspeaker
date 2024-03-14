@@ -15,7 +15,6 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { AudiencesHelper } from '../audiences/audiences.helper';
 import { CustomersService } from '../customers/customers.service';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
-import { Filter } from '../filter/entities/filter.entity';
 import { WorkflowsService } from '../workflows/workflows.service';
 import { CreateSegmentDTO } from './dto/create-segment.dto';
 import { UpdateSegmentDTO } from './dto/update-segment.dto';
@@ -26,6 +25,7 @@ import mongoose, { Types } from 'mongoose';
 import e, { query } from 'express';
 import { CountSegmentUsersSizeDTO } from './dto/size-count.dto';
 import { randomUUID } from 'crypto';
+import { Filter, Document } from 'mongodb';
 
 @Injectable()
 export class SegmentsService {
@@ -374,9 +374,10 @@ export class SegmentsService {
     for (const record of records) {
       const customerId = record.customerId; // Assuming customerId is a field in record
       // Update the collection: increment the count for this customerId
-      const objectId = new Types.ObjectId(customerId);
+      //const objectId = new Types.ObjectId(customerId);
+      const objectId = customerId;
       await collectionHandle.updateOne(
-        { _id: objectId },
+        { _id: objectId } as unknown as Filter<Document>,
         { $setOnInsert: { _id: objectId } },
         { upsert: true }
       );
@@ -500,14 +501,17 @@ export class SegmentsService {
       // Convert SegmentCustomers to MongoDB documents
       let mongoDocuments = segmentCustomers.map((sc) => {
         return {
-          _id: new Types.ObjectId(sc.customerId),
+          //_id: new Types.ObjectId(sc.customerId),
+          _id: sc.customerId,
           //_id: new ObjectId(sc.customerId), // Assuming customerId is stored in string format
           // Add other properties if needed
         };
       });
 
       try {
-        const result = await mongoCollection.insertMany(mongoDocuments);
+        const result = await mongoCollection.insertMany(
+          mongoDocuments as unknown[]
+        );
         //console.log('Batch of documents inserted:', result);
         mongoDocuments = []; // Reset batch after insertion
       } catch (err) {

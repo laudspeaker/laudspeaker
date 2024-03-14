@@ -20,6 +20,14 @@ on:
           - "100000"
           - "500000"
           - "1000000"
+      script:
+        description: Which performance script to run?
+        type: choice
+        required: true
+        default: "message_send_only"
+        options:
+          - "message_send_only"
+          - "message_send_and_events"
 
 jobs:
   trigger-perf-test:
@@ -37,35 +45,61 @@ jobs:
               "^100$": {
                   "CSV_URL": "https://testtachyontest123.s3.us-west-1.amazonaws.com/perf-folder/perf-100.csv",
                   "NUM_CUSTOMERS": "100",
-                  "POLLING_MINUTES": ".1"
+                  "POLLING_MINUTES": ".1",
+                  "EVENTS_PER_ITERATION": "50"
               },
               "^1000$": {
                   "CSV_URL": "https://testtachyontest123.s3.us-west-1.amazonaws.com/perf-folder/perf-1000.csv",
                   "NUM_CUSTOMERS": "1000",
-                  "POLLING_MINUTES": ".5"
+                  "POLLING_MINUTES": ".5",
+                  "EVENTS_PER_ITERATION": "500"
               },
               "^10000$": {
                   "CSV_URL": "https://testtachyontest123.s3.us-west-1.amazonaws.com/perf-folder/perf-10000.csv",
-                  "NUM_CUSTOMERS": "10000"
+                  "NUM_CUSTOMERS": "10000",
+                  "EVENTS_PER_ITERATION": "3000"
               },
               "^50000$": {
                   "CSV_URL": "https://testtachyontest123.s3.us-west-1.amazonaws.com/perf-folder/perf-50000.csv",
-                  "NUM_CUSTOMERS": "50000"
+                  "NUM_CUSTOMERS": "50000",
+                  "EVENTS_PER_ITERATION": "5000"
               },
               "^100000$": {
                   "CSV_URL": "https://testtachyontest123.s3.us-west-1.amazonaws.com/perf-folder/perf-100000.csv",
-                  "NUM_CUSTOMERS": "100000"
+                  "NUM_CUSTOMERS": "100000",
+                  "POLLING_MINUTES": "2",
+                  "EVENTS_PER_ITERATION": "10000"
               },
               "^500000$": {
                   "CSV_URL": "https://testtachyontest123.s3.us-west-1.amazonaws.com/perf-folder/perf-500000.csv",
-                  "NUM_CUSTOMERS": "500000"
+                  "NUM_CUSTOMERS": "500000",
+                  "POLLING_MINUTES": "5",
+                  "EVENTS_PER_ITERATION": "50000"
               },
               "^1000000$": {
                   "CSV_URL": "https://testtachyontest123.s3.us-west-1.amazonaws.com/perf-folder/perf-1000000.csv",
-                  "NUM_CUSTOMERS": "1000000"
+                  "NUM_CUSTOMERS": "1000000",
+                  "POLLING_MINUTES": "5",
+                  "EVENTS_PER_ITERATION": "125000"
               },
               ".*": {
                   "POLLING_MINUTES": "1"
+              }
+            }
+          export_to: output,log
+          mode: fill
+      - uses: kanga333/variable-mapper@master
+        name: Setup script
+        id: script
+        with:
+          key: "${{ inputs.script }}"
+          map: |
+            {
+              "^message_send_only$": {
+                "SCRIPT": "customer_messages_test.js"
+              },
+              "^message_send_and_events$": {
+                "SCRIPT": "journey_events_test.js"
               }
             }
           export_to: output,log
@@ -79,10 +113,11 @@ jobs:
       - name: Run k6 local test
         uses: grafana/k6-action@v0.3.1
         with:
-          filename: ./packages/tests/k6/customer_messages_test.js
+          filename: ./packages/tests/k6/${{ steps.script.outputs.SCRIPT }}
           flags: --quiet
         env:
           BASE_URL: ${{ inputs.endpoint }}
           CSV_FILEPATH: ${{ steps.csv.outputs.CSV_FILEPATH }}
           NUM_CUSTOMERS: ${{ steps.params.outputs.NUM_CUSTOMERS }}
           POLLING_MINUTES: ${{ steps.params.outputs.POLLING_MINUTES }}
+          EVENTS_PER_ITERATION: ${{ steps.params.outputs.EVENTS_PER_ITERATION }}
