@@ -323,7 +323,7 @@ export class EventsController {
     );
   }
 
-  @Post('/testEvent/')
+  @Post('/batch/')
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   @UseGuards(ApiKeyAuthGuard)
   async testEndpoint(
