@@ -93,16 +93,6 @@ Cypress.Commands.add("modifyAttributes", (args) => {
       type: "Number",
       isArray: false,
     },
-    {
-      key: "androidDeviceToken",
-      type: "String",
-      isArray: false,
-    },
-    {
-      key: "iosDeviceToken",
-      type: "String",
-      isArray: false,
-    },
   ];
 
   const modifyAttributes = {
@@ -137,7 +127,7 @@ Cypress.Commands.add("uploadCSV", (args) => {
 
   cy.modifyAttributes();
 
-  const fileName = "Correctness.csv";
+  const fileName = "correctness_testing.csv";
 
   cy.fixture(fileName, "utf-8")
     .then(Cypress.Blob.binaryStringToBlob)
@@ -145,7 +135,7 @@ Cypress.Commands.add("uploadCSV", (args) => {
       const file = new File([blob], fileName, { type: "text/csv" });
 
       const formdata = new FormData();
-      formdata.append("file", file, "Correctness.csv");
+      formdata.append("file", file, "correctness_testing.csv");
 
       cy.request({
         method: "POST",
@@ -301,28 +291,6 @@ Cypress.Commands.add("uploadCSV", (args) => {
             head: "yesterday_diff_credit_score",
             isPrimary: false,
             doNotOverwrite: false,
-          },
-          androidDeviceToken: {
-            head: "androidDeviceToken",
-            isPrimary: false,
-            doNotOverwrite: false,
-            asAttribute: {
-              key: "androidDeviceToken",
-              type: "String",
-              dateFormat: "undefined",
-              skip: false,
-            },
-          },
-          iosDeviceToken: {
-            head: "iosDeviceToken",
-            isPrimary: false,
-            doNotOverwrite: false,
-            asAttribute: {
-              key: "iosDeviceToken",
-              type: "String",
-              dateFormat: "undefined",
-              skip: false,
-            },
           },
         },
         importOption: "NEW",

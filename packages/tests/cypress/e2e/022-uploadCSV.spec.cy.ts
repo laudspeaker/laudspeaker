@@ -39,7 +39,7 @@ describe("Comprehensive MultiSplit", () => {
   it("works as expected", () => {
     cy.modifyAttributes();
 
-    uploadCSV("Correctness.csv");
+    uploadCSV("correctness_testing.csv");
 
     mapField("name", "name");
     mapField("user_id", "user_id");
@@ -48,8 +48,6 @@ describe("Comprehensive MultiSplit", () => {
     mapField("credit_score", "credit_score");
     mapField("recent_appl_date", "recent_appl_date");
     mapField("recent_repay_amt", "recent_repay_amt");
-    mapField("androidDeviceToken", "androidDeviceToken");
-    mapField("iosDeviceToken", "iosDeviceToken");
 
     cy.wait(1000);
     cy.get("[data-testid='next-button']").click({ force: true });
