@@ -37,6 +37,9 @@ import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { DeleteCustomerDto } from './dto/delete-customer.dto';
 import { ReadCustomerDto } from './dto/read-customer.dto';
 import { ModifyAttributesDto } from './dto/modify-attributes.dto';
+import { SendFCMDto } from './dto/send-fcm.dto';
+import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
+import { SetCustomerPropsDTO } from './dto/set-customer-props.dto'
 
 @Controller('customers')
 export class CustomersController {
@@ -584,4 +587,47 @@ export class CustomersController {
       skip
     );
   }
+
+  @Post('/send-fcm')
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  @UseGuards(ApiKeyAuthGuard)
+  async sendFCMToken(@Req() { user }: Request, @Body() body: SendFCMDto) {
+    const session = randomUUID();
+    return this.customersService.sendFCMToken(
+      <{ account: Account; workspace: Workspaces }>user,
+      body,
+      session
+    );
+  }
+
+  @Post('/identify-customer')
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  @UseGuards(ApiKeyAuthGuard)
+  async identifyCustomer(
+    @Req() { user }: Request,
+    @Body() body: IdentifyCustomerDTO
+  ) {
+    const session = randomUUID();
+    return this.customersService.identifyCustomer(
+      <{ account: Account; workspace: Workspaces }>user,
+      body,
+      session
+    );
+  }
+
+  @Post('/set-customer-props')
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  @UseGuards(ApiKeyAuthGuard)
+  async setCustomerProperpties(
+    @Req() { user }: Request,
+    @Body() body: SetCustomerPropsDTO
+  ) {
+    const session = randomUUID();
+    return this.customersService.setCustomerProperties(
+      <{ account: Account; workspace: Workspaces }>user,
+      body,
+      session
+    );
+  }
+
 }

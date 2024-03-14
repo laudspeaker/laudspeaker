@@ -164,13 +164,14 @@ export class AccountsService extends BaseJwtHelper {
         const e = new NotFoundException('Account not found');
         throw e;
       }
-
+      /*
       this.debug(
         `Found ${JSON.stringify(account)}`,
         this.findOrganizationOwnerByWorkspaceId.name,
         session,
         id
       );
+      */
       return account;
     } catch (e) {
       this.error(e, this.findOrganizationOwnerByWorkspaceId.name, session, id);
@@ -192,13 +193,14 @@ export class AccountsService extends BaseJwtHelper {
         const e = new NotFoundException('Account not found');
         throw e;
       }
-
+      /*
       this.debug(
         `Found ${JSON.stringify(account)}`,
         this.findOne.name,
         session,
         (<Account>user).id
       );
+      */
       return account;
     } catch (e) {
       this.error(e, this.findOne.name, session, (<Account>user).id);
@@ -528,12 +530,14 @@ export class AccountsService extends BaseJwtHelper {
     let transactionSession: ClientSession;
     try {
       const account = await this.findOne(user, session);
+      /*
       this.debug(
         `Found ${JSON.stringify({ id: account.id })}`,
         this.remove.name,
         session,
         (<Account>user).id
       );
+    */
       const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
       if (!bcrypt.compareSync(removeAccountDto.password, account.password))
