@@ -283,7 +283,7 @@ export class CustomersService {
       session
     );
 
-    console.log("this is the create customerDTO", JSON.stringify(createCustomerDto, null, 2));
+    //console.log("this is the create customerDTO", JSON.stringify(createCustomerDto, null, 2));
 
     const createdCustomer = new this.CustomerModel({
       _id: randomUUID(),
@@ -293,7 +293,7 @@ export class CustomersService {
     const ret = await createdCustomer.save({ session: transactionSession });
 
     this.debug(
-      `here 1`,
+      `saved customer`,
       this.create.name,
       session
     );
@@ -327,7 +327,7 @@ export class CustomersService {
       ).exec();
     }
     this.debug(
-      `here 5`,
+      `customer successfuly created`,
       this.create.name,
       session
     );
