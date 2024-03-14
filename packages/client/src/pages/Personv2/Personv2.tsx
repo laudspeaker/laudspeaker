@@ -151,18 +151,6 @@ const Personv2 = () => {
   const predefinedAttributes: Attribute[] = [
     {
       id: uuid(),
-      key: "androidFCMTokens",
-      type: StatementValueType.STRING,
-      isArray: true,
-    },
-    {
-      id: uuid(),
-      key: "iosFCMTokens",
-      type: StatementValueType.STRING,
-      isArray: true,
-    },
-    {
-      id: uuid(),
       key: "isAnonymous",
       type: StatementValueType.BOOLEAN,
       isArray: false,

@@ -276,11 +276,23 @@ export class CustomersService {
   > {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
+    this.debug(
+      `in create ok`,
+      this.create.name,
+      session
+    );
+
     const createdCustomer = new this.CustomerModel({
       workspaceId: workspace.id,
       ...createCustomerDto,
     });
     const ret = await createdCustomer.save({ session: transactionSession });
+
+    this.debug(
+      `here 1`,
+      this.create.name,
+      session
+    );
 
     for (const key of Object.keys(ret.toObject()).filter(
       (item) => !KEYS_TO_SKIP.includes(item)
@@ -310,6 +322,11 @@ export class CustomersService {
         { upsert: true }
       ).exec();
     }
+    this.debug(
+      `here 5`,
+      this.create.name,
+      session
+    );
 
     return ret;
   }
@@ -482,15 +499,53 @@ export class CustomersService {
     //if (!isValidObjectId(id))
       //throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
 
+      this.debug(
+        `in customer service findOne`,
+        this.findOne.name,
+        session
+      );
+
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    const customer = await this.CustomerModel.findOne({
-      //_id: new Types.ObjectId(id),
-      _id: id,
-      workspaceId: workspace.id,
-    }).exec();
+    let customer;
+
+    if (isValidObjectId(id)) {
+      this.debug(
+        `in customer service validobject id, we should be seeing fewer of these`,
+        this.findOne.name,
+        session
+      );
+       customer = await this.CustomerModel.findOne({
+        _id: new Types.ObjectId(id),
+        //_id: id,
+        workspaceId: workspace.id,
+      }).exec();
+      if (!customer){
+        this.debug(
+          `in customer service validobject id, found no user`,
+          this.findOne.name,
+          session
+        );
+        return null//throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
+      }
+        
+      return {
+        ...customer.toObject(),
+        _id: id,
+      };
+
+    }
+    else{
+       customer = await this.CustomerModel.findOne({
+        //_id: new Types.ObjectId(id),
+        _id: id,
+        workspaceId: workspace.id,
+      }).exec();
+
+    }
+    
     if (!customer)
-      throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
+      return null//throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
     return {
       ...customer.toObject(),
       _id: id,
