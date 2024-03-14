@@ -79,6 +79,7 @@ import { cloneDeep } from 'lodash';
 import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
 import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
 import { SendFCMDto } from './dto/send-fcm.dto';
+//import { v4 as uuid } from "uuid";
 
 import {
   PushPlatforms,
@@ -282,7 +283,10 @@ export class CustomersService {
       session
     );
 
+    console.log("this is the create customerDTO", JSON.stringify(createCustomerDto, null, 2));
+
     const createdCustomer = new this.CustomerModel({
+      _id: randomUUID(),
       workspaceId: workspace.id,
       ...createCustomerDto,
     });
@@ -507,6 +511,39 @@ export class CustomersService {
 
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
+    const customer = await this.CustomerModel.findOne({
+      //_id: new Types.ObjectId(id),
+      _id: id,
+      workspaceId: workspace.id,
+    }).exec();
+    if (!customer){
+      this.debug(
+        `in customer service validobject id, found no user`,
+        this.findOne.name,
+        session
+      );
+      throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
+    }
+      
+    return {
+      ...customer.toObject(),
+      _id: id,
+    };
+  }
+
+  /*
+  async findOne(account: Account, id: string, session: string) {
+    //if (!isValidObjectId(id))
+      //throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
+
+      this.debug(
+        `in customer service findOne`,
+        this.findOne.name,
+        session
+      );
+
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     let customer;
 
     if (isValidObjectId(id)) {
@@ -526,6 +563,8 @@ export class CustomersService {
           this.findOne.name,
           session
         );
+        console.log("customer id is", id);
+        console.log("workspaceId is", workspace.id);
         return null//throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
       }
         
@@ -551,6 +590,7 @@ export class CustomersService {
       _id: id,
     };
   }
+  */
 
   async transactionalFindOne(
     account: Account,
@@ -1483,7 +1523,7 @@ export class CustomersService {
     transactionSession: ClientSession
   ): Promise<Correlation> {
     let customer: CustomerDocument; // Found customer
-    const queryParam = { workspaceId: workspace.id };
+    let queryParam: {workspaceId: string, _id?: string} = { workspaceId: workspace.id };
     queryParam[dto.correlationKey] = dto.correlationValue;
     try {
       customer = await this.CustomerModel.findOne(queryParam)
@@ -1493,6 +1533,11 @@ export class CustomersService {
       return Promise.reject(err);
     }
     if (!customer) {
+
+      if (!queryParam._id) {
+        queryParam._id = randomUUID();
+      }
+
       const createdCustomer = new this.CustomerModel(queryParam);
       return {
         cust: await createdCustomer.save({ session: transactionSession }),
