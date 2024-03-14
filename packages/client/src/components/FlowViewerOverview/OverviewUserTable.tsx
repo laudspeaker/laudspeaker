@@ -14,11 +14,13 @@ import sortNoneChevronsImage from "../../pages/JourneyTablev2/svg/sort-none-chev
 import Pagination from "components/Pagination";
 import ApiService from "services/api.service";
 import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useAppSelector } from "store/hooks";
 
 enum FilterOption {
-  ALL,
-  IN_PROGRESS,
-  FINISHED,
+  ALL = "all",
+  IN_PROGRESS = "in-progress",
+  FINISHED = "finished",
 }
 
 const filterOptionToTextMap: Record<FilterOption, string> = {
@@ -42,6 +44,7 @@ interface UserRowData {
   email: string;
   status: UserStatus;
   lastUpdate: string;
+  [key: string]: string | number | boolean;
 }
 
 export const userStatusClassName: Record<UserStatus, string> = {
@@ -72,7 +75,10 @@ interface GetCustomersDto {
 const ITEMS_PER_PAGE = 10;
 
 const OverviewUserTable = () => {
+  const navigate = useNavigate();
+
   const { id } = useParams();
+  const pk = useAppSelector((state) => state.auth.userData.pk);
 
   const [isFirstRender, setIsFirstRender] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -108,6 +114,7 @@ const OverviewUserTable = () => {
         }`,
       });
 
+      setRows(data);
       setPagesCount(totalPages);
       setIsLoaded(true);
     } catch (e) {
@@ -213,7 +220,7 @@ const OverviewUserTable = () => {
               ))}
             </div>
 
-            {/* {showSearch ? (
+            {showSearch ? (
               <div className="flex gap-[10px] items-center">
                 <Input
                   value={search}
@@ -233,7 +240,7 @@ const OverviewUserTable = () => {
               <button onClick={() => setShowSearch(true)}>
                 <img src={searchIconImage} />
               </button>
-            )} */}
+            )}
           </div>
 
           <Table
@@ -243,8 +250,8 @@ const OverviewUserTable = () => {
               <div key={"customer_id"} className="px-5 py-[10px] select-none">
                 Customer ID
               </div>,
-              <div key="email" className="px-5 py-[10px] select-none">
-                Email
+              <div key="pk" className="px-5 py-[10px] select-none">
+                {pk?.key}
               </div>,
               <div
                 key="status"
@@ -317,10 +324,14 @@ const OverviewUserTable = () => {
             ]}
             rowsData={rows}
             rows={rows.map((row) => [
-              <button key={row.customerId} className="text-[#6366F1]">
+              <button
+                key={row.customerId}
+                className="text-[#6366F1]"
+                onClick={() => navigate(`/person/${row.customerId}`)}
+              >
                 {row.customerId}
               </button>,
-              <div key={row.email}>{row.email}</div>,
+              <div key={pk?.key}>{pk ? row[pk.key] : ""}</div>,
               <div
                 key={row.status}
                 className={`px-[10px] py-[2px] rounded-[14px] w-fit ${

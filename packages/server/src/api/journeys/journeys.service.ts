@@ -1119,43 +1119,98 @@ export class JourneysService {
     if (!journey) throw new NotFoundException('Journey not found');
 
     if (take > 100) take = 100;
+    if (!search) search = '';
     if (!filter) filter = 'all';
+
+    if (sortBy !== 'status' && sortBy !== 'latestSave') sortBy = 'latestSave';
+    if (sortType !== 'desc' && sortType !== 'asc') sortType = 'desc';
+
+    const baseQuery = `
+      SELECT * FROM
+        (
+          SELECT
+            "customer" as "customerId",
+            "journeyEntry" as "lastUpdate",
+            NOT (
+                  (step.metadata)::json #>'{destination}' IS NOT NULL 
+                  OR EXISTS (
+                      SELECT 1 
+                      FROM jsonb_array_elements(step.metadata -> 'branches') AS branch 
+                      WHERE (branch ->> 'destination') IS NOT NULL
+                  )
+                  OR (step.metadata -> 'timeBranch' ->> 'destination') IS NOT NULL
+                )
+            as "isFinished"
+          FROM journey_location
+          LEFT JOIN step ON step.id = journey_location."stepId"
+          WHERE journey_location."journeyId" = $1 AND "customer" LIKE $2
+        ) as a
+      ${
+        filter === 'all'
+          ? ''
+          : filter === 'in-progress'
+          ? `WHERE a."isFinished" = false`
+          : filter === 'finished'
+          ? `WHERE a."isFinished" = true`
+          : ''
+      }
+      ORDER BY a.${sortBy === 'status' ? `"isFinished"` : `"lastUpdate"`} ${
+      sortType === 'asc' ? 'ASC' : 'DESC'
+    }
+    `;
+
+    const countQuery = `SELECT COUNT(*) as count FROM (${baseQuery}) as a`;
+    const responseCount =
+      await this.journeyLocationsService.journeyLocationsRepository.query(
+        countQuery,
+        [journey.id, `%${search}%`]
+      );
+
+    let count = +responseCount?.[0].count;
+    if (isNaN(count)) count = 0;
+
+    const totalPages = Math.ceil(count / take) || 1;
+
+    const paginationQueryPart = `\n
+      LIMIT $3
+      OFFSET $4`;
 
     const data =
       await this.journeyLocationsService.journeyLocationsRepository.query(
-        `
-      SELECT
-        "customer" as "customerId",
-        "journeyEntry" as "lastUpdate",
-        NOT (
-              (step.metadata)::json #>'{destination}' IS NOT NULL 
-              OR EXISTS (
-                  SELECT 1 
-                  FROM jsonb_array_elements(step.metadata -> 'branches') AS branch 
-                  WHERE (branch ->> 'destination') IS NOT NULL
-              )
-              OR (step.metadata -> 'timeBranch' ->> 'destination') IS NOT NULL
-            )
-        as "isFinished"
-      FROM journey_location
-      LEFT JOIN step ON step.id = journey_location."stepId"
-      WHERE journey_location."journeyId" = $1
-      LIMIT $2
-      OFFSET $3;
-    `,
-        [journey.id, take, skip]
+        ` ${baseQuery}${paginationQueryPart}`,
+        [journey.id, `%${search}%`, take, skip]
       );
 
-    const customerIds = data.map((item) => item.customerId);
-
-    const customers = await this.CustomerModel.find({
-      _id: { $in: customerIds },
-    }).lean();
-
-    console.dir(data);
-    console.dir(customers);
-
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
+    const pk = await this.customersService.CustomerKeysModel.findOne({
+      isPrimary: true,
+      workspaceId: workspace.id,
+    });
+
+    if (pk) {
+      const customerIds = data.map((item) => item.customerId);
+
+      const customers = this.CustomerModel.find({
+        _id: { $in: customerIds },
+      }).cursor();
+
+      for await (const customer of customers) {
+        const dataItem = data.find((item) => item.customerId === customer.id);
+
+        if (dataItem) dataItem[pk.key] = customer[pk.key];
+      }
+    }
+
+    return {
+      data: data.map((item) => ({
+        customerId: item.customerId,
+        [pk.key]: item[pk.key],
+        status: item.isFinished ? 'Finished' : 'Enrolled',
+        lastUpdate: +item.lastUpdate,
+      })),
+      totalPages,
+    };
   }
 
   async getJourneyChanges(
