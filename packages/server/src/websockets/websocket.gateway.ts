@@ -148,6 +148,8 @@ export class WebsocketGateway implements OnGatewayConnection {
     );
   }
 
+  
+
   public async handleConnection(socket: Socket) {
     //console.log("In handle connection socket");
     const session = randomUUID();
@@ -355,6 +357,7 @@ export class WebsocketGateway implements OnGatewayConnection {
       }
     }
   }
+  
 
   public async handleDisconnect(socket: Socket) {
     if (socket.data.development && socket.handshake.auth.apiKey) {

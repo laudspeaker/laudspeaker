@@ -309,6 +309,7 @@ const Personv2 = () => {
       "other_ids",
       "iosDeviceTokenSetAt",
       "androidDeviceTokenSetAt",
+      "null",
     ]; // Fields to skip
 
     Object.entries(editingPersonInfo).forEach(([key, value]) => {
