@@ -208,7 +208,7 @@ export class StartProcessor extends WorkerHost {
             session: job.data.session,
             query: job.data.query,
             skip: job.data.skip + Math.floor(job.data.limit / 2),
-            limit: Math.floor(job.data.limit / 2),
+            limit: Math.ceil(job.data.limit / 2),
             collectionName: job.data.collectionName,
           },
         },
