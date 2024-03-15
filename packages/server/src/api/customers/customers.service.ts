@@ -133,7 +133,7 @@ const acceptableBooleanConvertable = {
   false: ['FALSE', 'false', 'F', 'f'],
 };
 
-export const systemAttributes: {
+export interface SystemAttribute {
   id: string;
   key: string;
   type: string;
@@ -141,7 +141,9 @@ export const systemAttributes: {
   dateFormat?: string;
   isArray: boolean;
   isSystem: true;
-}[] = [
+}
+
+export const systemAttributes: SystemAttribute[] = [
   {
     id: uuid(),
     key: 'androidFCMTokens',
@@ -168,6 +170,13 @@ export const systemAttributes: {
     key: 'other_ids',
     type: StatementValueType.STRING,
     isArray: true,
+    isSystem: true,
+  },
+  {
+    id: uuid(),
+    key: 'createdAt',
+    type: StatementValueType.NUMBER,
+    isArray: false,
     isSystem: true,
   },
 ];
@@ -996,7 +1005,7 @@ export class CustomersService {
       session,
       account.id
     );
-    
+
     const { data, totalPages } = await this.findAll(
       <Account>account,
       take,
@@ -1560,12 +1569,12 @@ export class CustomersService {
     transactionSession: ClientSession
   ): Promise<Correlation> {
     let customer: CustomerDocument; // Found customer
-    let queryParam = { 
+    const queryParam = {
       workspaceId: workspace.id,
       $or: [
         { [dto.correlationKey]: dto.correlationValue },
-        { other_ids: dto.correlationValue }
-      ]
+        { other_ids: dto.correlationValue },
+      ],
     };
     try {
       customer = await this.CustomerModel.findOne(queryParam)
@@ -1577,11 +1586,14 @@ export class CustomersService {
     if (!customer) {
       // When no customer is found with the given correlation, create a new one
       // If the correlationKey is '_id', use it to set the _id of the new customer
-      let newCustomerData: any = { workspaceId: workspace.id, createdAt: new Date() };
+      const newCustomerData: any = {
+        workspaceId: workspace.id,
+        createdAt: new Date(),
+      };
       if (dto.correlationKey === '_id') {
         newCustomerData._id = dto.correlationValue;
       } else {
-        // If correlationKey is not '_id', 
+        // If correlationKey is not '_id',
         newCustomerData._id = randomUUID();
       }
       const createdCustomer = new this.CustomerModel(newCustomerData);
@@ -1646,15 +1658,16 @@ export class CustomersService {
         );
 
       // Generate a new UUID to be used only if a new document is being inserted
-      const newId = randomUUID(); 
+      const newId = randomUUID();
       //console.log("in upsert 3");
       const ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
         {
           workspaceId: auth.workspace.id,
           [primaryKey.key]: upsertCustomerDto.primary_key,
-        },{
+        },
+        {
           $set: { ...upsertCustomerDto.properties },
-          $setOnInsert: { _id: newId } // This will ensure _id is set to newId only on insert
+          $setOnInsert: { _id: newId }, // This will ensure _id is set to newId only on insert
         },
         { upsert: true, new: true, projection: { _id: 1 } }
       );
