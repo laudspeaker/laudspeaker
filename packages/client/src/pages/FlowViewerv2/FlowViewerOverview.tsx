@@ -10,25 +10,72 @@ import {
 } from "components/FlowViewerOverview";
 import { legendValues } from "utils/flowBuilderOverviewMockData";
 import Button, { ButtonType } from "components/Elements/Buttonv2/Button";
+import { useEffect, useMemo, useState } from "react";
+import ApiService from "services/api.service";
+import { useParams } from "react-router-dom";
+import { AxiosError } from "axios";
+import { toast } from "react-toastify";
 
 const { RangePicker } = DatePicker;
 
+interface GetJourneyStatisticsDto {
+  enrolledDataPoints: number[];
+  finishedDataPoints: number[];
+}
+
 const FlowBuilderOverview = () => {
+  const { id } = useParams();
+
   const dateFormat = "MMM D, YYYY";
   const date = new Date();
   const last30Days = date.setDate(date.getDate() - 30);
 
-  const onRangeChange = (
-    dates: null | (Dayjs | null)[],
-    dateStrings: string[]
-  ) => {
-    if (dates) {
-      console.log("From: ", dates[0], ", to: ", dates[1]);
-      console.log("From: ", dateStrings[0], ", to: ", dateStrings[1]);
-    } else {
-      console.log("Clear");
+  const [frequency, setFrequency] = useState("daily");
+  const [range, setRange] = useState<[Dayjs | null, Dayjs | null] | null>([
+    dayjs(last30Days),
+    dayjs(new Date()),
+  ]);
+  const [enrolledDataPoints, setEnrolledDataPoints] = useState<number[]>([]);
+  const [finishedDataPoints, setFinishedDataPoints] = useState<number[]>([]);
+
+  const enrolledCount = useMemo(
+    () => enrolledDataPoints.reduce((acc, el) => acc + el, 0),
+    [enrolledDataPoints]
+  );
+  const finishedCount = useMemo(
+    () => finishedDataPoints.reduce((acc, el) => acc + el, 0),
+    [finishedDataPoints]
+  );
+
+  const loadData = async () => {
+    try {
+      const { data } = await ApiService.get<GetJourneyStatisticsDto>({
+        url: `/journeys/${id}/statistics?startTime=${range?.[0]
+          ?.toDate()
+          .getTime()}&endTime=${range?.[1]
+          ?.toDate()
+          .getTime()}&frequency=${frequency}`,
+      });
+
+      setEnrolledDataPoints(data.enrolledDataPoints);
+      setFinishedDataPoints(data.finishedDataPoints);
+    } catch (e) {
+      let message = "Unexpected error while loading statistics";
+
+      if (e instanceof AxiosError) {
+        message =
+          e.response?.data?.message ||
+          e.response?.data?.message?.[0] ||
+          message;
+      }
+
+      toast.error(message);
     }
   };
+
+  useEffect(() => {
+    loadData();
+  }, [range?.[0], range?.[1], frequency]);
 
   const rangePresets: TimeRangePickerProps["presets"] = [
     { label: "Last 30 Days", value: [dayjs().add(-30, "d"), dayjs()] },
@@ -49,16 +96,17 @@ const FlowBuilderOverview = () => {
       <div className="flex justify-between">
         <div className="flex gap-2">
           <RangePicker
-            defaultValue={[dayjs(last30Days), dayjs(new Date())]}
+            value={range}
             format={dateFormat}
             needConfirm
             presets={rangePresets}
-            onChange={onRangeChange}
+            onChange={setRange}
             className="rounded font-inter"
           />
 
           <BasicSelect
-            defaultValue="daily"
+            value={frequency}
+            onChange={setFrequency}
             options={[
               { value: "daily", label: "Daily" },
               { value: "weekly", label: "Weekly" },
@@ -75,28 +123,14 @@ const FlowBuilderOverview = () => {
         <div className="flex flex-col gap-5">
           <OverviewStatusSummary
             status="Enrolled"
-            count={200}
-            dataPoints={[
-              { x: 0, y: 0 },
-              { x: 0.5, y: 1.5 },
-              { x: 2, y: 2 },
-              { x: 3, y: 1.5 },
-              { x: 4, y: 2 },
-              { x: 5, y: 1 },
-            ]}
+            count={enrolledCount}
+            dataPoints={enrolledDataPoints.map((y, i) => ({ x: i, y }))}
           />
 
           <OverviewStatusSummary
             status="Finished"
-            count={100}
-            dataPoints={[
-              { x: 0, y: 0 },
-              { x: 0.5, y: 1.5 },
-              { x: 2, y: 2 },
-              { x: 3, y: 1.5 },
-              { x: 4, y: 2 },
-              { x: 5, y: 1 },
-            ]}
+            count={finishedCount}
+            dataPoints={finishedDataPoints.map((y, i) => ({ x: i, y }))}
           />
         </div>
 
@@ -109,7 +143,7 @@ const FlowBuilderOverview = () => {
           </div>
 
           <div className="flex gap-16 justify-stretch">
-            {legendValues.map((value) => (
+            {/* {legendValues.map((value) => (
               <Popover
                 key={value.title}
                 content={popoverContent}
@@ -128,7 +162,7 @@ const FlowBuilderOverview = () => {
                   />
                 </button>
               </Popover>
-            ))}
+            ))} */}
           </div>
 
           <OverviewConversionChart />
