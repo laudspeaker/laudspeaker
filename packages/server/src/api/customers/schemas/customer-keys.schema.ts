@@ -33,6 +33,9 @@ export class CustomerKeys {
 
   @Prop()
   dateFormat?: string;
+
+  @Prop()
+  isSystem?: boolean;
 }
 
 export const CustomerKeysSchema = SchemaFactory.createForClass(CustomerKeys);

@@ -148,15 +148,6 @@ export const generateAttributeView = (
 };
 
 const Personv2 = () => {
-  const predefinedAttributes: Attribute[] = [
-    {
-      id: uuid(),
-      key: "isAnonymous",
-      type: StatementValueType.BOOLEAN,
-      isArray: false,
-    },
-  ];
-
   const navigate = useNavigate();
 
   const { id } = useParams();
@@ -204,8 +195,8 @@ const Personv2 = () => {
   const [attributeSearch, setAttributeSearch] = useState("");
 
   const attributesToShow = useMemo(
-    () => [...predefinedAttributes, ...possibleAttributes],
-    [predefinedAttributes, possibleAttributes]
+    () => [...possibleAttributes],
+    [possibleAttributes]
   );
 
   const loadPossibleKeys = async () => {
@@ -318,6 +309,7 @@ const Personv2 = () => {
       "other_ids",
       "iosDeviceTokenSetAt",
       "androidDeviceTokenSetAt",
+      "null",
     ]; // Fields to skip
 
     Object.entries(editingPersonInfo).forEach(([key, value]) => {
@@ -602,6 +594,7 @@ const Personv2 = () => {
                     .filter(
                       (attr) =>
                         !Object.keys(editingPersonInfo).includes(attr.key) &&
+                        !attr.isSystem &&
                         attr.key.includes(attributeSearch)
                     )
                     .map((attr) => ({
