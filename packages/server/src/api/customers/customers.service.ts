@@ -288,6 +288,7 @@ export class CustomersService {
     const createdCustomer = new this.CustomerModel({
       _id: randomUUID(),
       workspaceId: workspace.id,
+      createdAt: new Date(),
       ...createCustomerDto,
     });
     const ret = await createdCustomer.save({ session: transactionSession });
@@ -964,6 +965,13 @@ export class CustomersService {
     showFreezed?: boolean,
     createdAtSortType?: 'asc' | 'desc'
   ) {
+    this.debug(
+      `in returnAllPeopleInfo`,
+      this.returnAllPeopleInfo.name,
+      session,
+      account.id
+    );
+    
     const { data, totalPages } = await this.findAll(
       <Account>account,
       take,
@@ -984,6 +992,7 @@ export class CustomersService {
 
     const listInfo = await Promise.all(
       data.map(async (person) => {
+        //console.log("person createdAt is", person.createdAt);
         const info: Record<string, any> = {};
         (info['id'] = person['_id'].toString()),
           (info['salient'] =
@@ -995,9 +1004,12 @@ export class CustomersService {
 
         info.email = person.email || person.phEmail;
         info.phone = person.phone;
+        info.createdAt = new Date(person.createdAt);
+        /*
         info.createdAt = new Date(
           parseInt(person._id.toString().slice(0, 8), 16) * 1000
         ).toUTCString();
+        */
         info.dataSource = 'people';
 
         if (pk && person[pk.key]) {
@@ -1523,8 +1535,13 @@ export class CustomersService {
     transactionSession: ClientSession
   ): Promise<Correlation> {
     let customer: CustomerDocument; // Found customer
-    let queryParam: {workspaceId: string, _id?: string} = { workspaceId: workspace.id };
-    queryParam[dto.correlationKey] = dto.correlationValue;
+    let queryParam = { 
+      workspaceId: workspace.id,
+      $or: [
+        { [dto.correlationKey]: dto.correlationValue },
+        { other_ids: dto.correlationValue }
+      ]
+    };
     try {
       customer = await this.CustomerModel.findOne(queryParam)
         .session(transactionSession)
@@ -1532,6 +1549,25 @@ export class CustomersService {
     } catch (err) {
       return Promise.reject(err);
     }
+    if (!customer) {
+      // When no customer is found with the given correlation, create a new one
+      // If the correlationKey is '_id', use it to set the _id of the new customer
+      let newCustomerData: any = { workspaceId: workspace.id, createdAt: new Date() };
+      if (dto.correlationKey === '_id') {
+        newCustomerData._id = dto.correlationValue;
+      } else {
+        // If correlationKey is not '_id', 
+        newCustomerData._id = randomUUID();
+      }
+      const createdCustomer = new this.CustomerModel(newCustomerData);
+      return {
+        cust: await createdCustomer.save({ session: transactionSession }),
+        found: false,
+      };
+    } else {
+      return { cust: customer, found: true };
+    }
+    /*
     if (!customer) {
 
       if (!queryParam._id) {
@@ -1544,6 +1580,7 @@ export class CustomersService {
         found: false,
       };
     } else return { cust: customer, found: true };
+    */
   }
 
   /**
