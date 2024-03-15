@@ -14,6 +14,9 @@ export class Customer {
   other_ids: string[];
 
   @Prop()
+  createdAt: Date;
+
+  @Prop()
   firstName: string;
 
   @Prop()

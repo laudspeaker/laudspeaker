@@ -235,6 +235,7 @@ export class ImportProcessor extends WorkerHost {
       })
       .map((el) => ({
         _id: randomUUID(),
+        createdAt: new Date(),
         workspaceId: workspace.id,
         [pkKey]: el.pkKeyValue,
         ...el.create,

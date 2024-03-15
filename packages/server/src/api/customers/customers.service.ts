@@ -325,6 +325,7 @@ export class CustomersService {
     const createdCustomer = new this.CustomerModel({
       _id: randomUUID(),
       workspaceId: workspace.id,
+      createdAt: new Date(),
       ...createCustomerDto,
     });
     const ret = await createdCustomer.save({ session: transactionSession });
@@ -989,6 +990,13 @@ export class CustomersService {
     showFreezed?: boolean,
     createdAtSortType?: 'asc' | 'desc'
   ) {
+    this.debug(
+      `in returnAllPeopleInfo`,
+      this.returnAllPeopleInfo.name,
+      session,
+      account.id
+    );
+    
     const { data, totalPages } = await this.findAll(
       <Account>account,
       take,
@@ -1009,6 +1017,7 @@ export class CustomersService {
 
     const listInfo = await Promise.all(
       data.map(async (person) => {
+        //console.log("person createdAt is", person.createdAt);
         const info: Record<string, any> = {};
         (info['id'] = person['_id'].toString()),
           (info['salient'] =
@@ -1020,9 +1029,12 @@ export class CustomersService {
 
         info.email = person.email || person.phEmail;
         info.phone = person.phone;
+        info.createdAt = new Date(person.createdAt);
+        /*
         info.createdAt = new Date(
           parseInt(person._id.toString().slice(0, 8), 16) * 1000
         ).toUTCString();
+        */
         info.dataSource = 'people';
 
         if (pk && person[pk.key]) {
@@ -1548,10 +1560,13 @@ export class CustomersService {
     transactionSession: ClientSession
   ): Promise<Correlation> {
     let customer: CustomerDocument; // Found customer
-    const queryParam: { workspaceId: string; _id?: string } = {
+    let queryParam = { 
       workspaceId: workspace.id,
+      $or: [
+        { [dto.correlationKey]: dto.correlationValue },
+        { other_ids: dto.correlationValue }
+      ]
     };
-    queryParam[dto.correlationKey] = dto.correlationValue;
     try {
       customer = await this.CustomerModel.findOne(queryParam)
         .session(transactionSession)
@@ -1560,6 +1575,26 @@ export class CustomersService {
       return Promise.reject(err);
     }
     if (!customer) {
+      // When no customer is found with the given correlation, create a new one
+      // If the correlationKey is '_id', use it to set the _id of the new customer
+      let newCustomerData: any = { workspaceId: workspace.id, createdAt: new Date() };
+      if (dto.correlationKey === '_id') {
+        newCustomerData._id = dto.correlationValue;
+      } else {
+        // If correlationKey is not '_id', 
+        newCustomerData._id = randomUUID();
+      }
+      const createdCustomer = new this.CustomerModel(newCustomerData);
+      return {
+        cust: await createdCustomer.save({ session: transactionSession }),
+        found: false,
+      };
+    } else {
+      return { cust: customer, found: true };
+    }
+    /*
+    if (!customer) {
+
       if (!queryParam._id) {
         queryParam._id = randomUUID();
       }
@@ -1570,6 +1605,7 @@ export class CustomersService {
         found: false,
       };
     } else return { cust: customer, found: true };
+    */
   }
 
   /**
@@ -1586,6 +1622,7 @@ export class CustomersService {
     upsertCustomerDto: UpsertCustomerDto,
     session: string
   ): Promise<{ id: string }> {
+    //console.log("in upsert");
     try {
       let primaryKey: CustomerKeysDocument = await this.cacheManager.get(
         `${auth.workspace.id}-primary-key`
@@ -1601,24 +1638,31 @@ export class CustomersService {
         );
       }
 
+      //console.log("in upsert 2");
       if (!primaryKey)
         throw new HttpException(
           'Primary key has not been set: see https://laudspeaker.com/docs/developer/api/users/upsert for more details.',
           HttpStatus.BAD_REQUEST
         );
 
+      // Generate a new UUID to be used only if a new document is being inserted
+      const newId = randomUUID(); 
+      //console.log("in upsert 3");
       const ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
         {
           workspaceId: auth.workspace.id,
           [primaryKey.key]: upsertCustomerDto.primary_key,
+        },{
+          $set: { ...upsertCustomerDto.properties },
+          $setOnInsert: { _id: newId } // This will ensure _id is set to newId only on insert
         },
-        { ...upsertCustomerDto.properties },
         { upsert: true, new: true, projection: { _id: 1 } }
       );
-
+      //console.log("in upsert 4");
       return Promise.resolve({ id: ret.id });
     } catch (err) {
       this.error(err, this.upsert.name, session, auth.account.email);
+      //console.log("in upsert 6");
       throw err;
     }
   }
