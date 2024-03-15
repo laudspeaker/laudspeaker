@@ -3,6 +3,7 @@ import mongoose, {
   ClientSession,
   isValidObjectId,
   Model,
+  Query,
   Types,
 } from 'mongoose';
 import {
@@ -75,6 +76,14 @@ import {
 } from './dto/modify-attributes.dto';
 import { parseISO, add, sub, formatISO } from 'date-fns';
 import { cloneDeep } from 'lodash';
+import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
+import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
+import { SendFCMDto } from './dto/send-fcm.dto';
+//import { v4 as uuid } from "uuid";
+
+import {
+  PushPlatforms,
+} from '../templates/entities/template.entity';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -268,11 +277,27 @@ export class CustomersService {
   > {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
+    this.debug(
+      `in create ok`,
+      this.create.name,
+      session
+    );
+
+    //console.log("this is the create customerDTO", JSON.stringify(createCustomerDto, null, 2));
+
     const createdCustomer = new this.CustomerModel({
+      _id: randomUUID(),
       workspaceId: workspace.id,
+      createdAt: new Date(),
       ...createCustomerDto,
     });
     const ret = await createdCustomer.save({ session: transactionSession });
+
+    this.debug(
+      `saved customer`,
+      this.create.name,
+      session
+    );
 
     for (const key of Object.keys(ret.toObject()).filter(
       (item) => !KEYS_TO_SKIP.includes(item)
@@ -302,6 +327,11 @@ export class CustomersService {
         { upsert: true }
       ).exec();
     }
+    this.debug(
+      `customer successfuly created`,
+      this.create.name,
+      session
+    );
 
     return ret;
   }
@@ -471,22 +501,97 @@ export class CustomersService {
   }
 
   async findOne(account: Account, id: string, session: string) {
-    if (!isValidObjectId(id))
-      throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
+    //if (!isValidObjectId(id))
+      //throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
+
+      this.debug(
+        `in customer service findOne`,
+        this.findOne.name,
+        session
+      );
 
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const customer = await this.CustomerModel.findOne({
-      _id: new Types.ObjectId(id),
+      //_id: new Types.ObjectId(id),
+      _id: id,
       workspaceId: workspace.id,
     }).exec();
-    if (!customer)
+    if (!customer){
+      this.debug(
+        `in customer service validobject id, found no user`,
+        this.findOne.name,
+        session
+      );
       throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
+    }
+      
     return {
       ...customer.toObject(),
       _id: id,
     };
   }
+
+  /*
+  async findOne(account: Account, id: string, session: string) {
+    //if (!isValidObjectId(id))
+      //throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
+
+      this.debug(
+        `in customer service findOne`,
+        this.findOne.name,
+        session
+      );
+
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    let customer;
+
+    if (isValidObjectId(id)) {
+      this.debug(
+        `in customer service validobject id, we should be seeing fewer of these`,
+        this.findOne.name,
+        session
+      );
+       customer = await this.CustomerModel.findOne({
+        _id: new Types.ObjectId(id),
+        //_id: id,
+        workspaceId: workspace.id,
+      }).exec();
+      if (!customer){
+        this.debug(
+          `in customer service validobject id, found no user`,
+          this.findOne.name,
+          session
+        );
+        console.log("customer id is", id);
+        console.log("workspaceId is", workspace.id);
+        return null//throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
+      }
+        
+      return {
+        ...customer.toObject(),
+        _id: id,
+      };
+
+    }
+    else{
+       customer = await this.CustomerModel.findOne({
+        //_id: new Types.ObjectId(id),
+        _id: id,
+        workspaceId: workspace.id,
+      }).exec();
+
+    }
+    
+    if (!customer)
+      return null//throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
+    return {
+      ...customer.toObject(),
+      _id: id,
+    };
+  }
+  */
 
   async transactionalFindOne(
     account: Account,
@@ -860,6 +965,13 @@ export class CustomersService {
     showFreezed?: boolean,
     createdAtSortType?: 'asc' | 'desc'
   ) {
+    this.debug(
+      `in returnAllPeopleInfo`,
+      this.returnAllPeopleInfo.name,
+      session,
+      account.id
+    );
+    
     const { data, totalPages } = await this.findAll(
       <Account>account,
       take,
@@ -880,6 +992,7 @@ export class CustomersService {
 
     const listInfo = await Promise.all(
       data.map(async (person) => {
+        //console.log("person createdAt is", person.createdAt);
         const info: Record<string, any> = {};
         (info['id'] = person['_id'].toString()),
           (info['salient'] =
@@ -891,9 +1004,12 @@ export class CustomersService {
 
         info.email = person.email || person.phEmail;
         info.phone = person.phone;
+        info.createdAt = new Date(person.createdAt);
+        /*
         info.createdAt = new Date(
           parseInt(person._id.toString().slice(0, 8), 16) * 1000
         ).toUTCString();
+        */
         info.dataSource = 'people';
 
         if (pk && person[pk.key]) {
@@ -994,8 +1110,8 @@ export class CustomersService {
   }
 
   async findByCustomerId(customerId: string, clientSession?: ClientSession) {
-    if (!isValidObjectId(customerId))
-      throw new BadRequestException('Invalid object id');
+    //if (!isValidObjectId(customerId))
+    //  throw new BadRequestException('Invalid object id');
 
     const query = this.CustomerModel.findById(customerId);
     if (clientSession) {
@@ -1015,8 +1131,8 @@ export class CustomersService {
         _id: Types.ObjectId;
       }
   > {
-    if (!isValidObjectId(customerId))
-      throw new BadRequestException('Invalid object id');
+    //if (!isValidObjectId(customerId))
+      //throw new BadRequestException('Invalid object id');
 
     const query = this.CustomerModel.findById(customerId);
     if (clientSession) {
@@ -1215,12 +1331,12 @@ export class CustomersService {
     session: string,
     transactionSession?: ClientSession,
     skip?: number,
-    limit?: number
-  ): Promise<{ collectionName: string; customers: CustomerDocument[] }> {
+    limit?: number,
+    collectionName?: string
+  ): Promise<CustomerDocument[]> {
     let query: any;
-    let collectionPrefix: string;
-    let collectionName: string;
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    let customers: any[];
 
     if (
       !criteria ||
@@ -1232,47 +1348,20 @@ export class CustomersService {
       query = this.CustomerModel.find({
         workspaceId: workspace.id,
       });
+      if (transactionSession) query.session(transactionSession);
+      if (limit) query.limit(limit);
+      if (skip) query.skip(skip);
+      customers = await query.exec();
     } else {
-      collectionPrefix = this.segmentsService.generateRandomString();
-      const customersInSegment = await this.getSegmentCustomersFromQuery(
-        criteria.query,
-        account,
-        session,
-        true,
-        0,
-        collectionPrefix
-      );
-      collectionName = customersInSegment; // Name of the MongoDB collection
-
-      const pipeline = [
-        {
-          $lookup: {
-            from: collectionName, // The name of the intermediate collection
-            localField: '_id', // Field from the customers collection
-            foreignField: '_id', // Assuming intermediateCollection uses _id for customer IDs
-            as: 'matchedInIntermediate',
-          },
-        },
-        {
-          $match: {
-            'matchedInIntermediate.0': { $exists: true }, // Filters for customers present in intermediateCollection
-          },
-        },
-        {
-          $project: {
-            matchedInIntermediate: 0, // Optionally remove the matchedInIntermediate array from results
-          },
-        },
-      ];
-
-      query = this.CustomerModel.aggregate(pipeline);
+      customers = await this.connection.db
+        .collection(collectionName)
+        .find({}, { session: transactionSession })
+        .sort({ _id: 1 })
+        .skip(skip) // Skip the specified number of documents
+        .limit(limit) // Limit the number of documents to return
+        .toArray();
     }
-
-    if (transactionSession) query.session(transactionSession);
-    if (limit) query.limit(limit);
-    if (skip) query.skip(skip);
-    const res = await query.exec();
-    return { collectionName, customers: res };
+    return customers;
   }
 
   /**
@@ -1339,6 +1428,7 @@ export class CustomersService {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     let collectionPrefix: string;
     let count = 0;
+    let query: any;
     if (
       !criteria ||
       criteria.type === 'allCustomers' ||
@@ -1346,17 +1436,14 @@ export class CustomersService {
       !criteria.query.statements ||
       !criteria.query.statements.length
     ) {
-      count = await this.CustomerModel.countDocuments({
+      query = this.CustomerModel.countDocuments({
         workspaceId: workspace.id,
-      })
-        .session(transactionSession)
-        .exec();
+      });
+      if (transactionSession) query.session(transactionSession);
+      count = await query.exec();
     } else {
-      //TODO: We need to translate segment builder condiitons
-      // into a mongo query
-
       collectionPrefix = this.segmentsService.generateRandomString();
-      const customersInSegment = await this.getSegmentCustomersFromQuery(
+      const customersInSegment = await this.getCustomersFromQuery(
         criteria.query,
         account,
         session,
@@ -1365,16 +1452,10 @@ export class CustomersService {
         collectionPrefix
       );
       collectionName = customersInSegment; // Name of the MongoDB collection
-      const coll = this.connection.collection(collectionName);
-      count = await coll.countDocuments({});
+      count = await this.connection.db
+        .collection(collectionName)
+        .countDocuments({}, { session: transactionSession });
     }
-
-    this.debug(
-      `${JSON.stringify({ audienceSize: count })}`,
-      this.getAudienceSize.name,
-      session,
-      account.email
-    );
 
     return { collectionName, count };
   }
@@ -1454,8 +1535,13 @@ export class CustomersService {
     transactionSession: ClientSession
   ): Promise<Correlation> {
     let customer: CustomerDocument; // Found customer
-    const queryParam = { workspaceId: workspace.id };
-    queryParam[dto.correlationKey] = dto.correlationValue;
+    let queryParam = { 
+      workspaceId: workspace.id,
+      $or: [
+        { [dto.correlationKey]: dto.correlationValue },
+        { other_ids: dto.correlationValue }
+      ]
+    };
     try {
       customer = await this.CustomerModel.findOne(queryParam)
         .session(transactionSession)
@@ -1464,12 +1550,37 @@ export class CustomersService {
       return Promise.reject(err);
     }
     if (!customer) {
+      // When no customer is found with the given correlation, create a new one
+      // If the correlationKey is '_id', use it to set the _id of the new customer
+      let newCustomerData: any = { workspaceId: workspace.id, createdAt: new Date() };
+      if (dto.correlationKey === '_id') {
+        newCustomerData._id = dto.correlationValue;
+      } else {
+        // If correlationKey is not '_id', 
+        newCustomerData._id = randomUUID();
+      }
+      const createdCustomer = new this.CustomerModel(newCustomerData);
+      return {
+        cust: await createdCustomer.save({ session: transactionSession }),
+        found: false,
+      };
+    } else {
+      return { cust: customer, found: true };
+    }
+    /*
+    if (!customer) {
+
+      if (!queryParam._id) {
+        queryParam._id = randomUUID();
+      }
+
       const createdCustomer = new this.CustomerModel(queryParam);
       return {
         cust: await createdCustomer.save({ session: transactionSession }),
         found: false,
       };
     } else return { cust: customer, found: true };
+    */
   }
 
   /**
@@ -1486,6 +1597,7 @@ export class CustomersService {
     upsertCustomerDto: UpsertCustomerDto,
     session: string
   ): Promise<{ id: string }> {
+    //console.log("in upsert");
     try {
       let primaryKey: CustomerKeysDocument = await this.cacheManager.get(
         `${auth.workspace.id}-primary-key`
@@ -1501,24 +1613,31 @@ export class CustomersService {
         );
       }
 
+      //console.log("in upsert 2");
       if (!primaryKey)
         throw new HttpException(
           'Primary key has not been set: see https://laudspeaker.com/docs/developer/api/users/upsert for more details.',
           HttpStatus.BAD_REQUEST
         );
 
+      // Generate a new UUID to be used only if a new document is being inserted
+      const newId = randomUUID(); 
+      //console.log("in upsert 3");
       const ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
         {
           workspaceId: auth.workspace.id,
           [primaryKey.key]: upsertCustomerDto.primary_key,
+        },{
+          $set: { ...upsertCustomerDto.properties },
+          $setOnInsert: { _id: newId } // This will ensure _id is set to newId only on insert
         },
-        { ...upsertCustomerDto.properties },
         { upsert: true, new: true, projection: { _id: 1 } }
       );
-
+      //console.log("in upsert 4");
       return Promise.resolve({ id: ret.id });
     } catch (err) {
       this.error(err, this.upsert.name, session, auth.account.email);
+      //console.log("in upsert 6");
       throw err;
     }
   }
@@ -1685,7 +1804,8 @@ export class CustomersService {
     );
 
     const res = await this.CustomerModel.deleteOne({
-      _id: new mongoose.Types.ObjectId(cust.id),
+      _id: cust.id,
+      //_id: new mongoose.Types.ObjectId(cust.id),
     });
     this.debug(
       `Deleted customer ${JSON.stringify(res)}`,
@@ -2446,6 +2566,299 @@ export class CustomersService {
         });
       }
       return thisCollectionName; // mergedSet;
+    }
+    //shouldn't get here;
+    return ''; // Default: Return an empty set
+  }
+
+  /*
+   *
+   *
+   * Takes in a segment query (inclusion criteria) and returns a string that is the name of a mongo collection of customers not customerIds
+   *
+   * @remarks
+   * This has been initially optimized, but can likely be more optimized
+   *
+   */
+  //to do create intermediate collection
+  async getCustomersFromQuery(
+    query: any,
+    account: Account,
+    session: string,
+    topLevel: boolean,
+    count: number,
+    intermediateCollection?: string
+  ): Promise<string> {
+    this.debug(
+      'Creating segment from query',
+      this.getCustomersFromQuery.name,
+      session
+    );
+
+    this.debug(
+      `top level query is: ${JSON.stringify(query, null, 2)}`,
+      this.getCustomersFromQuery.name,
+      session,
+      account.id
+    );
+
+    //create collectionName
+    let collectionName: string;
+    let thisCollectionName: string;
+    if (count == 0) {
+      collectionName = intermediateCollection;
+    } else {
+      collectionName = intermediateCollection + count;
+    }
+    thisCollectionName = collectionName;
+    this.connection.db.collection(thisCollectionName);
+    count = count + 1;
+    //collectionName = collectionName + count;
+
+    if (query.type === 'all') {
+      console.log('the query has all (AND)');
+      if (!query.statements || query.statements.length === 0) {
+        return; //new Set<string>(); // Return an empty set
+      }
+      const sets = await Promise.all(
+        query.statements.map(async (statement) => {
+          return await this.getSegmentCustomersFromSubQuery(
+            statement,
+            account,
+            session,
+            count++,
+            collectionName + count
+          );
+        })
+      );
+      this.debug(
+        `the sets are: ${sets}`,
+        this.getCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `about to reduce the sets`,
+        this.getCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `the sets length: ${sets.length}`,
+        this.getCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      const unionAggregation: any[] = [];
+      //if (sets.length > 1) {
+      // Add each additional collection to the pipeline for union
+      sets.forEach((collName) => {
+        //console.log("the set is", collName);
+        unionAggregation.push({ $unionWith: { coll: collName } });
+      });
+      // Group by customerId and count occurrences
+      unionAggregation.push(
+        { $group: { _id: '$_id', count: { $sum: 1 } } },
+        //{ $group: { _id: "$customerId", count: { $sum: 1 } } },
+        { $match: { count: sets.length } } // Match only IDs present in all subqueries
+      );
+      //} else if (sets.length === 1) {
+      //  console.log("sets length 1");
+      // If there's only one collection, no matching
+      //} else {
+      //  console.log("No collections to process.");
+      //  return; // Exit if there are no collections
+      //}
+      unionAggregation.push({ $out: thisCollectionName });
+
+      //console.log("the first collection is", thisCollectionName);
+      //console.log("union aggreagation is", JSON.stringify(unionAggregation,null,2));
+
+      // Perform the aggregation on the first collection
+      const collectionHandle =
+        this.connection.db.collection(thisCollectionName);
+      await collectionHandle.aggregate(unionAggregation).toArray();
+
+      if (topLevel) {
+        //for each count drop the collections up to the last one
+        sets.map(async (collection) => {
+          try {
+            this.debug(
+              `trying to release collection`,
+              this.getCustomersFromQuery.name,
+              session,
+              account.id
+            );
+            //toggle for testing segments
+            await this.connection.db.collection(collection).drop();
+            this.debug(
+              `dropped successfully`,
+              this.getCustomersFromQuery.name,
+              session,
+              account.id
+            );
+          } catch (e) {
+            this.debug(
+              `error dropping collection: ${e}`,
+              this.getCustomersFromQuery.name,
+              session,
+              account.id
+            );
+          }
+        });
+      }
+
+      const fullDetailsCollectionName = `${thisCollectionName}_FullDetails`;
+
+      // Step 2-4: Perform a lookup aggregation to join and transfer to the new collection
+      const finalAggregationPipeline = [
+        {
+          $lookup: {
+            from: 'customers', // Replace with your actual collection name containing full details
+            localField: '_id', // Adjust if necessary to match the linking field
+            foreignField: '_id', // Adjust if necessary to match the linking field
+            as: 'customerDetails',
+          },
+        },
+        {
+          $unwind: '$customerDetails', // Optional, to flatten the results if each ID maps to exactly one customer
+        },
+        {
+          $replaceRoot: { newRoot: '$customerDetails' }, // Promotes customerDetails to the top level
+        },
+        {
+          $out: fullDetailsCollectionName, // Output the results into the new collection
+        },
+      ];
+
+      //return thisCollectionName; // mergedSet;
+
+      let something = await collectionHandle
+        .aggregate(finalAggregationPipeline)
+        .toArray();
+
+      return fullDetailsCollectionName;
+    } else if (query.type === 'any') {
+      console.log('the query has any (OR)');
+      if (!query.statements || query.statements.length === 0) {
+        return ''; //new Set<string>(); // Return an empty set
+      }
+
+      const sets = await Promise.all(
+        query.statements.map(async (statement) => {
+          //console.log("collectionName is", collectionName);
+          return await this.getSegmentCustomersFromSubQuery(
+            statement,
+            account,
+            session,
+            count++,
+            collectionName + count
+          );
+        })
+      );
+
+      const unionAggregation: any[] = [];
+      /*
+      [
+        { $group: { _id: "$customerId" } }
+      ];
+      */
+
+      this.debug(
+        `the sets are: ${sets}`,
+        this.getCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `about to union the sets`,
+        this.getCustomersFromQuery.name,
+        session,
+        account.id
+      );
+      this.debug(
+        `the sets length: ${sets.length}`,
+        this.getCustomersFromQuery.name,
+        session,
+        account.id
+      );
+
+      // Add each additional collection to the pipeline
+      if (sets.length > 1) {
+        sets.forEach((collName) => {
+          unionAggregation.push({ $unionWith: { coll: collName } });
+          //unionAggregation.push({ $unionWith: { coll: collName, pipeline: [{ $group: { _id: "$customerId" } }] } });
+        });
+      }
+      //unique users
+      //unionAggregation.push({ $group: { _id: "$customerId" } });
+      unionAggregation.push({ $group: { _id: '$_id' } });
+
+      // dump results to thisCollectionName
+      unionAggregation.push({ $out: thisCollectionName });
+
+      //console.log("the first collection is", sets[0]);
+      // Perform the aggregation on the first collection
+      const collectionHandle = this.connection.db.collection(sets[0]);
+      await collectionHandle.aggregate(unionAggregation).toArray();
+
+      if (topLevel) {
+        //for each count drop the collections up to the last one
+        sets.map(async (collection) => {
+          try {
+            this.debug(
+              `trying to release collection`,
+              this.getCustomersFromQuery.name,
+              session,
+              account.id
+            );
+            //toggle for testing segments
+            await this.connection.db.collection(collection).drop();
+            this.debug(
+              `dropped successfully`,
+              this.getCustomersFromQuery.name,
+              session,
+              account.id
+            );
+          } catch (e) {
+            this.debug(
+              `error dropping collection: ${e}`,
+              this.getCustomersFromQuery.name,
+              session,
+              account.id
+            );
+          }
+        });
+      }
+
+      const fullDetailsCollectionName = `${thisCollectionName}_FullDetails`;
+
+      // Step 2-4: Perform a lookup aggregation to join and transfer to the new collection
+      const finalAggregationPipeline = [
+        {
+          $lookup: {
+            from: 'customers', // Replace with your actual collection name containing full details
+            localField: '_id', // Adjust if necessary to match the linking field
+            foreignField: '_id', // Adjust if necessary to match the linking field
+            as: 'customerDetails',
+          },
+        },
+        {
+          $unwind: '$customerDetails', // Optional, to flatten the results if each ID maps to exactly one customer
+        },
+        {
+          $replaceRoot: { newRoot: '$customerDetails' }, // Promotes customerDetails to the top level
+        },
+        {
+          $out: fullDetailsCollectionName, // Output the results into the new collection
+        },
+      ];
+
+      //return thisCollectionName; // mergedSet;
+      let something = await collectionHandle
+        .aggregate(finalAggregationPipeline)
+        .toArray();
+      return fullDetailsCollectionName;
     }
     //shouldn't get here;
     return ''; // Default: Return an empty set
@@ -3282,7 +3695,8 @@ export class CustomersService {
         for (const row of rows) {
           const cleanedText = row.text.replace(/^"(.*)"$/, '$1'); // Removes surrounding quotes
           //console.log("cleaned text is", cleanedText);
-          const objectId = new Types.ObjectId(cleanedText);
+          //const objectId = new Types.ObjectId(cleanedText);
+          const objectId = (cleanedText);
           batch.push({ _id: objectId }); // Convert each ObjectId into an object
 
           if (batch.length >= batchSize) {
@@ -3963,7 +4377,8 @@ export class CustomersService {
         { $match: mongoQuery },
         {
           $addFields: {
-            convertedCorrelationValue: { $toObjectId: '$correlationValue' },
+            //convertedCorrelationValue: { $toObjectId: '$correlationValue' },
+            convertedCorrelationValue: '$correlationValue' ,
           },
         },
         {
@@ -4189,7 +4604,8 @@ export class CustomersService {
         { $match: mobileMongoQuery },
         {
           $addFields: {
-            convertedCorrelationValue: { $toObjectId: '$correlationValue' },
+            //convertedCorrelationValue: { $toObjectId: '$correlationValue' },
+            convertedCorrelationValue: '$correlationValue' ,
           },
         },
         {
@@ -5411,7 +5827,8 @@ export class CustomersService {
 
       const searchConditions = {
         $or: [
-          ...(isValidObjectId(search) ? [{ _id: search }] : []),
+          ...(search ? [{ _id: search }] : []),
+          //...(isValidObjectId(search) ? [{ _id: search }] : []),
           { email: findRegexp },
           { phone: findRegexp },
           ...(pk ? [{ [pk.key]: findRegexp }] : []),
@@ -6136,5 +6553,150 @@ export class CustomersService {
     }
     await clientSession.commitTransaction();
     await clientSession.endSession();
+  }
+
+  async sendFCMToken(
+    auth: { account: Account; workspace: Workspaces },
+    body: SendFCMDto,
+    session: string
+  ) {
+    if (!body.type)
+      throw new HttpException('No type given', HttpStatus.BAD_REQUEST);
+    if (!body.token)
+      throw new HttpException('No FCM token given', HttpStatus.BAD_REQUEST);
+
+    const workspace = auth.workspace;
+
+    let customer = await this.CustomerModel.findOne({
+      _id: body.customerId,
+      workspaceId: workspace.id,
+    });
+
+    if (!customer) {
+      this.error('Customer not found', this.sendFCMToken.name, session);
+
+      customer = await this.CustomerModel.create({
+        isAnonymous: true,
+        workspaceId: workspace.id,
+      });
+    }
+
+    await this.CustomerModel.updateOne(
+      { _id: customer.id },
+      {
+        [body.type === PushPlatforms.ANDROID
+          ? 'androidDeviceToken'
+          : 'iosDeviceToken']: body.token,
+      }
+    );
+
+    return customer.id;
+  }
+
+  async identifyCustomer(
+    auth: { account: Account; workspace: Workspaces },
+    body: IdentifyCustomerDTO,
+    session: string
+  ) {
+    if (!body.__PrimaryKey)
+      throw new HttpException(
+        'No Primary Key given',
+        HttpStatus.NOT_ACCEPTABLE
+      );
+
+    if (!auth?.account || !body?.customerId) {
+      return;
+    }
+
+    const workspace = auth.workspace;
+
+    let customer = await this.CustomerModel.findOne({
+      _id: body.customerId,
+      workspaceId: workspace.id,
+    });
+
+    if (!customer) {
+      this.error(
+        'Invalid customer id. Creating new anonymous customer...',
+        this.identifyCustomer.name,
+        session
+      );
+      customer = await this.CustomerModel.create({
+        isAnonymous: true,
+        workspaceId: workspace.id,
+      });
+    }
+
+    if (!customer.isAnonymous) {
+      throw new HttpException(
+        'Failed to identify: already identified',
+        HttpStatus.NOT_ACCEPTABLE
+      );
+    }
+
+    const primaryKey = await this.CustomerKeysModel.findOne({
+      workspaceId: workspace.id,
+      isPrimary: true,
+    });
+
+    const identifiedCustomer =
+      await this.CustomerModel.findOne({
+        workspaceId: workspace.id,
+        [primaryKey.key]: body.__PrimaryKey,
+      });
+
+    if (identifiedCustomer) {
+      await this.deleteEverywhere(customer.id);
+
+      await customer.deleteOne();
+
+      return identifiedCustomer.id;
+    } else {
+      await this.CustomerModel.findByIdAndUpdate(customer.id, {
+        ...customer.toObject(),
+        ...body.optionalProperties,
+        //...uniqueProperties,
+        [primaryKey.key]: body.__PrimaryKey,
+        workspaceId: workspace.id,
+        isAnonymous: false,
+      });
+    }
+
+    return customer.id;
+  }
+
+  async setCustomerProperties(
+    auth: { account: Account; workspace: Workspaces },
+    body: SetCustomerPropsDTO,
+    session: string
+  ) {
+    if (!auth.account || !body.customerId) {
+      return;
+    }
+
+    const workspace = auth.workspace;
+
+    const customer = await this.CustomerModel.findOne({
+      _id: body.customerId,
+      workspaceId: workspace.id,
+    });
+
+    if (!customer || customer.isAnonymous) {
+      this.error(
+        'Invalid customer id. Please call identify first',
+        this.setCustomerProperties.name,
+        session
+      );
+      throw new HttpException(
+        'Invalid customer id. Please call identify first',
+        HttpStatus.NOT_FOUND
+      );
+    }
+
+    await this.CustomerModel.findByIdAndUpdate(customer.id, {
+      ...customer.toObject(),
+      ...body.optionalProperties,
+      workspaceId: workspace.id,
+    });
   }
 }

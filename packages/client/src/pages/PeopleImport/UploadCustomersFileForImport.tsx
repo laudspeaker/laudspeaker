@@ -111,8 +111,8 @@ const UploadCustomersFileForImport = ({
       if (file.type !== "text/csv") {
         toast.error("File must have .csv extension");
         return;
-      } else if (file.size >= 1073741824) {
-        toast.error("File size should not more than 1GB");
+      } else if (file.size >= 10737418240) {
+        toast.error("File size cannot exceed 10GB");
         return;
       }
       setIsLoading(true);
@@ -131,9 +131,7 @@ const UploadCustomersFileForImport = ({
             handleUploadFile(results, file);
           },
           error(err) {
-            toast.error(
-              "Error processing file, make sure you upload CSV file."
-            );
+            toast.error(`Error processing file: ${err}`);
             clearFileInput();
             setIsFileValidating(false);
             setIsLoading(false);

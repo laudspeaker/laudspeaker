@@ -14,7 +14,11 @@ import {
 } from '@nestjs/bullmq';
 import { Job, MetricsTime, Queue } from 'bullmq';
 import { cpus } from 'os';
-import { CustomComponentAction, StepType } from '../types/step.interface';
+import {
+  CustomComponentAction,
+  ExperimentBranch,
+  StepType,
+} from '../types/step.interface';
 import { Step } from '../entities/step.entity';
 import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
@@ -175,16 +179,7 @@ export class TransitionProcessor extends WorkerHost {
       string
     >
   ): Promise<any> {
-    this.debug(
-      `${JSON.stringify({ job })}`,
-      this.process.name,
-      randomUUID(),
-      ''
-    );
     let err: any;
-    // const queryRunner = this.dataSource.createQueryRunner();
-    // await queryRunner.connect();
-    // await queryRunner.startTransaction();
     try {
       switch (job.data.step.type) {
         case StepType.START:
@@ -255,8 +250,6 @@ export class TransitionProcessor extends WorkerHost {
           //     job.data.event
           //   );
           break;
-        case StepType.RANDOM_COHORT_BRANCH:
-          break;
         case StepType.TIME_DELAY:
           await this.handleTimeDelay(
             job.data.owner,
@@ -289,6 +282,17 @@ export class TransitionProcessor extends WorkerHost {
             job.data.location,
             job.data.event,
             job.data.branch
+          );
+          break;
+        case StepType.EXPERIMENT:
+          await this.handleExperiment(
+            job.data.owner,
+            job.data.journey,
+            job.data.step,
+            job.data.session,
+            job.data.customer,
+            job.data.location,
+            job.data.event
           );
           break;
         default:
@@ -769,7 +773,7 @@ export class TransitionProcessor extends WorkerHost {
             name: TemplateType.EMAIL,
             accountID: owner.id,
             cc: template.cc,
-            customerID: customer.id,
+            customerID: customer._id,
             domain: sendingDomain,
             email: sendingEmail,
             stepID: step.id,
@@ -811,7 +815,7 @@ export class TransitionProcessor extends WorkerHost {
                   name: 'android',
                   accountID: owner.id,
                   stepID: step.id,
-                  customerID: customer.id,
+                  customerID: customer._id,
                   firebaseCredentials:
                     workspace.pushPlatforms.Android.credentials,
                   deviceToken: customer.androidDeviceToken,
@@ -828,7 +832,7 @@ export class TransitionProcessor extends WorkerHost {
                   name: 'ios',
                   accountID: owner.id,
                   stepID: step.id,
-                  customerID: customer.id,
+                  customerID: customer._id,
                   firebaseCredentials: workspace.pushPlatforms.iOS.credentials,
                   deviceToken: customer.iosDeviceToken,
                   pushTitle: template.pushObject.settings.iOS.title,
@@ -846,7 +850,7 @@ export class TransitionProcessor extends WorkerHost {
                   name: 'ios',
                   accountID: owner.id,
                   stepID: step.id,
-                  customerID: customer.id,
+                  customerID: customer._id,
                   firebaseCredentials: workspace.pushPlatforms.iOS.credentials,
                   deviceToken: customer.iosDeviceToken,
                   pushTitle: template.pushObject.settings.iOS.title,
@@ -864,7 +868,7 @@ export class TransitionProcessor extends WorkerHost {
                   name: 'android',
                   accountID: owner.id,
                   stepID: step.id,
-                  customerID: customer.id,
+                  customerID: customer._id,
                   firebaseCredentials:
                     workspace.pushPlatforms.Android.credentials,
                   deviceToken: customer.androidDeviceToken,
@@ -882,11 +886,11 @@ export class TransitionProcessor extends WorkerHost {
         case TemplateType.MODAL:
           if (template.modalState) {
             const isSent = await this.websocketGateway.sendModal(
-              customer.id,
+              customer._id,
               template
             );
             if (!isSent)
-              await this.modalsService.queueModalEvent(customer.id, template);
+              await this.modalsService.queueModalEvent(customer._id, template);
           }
           break;
         case TemplateType.SLACK:
@@ -898,7 +902,7 @@ export class TransitionProcessor extends WorkerHost {
               name: TemplateType.SLACK,
               accountID: owner.id,
               stepID: step.id,
-              customerID: customer.id,
+              customerID: customer._id,
               templateID: template.id,
               methodName: 'chat.postMessage',
               filteredTags: filteredTags,
@@ -920,7 +924,7 @@ export class TransitionProcessor extends WorkerHost {
               name: TemplateType.SMS,
               accountID: owner.id,
               stepID: step.id,
-              customerID: customer.id,
+              customerID: customer._id,
               templateID: template.id,
               from: workspace.smsFrom,
               sid: workspace.smsAccountSid,
@@ -942,7 +946,7 @@ export class TransitionProcessor extends WorkerHost {
               template,
               filteredTags,
               audienceId: step.id,
-              customerId: customer.id,
+              customerId: customer._id,
               accountId: owner.id,
             });
           }
@@ -973,7 +977,7 @@ export class TransitionProcessor extends WorkerHost {
           {
             stepId: step.id,
             createdAt: new Date().toISOString(),
-            customerId: customer.id,
+            customerId: customer._id,
             event: 'aborted',
             eventProvider: ClickHouseEventProvider.TRACKER,
             messageId: step.metadata.humanReadableName,
@@ -986,7 +990,7 @@ export class TransitionProcessor extends WorkerHost {
       );
     } else if (messageSendType === 'MOCK_SEND') {
       this.log(
-        `MOCK_MESSAGE_SEND set to true, mocking message send for customer: ${customer.id} in journey ${journey.id}`,
+        `MOCK_MESSAGE_SEND set to true, mocking message send for customer: ${customer._id} in journey ${journey.id}`,
         this.handleMessage.name,
         session,
         owner.id
@@ -1015,7 +1019,7 @@ export class TransitionProcessor extends WorkerHost {
           {
             stepId: step.id,
             createdAt: new Date().toISOString(),
-            customerId: customer.id,
+            customerId: customer._id,
             event: 'sent',
             eventProvider: ClickHouseEventProvider.TRACKER,
             messageId: step.metadata.humanReadableName,
@@ -1032,7 +1036,7 @@ export class TransitionProcessor extends WorkerHost {
       await this.journeysService.rateLimitByMinuteIncrement(owner, journey);
     } else if (messageSendType === 'LIMIT_HOLD') {
       this.log(
-        `Unique customers messaged limit hit. Holding customer:${customer.id} at message step for journey: ${journey.id}`,
+        `Unique customers messaged limit hit. Holding customer:${customer._id} at message step for journey: ${journey.id}`,
         this.handleMessage.name,
         session,
         owner.id
@@ -1044,7 +1048,7 @@ export class TransitionProcessor extends WorkerHost {
       messageSendType === 'LIMIT_REQUEUE'
     ) {
       this.log(
-        `Requeuing message for customer: ${customer.id}, step: ${step.id} for reason: ${messageSendType}`,
+        `Requeuing message for customer: ${customer._id}, step: ${step.id} for reason: ${messageSendType}`,
         this.handleMessage.name,
         session,
         owner.id
@@ -1052,7 +1056,7 @@ export class TransitionProcessor extends WorkerHost {
       await this.stepsService.requeueMessage(
         owner,
         step,
-        customer.id,
+        customer._id,
         requeueTime,
         session
       );
@@ -1675,6 +1679,64 @@ export class TransitionProcessor extends WorkerHost {
           session,
           customer,
           location,
+          event,
+        };
+      } else {
+        // Destination is time based,
+        // customer has stopped moving so we can release lock
+        await this.journeyLocationsService.unlock(location, nextStep);
+      }
+    } else {
+      // Destination does not exist,
+      // customer has stopped moving so we can release lock
+      await this.journeyLocationsService.unlock(location, step);
+    }
+    if (nextStep && job) await this.transitionQueue.add(nextStep.type, job);
+  }
+
+  async handleExperiment(
+    owner: Account,
+    journey: Journey,
+    step: Step,
+    session: string,
+    customer: CustomerDocument,
+    location: JourneyLocation,
+    event?: string
+  ) {
+    let p = 0;
+    let job;
+    let nextStep;
+    let nextBranch: ExperimentBranch | undefined;
+
+    const random = Math.random();
+    for (const branch of step.metadata.branches) {
+      p += branch.ratio;
+      if (random < p) {
+        nextBranch = branch;
+        break;
+      }
+    }
+
+    nextStep = await this.cacheManager.get(`step:${nextBranch.destination}`);
+    if (!nextStep) {
+      nextStep = await this.stepsService.lazyFindByID(nextBranch.destination);
+      if (nextStep)
+        await this.cacheManager.set(`step:${nextBranch.destination}`, nextStep);
+    }
+
+    if (nextStep) {
+      if (
+        nextStep.type !== StepType.TIME_DELAY &&
+        nextStep.type !== StepType.TIME_WINDOW &&
+        nextStep.type !== StepType.WAIT_UNTIL_BRANCH
+      ) {
+        job = {
+          owner,
+          journey,
+          step: nextStep,
+          session,
+          location,
+          customer,
           event,
         };
       } else {

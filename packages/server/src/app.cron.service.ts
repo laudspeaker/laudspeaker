@@ -1279,12 +1279,9 @@ export class CronService {
   async handleEntryTiming() {
     const session = randomUUID();
     let triggerStartTasks;
-    const collectionNames: string[] = [];
     const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
+    const client = await queryRunner.connect();
     await queryRunner.startTransaction();
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
     try {
       // Step 1: Find all journeys that are delayed
       const delayedJourneys = await queryRunner.manager
@@ -1355,9 +1352,9 @@ export class CronService {
               delayedJourneys[journeysIndex].workspace.organization.owner,
               delayedJourneys[journeysIndex].inclusionCriteria,
               session,
-              transactionSession
+              null
             );
-          if (collectionName) collectionNames.push(collectionName);
+          // if (collectionName) collectionNames.push(collectionName);
           // Step 3: Edit journey details
           await queryRunner.manager.save(Journey, {
             ...delayedJourneys[journeysIndex],
@@ -1383,18 +1380,18 @@ export class CronService {
                 )
               : count,
             queryRunner,
-            transactionSession,
-            session
+            client,
+            session,
+            collectionName
           );
-          if (triggerStartTasks.collectionName)
-            collectionNames.push(triggerStartTasks.collectionName);
+          // if (triggerStartTasks.collectionName)
+          //   collectionNames.push(triggerStartTasks.collectionName);
         }
       }
-      await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
-      for (const collection of collectionNames) {
-        await this.connection.dropCollection(collection);
-      }
+      // for (const collection of collectionNames) {
+      //   await this.connection.dropCollection(collection);
+      // }
       if (triggerStartTasks?.job)
         await this.startQueue.add(
           triggerStartTasks.job.name,
@@ -1403,9 +1400,7 @@ export class CronService {
     } catch (e) {
       this.error(e, this.handleEntryTiming.name, session);
       await queryRunner.rollbackTransaction();
-      await transactionSession.abortTransaction();
     } finally {
-      await transactionSession.endSession();
       await queryRunner.release();
     }
   }

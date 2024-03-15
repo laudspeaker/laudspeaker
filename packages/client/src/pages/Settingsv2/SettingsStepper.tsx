@@ -16,6 +16,7 @@ const SettingsStepper: FC<SettingsStepperProps> = ({
     SettingsTab.EVENT_PROVIDER,
     SettingsTab.API,
     SettingsTab.ORGANIZATION,
+    //SettingsTab.FREQUENCY_CAPPING,
     // Removed for 1 release
     // SettingsTab.PLAN,
     // SettingsTab.BILLING,
@@ -28,6 +29,7 @@ const SettingsStepper: FC<SettingsStepperProps> = ({
     [SettingsTab.EVENT_PROVIDER]: "Event Providers",
     [SettingsTab.API]: "API",
     [SettingsTab.ORGANIZATION]: "Organization",
+    //[SettingsTab.FREQUENCY_CAPPING]: "Frequency capping",
     // Removed for 1 release
     // [SettingsTab.PLAN]: "Plan",
     // [SettingsTab.BILLING]: "Billing",
