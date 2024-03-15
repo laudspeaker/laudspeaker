@@ -977,7 +977,7 @@ export class SegmentsService {
       data: customers.map((customer) => ({
         ...(customer?.toObject() || {}),
         id: customer.id,
-        createdAt: customer._id.getTimestamp(),
+        createdAt: customer.createdAt,
         dataSource: 'segmentPeople',
       })),
       totalPages,
