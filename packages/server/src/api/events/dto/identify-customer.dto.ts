@@ -15,4 +15,3 @@ export class IdentifyCustomerDTO {
   @IsOptional()
   optionalProperties?: { [key: string]: unknown };
 }
-

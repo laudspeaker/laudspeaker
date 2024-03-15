@@ -11,4 +11,3 @@ export class SetCustomerPropsDTO {
   @IsOptional()
   optionalProperties?: { [key: string]: unknown };
 }
-
