@@ -1597,6 +1597,7 @@ export class CustomersService {
     upsertCustomerDto: UpsertCustomerDto,
     session: string
   ): Promise<{ id: string }> {
+    //console.log("in upsert");
     try {
       let primaryKey: CustomerKeysDocument = await this.cacheManager.get(
         `${auth.workspace.id}-primary-key`
@@ -1612,24 +1613,31 @@ export class CustomersService {
         );
       }
 
+      //console.log("in upsert 2");
       if (!primaryKey)
         throw new HttpException(
           'Primary key has not been set: see https://laudspeaker.com/docs/developer/api/users/upsert for more details.',
           HttpStatus.BAD_REQUEST
         );
 
+      // Generate a new UUID to be used only if a new document is being inserted
+      const newId = randomUUID(); 
+      //console.log("in upsert 3");
       const ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
         {
           workspaceId: auth.workspace.id,
           [primaryKey.key]: upsertCustomerDto.primary_key,
+        },{
+          $set: { ...upsertCustomerDto.properties },
+          $setOnInsert: { _id: newId } // This will ensure _id is set to newId only on insert
         },
-        { ...upsertCustomerDto.properties },
         { upsert: true, new: true, projection: { _id: 1 } }
       );
-
+      //console.log("in upsert 4");
       return Promise.resolve({ id: ret.id });
     } catch (err) {
       this.error(err, this.upsert.name, session, auth.account.email);
+      //console.log("in upsert 6");
       throw err;
     }
   }
