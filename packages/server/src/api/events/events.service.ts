@@ -968,7 +968,7 @@ export class EventsService {
                 session,
                 auth.account.id
               );
-              console.log('Handling $identify event for correlationKey:', thisEvent.correlationValue);
+              //console.log('Handling $identify event for correlationKey:', thisEvent.correlationValue);
               await this.handleIdentify(auth, thisEvent, session);
               break;
               // Your logic to handle $identify event
@@ -980,7 +980,7 @@ export class EventsService {
                 session,
                 auth.account.id
               );
-              console.log('Handling $set event for correlationKey:', thisEvent.correlationValue);
+              //console.log('Handling $set event for correlationKey:', thisEvent.correlationValue);
               await this.handleSet(auth, thisEvent, session);
               // Your logic to handle $set event
               break;
@@ -992,7 +992,7 @@ export class EventsService {
                 session,
                 auth.account.id
               );
-              console.log('Handling $fcm event for correlationKey:', thisEvent.correlationValue);
+              //console.log('Handling $fcm event for correlationKey:', thisEvent.correlationValue);
               await this.handleFCM(auth, thisEvent, session);
               // Your logic to handle $set event
               break;
