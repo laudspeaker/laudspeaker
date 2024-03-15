@@ -1112,6 +1112,15 @@ export class EventsService {
       { new: true }
     );
 
+    await this.EventModel.create({
+      event: event.event,
+      workspaceId: workspaceId,
+      payload: filteredPayload,
+      //we should really standardize on .toISOString() or .toUTCString()
+      //createdAt: new Date().toUTCString(),
+      createdAt: new Date().toISOString(),
+    });
+
     return customer._id;
   }
 
@@ -1399,6 +1408,15 @@ export class EventsService {
       },
       { upsert: true }
     );
+
+    await this.EventModel.create({
+      event: event.event,
+      workspaceId: workspaceId,
+      payload: filteredPayload,
+      //we should really standardize on .toISOString() or .toUTCString()
+      //createdAt: new Date().toUTCString(),
+      createdAt: new Date().toISOString(),
+    });
   
     return customer._id;
   }
