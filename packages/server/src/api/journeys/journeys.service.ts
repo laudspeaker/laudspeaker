@@ -1004,16 +1004,12 @@ export class JourneysService {
         relations: ['latestChanger'],
       });
 
-      const journeysWithEnrolledCustomersCount = await Promise.all(
-        journeys.map(async (journey) => ({
-          ...journey,
-          latestChanger: null,
-          latestChangerEmail: journey.latestChanger?.email,
-          enrolledCustomers: await this.CustomerModel.count({
-            journeys: journey.id,
-          }),
-        }))
-      );
+      const journeysWithEnrolledCustomersCount = journeys.map((journey) => ({
+        ...journey,
+        latestChanger: null,
+        latestChangerEmail: journey.latestChanger?.email,
+        enrolledCustomers: +journey.enrollment_count,
+      }));
 
       return { data: journeysWithEnrolledCustomersCount, totalPages };
     } catch (err) {
