@@ -65,7 +65,7 @@ import {
 } from '../customers/schemas/customer-keys.schema';
 import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
 import { MobileBatchDto } from './dto/mobile-batch.dto';
-import e from 'express';
+import { EventBatchDto } from './dto/event-batch.dto';
 
 @Injectable()
 export class EventsService {
@@ -284,6 +284,21 @@ export class EventsService {
       event: eventDto,
       session: session,
     });
+  }
+
+  async customBatchPayload(
+    auth: { account: Account; workspace: Workspaces },
+    eventBatchDto: EventBatchDto,
+    session: string
+  ) {
+    for (const eventDto of eventBatchDto.batch) {
+      await this.eventPreprocessorQueue.add(ProviderType.LAUDSPEAKER, {
+        owner: auth.account,
+        workspace: auth.workspace,
+        event: eventDto,
+        session: session,
+      });
+    }
   }
 
   async getOrUpdateAttributes(resourceId: string, session: string) {
