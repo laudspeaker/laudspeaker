@@ -950,12 +950,9 @@ export class EventsService {
     session: string
   ) {
     let err: any;
-    //const queryRunner = this.dataSource.createQueryRunner();
-    //await queryRunner.connect();
-    //await queryRunner.startTransaction();
 
-    console.log("in batch events service");
-    console.log("here is the whole batch", JSON.stringify(MobileBatchDto, null, 2));
+    //console.log("in batch events service");
+    //console.log("here is the whole batch", JSON.stringify(MobileBatchDto, null, 2));
 
     try {
       //if(MobileBatchDto.batch.length <= 1){
