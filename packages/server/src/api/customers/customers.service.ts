@@ -133,7 +133,7 @@ const acceptableBooleanConvertable = {
   false: ['FALSE', 'false', 'F', 'f'],
 };
 
-export const systemAttributes: {
+export interface SystemAttribute {
   id: string;
   key: string;
   type: string;
@@ -141,7 +141,9 @@ export const systemAttributes: {
   dateFormat?: string;
   isArray: boolean;
   isSystem: true;
-}[] = [
+}
+
+export const systemAttributes: SystemAttribute[] = [
   {
     id: uuid(),
     key: 'androidFCMTokens',
@@ -168,6 +170,13 @@ export const systemAttributes: {
     key: 'other_ids',
     type: StatementValueType.STRING,
     isArray: true,
+    isSystem: true,
+  },
+  {
+    id: uuid(),
+    key: 'createdAt',
+    type: StatementValueType.NUMBER,
+    isArray: false,
     isSystem: true,
   },
 ];
