@@ -264,7 +264,7 @@ export class CustomersController {
       customComponents,
       ...customer
     } = await this.customersService.findOne(<Account>user, id, session);
-    const createdAt = new Date(parseInt(_id.slice(0, 8), 16) * 1000).getTime();
+    const createdAt = customer.createdAt;
     return { ...customer, createdAt };
   }
 
@@ -307,6 +307,12 @@ export class CustomersController {
     @Body() upsertCustomerDto: UpsertCustomerDto
   ) {
     const session = randomUUID();
+    this.debug(
+      `upserting customer ${JSON.stringify(upsertCustomerDto)}`,
+      this.upsert.name,
+      session,
+      (<Account>user).id
+    );
     return await this.customersService.upsert(
       <{ account: Account; workspace: Workspaces }>user,
       upsertCustomerDto,

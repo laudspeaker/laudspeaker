@@ -950,54 +950,55 @@ export class EventsService {
     session: string
   ) {
     let err: any;
-    //const queryRunner = this.dataSource.createQueryRunner();
-    //await queryRunner.connect();
-    //await queryRunner.startTransaction();
+
+    //console.log("in batch events service");
+    //console.log("here is the whole batch", JSON.stringify(MobileBatchDto, null, 2));
 
     try {
-      if (MobileBatchDto.batch.length <= 1) {
-        for (const thisEvent of MobileBatchDto.batch) {
-          switch (thisEvent.event) {
-            case '$identify':
-              // Handle $identify event
-              // You can add your logic here, for example:
-              this.debug(
-                `Handling $identify event for correlationKey: ${thisEvent.correlationValue}`,
-                this.handleIdentify.name,
-                session,
-                auth.account.id
-              );
-              //console.log('Handling $identify event for correlationKey:', thisEvent.correlationValue);
-              await this.handleIdentify(auth, thisEvent, session);
-              break;
-            // Your logic to handle $identify event
-            case '$set':
-              // Handle $set event
-              this.debug(
-                `Handling $set event for correlationKey: ${thisEvent.correlationValue}`,
-                this.handleIdentify.name,
-                session,
-                auth.account.id
-              );
-              //console.log('Handling $set event for correlationKey:', thisEvent.correlationValue);
-              await this.handleSet(auth, thisEvent, session);
-              // Your logic to handle $set event
-              break;
-            case '$fcm':
-              // Handle $set event
-              this.debug(
-                `Handling $fcm event for correlationKey: ${thisEvent.correlationValue}`,
-                this.handleIdentify.name,
-                session,
-                auth.account.id
-              );
-              //console.log('Handling $fcm event for correlationKey:', thisEvent.correlationValue);
-              await this.handleFCM(auth, thisEvent, session);
-              // Your logic to handle $set event
-              break;
-            default:
-              // Handle any other event
-              /*
+      //if(MobileBatchDto.batch.length <= 1){
+      for (const thisEvent of MobileBatchDto.batch) {
+        console.log('this is the event', JSON.stringify(thisEvent, null, 2));
+        switch (thisEvent.event) {
+          case '$identify':
+            // Handle $identify event
+            // You can add your logic here, for example:
+            this.debug(
+              `Handling $identify event for correlationKey: ${thisEvent.correlationValue}`,
+              this.handleIdentify.name,
+              session,
+              auth.account.id
+            );
+            //console.log('Handling $identify event for correlationKey:', thisEvent.correlationValue);
+            await this.handleIdentify(auth, thisEvent, session);
+            break;
+          // Your logic to handle $identify event
+          case '$set':
+            // Handle $set event
+            this.debug(
+              `Handling $set event for correlationKey: ${thisEvent.correlationValue}`,
+              this.handleIdentify.name,
+              session,
+              auth.account.id
+            );
+            //console.log('Handling $set event for correlationKey:', thisEvent.correlationValue);
+            await this.handleSet(auth, thisEvent, session);
+            // Your logic to handle $set event
+            break;
+          case '$fcm':
+            // Handle $set event
+            this.debug(
+              `Handling $fcm event for correlationKey: ${thisEvent.correlationValue}`,
+              this.handleIdentify.name,
+              session,
+              auth.account.id
+            );
+            //console.log('Handling $fcm event for correlationKey:', thisEvent.correlationValue);
+            await this.handleFCM(auth, thisEvent, session);
+            // Your logic to handle $set event
+            break;
+          default:
+            // Handle any other event
+            /*
               const eventStruct: EventDto = {
                 correlationKey: '_id',
                 correlationValue: customer.id,
@@ -1006,50 +1007,24 @@ export class EventsService {
                 event: eventName,
               };
               */
-              await this.customPayload(
-                { account: auth.account, workspace: auth.workspace },
-                thisEvent,
-                session
-              );
-              console.log(
-                'Handling other event for correlationKey:',
-                thisEvent.event
-              );
-              console.log(
-                'Handling other event for correlationKey:',
-                thisEvent.correlationValue
-              );
-              // Your logic to handle other types of events
-              break;
-          }
+            await this.customPayload(
+              { account: auth.account, workspace: auth.workspace },
+              thisEvent,
+              session
+            );
+            console.log(
+              'Handling other event for correlationKey:',
+              thisEvent.event
+            );
+            console.log(
+              'Handling other event for correlationKey:',
+              thisEvent.correlationValue
+            );
+            // Your logic to handle other types of events
+            break;
         }
-      } else {
-        const chronologicalEvents: EventDto[] = MobileBatchDto.batch.sort(
-          (a, b) =>
-            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-        );
-
-        /*
-        for (
-          let numEvent = 0;
-          numEvent < chronologicalEvents.length;
-          numEvent++
-        ) {
-          await this.eventPreprocessorQueue.add(
-            'posthog',
-            {
-              account: account,
-              event: MobileBatchDto,
-              session: session,
-            },
-            {
-              attempts: 10,
-              backoff: { delay: 1000, type: 'exponential' },
-            }
-          );
-        }
-        */
       }
+      //}
     } catch (e) {
       //await queryRunner.rollbackTransaction();
       err = e;
@@ -1151,6 +1126,15 @@ export class EventsService {
       { $set: filteredPayload },
       { new: true }
     );
+
+    await this.EventModel.create({
+      event: event.event,
+      workspaceId: workspaceId,
+      payload: filteredPayload,
+      //we should really standardize on .toISOString() or .toUTCString()
+      //createdAt: new Date().toUTCString(),
+      createdAt: new Date().toISOString(),
+    });
 
     return customer._id;
   }
@@ -1476,6 +1460,15 @@ export class EventsService {
       },
       { upsert: true }
     );
+
+    await this.EventModel.create({
+      event: event.event,
+      workspaceId: workspaceId,
+      payload: filteredPayload,
+      //we should really standardize on .toISOString() or .toUTCString()
+      //createdAt: new Date().toUTCString(),
+      createdAt: new Date().toISOString(),
+    });
 
     return customer._id;
   }
