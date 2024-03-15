@@ -1618,12 +1618,17 @@ export class CustomersService {
           HttpStatus.BAD_REQUEST
         );
 
+      // Generate a new UUID to be used only if a new document is being inserted
+      const newId = randomUUID(); 
+
       const ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
         {
           workspaceId: auth.workspace.id,
           [primaryKey.key]: upsertCustomerDto.primary_key,
+        },{
+          $set: { ...upsertCustomerDto.properties },
+          $setOnInsert: { _id: newId } // This will ensure _id is set to newId only on insert
         },
-        { ...upsertCustomerDto.properties },
         { upsert: true, new: true, projection: { _id: 1 } }
       );
 

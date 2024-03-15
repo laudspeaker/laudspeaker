@@ -954,9 +954,13 @@ export class EventsService {
     //await queryRunner.connect();
     //await queryRunner.startTransaction();
 
+    console.log("in batch events service");
+    console.log("here is the whole batch", JSON.stringify(MobileBatchDto, null, 2));
+
     try {
-      if(MobileBatchDto.batch.length <= 1){
+      //if(MobileBatchDto.batch.length <= 1){
         for (const thisEvent of MobileBatchDto.batch) {
+          console.log("this is the event", JSON.stringify(thisEvent, null, 2));
           switch (thisEvent.event) {
             case '$identify':
               // Handle $identify event
@@ -967,7 +971,7 @@ export class EventsService {
                 session,
                 auth.account.id
               );
-              //console.log('Handling $identify event for correlationKey:', thisEvent.correlationValue);
+              console.log('Handling $identify event for correlationKey:', thisEvent.correlationValue);
               await this.handleIdentify(auth, thisEvent, session);
               break;
               // Your logic to handle $identify event
@@ -979,7 +983,7 @@ export class EventsService {
                 session,
                 auth.account.id
               );
-              //console.log('Handling $set event for correlationKey:', thisEvent.correlationValue);
+              console.log('Handling $set event for correlationKey:', thisEvent.correlationValue);
               await this.handleSet(auth, thisEvent, session);
               // Your logic to handle $set event
               break;
@@ -991,7 +995,7 @@ export class EventsService {
                 session,
                 auth.account.id
               );
-              //console.log('Handling $fcm event for correlationKey:', thisEvent.correlationValue);
+              console.log('Handling $fcm event for correlationKey:', thisEvent.correlationValue);
               await this.handleFCM(auth, thisEvent, session);
               // Your logic to handle $set event
               break;
@@ -1017,36 +1021,7 @@ export class EventsService {
               break;
           }
         }
-      }
-      else{
-        const chronologicalEvents: EventDto[] = MobileBatchDto.batch.sort(
-          (a, b) =>
-            new Date(a.timestamp).getTime() -
-            new Date(b.timestamp).getTime()
-        );
-        
-        /*
-        for (
-          let numEvent = 0;
-          numEvent < chronologicalEvents.length;
-          numEvent++
-        ) {
-          await this.eventPreprocessorQueue.add(
-            'posthog',
-            {
-              account: account,
-              event: MobileBatchDto,
-              session: session,
-            },
-            {
-              attempts: 10,
-              backoff: { delay: 1000, type: 'exponential' },
-            }
-          );
-        }
-        */
-      }
-
+      //}
       
     } catch (e) {
       //await queryRunner.rollbackTransaction();

@@ -300,6 +300,12 @@ export class CustomersController {
     @Body() upsertCustomerDto: UpsertCustomerDto
   ) {
     const session = randomUUID();
+    this.debug(
+      `upserting customer ${JSON.stringify(upsertCustomerDto)}`,
+      this.upsert.name,
+      session,
+      (<Account>user).id
+    );
     return await this.customersService.upsert(
       <{ account: Account; workspace: Workspaces }>user,
       upsertCustomerDto,
