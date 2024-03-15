@@ -1238,19 +1238,51 @@ export class EventsService {
   
     // If customer still not found, create a new one
     if (!customer) {
-      customer = new this.customersService.CustomerModel({
-        _id: correlationValue,
-        [primaryKeyName]: primaryKeyValue,
-        workspaceId,
-        isAnonymous: false, // Adjust based on your logic
-      });
-      await customer.save();
-      this.debug(
-        `creating customer is: ${customer}`,
-        this.findOrCreateCustomer.name,
-        "000"
-      );
-      findType = 4;
+      const upsertData = {
+        $setOnInsert: {
+          _id: correlationValue,
+          workspaceId,
+        }
+      };
+
+      if (primaryKeyValue && primaryKeyName) {
+        upsertData.$setOnInsert[primaryKeyName] = primaryKeyValue;
+        upsertData.$setOnInsert["isAnonymous"] = false;
+      }
+
+      try {
+        customer = await this.customersService.CustomerModel.findOneAndUpdate(
+          { _id: correlationValue, workspaceId },
+          upsertData,
+          { upsert: true, new: true }
+        );
+        this.debug(
+          `upserted customer is: ${customer}`,
+          this.findOrCreateCustomer.name,
+          "000"
+        );
+        findType = 4; // Set findType to 4 to indicate an upsert operation
+      } catch (error: any) {
+        // Check if the error is a duplicate key error
+        if (error.code === 11000) {
+          // Handle the duplicate key error, for example, by fetching the existing customer
+          console.error("Duplicate key error encountered. Fetching existing customer.");
+          customer = await this.customersService.CustomerModel.findOne({
+            _id: correlationValue,
+            workspaceId,
+          });
+          this.debug(
+            `fetched existing customer after duplicate key error: ${customer}`,
+            this.findOrCreateCustomer.name,
+            "000"
+          );
+          findType = 5; // Optionally, set a different findType to indicate handling of a duplicate key error
+        } else {
+          // Re-throw the error if it is not a duplicate key error
+          this.error(error, this.findOrCreateCustomer.name, "000");
+          //throw error;
+        }
+      }
     }
   
     return {customer, findType};
