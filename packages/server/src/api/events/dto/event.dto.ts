@@ -51,5 +51,4 @@ export class EventDto {
 
   @IsOptional()
   public uuid?: string;
-
 }

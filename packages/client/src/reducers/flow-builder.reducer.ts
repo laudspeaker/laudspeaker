@@ -280,7 +280,7 @@ export enum DateComparisonType {
 export interface AttributeQueryStatement {
   type: QueryStatementType.ATTRIBUTE;
   key: string;
-  valueType: StatementValueType;
+  valueType?: StatementValueType;
   comparisonType: ComparisonType;
   subComparisonType: ObjectKeyComparisonType;
   subComparisonValue: string;
