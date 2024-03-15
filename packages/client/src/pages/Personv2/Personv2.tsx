@@ -105,7 +105,7 @@ function validateType(value: any, type: any) {
   }
 }
 
-function enforceType(value: any, type: AttributeType) {
+export function enforceType(value: any, type: AttributeType) {
   switch (type) {
     case StatementValueType.NUMBER:
       return Number(value);
