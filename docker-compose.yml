@@ -151,6 +151,16 @@ services:
     networks:
       - laudspeaker_default
 
+  ping-server:
+    image: jaredhanson11/ping-server:latest
+    container_name: ping-server
+    ports:
+      - "8555:8555"
+    environment:
+      PORT: 8555
+    networks:
+      - laudspeaker_default
+
   laudspeaker:
     profiles:
       - "testing"

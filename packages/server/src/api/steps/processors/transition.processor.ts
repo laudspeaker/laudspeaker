@@ -773,7 +773,7 @@ export class TransitionProcessor extends WorkerHost {
             name: TemplateType.EMAIL,
             accountID: owner.id,
             cc: template.cc,
-            customerID: customer.id,
+            customerID: customer._id,
             domain: sendingDomain,
             email: sendingEmail,
             stepID: step.id,
@@ -815,7 +815,7 @@ export class TransitionProcessor extends WorkerHost {
                   name: 'android',
                   accountID: owner.id,
                   stepID: step.id,
-                  customerID: customer.id,
+                  customerID: customer._id,
                   firebaseCredentials:
                     workspace.pushPlatforms.Android.credentials,
                   deviceToken: customer.androidDeviceToken,
@@ -832,7 +832,7 @@ export class TransitionProcessor extends WorkerHost {
                   name: 'ios',
                   accountID: owner.id,
                   stepID: step.id,
-                  customerID: customer.id,
+                  customerID: customer._id,
                   firebaseCredentials: workspace.pushPlatforms.iOS.credentials,
                   deviceToken: customer.iosDeviceToken,
                   pushTitle: template.pushObject.settings.iOS.title,
@@ -850,7 +850,7 @@ export class TransitionProcessor extends WorkerHost {
                   name: 'ios',
                   accountID: owner.id,
                   stepID: step.id,
-                  customerID: customer.id,
+                  customerID: customer._id,
                   firebaseCredentials: workspace.pushPlatforms.iOS.credentials,
                   deviceToken: customer.iosDeviceToken,
                   pushTitle: template.pushObject.settings.iOS.title,
@@ -868,7 +868,7 @@ export class TransitionProcessor extends WorkerHost {
                   name: 'android',
                   accountID: owner.id,
                   stepID: step.id,
-                  customerID: customer.id,
+                  customerID: customer._id,
                   firebaseCredentials:
                     workspace.pushPlatforms.Android.credentials,
                   deviceToken: customer.androidDeviceToken,
@@ -886,11 +886,11 @@ export class TransitionProcessor extends WorkerHost {
         case TemplateType.MODAL:
           if (template.modalState) {
             const isSent = await this.websocketGateway.sendModal(
-              customer.id,
+              customer._id,
               template
             );
             if (!isSent)
-              await this.modalsService.queueModalEvent(customer.id, template);
+              await this.modalsService.queueModalEvent(customer._id, template);
           }
           break;
         case TemplateType.SLACK:
@@ -902,7 +902,7 @@ export class TransitionProcessor extends WorkerHost {
               name: TemplateType.SLACK,
               accountID: owner.id,
               stepID: step.id,
-              customerID: customer.id,
+              customerID: customer._id,
               templateID: template.id,
               methodName: 'chat.postMessage',
               filteredTags: filteredTags,
@@ -924,7 +924,7 @@ export class TransitionProcessor extends WorkerHost {
               name: TemplateType.SMS,
               accountID: owner.id,
               stepID: step.id,
-              customerID: customer.id,
+              customerID: customer._id,
               templateID: template.id,
               from: workspace.smsFrom,
               sid: workspace.smsAccountSid,
@@ -946,7 +946,7 @@ export class TransitionProcessor extends WorkerHost {
               template,
               filteredTags,
               audienceId: step.id,
-              customerId: customer.id,
+              customerId: customer._id,
               accountId: owner.id,
             });
           }
@@ -977,7 +977,7 @@ export class TransitionProcessor extends WorkerHost {
           {
             stepId: step.id,
             createdAt: new Date().toISOString(),
-            customerId: customer.id,
+            customerId: customer._id,
             event: 'aborted',
             eventProvider: ClickHouseEventProvider.TRACKER,
             messageId: step.metadata.humanReadableName,
@@ -990,7 +990,7 @@ export class TransitionProcessor extends WorkerHost {
       );
     } else if (messageSendType === 'MOCK_SEND') {
       this.log(
-        `MOCK_MESSAGE_SEND set to true, mocking message send for customer: ${customer.id} in journey ${journey.id}`,
+        `MOCK_MESSAGE_SEND set to true, mocking message send for customer: ${customer._id} in journey ${journey.id}`,
         this.handleMessage.name,
         session,
         owner.id
@@ -1019,7 +1019,7 @@ export class TransitionProcessor extends WorkerHost {
           {
             stepId: step.id,
             createdAt: new Date().toISOString(),
-            customerId: customer.id,
+            customerId: customer._id,
             event: 'sent',
             eventProvider: ClickHouseEventProvider.TRACKER,
             messageId: step.metadata.humanReadableName,
@@ -1036,7 +1036,7 @@ export class TransitionProcessor extends WorkerHost {
       await this.journeysService.rateLimitByMinuteIncrement(owner, journey);
     } else if (messageSendType === 'LIMIT_HOLD') {
       this.log(
-        `Unique customers messaged limit hit. Holding customer:${customer.id} at message step for journey: ${journey.id}`,
+        `Unique customers messaged limit hit. Holding customer:${customer._id} at message step for journey: ${journey.id}`,
         this.handleMessage.name,
         session,
         owner.id
@@ -1048,7 +1048,7 @@ export class TransitionProcessor extends WorkerHost {
       messageSendType === 'LIMIT_REQUEUE'
     ) {
       this.log(
-        `Requeuing message for customer: ${customer.id}, step: ${step.id} for reason: ${messageSendType}`,
+        `Requeuing message for customer: ${customer._id}, step: ${step.id} for reason: ${messageSendType}`,
         this.handleMessage.name,
         session,
         owner.id
@@ -1056,7 +1056,7 @@ export class TransitionProcessor extends WorkerHost {
       await this.stepsService.requeueMessage(
         owner,
         step,
-        customer.id,
+        customer._id,
         requeueTime,
         session
       );

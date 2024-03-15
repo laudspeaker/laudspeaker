@@ -536,8 +536,12 @@ export class MessageSender {
           sound: 'default',
           clickAction: 'FLUTTER_NOTIFICATION_CLICK',
         },
+        priority: 'high',
       },
       apns: {
+        headers: {
+          'apns-priority': '5', // Specify priority as needed
+        },
         payload: {
           aps: {
             badge: 1,
@@ -678,8 +682,12 @@ export class MessageSender {
           sound: 'default',
           clickAction: 'FLUTTER_NOTIFICATION_CLICK',
         },
+        priority: 'high',
       },
       apns: {
+        headers: {
+          'apns-priority': '5', // Specify priority as needed
+        },
         payload: {
           aps: {
             badge: 1,
