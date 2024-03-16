@@ -214,11 +214,7 @@ export class EventsController {
     @Req() { user }: Request,
     @Body() { token }: { token: string }
   ) {
-    try {
-      await this.eventsService.sendTestPush(<Account>user, token);
-    } catch (error) {
-      throw error;
-    }
+    await this.eventsService.sendTestPush(<Account>user, token);
   }
 
   @Post('/sendTestPushByCustomer')
@@ -228,11 +224,7 @@ export class EventsController {
     @Req() { user }: Request,
     @Body() body: CustomerPushTest
   ) {
-    try {
-      await this.eventsService.sendTestPushByCustomer(<Account>user, body);
-    } catch (error) {
-      throw error;
-    }
+    await this.eventsService.sendTestPushByCustomer(<Account>user, body);
   }
 
   @Get('/attributes/:resourceId?')

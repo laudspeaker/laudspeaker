@@ -57,6 +57,7 @@ import {
 } from '../templates/entities/template.entity';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { ProviderType } from './events.preprocessor';
+import { EventBatchDto } from './dto/event-batch.dto';
 import { SendFCMDto } from './dto/send-fcm.dto';
 import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
 import {
@@ -65,7 +66,6 @@ import {
 } from '../customers/schemas/customer-keys.schema';
 import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
 import { MobileBatchDto } from './dto/mobile-batch.dto';
-import e from 'express';
 
 @Injectable()
 export class EventsService {
@@ -1165,7 +1165,7 @@ export class EventsService {
 
     // Determine which deviceTokenSetAt fields to compare
     const deviceTypes = ['ios', 'android'];
-    const updateFields = {};
+    let updateFields = {};
 
     for (const type of deviceTypes) {
       const tokenField = `${type}DeviceToken`;
