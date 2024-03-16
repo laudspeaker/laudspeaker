@@ -16,4 +16,3 @@ export class SendFCMDto {
   @IsString()
   public token: string;
 }
-

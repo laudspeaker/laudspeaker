@@ -39,7 +39,7 @@ import { ReadCustomerDto } from './dto/read-customer.dto';
 import { ModifyAttributesDto } from './dto/modify-attributes.dto';
 import { SendFCMDto } from './dto/send-fcm.dto';
 import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
-import { SetCustomerPropsDTO } from './dto/set-customer-props.dto'
+import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -163,6 +163,13 @@ export class CustomersController {
     const session = randomUUID();
 
     await this.customersService.updatePrimaryKey(<Account>user, body, session);
+  }
+
+  @Get('/system-attributes')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getSystemAttributes() {
+    return this.customersService.getSystemAttributes();
   }
 
   @Get('/possible-attributes')
@@ -635,5 +642,4 @@ export class CustomersController {
       session
     );
   }
-
 }

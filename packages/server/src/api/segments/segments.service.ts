@@ -25,7 +25,7 @@ import mongoose, { Types } from 'mongoose';
 import e, { query } from 'express';
 import { CountSegmentUsersSizeDTO } from './dto/size-count.dto';
 import { randomUUID } from 'crypto';
-import { Filter, Document } from 'mongodb'
+import { Filter, Document } from 'mongodb';
 
 @Injectable()
 export class SegmentsService {
@@ -509,7 +509,9 @@ export class SegmentsService {
       });
 
       try {
-        const result = await mongoCollection.insertMany(mongoDocuments as unknown[]);
+        const result = await mongoCollection.insertMany(
+          mongoDocuments as unknown[]
+        );
         //console.log('Batch of documents inserted:', result);
         mongoDocuments = []; // Reset batch after insertion
       } catch (err) {
@@ -975,7 +977,7 @@ export class SegmentsService {
       data: customers.map((customer) => ({
         ...(customer?.toObject() || {}),
         id: customer.id,
-        createdAt: customer._id.getTimestamp(),
+        createdAt: customer.createdAt,
         dataSource: 'segmentPeople',
       })),
       totalPages,
