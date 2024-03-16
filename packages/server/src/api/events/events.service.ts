@@ -286,21 +286,6 @@ export class EventsService {
     });
   }
 
-  async customBatchPayload(
-    auth: { account: Account; workspace: Workspaces },
-    eventBatchDto: EventBatchDto,
-    session: string
-  ) {
-    for (const eventDto of eventBatchDto.batch) {
-      await this.eventPreprocessorQueue.add(ProviderType.LAUDSPEAKER, {
-        owner: auth.account,
-        workspace: auth.workspace,
-        event: eventDto,
-        session: session,
-      });
-    }
-  }
-
   async getOrUpdateAttributes(resourceId: string, session: string) {
     const attributes = await this.EventKeysModel.find().exec();
     if (resourceId === 'attributes') {

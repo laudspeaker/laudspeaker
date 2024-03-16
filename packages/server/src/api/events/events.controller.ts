@@ -25,7 +25,6 @@ import { randomUUID } from 'crypto';
 import { RavenInterceptor } from 'nest-raven';
 import { CustomerPushTest } from './dto/customer-push-test.dto';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
-import { EventBatchDto } from './dto/event-batch.dto';
 import { SendFCMDto } from './dto/send-fcm.dto';
 import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
 import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
@@ -118,22 +117,6 @@ export class EventsController {
   ): Promise<void | HttpException> {
     const session = randomUUID();
     return this.eventsService.customPayload(
-      <{ account: Account; workspace: Workspaces }>user,
-      body,
-      session
-    );
-  }
-
-  @Post('/batch')
-  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  @UseGuards(ApiKeyAuthGuard)
-  async customBatchPayload(
-    @Req() { user }: Request,
-    @Body() body: EventBatchDto
-  ): Promise<void | HttpException> {
-    const session = randomUUID();
-
-    return this.eventsService.customBatchPayload(
       <{ account: Account; workspace: Workspaces }>user,
       body,
       session
