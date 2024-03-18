@@ -15,6 +15,7 @@ export const uploadCSV = (filename: string) => {
     {
       // input element is hidden, so we need to force the upload
       force: true,
+      timeout: 10000,
     }
   );
 
