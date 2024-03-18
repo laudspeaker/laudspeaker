@@ -2,7 +2,6 @@ import credentials from "../fixtures/credentials";
 import createTestCustomer from "../test-helpers/createTestCustomer";
 import drag from "../test-helpers/drag";
 import { loginFunc } from "../test-helpers/loginFunc";
-import setMailgun from "../test-helpers/setMailgun";
 import { setupOrganization } from "../test-helpers/setupOrganization";
 import setupQuietHours from "../test-helpers/setupQuietHours";
 import signup from "../test-helpers/signup";
@@ -24,7 +23,6 @@ describe("quiet hours", () => {
   it("aborts message when quiet hours is set and now is quiet hour", () => {
     setupOrganization(organizationName, timeZone);
 
-    setMailgun();
     createTestCustomer(email);
     cy.wait(1000);
     cy.visit("/home");
@@ -71,7 +69,6 @@ describe("quiet hours", () => {
   it("doesn't abort message when quiet hours is set and now is quiet hour", () => {
     setupOrganization(organizationName, timeZone);
 
-    setMailgun();
     createTestCustomer(email);
     cy.wait(1000);
     cy.visit("/home");
