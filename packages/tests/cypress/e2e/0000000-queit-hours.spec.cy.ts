@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import credentials from "../fixtures/credentials";
 import createTestCustomer from "../test-helpers/createTestCustomer";
 import drag from "../test-helpers/drag";
@@ -51,10 +52,7 @@ describe("quiet hours", () => {
     const startDate = new Date(nowDate.getTime() - offset * hourInMs);
     const endDate = new Date(nowDate.getTime() + offset * hourInMs);
 
-    setupQuietHours(
-      startDate.toLocaleTimeString(),
-      endDate.toLocaleTimeString()
-    );
+    setupQuietHours(format(startDate, "HH:mm"), format(endDate, "HH:mm"));
 
     cy.get("#next-button").click();
     cy.get("#start-journey-button").click();
@@ -97,10 +95,7 @@ describe("quiet hours", () => {
     const startDate = new Date(nowDate.getTime() - 2 * offset * hourInMs);
     const endDate = new Date(nowDate.getTime() - offset * hourInMs);
 
-    setupQuietHours(
-      startDate.toLocaleTimeString(),
-      endDate.toLocaleTimeString()
-    );
+    setupQuietHours(format(startDate, "HH:mm"), format(endDate, "HH:mm"));
 
     cy.get("#next-button").click();
     cy.get("#start-journey-button").click();
