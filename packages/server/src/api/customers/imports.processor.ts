@@ -15,6 +15,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Segment } from '../segments/entities/segment.entity';
 import { Repository } from 'typeorm';
 import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 @Processor('imports', { removeOnComplete: { count: 100 } })
@@ -233,6 +234,8 @@ export class ImportProcessor extends WorkerHost {
         return data.find((el2) => el2.pkKeyValue === el);
       })
       .map((el) => ({
+        _id: randomUUID(),
+        createdAt: new Date(),
         workspaceId: workspace.id,
         [pkKey]: el.pkKeyValue,
         ...el.create,

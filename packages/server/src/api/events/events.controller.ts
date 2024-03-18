@@ -25,6 +25,9 @@ import { randomUUID } from 'crypto';
 import { RavenInterceptor } from 'nest-raven';
 import { CustomerPushTest } from './dto/customer-push-test.dto';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { SendFCMDto } from './dto/send-fcm.dto';
+import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
+import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
 
 @Controller('events')
 export class EventsController {
@@ -114,6 +117,48 @@ export class EventsController {
   ): Promise<void | HttpException> {
     const session = randomUUID();
     return this.eventsService.customPayload(
+      <{ account: Account; workspace: Workspaces }>user,
+      body,
+      session
+    );
+  }
+
+  @Post('/send-fcm')
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  @UseGuards(ApiKeyAuthGuard)
+  async sendFCMToken(@Req() { user }: Request, @Body() body: SendFCMDto) {
+    const session = randomUUID();
+    return this.eventsService.sendFCMToken(
+      <{ account: Account; workspace: Workspaces }>user,
+      body,
+      session
+    );
+  }
+
+  @Post('/identify-customer')
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  @UseGuards(ApiKeyAuthGuard)
+  async identifyCustomer(
+    @Req() { user }: Request,
+    @Body() body: IdentifyCustomerDTO
+  ) {
+    const session = randomUUID();
+    return this.eventsService.identifyCustomer(
+      <{ account: Account; workspace: Workspaces }>user,
+      body,
+      session
+    );
+  }
+
+  @Post('/set-customer-props')
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  @UseGuards(ApiKeyAuthGuard)
+  async setCustomerProperpties(
+    @Req() { user }: Request,
+    @Body() body: SetCustomerPropsDTO
+  ) {
+    const session = randomUUID();
+    return this.eventsService.setCustomerProperties(
       <{ account: Account; workspace: Workspaces }>user,
       body,
       session
@@ -276,5 +321,28 @@ export class EventsController {
       skip && +skip,
       search
     );
+  }
+
+  @Post('/batch/')
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  @UseGuards(ApiKeyAuthGuard)
+  async testEndpoint(
+    @Req() { user }: Request,
+    @Body() body: any
+  ): Promise<void | HttpException> {
+    const session = randomUUID();
+    //console.log("this is the body", JSON.stringify(body, null, 2));
+    this.debug(
+      `Handling batch: ${JSON.stringify(body, null, 2)}`,
+      this.testEndpoint.name,
+      session
+    );
+    this.eventsService.batch(
+      <{ account: Account; workspace: Workspaces }>user,
+      body,
+      session
+    );
+    //console.log("finished processing the batch?")
+    return;
   }
 }
