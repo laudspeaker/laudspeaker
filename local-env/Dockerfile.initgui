@@ -1,0 +1,12 @@
+FROM --platform=linux/amd64 debian:latest
+
+# GET MONGOSH
+WORKDIR /root
+
+RUN apt-get update
+# GET CURL
+RUN apt-get install -y curl
+
+COPY ./initgui.sh /root/initgui.sh
+
+ENTRYPOINT [ "/root/initgui.sh" ]

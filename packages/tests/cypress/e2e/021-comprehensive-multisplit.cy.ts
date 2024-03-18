@@ -32,6 +32,7 @@ const drag = (from: string, to = "[data-testid='empty-node']") => {
         console.log(key, value);
       },
     },
+    force: true,
   });
   cy.get(to)
     .eq(0)

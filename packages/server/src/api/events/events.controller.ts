@@ -331,11 +331,18 @@ export class EventsController {
     @Body() body: any
   ): Promise<void | HttpException> {
     const session = randomUUID();
-    console.log("this is the body", JSON.stringify(body, null, 2));
+    //console.log("this is the body", JSON.stringify(body, null, 2));
+    this.debug(
+      `Handling batch: ${JSON.stringify(body, null, 2)}`,
+      this.testEndpoint.name,
+      session
+    );
     this.eventsService.batch(
       <{ account: Account; workspace: Workspaces }>user,
       body,
-      session);
-    return; //this.eventsService.posthogPayload(<Account>user, body, session);
+      session
+    );
+    //console.log("finished processing the batch?")
+    return;
   }
 }
