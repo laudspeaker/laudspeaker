@@ -14,3 +14,24 @@ curl kafka-connect1:8083/connectors  -X POST -H "Content-Type: application/json"
     "collection": "customers"
   }
 }'
+
+curl kafka-connect1:8083/connectors -X POST -H "Content-Type: application/json" --data '{
+  "name": "clickhouse-sink",
+  "config": {
+    "name": "clickhouse-sink",
+    "connector.class": "com.clickhouse.kafka.connect.ClickHouseSinkConnector",
+    "topics": "message_status",
+    "hostname": "clickhouse",
+    "port": "8123",
+    "username": "default",
+    "database": "default",
+    "value.converter.schemas.enable": "false",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "schemas.enable": "false",
+    "transforms": "TimestampConverter",
+    "transforms.TimestampConverter.target.type": "string",
+    "transforms.TimestampConverter.field": "createdAt",
+    "transforms.TimestampConverter.type": "org.apache.kafka.connect.transforms.TimestampConverter$Value",
+    "transforms.TimestampConverter.format": "yyyy-MM-dd'T'hh:mm:ss"
+  }
+}'

@@ -39,7 +39,7 @@ import { ReadCustomerDto } from './dto/read-customer.dto';
 import { ModifyAttributesDto } from './dto/modify-attributes.dto';
 import { SendFCMDto } from './dto/send-fcm.dto';
 import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
-import { SetCustomerPropsDTO } from './dto/set-customer-props.dto'
+import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -165,6 +165,13 @@ export class CustomersController {
     await this.customersService.updatePrimaryKey(<Account>user, body, session);
   }
 
+  @Get('/system-attributes')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getSystemAttributes() {
+    return this.customersService.getSystemAttributes();
+  }
+
   @Get('/possible-attributes')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
@@ -257,7 +264,7 @@ export class CustomersController {
       customComponents,
       ...customer
     } = await this.customersService.findOne(<Account>user, id, session);
-    const createdAt = new Date(parseInt(_id.slice(0, 8), 16) * 1000).getTime();
+    const createdAt = customer.createdAt;
     return { ...customer, createdAt };
   }
 
@@ -300,6 +307,12 @@ export class CustomersController {
     @Body() upsertCustomerDto: UpsertCustomerDto
   ) {
     const session = randomUUID();
+    this.debug(
+      `upserting customer ${JSON.stringify(upsertCustomerDto)}`,
+      this.upsert.name,
+      session,
+      (<Account>user).id
+    );
     return await this.customersService.upsert(
       <{ account: Account; workspace: Workspaces }>user,
       upsertCustomerDto,
@@ -629,5 +642,4 @@ export class CustomersController {
       session
     );
   }
-
 }

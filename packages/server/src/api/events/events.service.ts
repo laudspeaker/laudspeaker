@@ -950,54 +950,55 @@ export class EventsService {
     session: string
   ) {
     let err: any;
-    //const queryRunner = this.dataSource.createQueryRunner();
-    //await queryRunner.connect();
-    //await queryRunner.startTransaction();
+
+    //console.log("in batch events service");
+    //console.log("here is the whole batch", JSON.stringify(MobileBatchDto, null, 2));
 
     try {
-      if(MobileBatchDto.batch.length <= 1){
-        for (const thisEvent of MobileBatchDto.batch) {
-          switch (thisEvent.event) {
-            case '$identify':
-              // Handle $identify event
-              // You can add your logic here, for example:
-              this.debug(
-                `Handling $identify event for correlationKey: ${thisEvent.correlationValue}`,
-                this.handleIdentify.name,
-                session,
-                auth.account.id
-              );
-              //console.log('Handling $identify event for correlationKey:', thisEvent.correlationValue);
-              await this.handleIdentify(auth, thisEvent, session);
-              break;
-              // Your logic to handle $identify event
-            case '$set':
-              // Handle $set event
-              this.debug(
-                `Handling $set event for correlationKey: ${thisEvent.correlationValue}`,
-                this.handleIdentify.name,
-                session,
-                auth.account.id
-              );
-              //console.log('Handling $set event for correlationKey:', thisEvent.correlationValue);
-              await this.handleSet(auth, thisEvent, session);
-              // Your logic to handle $set event
-              break;
-            case '$fcm':
-              // Handle $set event
-              this.debug(
-                `Handling $fcm event for correlationKey: ${thisEvent.correlationValue}`,
-                this.handleIdentify.name,
-                session,
-                auth.account.id
-              );
-              //console.log('Handling $fcm event for correlationKey:', thisEvent.correlationValue);
-              await this.handleFCM(auth, thisEvent, session);
-              // Your logic to handle $set event
-              break;
-            default:
-              // Handle any other event
-              /*
+      //if(MobileBatchDto.batch.length <= 1){
+      for (const thisEvent of MobileBatchDto.batch) {
+        console.log('this is the event', JSON.stringify(thisEvent, null, 2));
+        switch (thisEvent.event) {
+          case '$identify':
+            // Handle $identify event
+            // You can add your logic here, for example:
+            this.debug(
+              `Handling $identify event for correlationKey: ${thisEvent.correlationValue}`,
+              this.handleIdentify.name,
+              session,
+              auth.account.id
+            );
+            //console.log('Handling $identify event for correlationKey:', thisEvent.correlationValue);
+            await this.handleIdentify(auth, thisEvent, session);
+            break;
+          // Your logic to handle $identify event
+          case '$set':
+            // Handle $set event
+            this.debug(
+              `Handling $set event for correlationKey: ${thisEvent.correlationValue}`,
+              this.handleIdentify.name,
+              session,
+              auth.account.id
+            );
+            //console.log('Handling $set event for correlationKey:', thisEvent.correlationValue);
+            await this.handleSet(auth, thisEvent, session);
+            // Your logic to handle $set event
+            break;
+          case '$fcm':
+            // Handle $set event
+            this.debug(
+              `Handling $fcm event for correlationKey: ${thisEvent.correlationValue}`,
+              this.handleIdentify.name,
+              session,
+              auth.account.id
+            );
+            //console.log('Handling $fcm event for correlationKey:', thisEvent.correlationValue);
+            await this.handleFCM(auth, thisEvent, session);
+            // Your logic to handle $set event
+            break;
+          default:
+            // Handle any other event
+            /*
               const eventStruct: EventDto = {
                 correlationKey: '_id',
                 correlationValue: customer.id,
@@ -1006,48 +1007,24 @@ export class EventsService {
                 event: eventName,
               };
               */
-              await this.customPayload(
-                { account: auth.account, workspace: auth.workspace },
-                thisEvent,
-                session
-              );
-              console.log('Handling other event for correlationKey:', thisEvent.event);
-              console.log('Handling other event for correlationKey:', thisEvent.correlationValue);
-              // Your logic to handle other types of events
-              break;
-          }
+            await this.customPayload(
+              { account: auth.account, workspace: auth.workspace },
+              thisEvent,
+              session
+            );
+            console.log(
+              'Handling other event for correlationKey:',
+              thisEvent.event
+            );
+            console.log(
+              'Handling other event for correlationKey:',
+              thisEvent.correlationValue
+            );
+            // Your logic to handle other types of events
+            break;
         }
       }
-      else{
-        const chronologicalEvents: EventDto[] = MobileBatchDto.batch.sort(
-          (a, b) =>
-            new Date(a.timestamp).getTime() -
-            new Date(b.timestamp).getTime()
-        );
-        
-        /*
-        for (
-          let numEvent = 0;
-          numEvent < chronologicalEvents.length;
-          numEvent++
-        ) {
-          await this.eventPreprocessorQueue.add(
-            'posthog',
-            {
-              account: account,
-              event: MobileBatchDto,
-              session: session,
-            },
-            {
-              attempts: 10,
-              backoff: { delay: 1000, type: 'exponential' },
-            }
-          );
-        }
-        */
-      }
-
-      
+      //}
     } catch (e) {
       //await queryRunner.rollbackTransaction();
       err = e;
@@ -1065,15 +1042,15 @@ export class EventsService {
     const customerId = event.correlationValue;
     const updatePayload = event.payload;
     const workspaceId = auth.workspace.id;
-  
+
     if (!customerId) {
       throw new Error('Customer ID is missing from the event');
     }
-  
+
     // Retrieve all CustomerKeys for the workspace
     const customerKeys = await this.CustomerKeysModel.find({ workspaceId });
 
-    const customersPrimaryKey = customerKeys.find(k => k.isPrimary);
+    const customersPrimaryKey = customerKeys.find((k) => k.isPrimary);
 
     if (!customersPrimaryKey) {
       this.debug(
@@ -1086,7 +1063,12 @@ export class EventsService {
       return;
     }
 
-    let { customer, findType } = await this.findOrCreateCustomer(workspaceId, null, null, event.correlationValue);
+    const { customer, findType } = await this.findOrCreateCustomer(
+      workspaceId,
+      null,
+      null,
+      event.correlationValue
+    );
 
     /*
     let customer = await this.customersService.CustomerModel.findOne({
@@ -1118,27 +1100,41 @@ export class EventsService {
       //return;
     }
     */
-  
+
     // Filter and validate the event payload against CustomerKeys
     // Exclude the primary key and 'other_ids' from updates
     const filteredPayload = {};
-    Object.keys(event.payload).forEach(key => {
+    Object.keys(event.payload).forEach((key) => {
       if (key !== customersPrimaryKey.key && key !== 'other_ids') {
-        const customerKey = customerKeys.find(k => k.key === key);
-        if (customerKey && this.isValidType(event.payload[key], customerKey.type)) {
+        const customerKey = customerKeys.find((k) => k.key === key);
+        if (
+          customerKey &&
+          this.isValidType(event.payload[key], customerKey.type)
+        ) {
           filteredPayload[key] = event.payload[key];
         } else {
-          console.warn(`Skipping update for key ${key}: Type mismatch or key not allowed.`);
+          console.warn(
+            `Skipping update for key ${key}: Type mismatch or key not allowed.`
+          );
         }
       }
     });
-  
+
     // Update the customer with validated and filtered payload
     await this.customersService.CustomerModel.updateOne(
       { _id: customer._id },
       { $set: filteredPayload },
       { new: true }
     );
+
+    await this.EventModel.create({
+      event: event.event,
+      workspaceId: workspaceId,
+      payload: filteredPayload,
+      //we should really standardize on .toISOString() or .toUTCString()
+      //createdAt: new Date().toUTCString(),
+      createdAt: new Date().toISOString(),
+    });
 
     return customer._id;
   }
@@ -1147,68 +1143,84 @@ export class EventsService {
     // Step 1: Check if the customer's _id is not equal to the given correlation value
     if (customer._id.toString() !== correlationValue) {
       // Step 2: Update the customer's other_ids array with the correlation value if it doesn't already have it
-      const updateResult = await this.customersService.CustomerModel.updateOne({
-        _id: customer._id,
-        other_ids: { $ne: correlationValue } // Ensures we don't add duplicates
-      }, {
-        $push: { other_ids: correlationValue }
-      });
-  
+      const updateResult = await this.customersService.CustomerModel.updateOne(
+        {
+          _id: customer._id,
+          other_ids: { $ne: correlationValue }, // Ensures we don't add duplicates
+        },
+        {
+          $push: { other_ids: correlationValue },
+        }
+      );
+
       //console.log('Update result:', updateResult);
     }
 
-      // Additional Step: Retrieve the potential duplicate customer to compare deviceTokenSetAt for both device types
-      const duplicateCustomer = await this.customersService.CustomerModel.findOne({
-        _id: correlationValue
-      });
+    // Additional Step: Retrieve the potential duplicate customer to compare deviceTokenSetAt for both device types
+    const duplicateCustomer = await this.customersService.CustomerModel.findOne(
+      {
+        _id: correlationValue,
+      }
+    );
 
-      // Determine which deviceTokenSetAt fields to compare
-      const deviceTypes = ['ios', 'android'];
-      let updateFields = {};
+    // Determine which deviceTokenSetAt fields to compare
+    const deviceTypes = ['ios', 'android'];
+    const updateFields = {};
 
-      for (const type of deviceTypes) {
-        const tokenField = `${type}DeviceToken`;
-        const setAtField = `${type}DeviceTokenSetAt`;
+    for (const type of deviceTypes) {
+      const tokenField = `${type}DeviceToken`;
+      const setAtField = `${type}DeviceTokenSetAt`;
 
-        // Check if the duplicate has a more recent deviceToken for each type
-        if (duplicateCustomer && duplicateCustomer[setAtField] && (!customer[setAtField] || duplicateCustomer[setAtField] > customer[setAtField])) {
-          // Prepare update object with the more recent deviceToken and its setAt timestamp
-          updateFields[tokenField] = duplicateCustomer[tokenField];
-          updateFields[setAtField] = duplicateCustomer[setAtField];
+      // Check if the duplicate has a more recent deviceToken for each type
+      if (
+        duplicateCustomer &&
+        duplicateCustomer[setAtField] &&
+        (!customer[setAtField] ||
+          duplicateCustomer[setAtField] > customer[setAtField])
+      ) {
+        // Prepare update object with the more recent deviceToken and its setAt timestamp
+        updateFields[tokenField] = duplicateCustomer[tokenField];
+        updateFields[setAtField] = duplicateCustomer[setAtField];
+      }
+    }
+
+    // If there are fields to update (i.e., a more recent token was found), perform the update
+    if (Object.keys(updateFields).length > 0) {
+      await this.customersService.CustomerModel.updateOne(
+        {
+          _id: customer._id,
+        },
+        {
+          $set: updateFields,
         }
-      }
+      );
+    }
 
-      // If there are fields to update (i.e., a more recent token was found), perform the update
-      if (Object.keys(updateFields).length > 0) {
-        await this.customersService.CustomerModel.updateOne({
-          _id: customer._id
-        }, {
-          $set: updateFields
-        });
-      }
-  
     // Step 3: Delete any other customers that have an _id matching the correlation value
     const deleteResult = await this.customersService.CustomerModel.deleteMany({
-      _id: correlationValue
+      _id: correlationValue,
     });
-  
+
     //console.log('Delete result:', deleteResult);
   }
-  
 
-  async findOrCreateCustomer(workspaceId: string, primaryKeyValue?: string, primaryKeyName?: string, correlationValue?: string | string[]): Promise<{ customer: any; findType: number }> {
+  async findOrCreateCustomer(
+    workspaceId: string,
+    primaryKeyValue?: string,
+    primaryKeyName?: string,
+    correlationValue?: string | string[]
+  ): Promise<{ customer: any; findType: number }> {
     let customer;
     let findType;
 
     // Try to find by primary key if provided
     if (primaryKeyValue) {
-
       this.debug(
         `searcing for customer by primary key: ${primaryKeyValue}`,
         this.findOrCreateCustomer.name,
-        "000"
+        '000'
       );
-      
+
       //console.log("searcing for customer by primary key", primaryKeyName, primaryKeyValue)
       customer = await this.customersService.CustomerModel.findOne({
         [primaryKeyName]: primaryKeyValue,
@@ -1218,14 +1230,17 @@ export class EventsService {
       this.debug(
         `customer is: ${customer}`,
         this.findOrCreateCustomer.name,
-        "000"
+        '000'
       );
-      if(customer) findType = 1;
+      if (customer) findType = 1;
     }
-  
+
     // If not found by primary key, try finding by _id
     if (!customer && correlationValue) {
-      console.log("searcing for customer by correlationValue", correlationValue)
+      console.log(
+        'searcing for customer by correlationValue',
+        correlationValue
+      );
       customer = await this.customersService.CustomerModel.findOne({
         _id: correlationValue,
         workspaceId,
@@ -1233,15 +1248,18 @@ export class EventsService {
       this.debug(
         `customer is: ${customer}`,
         this.findOrCreateCustomer.name,
-        "000"
+        '000'
       );
-      
-      if(customer) findType = 2;
+
+      if (customer) findType = 2;
     }
-  
+
     // If still not found, try finding by other_ids array containing the correlationValue
     if (!customer && correlationValue) {
-      console.log("searcing for customer by correlationValue in other ids", correlationValue)
+      console.log(
+        'searcing for customer by correlationValue in other ids',
+        correlationValue
+      );
       customer = await this.customersService.CustomerModel.findOne({
         other_ids: { $in: [correlationValue] },
         workspaceId,
@@ -1249,32 +1267,63 @@ export class EventsService {
       this.debug(
         `customer is: ${customer}`,
         this.findOrCreateCustomer.name,
-        "000"
+        '000'
       );
-      
-      if(customer) findType = 3;
+
+      if (customer) findType = 3;
     }
-  
+
     // If customer still not found, create a new one
     if (!customer) {
-      customer = new this.customersService.CustomerModel({
-        _id: correlationValue,
-        [primaryKeyName]: primaryKeyValue,
-        workspaceId,
-        isAnonymous: false, // Adjust based on your logic
-      });
-      await customer.save();
-      this.debug(
-        `creating customer is: ${customer}`,
-        this.findOrCreateCustomer.name,
-        "000"
-      );
-      findType = 4;
+      const upsertData = {
+        $setOnInsert: {
+          _id: correlationValue,
+          workspaceId,
+        }
+      };
+
+      if (primaryKeyValue && primaryKeyName) {
+        upsertData.$setOnInsert[primaryKeyName] = primaryKeyValue;
+        upsertData.$setOnInsert["isAnonymous"] = false;
+      }
+
+      try {
+        customer = await this.customersService.CustomerModel.findOneAndUpdate(
+          { _id: correlationValue, workspaceId },
+          upsertData,
+          { upsert: true, new: true }
+        );
+        this.debug(
+          `upserted customer is: ${customer}`,
+          this.findOrCreateCustomer.name,
+          "000"
+        );
+        findType = 4; // Set findType to 4 to indicate an upsert operation
+      } catch (error: any) {
+        // Check if the error is a duplicate key error
+        if (error.code === 11000) {
+          // Handle the duplicate key error, for example, by fetching the existing customer
+          console.error("Duplicate key error encountered. Fetching existing customer.");
+          customer = await this.customersService.CustomerModel.findOne({
+            _id: correlationValue,
+            workspaceId,
+          });
+          this.debug(
+            `fetched existing customer after duplicate key error: ${customer}`,
+            this.findOrCreateCustomer.name,
+            "000"
+          );
+          findType = 5; // Optionally, set a different findType to indicate handling of a duplicate key error
+        } else {
+          // Re-throw the error if it is not a duplicate key error
+          this.error(error, this.findOrCreateCustomer.name, "000");
+          //throw error;
+        }
+      }
     }
-  
-    return {customer, findType};
+
+    return { customer, findType };
   }
-  
 
   /*
    * Check to see if a customer found by primary key, if not search by _id
@@ -1287,7 +1336,6 @@ export class EventsService {
     event: EventDto, // Assuming EventDto has all the necessary fields including payload
     session: string
   ) {
-
     this.debug(
       ` in handleIdentify`,
       this.handleIdentify.name,
@@ -1297,14 +1345,13 @@ export class EventsService {
 
     const primaryKeyValue = event.payload?.distinct_id; // Adjust based on your actual primary key field
     if (!primaryKeyValue) {
-
       this.debug(
         ` no primary key provided in identify call --so return`,
         this.handleIdentify.name,
         session,
         auth.account.id
       );
-      
+
       return;
       /*
       throw new HttpException(
@@ -1313,14 +1360,14 @@ export class EventsService {
       );
       */
     }
-  
+
     const workspaceId = auth.workspace.id;
-  
+
     // Retrieve all CustomerKeys for the workspace to validate and filter updates
     const customerKeys = await this.CustomerKeysModel.find({ workspaceId });
 
     // Find the primary key among the CustomerKeys
-    const customersPrimaryKey = customerKeys.find(k => k.isPrimary);
+    const customersPrimaryKey = customerKeys.find((k) => k.isPrimary);
 
     if (!customersPrimaryKey) {
       this.debug(
@@ -1332,7 +1379,7 @@ export class EventsService {
       // Handle the absence of a primary key definition
       return;
     }
-  
+
     // Now you have the primary key's name and type
     const primaryKeyName = customersPrimaryKey.key;
     const primaryKeyType = customersPrimaryKey.type;
@@ -1349,10 +1396,18 @@ export class EventsService {
       return;
     }
 
-    let { customer, findType } = await this.findOrCreateCustomer(workspaceId, primaryKeyValue, primaryKeyName, event.correlationValue);
+    const { customer, findType } = await this.findOrCreateCustomer(
+      workspaceId,
+      primaryKeyValue,
+      primaryKeyName,
+      event.correlationValue
+    );
     //check the customer does not have another primary key already if it does this is not supported right now
-    if(findType == 2 ){
-      if(customer.primaryKeyName && customer.primaryKeyName !== primaryKeyValue){
+    if (findType == 2) {
+      if (
+        customer.primaryKeyName &&
+        customer.primaryKeyName !== primaryKeyValue
+      ) {
         this.debug(
           `found customers primary key: ${customer.primaryKeyName} does not match event primary key`,
           this.handleIdentify.name,
@@ -1364,15 +1419,15 @@ export class EventsService {
       }
     }
 
-    if(customer.id !== event.correlationValue){
-      await this.deduplication(customer, event.correlationValue)
+    if (customer.id !== event.correlationValue) {
+      await this.deduplication(customer, event.correlationValue);
     }
-  
+
     // Filter and validate the event payload against CustomerKeys, with special handling for distinct_id and $anon_distinct_id
     const filteredPayload = {};
     const otherIdsUpdates = [];
 
-    Object.keys(event.payload).forEach(key => {
+    Object.keys(event.payload).forEach((key) => {
       if (key === 'distinct_id') {
         // Handle distinct_id: Check if it matches the primary key type and set customer's primary key
         const isValid = this.isValidType(event.payload[key], primaryKeyType); // Assume primaryKeyType is determined earlier
@@ -1383,17 +1438,27 @@ export class EventsService {
         }
       } else if (key === '$anon_distinct_id') {
         // Check and add $anon_distinct_id to other_ids if not already present and valid and not equal to the customer's own _id
-        const isValid = this.isValidType(event.payload[key], AttributeType.STRING); // Assuming $anon_distinct_id should always be a string
+        const isValid = this.isValidType(
+          event.payload[key],
+          AttributeType.STRING
+        ); // Assuming $anon_distinct_id should always be a string
         const anonId = event.payload[key];
-        if (isValid && !customer.other_ids.includes(event.payload[key]) && customer._id !== anonId) {
+        if (
+          isValid &&
+          !customer.other_ids.includes(event.payload[key]) &&
+          customer._id !== anonId
+        ) {
           otherIdsUpdates.push(anonId);
         } else {
           //console.warn(`Skipping update for $anon_distinct_id: Type mismatch or already exists.`);
         }
       } else {
         // Handle other keys normally
-        const customerKey = customerKeys.find(k => k.key === key);
-        if (customerKey && this.isValidType(event.payload[key], customerKey.type)) {
+        const customerKey = customerKeys.find((k) => k.key === key);
+        if (
+          customerKey &&
+          this.isValidType(event.payload[key], customerKey.type)
+        ) {
           filteredPayload[key] = event.payload[key];
         } else {
           //console.warn(`Skipping update for key ${key}: Type mismatch or key not allowed.`);
@@ -1422,12 +1487,21 @@ export class EventsService {
       {
         $set: filteredPayload,
         ...(otherIdsUpdates.length > 0 && {
-          $addToSet: { other_ids: { $each: otherIdsUpdates } }
-        })
+          $addToSet: { other_ids: { $each: otherIdsUpdates } },
+        }),
       },
       { upsert: true }
     );
-  
+
+    await this.EventModel.create({
+      event: event.event,
+      workspaceId: workspaceId,
+      payload: filteredPayload,
+      //we should really standardize on .toISOString() or .toUTCString()
+      //createdAt: new Date().toUTCString(),
+      createdAt: new Date().toISOString(),
+    });
+
     return customer._id;
   }
 
@@ -1442,17 +1516,20 @@ export class EventsService {
       session,
       auth.account.id
     );
-  
+
     // Extract device tokens from the event payload
     const { iosDeviceToken, androidDeviceToken } = event.payload;
     const customerId = event.correlationValue; // Or distinct_id, assuming they are meant to represent the same identifier
-  
-    // Determine which device token is provided
-    const deviceTokenField = iosDeviceToken ? 'iosDeviceToken' : 'androidDeviceToken';
-    const deviceTokenValue = iosDeviceToken || androidDeviceToken;
-    const deviceTokenSetAtField = iosDeviceToken ? 'iosDeviceTokenSetAt' : 'androidDeviceTokenSetAt';
 
-  
+    // Determine which device token is provided
+    const deviceTokenField = iosDeviceToken
+      ? 'iosDeviceToken'
+      : 'androidDeviceToken';
+    const deviceTokenValue = iosDeviceToken || androidDeviceToken;
+    const deviceTokenSetAtField = iosDeviceToken
+      ? 'iosDeviceTokenSetAt'
+      : 'androidDeviceTokenSetAt';
+
     // Ensure a device token and customerId are provided
     if (!deviceTokenValue || !customerId) {
       this.debug(
@@ -1467,8 +1544,13 @@ export class EventsService {
 
     // Retrieve the customer based on customerId
     const workspaceId = auth.workspace.id;
-    let { customer, findType } = await this.findOrCreateCustomer(workspaceId, null, null, event.correlationValue);
-  
+    const { customer, findType } = await this.findOrCreateCustomer(
+      workspaceId,
+      null,
+      null,
+      event.correlationValue
+    );
+
     /*
     let customer = await this.customersService.CustomerModel.findOne({
       _id: customerId,
@@ -1499,29 +1581,29 @@ export class EventsService {
       //return;
     }
     */
-  
+
     // Update the customer with the provided device token
-    const updatedCustomer = await this.customersService.CustomerModel.findOneAndUpdate(
-      { _id: customer._id, workspaceId },
-      { 
-        $set: { 
-          [deviceTokenField]: deviceTokenValue,
-          [deviceTokenSetAtField]: new Date() // Dynamically sets the appropriate deviceTokenSetAt field
-        } 
-      },
-      { new: true }
-    );
-  
+    const updatedCustomer =
+      await this.customersService.CustomerModel.findOneAndUpdate(
+        { _id: customer._id, workspaceId },
+        {
+          $set: {
+            [deviceTokenField]: deviceTokenValue,
+            [deviceTokenSetAtField]: new Date(), // Dynamically sets the appropriate deviceTokenSetAt field
+          },
+        },
+        { new: true }
+      );
+
     this.debug(
       `FCM event processed for customer ${customerId}, Device Token Field: ${deviceTokenField}`,
       this.handleFCM.name,
       session,
       auth.account.id
     );
-  
+
     return updatedCustomer;
   }
-  
 
   isValidType(value: any, type: AttributeType): boolean {
     switch (type) {
@@ -1541,11 +1623,11 @@ export class EventsService {
       case AttributeType.ARRAY:
         return Array.isArray(value);
       case AttributeType.OBJECT:
-        return typeof value === 'object' && !Array.isArray(value) && value !== null;
+        return (
+          typeof value === 'object' && !Array.isArray(value) && value !== null
+        );
       default:
         return false;
     }
   }
-  
-
 }

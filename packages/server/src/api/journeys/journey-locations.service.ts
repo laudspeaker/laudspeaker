@@ -211,7 +211,7 @@ export class JourneyLocationsService {
   ): Promise<void> {
     if (!customers.length) return;
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-    let moveStarted = Date.now(),
+    const moveStarted = Date.now(),
       stepEntry = Date.now(),
       journeyEntry = Date.now();
 
