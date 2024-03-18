@@ -340,8 +340,9 @@ export class EventsController {
     this.eventsService.batch(
       <{ account: Account; workspace: Workspaces }>user,
       body,
-      session);
+      session
+    );
     //console.log("finished processing the batch?")
-    return; 
+    return;
   }
 }
