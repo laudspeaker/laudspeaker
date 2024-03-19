@@ -1292,7 +1292,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               eventName: value,
                             })
                           }
-                          dataTestId={`attribute-statement-${i}`}
+                          inputDataTestId={`attribute-statement-${i}`}
                           onSelect={(value) =>
                             handleChangeStatement(i, {
                               ...statement,
