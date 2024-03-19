@@ -46,6 +46,7 @@ import Select from "components/Elements/Selectv2";
 import { Workflow } from "types/Workflow";
 import axios, { CancelTokenSource } from "axios";
 import deepCopy from "utils/deepCopy";
+import AutoComplete from "../../../components/AutoCompletev2/AutoCompletev2";
 
 interface FilterBuilderProps {
   settings: ConditionalSegmentsSettings | SegmentsSettings;
@@ -881,6 +882,14 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     ...(possibleMessages[`${channel};;${specId}`] || []),
   ];
 
+  const retriveEventNames = async (query: string) => {
+    const { data } = await ApiService.get<string[]>({
+      url: `/events/possible-names?search=${query}`,
+    });
+
+    return data;
+  };
+
   return (
     <div className="flex w-full flex-col gap-[10px] pr-[10px]">
       <div className="flex relative w-full gap-[10px] items-center">
@@ -1275,17 +1284,27 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                   <>
                     <div className="flex gap-[10px]">
                       <div>
-                        <FilterBuilderDynamicInput
-                          type={StatementValueType.STRING}
+                        <AutoComplete
                           value={statement.eventName}
-                          placeholder="Name"
-                          onChange={(value) =>
+                          onQueryChange={(value) =>
                             handleChangeStatement(i, {
                               ...statement,
                               eventName: value,
                             })
                           }
-                          dataTestId={`attribute-statement-${i}`}
+                          inputDataTestId={`attribute-statement-${i}`}
+                          onSelect={(value) =>
+                            handleChangeStatement(i, {
+                              ...statement,
+                              eventName: value,
+                            })
+                          }
+                          retrieveLabel={(item) => item}
+                          includedItems={{
+                            type: "setter",
+                            getItems: retriveEventNames,
+                          }}
+                          placeholder="Name"
                         />
                       </div>
                       <div className="flex items-center">

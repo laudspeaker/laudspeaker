@@ -1568,12 +1568,12 @@ export class CustomersService {
     transactionSession: ClientSession
   ): Promise<Correlation> {
     let customer: CustomerDocument; // Found customer
-    let queryParam = { 
+    let queryParam = {
       workspaceId: workspace.id,
       $or: [
         { [dto.correlationKey]: dto.correlationValue },
-        { other_ids: dto.correlationValue }
-      ]
+        { other_ids: dto.correlationValue },
+      ],
     };
     try {
       customer = await this.CustomerModel.findOne(queryParam)
@@ -1585,11 +1585,14 @@ export class CustomersService {
     if (!customer) {
       // When no customer is found with the given correlation, create a new one
       // If the correlationKey is '_id', use it to set the _id of the new customer
-      let newCustomerData: any = { workspaceId: workspace.id, createdAt: new Date() };
+      let newCustomerData: any = {
+        workspaceId: workspace.id,
+        createdAt: new Date(),
+      };
       if (dto.correlationKey === '_id') {
         newCustomerData._id = dto.correlationValue;
       } else {
-        // If correlationKey is not '_id', 
+        // If correlationKey is not '_id',
         newCustomerData._id = randomUUID();
       }
       const createdCustomer = new this.CustomerModel(newCustomerData);
@@ -1654,16 +1657,17 @@ export class CustomersService {
         );
 
       // Generate a new UUID to be used only if a new document is being inserted
-      const newId = randomUUID(); 
+      const newId = randomUUID();
 
       //console.log("in upsert 3");
       const ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
         {
           workspaceId: auth.workspace.id,
           [primaryKey.key]: upsertCustomerDto.primary_key,
-        },{
+        },
+        {
           $set: { ...upsertCustomerDto.properties },
-          $setOnInsert: { _id: newId } // This will ensure _id is set to newId only on insert
+          $setOnInsert: { _id: newId }, // This will ensure _id is set to newId only on insert
         },
         { upsert: true, new: true, projection: { _id: 1 } }
       );
@@ -2395,76 +2399,33 @@ export class CustomersService {
       throw new HttpException('Such customer not found', HttpStatus.FORBIDDEN);
     }
 
-    const queryText = `
-    SELECT 
-    jr.id, 
-    jr.name, 
-    COALESCE(
-        (
-            SELECT 
-                NOT (
-                    (sp.metadata)::json #>'{destination}' IS NOT NULL 
-                    OR EXISTS (
-                        SELECT 1 
-                        FROM jsonb_array_elements(sp.metadata -> 'branches') AS branch 
-                        WHERE (branch ->> 'destination') IS NOT NULL
-                    )
-                    OR (sp.metadata -> 'timeBranch' ->> 'destination') IS NOT NULL
-                )
-            FROM 
-                step AS sp 
-            WHERE 
-                EXISTS (
-                    SELECT 1 
-                    FROM unnest(sp.customers :: jsonb[]) AS json_text 
-                    WHERE json_text ->> 'customerID' = $1
-                ) 
-                AND sp."journeyId" = jr.id
-        ), true
-        ) as "isFinished",
-              (
-                  SELECT 
-                      sp.id
-                  FROM 
-                      step AS sp 
-                  WHERE 
-                      EXISTS (
-                          SELECT 1 
-                          FROM unnest(sp.customers :: jsonb[]) AS json_text 
-                          WHERE json_text ->> 'customerID' = $1
-                      ) 
-                      AND sp."journeyId" = jr.id
-              ) as "currentStepId"
-          FROM 
-              journey as jr 
-              LEFT JOIN step ON step."journeyId" = jr.id 
-          WHERE 
-              jr.id = ANY($2)
-          GROUP BY 
-              jr.id 
-          LIMIT $3 OFFSET $4`;
+    const [data, count] =
+      await this.journeyLocationsService.journeyLocationsRepository.findAndCount(
+        {
+          where: { workspace: { id: workspace.id }, customer: customer.id },
+          take,
+          skip,
+          relations: ['journey', 'step'],
+        }
+      );
 
-    const totalJourneys = await this.dataSource.query(
-      `
-        SELECT COUNT(DISTINCT jr.id) 
-        FROM journey as jr 
-        LEFT JOIN step ON step."journeyId" = jr.id 
-        WHERE jr.id = ANY($1);
-      `,
-      [customer.journeys]
-    );
-
-    const data = await this.dataSource.query<JourneyDataForTimeLine[]>(
-      queryText,
-      [customer.id, customer.journeys, take, skip]
-    );
+    const totalPages = Math.ceil(count / take) || 1;
 
     return {
       data: data.map((el) => ({
-        ...el,
-        enrollmentTime: customer?.journeyEnrollmentsDates?.[el.id] || null,
+        ...(el.journey as any),
+        isFinished: el.step.metadata?.destination
+          ? false
+          : (!el.step.metadata?.branches && !el.step.metadata?.timeBranch) ||
+            (el.step.metadata?.branches?.length === 0 &&
+              !el.step.metadata?.timeBranch) ||
+            (el.step.metadata?.branches?.every(
+              (branch) => !branch?.destination
+            ) &&
+              !el.step.metadata?.timeBranch?.destination),
+        enrollmentTime: +el.journeyEntry,
       })),
-      total: Number(totalJourneys[0].count),
+      total: totalPages,
     };
   }
 
