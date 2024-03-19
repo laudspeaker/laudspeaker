@@ -961,7 +961,6 @@ export class EventsService {
           switch (thisEvent.event) {
             case '$identify':
               // Handle $identify event
-              // You can add your logic here, for example:
               this.debug(
                 `Handling $identify event for correlationKey: ${thisEvent.correlationValue}`,
                 this.handleIdentify.name,
@@ -971,7 +970,6 @@ export class EventsService {
               //console.log('Handling $identify event for correlationKey:', thisEvent.correlationValue);
               await this.handleIdentify(auth, thisEvent, session);
               break;
-              // Your logic to handle $identify event
             case '$set':
               // Handle $set event
               this.debug(
@@ -982,7 +980,6 @@ export class EventsService {
               );
               //console.log('Handling $set event for correlationKey:', thisEvent.correlationValue);
               await this.handleSet(auth, thisEvent, session);
-              // Your logic to handle $set event
               break;
             case '$fcm':
               // Handle $set event
@@ -994,7 +991,6 @@ export class EventsService {
               );
               //console.log('Handling $fcm event for correlationKey:', thisEvent.correlationValue);
               await this.handleFCM(auth, thisEvent, session);
-              // Your logic to handle $set event
               break;
             default:
               // Handle any other event
@@ -1014,7 +1010,6 @@ export class EventsService {
               );
               console.log('Handling other event for correlationKey:', thisEvent.event);
               console.log('Handling other event for correlationKey:', thisEvent.correlationValue);
-              // Your logic to handle other types of events
               break;
           }
         }
