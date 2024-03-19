@@ -49,6 +49,7 @@ Sentry.init({
   tracesSampleRate: 1.0, // Capture 100% of the transactions, reduce in production!
   // Set sampling rate for profiling - this is relative to tracesSampleRate
   profilesSampleRate: 1.0, // Capture 100% of the transactions, reduce in production!
+  maxBreadcrumbs: Number.MAX_SAFE_INTEGER
 });
 
 if (process.env.SENTRY_ENVIRONMENT_TAG) {
