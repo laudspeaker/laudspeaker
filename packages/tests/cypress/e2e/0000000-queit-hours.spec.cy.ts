@@ -60,7 +60,7 @@ describe("quiet hours", () => {
 
     cy.wait(10000);
     cy.reload();
-
+    cy.wait(5000);
     cy.get(".sent > .stat-result").contains("0");
   });
 
@@ -103,7 +103,7 @@ describe("quiet hours", () => {
 
     cy.wait(10000);
     cy.reload();
-
+    cy.wait(5000);
     cy.get(".sent > .stat-result").contains("1");
   });
 });
