@@ -8,6 +8,10 @@ export default (email: string) => {
   cy.get('[data-option="Email"]').click();
   cy.contains("Select user attribute").click();
   cy.contains("email").click();
+  cy.contains("Add attribute").click();
+  cy.get("input:last").clear().type("agreed");
+  cy.contains("String").click();
+  cy.get('[data-option="Boolean"]').click();
   cy.contains("Save").click();
 
   cy.get("#create-customer-button").click();
