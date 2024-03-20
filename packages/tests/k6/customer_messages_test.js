@@ -39,7 +39,7 @@ const session = new Httpx({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 60000, // 60s timeout.
+  timeout: 300000, // 5 minute timeout.
 });
 
 export default function main() {
