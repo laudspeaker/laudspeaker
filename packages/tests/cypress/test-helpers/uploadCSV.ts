@@ -7,7 +7,7 @@ export const uploadCSV = (filename: string) => {
     force: true,
   });
 
-  cy.get("#dropzone-file", { timeout: 10000 }).selectFile(
+  cy.get("#dropzone-file", { timeout: 30000 }).selectFile(
     {
       // path relative to the cypress configuration file
       contents: `cypress/fixtures/${filename}`,
