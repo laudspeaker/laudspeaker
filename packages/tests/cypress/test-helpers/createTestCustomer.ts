@@ -12,6 +12,11 @@ export default (email: string) => {
   cy.get("input:last").clear().type("agreed");
   cy.contains("String").click();
   cy.get('[data-option="Boolean"]').click();
+
+  cy.contains("Add attribute").click();
+  cy.get("input:last").clear().type("mkt_agree");
+  cy.contains("String").click();
+  cy.get('[data-option="Boolean"]').click();
   cy.contains("Save").click();
 
   cy.get("#create-customer-button").click();
