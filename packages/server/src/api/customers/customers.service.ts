@@ -4539,6 +4539,56 @@ export class CustomersService {
           aggregationPipelineMobile
         );
 
+      // we do one more merge with mobile users for those who may include the event correlationValues in their other_ids field
+      const aggregationPipelineMobileOtherIds: any[] = [
+        { $match: mongoQuery },
+        {
+          $lookup: {
+            from: 'customers',
+            localField: 'correlationValue',
+            foreignField: 'other_ids',
+            as: 'matchedCustomersFromOtherIds'
+          },
+        },
+        { $unwind: '$matchedCustomersFromOtherIds' },
+        {
+          $group: {
+            _id: '$matchedCustomersFromOtherIds._id',
+            count: { $sum: 1 }
+          },
+        },
+        { $match: { count: { $gte: value } } }, // Replace `value` with the minimum count of matches you want
+        {
+          $merge: {
+            into: intermediateCollection, // Specify the same intermediateCollection name as the first pipeline
+            on: '_id', // Merge on the `_id` field
+            whenMatched: 'keepExisting', // You could choose another option like 'replace', 'merge', or 'fail' based on your requirements
+            whenNotMatched: 'insert' // Insert if the _id was not matched (new entry)
+          },
+        },
+        // Add any additional stages you may need
+      ];
+
+      this.debug(
+        'aggregate mobile other ids query is/n\n',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+
+      this.debug(
+        JSON.stringify(aggregationPipelineMobileOtherIds, null, 2),
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+
+      //fetch users here
+      const mobileResultOtherIds: any =
+        await this.eventsService.getCustomersbyEventsMongo(
+          aggregationPipelineMobileOtherIds
+        );
+
       return intermediateCollection;
     } else if (comparisonType === 'has not performed') {
       /*
@@ -4620,33 +4670,6 @@ export class CustomersService {
 
         return intermediateCollection;
       }
-
-      /*
-      //mobile event check
-      let mobileMongoQuery = cloneDeep(mongoQuery)
-      mobileMongoQuery.source = "mobile";
-
-      const checkMobileEventExists = [
-        {
-          $match: mobileMongoQuery,
-        },
-        {
-          $group: {
-            _id: '$event',
-            count: { $sum: 1 },
-          },
-        },
-      ];
-      const checkMobile = await this.eventsService.getCustomersbyEventsMongo(
-        checkMobileEventExists
-      );
-      
-      if (checkMobile.length < 1) {
-        console.log("no mobile")
-      } else {
-
-      }
-      */
 
       this.debug(
         'event exists',
@@ -4752,6 +4775,38 @@ export class CustomersService {
       const result2 = await this.eventsService.getCustomersbyEventsMongo(
         pipeline2
       );
+
+      const pipeline_other_ids = [
+        { $match: mobileMongoQuery },
+        {
+          $addFields: {
+            //convertedCorrelationValue: { $toObjectId: '$correlationValue' },
+            convertedCorrelationValue: '$correlationValue' ,
+          },
+        },
+        {
+          $lookup: {
+            from: 'customers',
+            localField: 'convertedCorrelationValue',
+            foreignField: 'other_ids',
+            as: 'matchedOnCorrelationValue',
+          },
+        },
+        { $unwind: '$matchedOnCorrelationValue' },
+        {
+          $project: {
+            _id: '$matchedOnCorrelationValue._id', // Projects the _id of the matched customers
+          },
+        },
+        {
+          $merge: {
+            into: intermediateCollection,
+            on: '_id',
+            whenMatched: 'keepExisting',
+            whenNotMatched: 'insert',
+          },
+        },
+      ];
 
       const pipeline3 = [
         {
