@@ -2,14 +2,12 @@ import {
   Processor,
   WorkerHost,
   InjectQueue,
-  OnQueueEvent,
-  QueueEventsListener,
   OnWorkerEvent,
 } from '@nestjs/bullmq';
 import { Job, Queue, UnrecoverableError } from 'bullmq';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { Correlation, CustomersService } from '../customers/customers.service';
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import mongoose, { Model } from 'mongoose';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Journey } from '../journeys/entities/journey.entity';
@@ -30,8 +28,10 @@ import {
   CustomerDocument,
 } from '../customers/schemas/customer.schema';
 import * as Sentry from '@sentry/node';
-import { Account } from '../accounts/entities/accounts.entity';
 import { EventType } from './events.processor';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Account } from '../accounts/entities/accounts.entity';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
 
 export enum ProviderType {
   LAUDSPEAKER = 'laudspeaker',
@@ -41,7 +41,7 @@ export enum ProviderType {
 }
 
 @Injectable()
-@Processor('events_pre', { removeOnComplete: { count: 100 } })
+@Processor('events_pre', { removeOnComplete: { count: 100 }, concurrency: 10 })
 export class EventsPreProcessor extends WorkerHost {
   private providerMap: Record<
     ProviderType,
@@ -77,7 +77,9 @@ export class EventsPreProcessor extends WorkerHost {
     @InjectModel(PosthogEventType.name)
     private posthogEventTypeModel: Model<PosthogEventTypeDocument>,
     @InjectModel(Customer.name) public customerModel: Model<CustomerDocument>,
-    @InjectQueue('events') private readonly eventsQueue: Queue
+    @InjectQueue('events') private readonly eventsQueue: Queue,
+    @InjectRepository(Journey)
+    private readonly journeysRepository: Repository<Journey>
   ) {
     super();
   }
@@ -332,14 +334,21 @@ export class EventsPreProcessor extends WorkerHost {
     }
   }
 
-  async handleCustom(job: Job<any, any, string>): Promise<any> {
+  async handleCustom(
+    job: Job<
+      {
+        owner: Account;
+        workspace: Workspaces;
+        event: any;
+        session: string;
+      },
+      any,
+      any
+    >
+  ): Promise<any> {
     const transactionSession = await this.connection.startSession();
     transactionSession.startTransaction();
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
     let err: any;
-
     try {
       //find customer associated with event or create new customer if not found
       const correlation: Correlation =
@@ -349,7 +358,7 @@ export class EventsPreProcessor extends WorkerHost {
           transactionSession
         );
       //get all the journeys that are active, and pipe events to each journey in case they are listening for event
-      const journeys = await queryRunner.manager.find(Journey, {
+      const journeys = await this.journeysRepository.find({
         where: {
           workspace: {
             id: job.data.workspace.id,
@@ -360,13 +369,33 @@ export class EventsPreProcessor extends WorkerHost {
           isDeleted: false,
         },
       });
+      // add event to event database for visibility
+      if (job.data.event) {
+        await this.eventModel.create(
+          [
+            {
+              ...job.data.event,
+              workspaceId: job.data.workspace.id,
+              createdAt: new Date().toISOString(),
+            },
+          ],
+          { session: transactionSession }
+        );
+      }
+
+      await transactionSession.commitTransaction();
+
+      // Always add jobs after committing transactions, otherwise there could be race conditions
       for (let i = 0; i < journeys.length; i++) {
         await this.eventsQueue.add(
           EventType.EVENT,
           {
-            accountID: job.data.owner.id,
+            account: job.data.owner,
+            workspace: job.data.workspace,
             event: job.data.event,
-            journeyID: journeys[i].id,
+            journey: journeys[i],
+            customer: correlation.cust,
+            session: job.data.session,
           },
           {
             attempts: Number.MAX_SAFE_INTEGER,
@@ -374,27 +403,18 @@ export class EventsPreProcessor extends WorkerHost {
           }
         );
       }
-      // add event to event database for visibility
-      if (job.data.event) {
-        await this.eventModel.create({
-          ...job.data.event,
-          workspaceId: job.data.workspace.id,
-          //we should really standardize on .toISOString() or .toUTCString()
-          //createdAt: new Date().toUTCString(),
-          createdAt: new Date().toISOString(),
-        });
-      }
-
-      await transactionSession.commitTransaction();
-      await queryRunner.commitTransaction();
     } catch (e) {
-      await transactionSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
-      this.error(e, this.handleCustom.name, job.data.session, job.data.owner);
+      if (transactionSession.inTransaction())
+        transactionSession.abortTransaction();
+      this.error(
+        e,
+        this.handleCustom.name,
+        job.data.session,
+        job.data.owner.email
+      );
       err = e;
     } finally {
       await transactionSession.endSession();
-      await queryRunner.release();
     }
     if (err?.code === 11000) {
       this.warn(

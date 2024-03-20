@@ -213,8 +213,12 @@ export class AuthService {
       },
       relations: ['organization.owner'],
     });
+    const account: Account = await this.accountRepository.findOne({
+      where: { id: workspace.organization.owner.id },
+      relations: ['teams.organization.workspaces'],
+    });
 
-    return { account: workspace.organization.owner, workspace: workspace };
+    return { account: account, workspace: workspace };
   }
 
   public async refresh(user: Account, session: string): Promise<string> {
