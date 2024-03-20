@@ -59,7 +59,11 @@ import { JourneyLocationsService } from '../journeys/journey-locations.service';
 import { Journey } from '../journeys/entities/journey.entity';
 import { SegmentType } from '../segments/entities/segment.entity';
 import { UpdatePK_DTO } from './dto/update-pk.dto';
-import { StepType } from '../steps/types/step.interface';
+import {
+  Attribute,
+  CustomerAttribute,
+  StepType,
+} from '../steps/types/step.interface';
 import {
   KEYS_TO_SKIP,
   validateKeyForMutations,
@@ -77,14 +81,12 @@ import {
 } from './dto/modify-attributes.dto';
 import { parseISO, add, sub, formatISO } from 'date-fns';
 import { cloneDeep } from 'lodash';
+import { StatementValueType } from '../journeys/types/visual-layout.interface';
+import { v4 as uuid } from 'uuid';
 import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
 import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
 import { SendFCMDto } from './dto/send-fcm.dto';
-//import { v4 as uuid } from "uuid";
-
-import {
-  PushPlatforms,
-} from '../templates/entities/template.entity';
+import { PushPlatforms } from '../templates/entities/template.entity';
 
 export type Correlation = {
   cust: CustomerDocument;
@@ -131,6 +133,54 @@ const acceptableBooleanConvertable = {
   true: ['TRUE', 'true', 'T', 't'],
   false: ['FALSE', 'false', 'F', 'f'],
 };
+
+export interface SystemAttribute {
+  id: string;
+  key: string;
+  type: string;
+  isPrimary?: string;
+  dateFormat?: string;
+  isArray: boolean;
+  isSystem: true;
+}
+
+export const systemAttributes: SystemAttribute[] = [
+  {
+    id: uuid(),
+    key: 'androidFCMTokens',
+    type: StatementValueType.STRING,
+    isArray: true,
+    isSystem: true,
+  },
+  {
+    id: uuid(),
+    key: 'iosFCMTokens',
+    type: StatementValueType.STRING,
+    isArray: true,
+    isSystem: true,
+  },
+  {
+    id: uuid(),
+    key: 'isAnonymous',
+    type: StatementValueType.BOOLEAN,
+    isArray: false,
+    isSystem: true,
+  },
+  {
+    id: uuid(),
+    key: 'other_ids',
+    type: StatementValueType.STRING,
+    isArray: true,
+    isSystem: true,
+  },
+  {
+    id: uuid(),
+    key: 'createdAt',
+    type: StatementValueType.NUMBER,
+    isArray: false,
+    isSystem: true,
+  },
+];
 
 export interface QueryOptions {
   // ... other properties ...
@@ -278,11 +328,7 @@ export class CustomersService {
   > {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    this.debug(
-      `in create ok`,
-      this.create.name,
-      session
-    );
+    this.debug(`in create ok`, this.create.name, session);
 
     //console.log("this is the create customerDTO", JSON.stringify(createCustomerDto, null, 2));
 
@@ -294,11 +340,7 @@ export class CustomersService {
     });
     const ret = await createdCustomer.save({ session: transactionSession });
 
-    this.debug(
-      `saved customer`,
-      this.create.name,
-      session
-    );
+    this.debug(`saved customer`, this.create.name, session);
 
     for (const key of Object.keys(ret.toObject()).filter(
       (item) => !KEYS_TO_SKIP.includes(item)
@@ -328,11 +370,7 @@ export class CustomersService {
         { upsert: true }
       ).exec();
     }
-    this.debug(
-      `customer successfuly created`,
-      this.create.name,
-      session
-    );
+    this.debug(`customer successfuly created`, this.create.name, session);
 
     return ret;
   }
@@ -503,13 +541,9 @@ export class CustomersService {
 
   async findOne(account: Account, id: string, session: string) {
     //if (!isValidObjectId(id))
-      //throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
+    //throw new HttpException('Id is not valid', HttpStatus.BAD_REQUEST);
 
-      this.debug(
-        `in customer service findOne`,
-        this.findOne.name,
-        session
-      );
+    this.debug(`in customer service findOne`, this.findOne.name, session);
 
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -518,7 +552,7 @@ export class CustomersService {
       _id: id,
       workspaceId: workspace.id,
     }).exec();
-    if (!customer){
+    if (!customer) {
       this.debug(
         `in customer service validobject id, found no user`,
         this.findOne.name,
@@ -526,7 +560,7 @@ export class CustomersService {
       );
       throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
     }
-      
+
     return {
       ...customer.toObject(),
       _id: id,
@@ -972,7 +1006,6 @@ export class CustomersService {
       session,
       account.id
     );
-    
     const { data, totalPages } = await this.findAll(
       <Account>account,
       take,
@@ -1133,7 +1166,7 @@ export class CustomersService {
       }
   > {
     //if (!isValidObjectId(customerId))
-      //throw new BadRequestException('Invalid object id');
+    //throw new BadRequestException('Invalid object id');
 
     const query = this.CustomerModel.findById(customerId);
     if (clientSession) {
@@ -1536,12 +1569,12 @@ export class CustomersService {
     transactionSession: ClientSession
   ): Promise<Correlation> {
     let customer: CustomerDocument; // Found customer
-    let queryParam = { 
+    let queryParam = {
       workspaceId: workspace.id,
       $or: [
         { [dto.correlationKey]: dto.correlationValue },
-        { other_ids: dto.correlationValue }
-      ]
+        { other_ids: dto.correlationValue },
+      ],
     };
     try {
       customer = await this.CustomerModel.findOne(queryParam)
@@ -1553,11 +1586,14 @@ export class CustomersService {
     if (!customer) {
       // When no customer is found with the given correlation, create a new one
       // If the correlationKey is '_id', use it to set the _id of the new customer
-      let newCustomerData: any = { workspaceId: workspace.id, createdAt: new Date() };
+      let newCustomerData: any = {
+        workspaceId: workspace.id,
+        createdAt: new Date(),
+      };
       if (dto.correlationKey === '_id') {
         newCustomerData._id = dto.correlationValue;
       } else {
-        // If correlationKey is not '_id', 
+        // If correlationKey is not '_id',
         newCustomerData._id = randomUUID();
       }
       const createdCustomer = new this.CustomerModel(newCustomerData);
@@ -1622,15 +1658,17 @@ export class CustomersService {
         );
 
       // Generate a new UUID to be used only if a new document is being inserted
-      const newId = randomUUID(); 
+      const newId = randomUUID();
+
       //console.log("in upsert 3");
       const ret: CustomerDocument = await this.CustomerModel.findOneAndUpdate(
         {
           workspaceId: auth.workspace.id,
           [primaryKey.key]: upsertCustomerDto.primary_key,
-        },{
+        },
+        {
           $set: { ...upsertCustomerDto.properties },
-          $setOnInsert: { _id: newId } // This will ensure _id is set to newId only on insert
+          $setOnInsert: { _id: newId }, // This will ensure _id is set to newId only on insert
         },
         { upsert: true, new: true, projection: { _id: 1 } }
       );
@@ -2161,6 +2199,10 @@ export class CustomersService {
     );
   }
 
+  public async getSystemAttributes() {
+    return systemAttributes;
+  }
+
   public async getPossibleAttributes(
     account: Account,
     session: string,
@@ -2191,8 +2233,12 @@ export class CustomersService {
     }
     const attributes = await query.exec();
 
+    const filteredSystemAttributes = systemAttributes.filter((attr) =>
+      attr.key.match(new RegExp(`.*${key}.*`))
+    );
+
     return (
-      attributes
+      [...attributes, ...filteredSystemAttributes]
         .map((el) => ({
           id: el.id,
           key: el.key,
@@ -2200,6 +2246,7 @@ export class CustomersService {
           dateFormat: el.dateFormat,
           isArray: el.isArray,
           isPrimary: el.isPrimary,
+          isSystem: el.isSystem,
         }))
         // @ts-ignore
         .filter((el) => el.type !== 'undefined')
@@ -2353,76 +2400,33 @@ export class CustomersService {
       throw new HttpException('Such customer not found', HttpStatus.FORBIDDEN);
     }
 
-    const queryText = `
-    SELECT 
-    jr.id, 
-    jr.name, 
-    COALESCE(
-        (
-            SELECT 
-                NOT (
-                    (sp.metadata)::json #>'{destination}' IS NOT NULL 
-                    OR EXISTS (
-                        SELECT 1 
-                        FROM jsonb_array_elements(sp.metadata -> 'branches') AS branch 
-                        WHERE (branch ->> 'destination') IS NOT NULL
-                    )
-                    OR (sp.metadata -> 'timeBranch' ->> 'destination') IS NOT NULL
-                )
-            FROM 
-                step AS sp 
-            WHERE 
-                EXISTS (
-                    SELECT 1 
-                    FROM unnest(sp.customers :: jsonb[]) AS json_text 
-                    WHERE json_text ->> 'customerID' = $1
-                ) 
-                AND sp."journeyId" = jr.id
-        ), true
-        ) as "isFinished",
-              (
-                  SELECT 
-                      sp.id
-                  FROM 
-                      step AS sp 
-                  WHERE 
-                      EXISTS (
-                          SELECT 1 
-                          FROM unnest(sp.customers :: jsonb[]) AS json_text 
-                          WHERE json_text ->> 'customerID' = $1
-                      ) 
-                      AND sp."journeyId" = jr.id
-              ) as "currentStepId"
-          FROM 
-              journey as jr 
-              LEFT JOIN step ON step."journeyId" = jr.id 
-          WHERE 
-              jr.id = ANY($2)
-          GROUP BY 
-              jr.id 
-          LIMIT $3 OFFSET $4`;
+    const [data, count] =
+      await this.journeyLocationsService.journeyLocationsRepository.findAndCount(
+        {
+          where: { workspace: { id: workspace.id }, customer: customer.id },
+          take,
+          skip,
+          relations: ['journey', 'step'],
+        }
+      );
 
-    const totalJourneys = await this.dataSource.query(
-      `
-        SELECT COUNT(DISTINCT jr.id) 
-        FROM journey as jr 
-        LEFT JOIN step ON step."journeyId" = jr.id 
-        WHERE jr.id = ANY($1);
-      `,
-      [customer.journeys]
-    );
-
-    const data = await this.dataSource.query<JourneyDataForTimeLine[]>(
-      queryText,
-      [customer.id, customer.journeys, take, skip]
-    );
+    const totalPages = Math.ceil(count / take) || 1;
 
     return {
       data: data.map((el) => ({
-        ...el,
-        enrollmentTime: customer?.journeyEnrollmentsDates?.[el.id] || null,
+        ...(el.journey as any),
+        isFinished: el.step.metadata?.destination
+          ? false
+          : (!el.step.metadata?.branches && !el.step.metadata?.timeBranch) ||
+            (el.step.metadata?.branches?.length === 0 &&
+              !el.step.metadata?.timeBranch) ||
+            (el.step.metadata?.branches?.every(
+              (branch) => !branch?.destination
+            ) &&
+              !el.step.metadata?.timeBranch?.destination),
+        enrollmentTime: +el.journeyEntry,
       })),
-      total: Number(totalJourneys[0].count),
+      total: totalPages,
     };
   }
 
@@ -2734,7 +2738,7 @@ export class CustomersService {
 
       //return thisCollectionName; // mergedSet;
 
-      let something = await collectionHandle
+      const something = await collectionHandle
         .aggregate(finalAggregationPipeline)
         .toArray();
 
@@ -2856,7 +2860,7 @@ export class CustomersService {
       ];
 
       //return thisCollectionName; // mergedSet;
-      let something = await collectionHandle
+      const something = await collectionHandle
         .aggregate(finalAggregationPipeline)
         .toArray();
       return fullDetailsCollectionName;
@@ -3697,7 +3701,7 @@ export class CustomersService {
           const cleanedText = row.text.replace(/^"(.*)"$/, '$1'); // Removes surrounding quotes
           //console.log("cleaned text is", cleanedText);
           //const objectId = new Types.ObjectId(cleanedText);
-          const objectId = (cleanedText);
+          const objectId = cleanedText;
           batch.push({ _id: objectId }); // Convert each ObjectId into an object
 
           if (batch.length >= batchSize) {
@@ -4482,7 +4486,7 @@ export class CustomersService {
         {
           $addFields: {
             //convertedCorrelationValue: { $toObjectId: '$correlationValue' },
-            convertedCorrelationValue: '$correlationValue' ,
+            convertedCorrelationValue: '$correlationValue',
           },
         },
         {
@@ -4732,7 +4736,7 @@ export class CustomersService {
         {
           $addFields: {
             //convertedCorrelationValue: { $toObjectId: '$correlationValue' },
-            convertedCorrelationValue: '$correlationValue' ,
+            convertedCorrelationValue: '$correlationValue',
           },
         },
         {
@@ -5540,7 +5544,7 @@ export class CustomersService {
       $or: [],
     };
 
-    let currentPK: string = await this.CustomerKeysModel.findOne({
+    const currentPK: string = await this.CustomerKeysModel.findOne({
       workspaceId: workspace.id,
       isPrimary: true,
     });
@@ -6798,11 +6802,10 @@ export class CustomersService {
       isPrimary: true,
     });
 
-    const identifiedCustomer =
-      await this.CustomerModel.findOne({
-        workspaceId: workspace.id,
-        [primaryKey.key]: body.__PrimaryKey,
-      });
+    const identifiedCustomer = await this.CustomerModel.findOne({
+      workspaceId: workspace.id,
+      [primaryKey.key]: body.__PrimaryKey,
+    });
 
     if (identifiedCustomer) {
       await this.deleteEverywhere(customer.id);

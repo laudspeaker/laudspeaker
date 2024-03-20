@@ -46,6 +46,7 @@ import Select from "components/Elements/Selectv2";
 import { Workflow } from "types/Workflow";
 import axios, { CancelTokenSource } from "axios";
 import deepCopy from "utils/deepCopy";
+import AutoComplete from "../../../components/AutoCompletev2/AutoCompletev2";
 
 interface FilterBuilderProps {
   settings: ConditionalSegmentsSettings | SegmentsSettings;
@@ -296,6 +297,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     {
       key: string;
       type: StatementValueType;
+      isArray?: boolean;
     }[]
   >([]);
 
@@ -880,6 +882,14 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     ...(possibleMessages[`${channel};;${specId}`] || []),
   ];
 
+  const retriveEventNames = async (query: string) => {
+    const { data } = await ApiService.get<string[]>({
+      url: `/events/possible-names?search=${query}`,
+    });
+
+    return data;
+  };
+
   return (
     <div className="flex w-full flex-col gap-[10px] pr-[10px]">
       <div className="flex relative w-full gap-[10px] items-center">
@@ -1007,13 +1017,40 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         }}
                         retrieveLabel={(item) => item}
                         onQueryChange={(q) => {
-                          handleChangeStatement(i, { ...statement, key: q });
+                          const attribute = possibleKeys.find(
+                            (attr) => attr.key === q
+                          );
+
+                          const valueType = attribute?.isArray
+                            ? StatementValueType.ARRAY
+                            : attribute?.type || undefined;
+
+                          handleChangeStatement(i, {
+                            ...statement,
+                            key: q,
+                            valueType,
+                            comparisonType: valueType
+                              ? valueTypeToComparisonTypesMap[valueType][0]
+                              : ComparisonType.EQUALS,
+                          });
                           setKeysQuery(q);
                         }}
                         onSelect={(value) => {
+                          const attribute = possibleKeys.find(
+                            (attr) => attr.key === value
+                          );
+
+                          const valueType = attribute?.isArray
+                            ? StatementValueType.ARRAY
+                            : attribute?.type || undefined;
+
                           handleChangeStatement(i, {
                             ...statement,
                             key: value,
+                            valueType,
+                            comparisonType: valueType
+                              ? valueTypeToComparisonTypesMap[valueType][0]
+                              : ComparisonType.EQUALS,
                           });
                           setKeysQuery(value);
                         }}
@@ -1039,8 +1076,13 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           });
                         }}
                       >
-                        {Object.values(StatementValueType).map(
-                          (comparisonType, j) => (
+                        {Object.values(StatementValueType)
+                          .filter((valueType) =>
+                            statement.valueType
+                              ? statement.valueType === valueType
+                              : true
+                          )
+                          .map((comparisonType, j) => (
                             <optgroup key={j} label={comparisonType}>
                               {valueTypeToComparisonTypesMap[
                                 comparisonType
@@ -1053,8 +1095,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                 </option>
                               ))}
                             </optgroup>
-                          )
-                        )}
+                          ))}
                       </select>
                     </div>
 
@@ -1115,7 +1156,9 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         statement.comparisonType !==
                           ComparisonType.NOT_EXIST && (
                           <FilterBuilderDynamicInput
-                            type={statement.valueType}
+                            type={
+                              statement.valueType || StatementValueType.STRING
+                            }
                             value={statement.value}
                             isRelativeDate={
                               statement.dateComparisonType ===
@@ -1229,16 +1272,26 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                   <>
                     <div className="flex gap-[10px]">
                       <div>
-                        <FilterBuilderDynamicInput
-                          type={StatementValueType.STRING}
+                        <AutoComplete
                           value={statement.eventName}
-                          placeholder="Name"
-                          onChange={(value) =>
+                          onQueryChange={(value) =>
                             handleChangeStatement(i, {
                               ...statement,
                               eventName: value,
                             })
                           }
+                          onSelect={(value) =>
+                            handleChangeStatement(i, {
+                              ...statement,
+                              eventName: value,
+                            })
+                          }
+                          retrieveLabel={(item) => item}
+                          includedItems={{
+                            type: "setter",
+                            getItems: retriveEventNames,
+                          }}
+                          placeholder="Name"
                         />
                       </div>
                       <div className="flex items-center">
