@@ -449,7 +449,7 @@ export class SegmentsService {
       // Delete each collection
       for (const collectionName of collectionsToDelete) {
         //toggle for testing segments
-        //await this.connection.db.collection(collectionName).drop();
+        await this.connection.db.collection(collectionName).drop();
         //console.log(`Deleted collection: ${collectionName}`);
       }
     } catch (error) {

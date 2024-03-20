@@ -2549,7 +2549,7 @@ export class CustomersService {
               account.id
             );
             //toggle for testing segments
-            //await this.connection.db.collection(collection).drop();
+            await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
               this.getSegmentCustomersFromQuery.name,
@@ -2691,7 +2691,7 @@ export class CustomersService {
               account.id
             );
             //toggle for testing segments
-            //await this.connection.db.collection(collection).drop();
+            await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
               this.getCustomersFromQuery.name,
@@ -2814,7 +2814,7 @@ export class CustomersService {
               account.id
             );
             //toggle for testing segments
-            //await this.connection.db.collection(collection).drop();
+            await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
               this.getCustomersFromQuery.name,
@@ -3010,7 +3010,7 @@ export class CustomersService {
               account.id
             );
             //toggle for testing segments
-            //await this.connection.db.collection(collection).drop();
+            await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
               this.getSegmentCustomersFromQuery.name,
@@ -3103,7 +3103,7 @@ export class CustomersService {
               account.id
             );
             //toggle for testing segments
-            //await this.connection.db.collection(collection).drop();
+            await this.connection.db.collection(collection).drop();
             this.debug(
               `dropped successfully`,
               this.getSegmentCustomersFromQuery.name,
@@ -4199,7 +4199,7 @@ export class CustomersService {
     const { eventName, comparisonType, value, time, additionalProperties  } =
       statement;
 
-    const { dateComparisonType, timeAfter, timeBefore } = time;
+    
 
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -4252,6 +4252,7 @@ export class CustomersService {
 
     if (time) {
       console.log("the statement is", JSON.stringify(statement, null, 2));
+      const { dateComparisonType, timeAfter, timeBefore } = time;
       switch (time.comparisonType) {
         case 'after':
           //console.log("value type is", typeof value);
