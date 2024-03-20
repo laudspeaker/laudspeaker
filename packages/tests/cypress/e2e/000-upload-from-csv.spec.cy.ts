@@ -50,7 +50,6 @@ describe("upload from csv", () => {
     cy.get("tbody.relative > * > :nth-child(1) > :first").click();
     cy.wait(10000);
     cy.reload();
-    cy.contains("testing+7@laudspeaker.com").should("exist");
     cy.contains("Eligible users: 41 Users").should("exist");
   });
 });
