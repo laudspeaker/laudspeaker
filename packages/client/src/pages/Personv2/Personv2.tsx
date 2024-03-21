@@ -448,7 +448,9 @@ const Personv2 = () => {
                 <div className="text-[20px] font-semibold leading-[28px]">
                   {personInfo.email}
                 </div>
-                <div className="text-[#4B5563] font-roboto">Id: {id}</div>
+                <div className="text-[#4B5563] font-roboto">
+                  Id: <span id="personId">{id}</span>
+                </div>
               </div>
             </>
           )}
