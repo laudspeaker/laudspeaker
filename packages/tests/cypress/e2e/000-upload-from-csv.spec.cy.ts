@@ -5,7 +5,6 @@ import { loginFunc } from "../test-helpers/loginFunc";
 import setMailgun from "../test-helpers/setMailgun";
 import { setupOrganization } from "../test-helpers/setupOrganization";
 import signup from "../test-helpers/signup";
-import path from "path";
 
 const { email, password, firstName, lastName, organizationName, timeZone } =
   credentials;
@@ -33,6 +32,8 @@ describe("upload from csv", () => {
       "./cypress/fixtures/correctness_testing.csv",
       { force: true }
     );
+
+    cy.wait(10000);
 
     cy.contains("correctness_testing").should("exist");
     cy.contains("Next").click();
