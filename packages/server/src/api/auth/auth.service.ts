@@ -49,7 +49,7 @@ export class AuthService {
     @InjectConnection() private readonly connection: mongoose.Connection,
     @InjectRepository(OrganizationInvites)
     public organizationInvitesRepository: Repository<OrganizationInvites>
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -207,16 +207,33 @@ export class AuthService {
   public async validateAPIKey(
     apiKey: string
   ): Promise<{ account: Account; workspace: Workspaces } | never> {
-    const workspace = await this.workspacesRepository.findOne({
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    const workspace = await queryRunner.manager.findOne(Workspaces, {
       where: {
         apiKey,
       },
       relations: ['organization.owner'],
     });
-    const account: Account = await this.accountRepository.findOne({
-      where: { id: workspace.organization.owner.id },
-      relations: ['teams.organization.workspaces'],
-    });
+    // const account = await queryRunner.manager.findOne(Account, {
+    //   where: { id: workspace.organization.owner.id },
+    //   relations: ['teams.organization.workspaces', 'teams.organization.owner'],
+    // });
+
+    const account = await queryRunner.query(
+      `SELECT "account".*, "team".*, "organization".*, "workspaces".*, "ownerAccount".*
+      FROM "account"
+      LEFT JOIN "organization_team_members_account" "ota" ON "ota"."accountId" = "account"."id"
+      LEFT JOIN "organization_team" "team" ON "team"."id" = "ota"."organizationTeamId"
+      LEFT JOIN "organization" ON "team"."organizationId" = "organization"."id"
+      LEFT JOIN "workspaces" ON "organization"."id" = "workspaces"."organizationId"
+      LEFT JOIN "account" "ownerAccount" ON "organization"."ownerId" = "ownerAccount"."id"
+      WHERE "account"."id" = $1`, 
+      [workspace.organization.owner.id]
+    );
+
+    await queryRunner.commitTransaction();
 
     return { account: account, workspace: workspace };
   }
