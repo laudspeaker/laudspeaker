@@ -207,16 +207,21 @@ export class AuthService {
   public async validateAPIKey(
     apiKey: string
   ): Promise<{ account: Account; workspace: Workspaces } | never> {
-    const workspace = await this.workspacesRepository.findOne({
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    const workspace = await queryRunner.manager.findOne(Workspaces, {
       where: {
         apiKey,
       },
       relations: ['organization.owner'],
     });
-    const account = await this.accountRepository.findOne({
+    const account = await queryRunner.manager.findOne(Account, {
       where: { id: workspace.organization.owner.id },
       relations: ['teams.organization.workspaces', 'teams.organization.owner'],
     });
+
+    await queryRunner.commitTransaction();
 
     return { account: account, workspace: workspace };
   }
