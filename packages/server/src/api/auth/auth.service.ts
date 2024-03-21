@@ -213,9 +213,9 @@ export class AuthService {
       },
       relations: ['organization.owner'],
     });
-    const account: Account = await this.accountRepository.findOne({
+    const account = await this.accountRepository.findOne({
       where: { id: workspace.organization.owner.id },
-      relations: ['teams.organization.workspaces'],
+      relations: ['teams.organization.workspaces', 'teams.organization.owner'],
     });
 
     return { account: account, workspace: workspace };
