@@ -49,7 +49,7 @@ export class AuthService {
     @InjectConnection() private readonly connection: mongoose.Connection,
     @InjectRepository(OrganizationInvites)
     public organizationInvitesRepository: Repository<OrganizationInvites>
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -216,10 +216,22 @@ export class AuthService {
       },
       relations: ['organization.owner'],
     });
-    const account = await queryRunner.manager.findOne(Account, {
-      where: { id: workspace.organization.owner.id },
-      relations: ['teams.organization.workspaces', 'teams.organization.owner'],
-    });
+    // const account = await queryRunner.manager.findOne(Account, {
+    //   where: { id: workspace.organization.owner.id },
+    //   relations: ['teams.organization.workspaces', 'teams.organization.owner'],
+    // });
+
+    const account = await queryRunner.query(
+      `SELECT "account".*, "team".*, "organization".*, "workspaces".*, "ownerAccount".*
+      FROM "account"
+      LEFT JOIN "organization_team_members_account" "ota" ON "ota"."accountId" = "account"."id"
+      LEFT JOIN "organization_team" "team" ON "team"."id" = "ota"."organizationTeamId"
+      LEFT JOIN "organization" ON "team"."organizationId" = "organization"."id"
+      LEFT JOIN "workspaces" ON "organization"."id" = "workspaces"."organizationId"
+      LEFT JOIN "account" "ownerAccount" ON "organization"."ownerId" = "ownerAccount"."id"
+      WHERE "account"."id" = $1`, 
+      [workspace.organization.owner.id]
+    );
 
     await queryRunner.commitTransaction();
 
