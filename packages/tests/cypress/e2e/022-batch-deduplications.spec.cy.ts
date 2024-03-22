@@ -25,6 +25,7 @@ describe("batch and deduplication", () => {
     setupOrganization(organizationName, timeZone);
     cy.get("#settings").click();
     cy.contains("API").click();
+    cy.wait(1000);
     cy.get("#privateAPIKey")
       .invoke("val")
       .then((val) => {
@@ -46,7 +47,7 @@ describe("batch and deduplication", () => {
                 correlationKey: "_id",
                 payload: {
                   $anon_distinct_id: "FBBBCB26-B75E-4342-B40B-568BF879F7C5",
-                  distinct_id: "2001704",
+                  distinct_id: email,
                 },
                 correlationValue: "FBBBCB26-B75E-4342-B40B-568BF879F7C5",
               },
@@ -100,77 +101,52 @@ describe("batch and deduplication", () => {
                 event: "MY_banner_list_view",
               },
             ],
-            // [
-            //   {
-            //     timestamp: "2024-03-15T02:31:05.295Z",
-            //     uuid: "F451DF0A-D713-4076-AE20-41AB1641BC98",
-            //     event: "$identify",
-            //     source: "mobile",
-            //     correlationKey: "email",
-            //     payload: {
-            //       $anon_distinct_id: "FBBBCB26-B75E-4342-B40B-568BF879F7C5",
-            //       distinct_id: "2001704",
-            //     },
-            //     correlationValue: email,
-            //   },
-            //   {
-            //     timestamp: "2024-03-15T02:31:05.313Z",
-            //     uuid: "A97E8A44-AAB0-45C6-B68D-3CAD9A0ED0DD",
-            //     correlationKey: "email",
-            //     correlationValue: email,
-            //     source: "mobile",
-            //     event: "$set",
-            //     payload: {
-            //       mkt_agree: true,
-            //     },
-            //   },
-            //   {
-            //     correlationKey: "email",
-            //     source: "mobile",
-            //     uuid: "24291D14-944D-4C7B-B0E4-EC98B8A9DF46",
-            //     correlationValue: email,
-            //     event: "MY_home_view",
-            //     payload: {
-            //       service: "MY",
-            //       user: "KCB미연결",
-            //       tap: "open",
-            //     },
-            //     timestamp: "2024-03-15T02:31:05.333Z",
-            //   },
-            //   {
-            //     source: "mobile",
-            //     correlationValue: email,
-            //     event: "MY_home_view",
-            //     correlationKey: "email",
-            //     uuid: "46300C36-EB75-483D-9955-555233CE648C",
-            //     payload: {
-            //       service: "MY",
-            //       user: "KCB미연결",
-            //       tap: "main",
-            //     },
-            //     timestamp: "2024-03-15T02:31:05.353Z",
-            //   },
-            //   {
-            //     source: "mobile",
-            //     correlationKey: "email",
-            //     correlationValue: "FBBBCB26-B75E-4342-B40B-568BF879F7C5",
-            //     payload: {
-            //       id: 2,
-            //       service: "MY",
-            //     },
-            //     timestamp: "2024-03-15T02:31:05.443Z",
-            //     uuid: "C3EE7322-CBA2-49C4-B118-87DD86AAA5D0",
-            //     event: email,
-            //   },
-            // ],
           },
         }).then(() => {
           cy.wait(1000);
-          cy.get("#users").click();
-          cy.contains("FBBBCB26-B75E-4342-B40B-568BF879F7C5").should("exist");
-          cy.contains("FBBBCB26-B75E-4342-B40B-568BF879F7C5").click();
-          cy.contains("mkt_agree").should("exist");
-          cy.contains("true").should("exist");
+
+          cy.request({
+            method: "POST",
+            url: `${Cypress.env("TESTS_API_BASE_URL")}/events/batch`,
+            headers: { Authorization: `Api-Key ${apikey}` },
+            body: {
+              batch: [
+                {
+                  correlationKey: "_id",
+                  source: "mobile",
+                  uuid: "24291D14-944D-4C7B-B0E4-EC98B8A9DF46",
+                  correlationValue: "00000B26-B75E-4342-B40B-568BF879F7C5",
+                  event: "MY_home_view",
+                  payload: {
+                    service: "MY",
+                    user: "KCB미연결",
+                    tap: "open",
+                  },
+                  timestamp: "2024-03-15T02:31:05.333Z",
+                },
+                {
+                  timestamp: "2024-03-15T02:31:05.295Z",
+                  uuid: "F451DF0A-D713-4076-AE20-41AB1641BC98",
+                  event: "$identify",
+                  source: "mobile",
+                  correlationKey: "_id",
+                  payload: {
+                    $anon_distinct_id: "00000B26-B75E-4342-B40B-568BF879F7C5",
+                    distinct_id: email,
+                  },
+                  correlationValue: "00000B26-B75E-4342-B40B-568BF879F7C5",
+                },
+              ],
+            },
+          }).then(() => {
+            cy.wait(1000);
+            cy.get("#users").click();
+            cy.get(".personId:first").click();
+            cy.contains("FBBBCB26-B75E-4342-B40B-568BF879F7C5").should("exist");
+            cy.contains("00000B26-B75E-4342-B40B-568BF879F7C5").should("exist");
+            cy.contains("mkt_agree").should("exist");
+            cy.contains("true").should("exist");
+          });
         });
       });
   });

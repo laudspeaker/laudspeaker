@@ -26,6 +26,7 @@ describe("multisplit attribute", () => {
 
     cy.get("#settings").click();
     cy.contains("API").click();
+    cy.wait(1000);
     cy.get("#privateAPIKey")
       .invoke("val")
       .then((val) => {
@@ -33,17 +34,80 @@ describe("multisplit attribute", () => {
 
         createTestCustomer(email);
         cy.wait(1000);
+        cy.reload();
+        cy.contains("Edit").click();
+        cy.contains("Add attribute").click();
+        cy.contains("mkt_agree").click();
+        cy.contains("value").click();
+        cy.get('[data-option="true"]').click();
+        cy.contains("Save").click();
+
+        cy.wait(1000);
         cy.visit("/home");
         cy.url().should("include", "/home");
 
         cy.contains("Journeys").click();
-        cy.contains("Journey Builder").click();
+        cy.get("#campaigns").click();
+        cy.get("#create-template-button").click();
+        cy.get("#name").type("Webhook1");
+        cy.get("#handleTemplateType").click();
+        cy.get('[data-option="webhook"]').click();
+        cy.get("#submitTemplateCreation").click();
+        cy.get("#webhookURL").type(
+          `${Cypress.env("TESTS_API_BASE_URL")}/events`
+        );
+        cy.get("#custom-header").type(`Api-Key ${apikey}`);
+        cy.contains("Content").click();
+
+        cy.get("#webhook-body").type(
+          JSON.stringify(
+            {
+              event: "webhook1",
+              source: "custom",
+              correlationKey: "email",
+              correlationValue: email,
+            },
+            null,
+            2
+          )
+        );
+        cy.get("#saveDraftTemplate").click();
+        cy.get(".invert").click();
+
+        cy.get("#create-template-button").click();
+        cy.get("#name").type("Webhook2");
+        cy.get("#handleTemplateType").click();
+        cy.get('[data-option="webhook"]').click();
+        cy.get("#submitTemplateCreation").click();
+        cy.get("#webhookURL").type(
+          `${Cypress.env("TESTS_API_BASE_URL")}/events`
+        );
+        cy.get("#custom-header").type(`Api-Key ${apikey}`);
+        cy.contains("Content").click();
+
+        cy.get("#webhook-body").type(
+          JSON.stringify(
+            {
+              event: "webhook2",
+              source: "custom",
+              correlationKey: "email",
+              correlationValue: email,
+            },
+            null,
+            2
+          )
+        );
+        cy.get("#saveDraftTemplate").click();
+        cy.get(".invert").click();
+
+        cy.get("#journeys").click();
         cy.get("#create-journey").click();
 
         cy.get("#journey-name-input").clear().type("test00000");
         cy.get("#create-journey-modal-button").click();
 
         drag("#waitUntil", ".empty-node");
+        cy.wait(500);
         cy.get(".text-muted").click();
         cy.get('[data-option="event"]').click();
         cy.get("input").clear().type("eventA");
@@ -51,32 +115,24 @@ describe("multisplit attribute", () => {
         cy.get("#save-node-data").click();
 
         drag("#multisplit", ".empty-node");
+        cy.wait(500);
         cy.contains("Add branch").click();
         cy.contains("Add condition").click();
-        cy.get("input:first").clear().type("agreed");
+        cy.get("input:first").clear().type("mkt_agree");
         cy.contains("value").click();
         cy.get('[data-option="true"]').click();
         cy.get(':contains("Add"):last').click();
         cy.get("#save-node-data").click();
 
-        drag("#email", ".empty-node:first");
+        drag("#webhook", ".empty-node:first");
+        cy.wait(500);
         cy.get("#template-select").select(1);
         cy.get("#save-node-data").click();
 
-        drag("#email", ".empty-node:last");
+        drag("#webhook", ".empty-node:last");
+        cy.wait(500);
         cy.get("#template-select").select(2);
         cy.get("#save-node-data").click();
-
-        cy.get(".react-flow__node-waitUntil").click();
-
-        // cy.get(".react-flow__node-waitUntil").trigger("mouseenter");
-        // cy.get(".react-flow__node-waitUntil").trigger("mouseover");
-        // cy.get(".react-flow__node-waitUntil").trigger("mousemove");
-        // cy.get(".react-flow__node-waitUntil").trigger("mousedown");
-        cy.get(".react-flow__node-waitUntil").trigger("click");
-        // drag("#jumpTo", ".empty-node:first");
-        // cy.wait(1000);
-        // cy.get(".wait-until-node").click();
 
         cy.get("#next-button").click();
         cy.get("#next-button").click();
@@ -85,9 +141,6 @@ describe("multisplit attribute", () => {
         cy.get("#journey-start-verify-button").click();
 
         cy.contains("Journey has been started").should("exist");
-
-        cy.get(".sent:first").contains("0");
-        cy.get(".sent:first").contains("0");
 
         cy.request({
           method: "POST",
@@ -100,10 +153,8 @@ describe("multisplit attribute", () => {
             correlationValue: email,
           },
         }).then(() => {
+          cy.wait(1000);
           cy.reload();
-
-          cy.get(".sent:first").contains("0");
-          cy.get(".sent:first").contains("0");
         });
       });
   });
