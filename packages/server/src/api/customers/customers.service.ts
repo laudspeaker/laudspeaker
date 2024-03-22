@@ -3,6 +3,7 @@ import mongoose, {
   ClientSession,
   isValidObjectId,
   Model,
+  mongo,
   Query,
   Types,
 } from 'mongoose';
@@ -4169,6 +4170,26 @@ export class CustomersService {
    *  eg onboarding has performed 1 times
    *
    * Handles SINGLE statements not queries with subqueries
+   * 
+   * eg:
+   * 
+   * {
+      "type": "Event",
+      "comparisonType": "has performed",
+      "eventName": "Event_View",
+      "value": 1,
+      "time": {
+        "comparisonType": "before",
+        "timeBefore": "1 days ago",
+        "dateComparisonType": "relative",
+        "timeAfter": "1 days ago"
+      },
+      "additionalProperties": {
+        "comparison": "all",
+        "properties": []
+      }
+    }
+   *
    *
    * @returns set of customers
    */
@@ -4179,8 +4200,10 @@ export class CustomersService {
     count: number,
     intermediateCollection: string
   ) {
-    const { eventName, comparisonType, value, time, additionalProperties } =
+    const { eventName, comparisonType, value, time, additionalProperties  } =
       statement;
+
+    
 
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -4232,7 +4255,86 @@ export class CustomersService {
     };
 
     if (time) {
+      console.log("the statement is", JSON.stringify(statement, null, 2));
+      const { dateComparisonType, timeAfter, timeBefore } = time;
       switch (time.comparisonType) {
+        case 'after':
+          //console.log("value type is", typeof value);
+          //console.log("value is", value);
+          let afterDate: Date;
+          let isoDateStringAfter: string;
+          if ( dateComparisonType === 'relative') {
+            afterDate = this.parseRelativeDate(timeAfter);
+            isoDateStringAfter = afterDate.toISOString();
+          } else {
+            // Use the Date constructor for parsing RFC 2822 formatted dates
+            afterDate = new Date(timeAfter);
+            isoDateStringAfter = afterDate.toISOString();
+          }
+          //console.log("afterDate type is", typeof afterDate);
+          //console.log("after date is", afterDate);
+          // Check if afterDate is valid
+          if (isNaN(afterDate.getTime())) {
+            throw new Error('Invalid date format');
+          }
+          //query[key] = { $gt: afterDate };
+          mongoQuery.createdAt = { $gt: isoDateStringAfter };
+          break;
+        case 'before':
+          //console.log("value type is", typeof value);
+          //console.log("value is", value);
+          let beforeDate: Date;
+          let isoDateStringBefore: string;
+          if (dateComparisonType === 'relative') {
+            beforeDate = this.parseRelativeDate(timeBefore);
+            isoDateStringBefore = beforeDate.toISOString();
+          } else {
+            // Directly use the Date constructor for parsing RFC 2822 formatted dates
+            beforeDate = new Date(timeBefore);
+            isoDateStringBefore = beforeDate.toISOString();
+          }
+          //console.log("beforeDate type is", typeof beforeDate);
+          //console.log("before date is", beforeDate);
+          // Check if beforeDate is valid
+          if (isNaN(beforeDate.getTime())) {
+            throw new Error('Invalid date format');
+          }
+          //query[key] = { $lt: this.toMongoDate(beforeDate) };
+          //query[key] = { $lt: beforeDate };
+          mongoQuery.createdAt = { $lt: isoDateStringBefore };
+          break;
+        case 'during':
+          //console.log("value type is", typeof value);
+          //console.log("value is", value);
+          //console.log("subComparisonValue is", subComparisonValue);
+          let startDate: Date, endDate: Date;
+          let isoStart: string, isoEnd: string;
+          if ( dateComparisonType === 'relative') {
+            startDate = this.parseRelativeDate(timeAfter);
+            // this is not a type, the front end is making the later date timeBefore
+            endDate = this.parseRelativeDate(timeBefore);
+            isoStart = startDate.toISOString();
+            isoEnd = endDate.toISOString();
+          } else {
+            // Use the Date constructor for parsing RFC 2822 formatted dates
+            startDate = new Date(timeAfter);
+            // this is not a type, the front end is making the later date timeBefore
+            endDate = new Date(timeBefore);
+            isoStart = startDate.toISOString();
+            isoEnd = endDate.toISOString();
+          }
+          //console.log("startDate type is", typeof startDate);
+          //console.log("startDate is", startDate);
+          //console.log("endDate type is", typeof endDate);
+          //console.log("endDate is", endDate);
+          // Check if dates are valid
+          if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            throw new Error('Invalid date format');
+          }
+          //query[key] = { $gte: startDate, $lte: endDate };
+          mongoQuery.createdAt = { $gte: isoStart, $lte: isoEnd };
+          break;
+        /*
         case 'before':
           //.toUTCString()
           mongoQuery.createdAt = {
@@ -4252,7 +4354,9 @@ export class CustomersService {
           break;
         default:
           break;
+        */  
       }
+      console.log("time query is", JSON.stringify(mongoQuery,null,2))
     }
 
     //sub property not fully tested yet
@@ -4276,6 +4380,8 @@ export class CustomersService {
       }
     }
 
+    console.log("final mongo query is \n", JSON.stringify(mongoQuery, null ,2) );
+
     this.debug(
       'mongo query is/n\n',
       this.customersFromEventStatement.name,
@@ -4296,8 +4402,6 @@ export class CustomersService {
       account.id
     );
     this.connection.db.collection(intermediateCollection);
-
-    // we should enact a strict policy in all other areas in the application as matching here is done on primary key
 
     if (comparisonType === 'has performed') {
       this.debug(
@@ -4413,7 +4517,7 @@ export class CustomersService {
           $merge: {
             into: intermediateCollection, // specify the target collection name
             on: '_id', // assuming '_id' is your unique identifier
-            whenMatched: 'fail', // prevents updates to existing documents; consider "keepExisting" if you prefer not to error out
+            whenMatched: 'keepExisting', // prevents updates to existing documents; consider "keepExisting" if you prefer not to error out
             whenNotMatched: 'insert', // inserts the document if no match is found
           },
         },
@@ -4428,7 +4532,7 @@ export class CustomersService {
       );
 
       this.debug(
-        JSON.stringify(aggregationPipeline, null, 2),
+        JSON.stringify(aggregationPipelineMobile, null, 2),
         this.customersFromEventStatement.name,
         session,
         account.id
@@ -4438,6 +4542,56 @@ export class CustomersService {
       const mobileResult: any =
         await this.eventsService.getCustomersbyEventsMongo(
           aggregationPipelineMobile
+        );
+
+      // we do one more merge with mobile users for those who may include the event correlationValues in their other_ids field
+      const aggregationPipelineMobileOtherIds: any[] = [
+        { $match: mongoQuery },
+        {
+          $lookup: {
+            from: 'customers',
+            localField: 'correlationValue',
+            foreignField: 'other_ids',
+            as: 'matchedCustomersFromOtherIds'
+          },
+        },
+        { $unwind: '$matchedCustomersFromOtherIds' },
+        {
+          $group: {
+            _id: '$matchedCustomersFromOtherIds._id',
+            count: { $sum: 1 }
+          },
+        },
+        { $match: { count: { $gte: value } } }, // Replace `value` with the minimum count of matches you want
+        {
+          $merge: {
+            into: intermediateCollection, // Specify the same intermediateCollection name as the first pipeline
+            on: '_id', // Merge on the `_id` field
+            whenMatched: 'keepExisting', // You could choose another option like 'replace', 'merge', or 'fail' based on your requirements
+            whenNotMatched: 'insert' // Insert if the _id was not matched (new entry)
+          },
+        },
+        // Add any additional stages you may need
+      ];
+
+      this.debug(
+        'aggregate mobile other ids query is/n\n',
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+
+      this.debug(
+        JSON.stringify(aggregationPipelineMobileOtherIds, null, 2),
+        this.customersFromEventStatement.name,
+        session,
+        account.id
+      );
+
+      //fetch users here
+      const mobileResultOtherIds: any =
+        await this.eventsService.getCustomersbyEventsMongo(
+          aggregationPipelineMobileOtherIds
         );
 
       return intermediateCollection;
@@ -4522,33 +4676,6 @@ export class CustomersService {
         return intermediateCollection;
       }
 
-      /*
-      //mobile event check
-      let mobileMongoQuery = cloneDeep(mongoQuery)
-      mobileMongoQuery.source = "mobile";
-
-      const checkMobileEventExists = [
-        {
-          $match: mobileMongoQuery,
-        },
-        {
-          $group: {
-            _id: '$event',
-            count: { $sum: 1 },
-          },
-        },
-      ];
-      const checkMobile = await this.eventsService.getCustomersbyEventsMongo(
-        checkMobileEventExists
-      );
-      
-      if (checkMobile.length < 1) {
-        console.log("no mobile")
-      } else {
-
-      }
-      */
-
       this.debug(
         'event exists',
         this.customersFromEventStatement.name,
@@ -4559,7 +4686,7 @@ export class CustomersService {
       /*
        *  Find customers who perform event (non mobile) (pipeline1), then merge with users who perform event (mobile) (pipeline2)
        *  filter these customers out, return the remaining customers
-       *  re todo
+       *  
        */
 
       const primaryKey = await this.getPrimaryKey(account, session); // Ensure this is done outside the pipeline
@@ -4653,6 +4780,38 @@ export class CustomersService {
       const result2 = await this.eventsService.getCustomersbyEventsMongo(
         pipeline2
       );
+
+      const pipeline_other_ids = [
+        { $match: mobileMongoQuery },
+        {
+          $addFields: {
+            //convertedCorrelationValue: { $toObjectId: '$correlationValue' },
+            convertedCorrelationValue: '$correlationValue' ,
+          },
+        },
+        {
+          $lookup: {
+            from: 'customers',
+            localField: 'convertedCorrelationValue',
+            foreignField: 'other_ids',
+            as: 'matchedOnCorrelationValue',
+          },
+        },
+        { $unwind: '$matchedOnCorrelationValue' },
+        {
+          $project: {
+            _id: '$matchedOnCorrelationValue._id', // Projects the _id of the matched customers
+          },
+        },
+        {
+          $merge: {
+            into: intermediateCollection,
+            on: '_id',
+            whenMatched: 'keepExisting',
+            whenNotMatched: 'insert',
+          },
+        },
+      ];
 
       const pipeline3 = [
         {

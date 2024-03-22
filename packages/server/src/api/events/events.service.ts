@@ -1024,6 +1024,7 @@ export class EventsService {
           default:
             // Handle any other event
             /*
+
               const eventStruct: EventDto = {
                 correlationKey: '_id',
                 correlationValue: customer.id,
