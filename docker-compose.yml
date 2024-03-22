@@ -199,6 +199,8 @@ services:
     depends_on:
       init-environment:
         condition: service_completed_successfully
+      s3-createbuckets:
+        condition: service_completed_successfully
     env_file:
       - ./local-env/env-docker-compose
     networks:
