@@ -151,6 +151,26 @@ services:
         condition: service_healthy
       kafka-connect1:
         condition: service_healthy
+      s3:
+        condition: service_healthy
+    networks:
+      - laudspeaker_default
+
+  s3:
+    image: quay.io/minio/minio
+    command: "server /data --console-address :9123"
+    ports:
+      - "9123:9123"
+      - "9001:9000"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      MINIO_ROOT_USER: test
+      MINIO_ROOT_PASSWORD: 12345678
+    container_name: s3
     networks:
       - laudspeaker_default
 
@@ -179,6 +199,25 @@ services:
     depends_on:
       init-environment:
         condition: service_completed_successfully
+    env_file:
+      - ./local-env/env-docker-compose
+    networks:
+      - laudspeaker_default
+
+  s3-createbuckets:
+    image: minio/mc
+    profiles:
+      - "testing"
+    depends_on:
+      s3:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add s3 http://s3:9000 test 12345678;
+      /usr/bin/mc mb s3/$$AWS_S3_CUSTOMERS_IMPORT_BUCKET;
+      /usr/bin/mc mb s3/$$AWS_S3_BUCKET;
+      exit 0;
+      "
     env_file:
       - ./local-env/env-docker-compose
     networks:
