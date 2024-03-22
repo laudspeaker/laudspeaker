@@ -1343,7 +1343,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                       )}
                     </div>
 
-                    {statement.time !== undefined && (
+                    {statement.time && (
                       <div className="min-w-full flex items-center px-5 py-[14px] border border-[#E5E7EB] bg-white gap-[10px]">
                         <Select
                           value={statement.time.comparisonType}
@@ -1360,10 +1360,47 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               ...statement,
                               time: {
                                 comparisonType: e as any,
+                                dateComparisonType: DateComparisonType.ABSOLUTE,
                               },
                             })
                           }
                           className="max-w-[145px]"
+                        />
+
+                        <Select
+                          buttonClassName="!w-fit"
+                          className="!w-fit"
+                          value={statement.time.dateComparisonType}
+                          onChange={(value) =>
+                            handleChangeStatement(i, {
+                              ...statement,
+                              time: {
+                                ...statement.time,
+                                comparisonType:
+                                  statement.time?.comparisonType ||
+                                  ComparisonType.AFTER,
+                                dateComparisonType: value,
+                                timeBefore:
+                                  value === DateComparisonType.ABSOLUTE
+                                    ? ""
+                                    : "1 days ago",
+                                timeAfter:
+                                  value === DateComparisonType.ABSOLUTE
+                                    ? ""
+                                    : "1 days ago",
+                              },
+                            })
+                          }
+                          options={[
+                            {
+                              key: DateComparisonType.ABSOLUTE,
+                              title: "absolute date",
+                            },
+                            {
+                              key: DateComparisonType.RELATIVE,
+                              title: "relative date",
+                            },
+                          ]}
                         />
 
                         <FilterBuilderDynamicInput
@@ -1374,6 +1411,10 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               ? statement.time.timeBefore
                               : statement.time.timeAfter) || ""
                           }
+                          isRelativeDate={
+                            statement.time.dateComparisonType ===
+                            DateComparisonType.RELATIVE
+                          }
                           onChange={(value) => {
                             handleChangeStatement(i, {
                               ...statement,
@@ -1382,10 +1423,18 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                 ...(statement.time?.comparisonType ===
                                 ComparisonType.BEFORE
                                   ? {
-                                      timeBefore: new Date(value).toISOString(),
+                                      timeBefore:
+                                        statement.time.dateComparisonType ===
+                                        DateComparisonType.ABSOLUTE
+                                          ? new Date(value).toISOString()
+                                          : value,
                                     }
                                   : {
-                                      timeAfter: new Date(value).toISOString(),
+                                      timeAfter:
+                                        statement.time?.dateComparisonType ===
+                                        DateComparisonType.ABSOLUTE
+                                          ? new Date(value).toISOString()
+                                          : value,
                                     }),
                               },
                             });
@@ -1398,12 +1447,20 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                             <FilterBuilderDynamicInput
                               type={StatementValueType.DATE}
                               value={statement.time.timeBefore || ""}
+                              isRelativeDate={
+                                statement.time.dateComparisonType ===
+                                DateComparisonType.RELATIVE
+                              }
                               onChange={(value) => {
                                 handleChangeStatement(i, {
                                   ...statement,
                                   time: {
                                     ...statement.time!,
-                                    timeBefore: new Date(value).toISOString(),
+                                    timeBefore:
+                                      statement.time!.dateComparisonType ===
+                                      DateComparisonType.ABSOLUTE
+                                        ? new Date(value).toISOString()
+                                        : value,
                                   },
                                 });
                               }}
@@ -1793,6 +1850,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               time: {
                                 comparisonType: ComparisonType.BEFORE,
                                 timeBefore: new Date().toISOString(),
+                                dateComparisonType: DateComparisonType.ABSOLUTE,
                               },
                             })
                           }
@@ -1977,6 +2035,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               time: {
                                 comparisonType: ComparisonType.BEFORE,
                                 timeBefore: new Date().toISOString(),
+                                dateComparisonType: DateComparisonType.ABSOLUTE,
                               },
                             } as MessageEventQuery)
                           }
@@ -2005,14 +2064,59 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               ...statement,
                               time: {
                                 comparisonType: e as any,
+                                dateComparisonType: DateComparisonType.ABSOLUTE,
                               },
                             } as MessageEventQuery)
                           }
                           className="max-w-[145px]"
                         />
 
+                        <Select
+                          buttonClassName="!w-fit"
+                          className="!w-fit"
+                          value={
+                            (statement as MessageEventQuery).time
+                              ?.dateComparisonType
+                          }
+                          onChange={(value) =>
+                            handleChangeStatement(i, {
+                              ...statement,
+                              time: {
+                                ...(statement as MessageEventQuery).time,
+                                comparisonType:
+                                  (statement as MessageEventQuery).time
+                                    ?.comparisonType || ComparisonType.AFTER,
+                                dateComparisonType: value,
+                                timeBefore:
+                                  value === DateComparisonType.ABSOLUTE
+                                    ? ""
+                                    : "1 days ago",
+                                timeAfter:
+                                  value === DateComparisonType.ABSOLUTE
+                                    ? ""
+                                    : "1 days ago",
+                              },
+                            } as MessageEventQuery)
+                          }
+                          options={[
+                            {
+                              key: DateComparisonType.ABSOLUTE,
+                              title: "absolute date",
+                            },
+                            {
+                              key: DateComparisonType.RELATIVE,
+                              title: "relative date",
+                            },
+                          ]}
+                        />
+
                         <FilterBuilderDynamicInput
                           type={StatementValueType.DATE}
+                          isRelativeDate={
+                            (statement as MessageEventQuery).time
+                              ?.dateComparisonType ===
+                            DateComparisonType.RELATIVE
+                          }
                           value={
                             ((statement as MessageEventQuery).time
                               ?.comparisonType === ComparisonType.BEFORE
@@ -2029,10 +2133,20 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                 ...((statement as MessageEventQuery).time
                                   ?.comparisonType === ComparisonType.BEFORE
                                   ? {
-                                      timeBefore: new Date(value).toISOString(),
+                                      timeBefore:
+                                        (statement as MessageEventQuery).time
+                                          ?.dateComparisonType ===
+                                        DateComparisonType.ABSOLUTE
+                                          ? new Date(value).toISOString()
+                                          : value,
                                     }
                                   : {
-                                      timeAfter: new Date(value).toISOString(),
+                                      timeAfter:
+                                        (statement as MessageEventQuery).time
+                                          ?.dateComparisonType ===
+                                        DateComparisonType.ABSOLUTE
+                                          ? new Date(value).toISOString()
+                                          : value,
                                     }),
                               },
                             } as MessageEventQuery);
@@ -2044,6 +2158,11 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                             -
                             <FilterBuilderDynamicInput
                               type={StatementValueType.DATE}
+                              isRelativeDate={
+                                (statement as MessageEventQuery).time
+                                  ?.dateComparisonType ===
+                                DateComparisonType.RELATIVE
+                              }
                               value={
                                 (statement as MessageEventQuery).time
                                   ?.timeBefore || ""
@@ -2053,7 +2172,12 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                   ...statement,
                                   time: {
                                     ...(statement as MessageEventQuery).time!,
-                                    timeBefore: new Date(value).toISOString(),
+                                    timeBefore:
+                                      (statement as MessageEventQuery).time
+                                        ?.dateComparisonType ===
+                                      DateComparisonType.ABSOLUTE
+                                        ? new Date(value).toISOString()
+                                        : value,
                                   },
                                 } as MessageEventQuery);
                               }}
