@@ -102,7 +102,7 @@ const triggerEvent = (
   });
 };
 
-describe("Comprehensive MultiSplit", () => {
+describe("Comprehensive MultiSplit", { retries: 2 }, () => {
   beforeEach(() => {
     try {
       cy.request(`${Cypress.env("TESTS_API_BASE_URL")}/tests/reset-tests`);

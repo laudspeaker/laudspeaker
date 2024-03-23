@@ -69,7 +69,7 @@ const MapValidationErrors: FC<MapValidationErrorsProps> = ({
             <Button
               type={ButtonType.SECONDARY}
               onClick={onClose}
-              data-testid="cancel-validation-button"
+              id="cancel-validation-button"
             >
               {cancelText}
             </Button>
@@ -78,7 +78,7 @@ const MapValidationErrors: FC<MapValidationErrorsProps> = ({
             type={confirmButtonType}
             className={confirmTextClassName}
             onClick={onConfirm}
-            data-testid="confirm-validation-button"
+            id="confirm-validation-button"
           >
             {confirmText}
           </Button>

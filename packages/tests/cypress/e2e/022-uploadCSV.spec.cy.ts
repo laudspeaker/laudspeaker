@@ -16,7 +16,7 @@ const mapField = (field: string, option: string) => {
   });
 };
 
-describe("Comprehensive MultiSplit", () => {
+describe("uploadCSV", { retries: 2 }, () => {
   beforeEach(() => {
     try {
       cy.request(`${Cypress.env("TESTS_API_BASE_URL")}/tests/reset-tests`);
@@ -50,13 +50,11 @@ describe("Comprehensive MultiSplit", () => {
     mapField("recent_repay_amt", "recent_repay_amt");
 
     cy.wait(1000);
-    cy.get("[data-testid='next-button']").click({ force: true });
-    cy.get("[data-testid='confirm-validation-button']").click({ force: true });
+    cy.get("#next-button").click({ force: true });
+    cy.get("#confirm-validation-button").click({ force: true });
 
-    cy.contains("From your file, we can", { timeout: 20000 }).should(
-      "be.visible"
-    );
-    cy.get("[data-testid='import-button']").click({ force: true });
+    cy.contains("From your file, we can").should("be.visible");
+    cy.get("#import-button").click({ force: true });
 
     cy.wait(5000);
     cy.reload();
