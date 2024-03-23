@@ -48,7 +48,9 @@ describe("upload from csv", () => {
     cy.contains("41").should("exist");
     cy.get(':contains("Import"):last').click();
     cy.get("#segments").click();
-    cy.get("tbody.relative > * > :nth-child(1) > :first").click();
+    cy.get("td:nth-of-type(1) > button").click();
+    //cy.get("#segments > div").click();
+    //cy.get("tbody.relative > * > :nth-child(1) > :first").click();
     cy.wait(10000);
     cy.reload();
     cy.contains("Eligible users: 41 Users").should("exist");
