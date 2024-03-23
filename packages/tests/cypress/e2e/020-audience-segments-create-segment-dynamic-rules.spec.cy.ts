@@ -23,13 +23,15 @@ describe("Segment Correctness", { retries: 2 }, () => {
     cy.clearAllSessionStorage();
     signup(email, password, firstName, lastName);
     cy.wait(1000);
-    setupOrganization(organizationName, timeZone);
-    cy.wait(10000);
-    cy.visit("/home");
-    cy.url().should("include", "/home");
   });
 
   it("works as expected", () => {
+    setupOrganization(organizationName, timeZone);
+
+    cy.wait(10000);
+    cy.visit("/home");
+    cy.url().should("include", "/home");
+
     uploadCSV("correctness_testing.csv");
 
     mapAttributesToNewFields();
