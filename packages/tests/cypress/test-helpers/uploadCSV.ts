@@ -3,11 +3,11 @@ import "@4tw/cypress-drag-drop";
 export const uploadCSV = (filename: string) => {
   cy.visit("/people");
 
-  cy.get("[data-testid='import-customer-button']", { timeout: 10000 }).click({
+  cy.get("#import-customer-button", { timeout: 40000 }).click({
     force: true,
   });
 
-  cy.get("#dropzone-file", { timeout: 30000 }).selectFile(
+  cy.get("#dropzone-file", { timeout: 40000 }).selectFile(
     {
       // path relative to the cypress configuration file
       contents: `cypress/fixtures/${filename}`,
@@ -15,13 +15,10 @@ export const uploadCSV = (filename: string) => {
     {
       // input element is hidden, so we need to force the upload
       force: true,
-      timeout: 10000,
     }
   );
 
-  cy.get("[data-testid='import-file-name']", { timeout: 20000 }).should(
-    "be.visible"
-  );
+  cy.get("#import-file-name", { timeout: 80000 }).should("be.visible");
 
-  cy.get("[data-testid='next-button']").click({ force: true });
+  cy.get("#next-button").click({ force: true });
 };

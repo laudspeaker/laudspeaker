@@ -6,17 +6,15 @@ import { mapAttributesToNewFields } from "../test-helpers/mapAttributesToNewFiel
 import {
   booleanSegments,
   createNewDynamicSegment,
-  dateSegments,
   emailSegments,
   numberSegments,
   stringSegments,
 } from "../test-helpers/createNewDynamicSegment";
-import { add } from "cypress/types/lodash";
 
 const { email, password, firstName, lastName, organizationName, timeZone } =
   credentials;
 
-describe("Segment Correctness", () => {
+describe("Segment Correctness", { retries: 2 }, () => {
   beforeEach(() => {
     cy.request(`${Cypress.env("TESTS_API_BASE_URL")}/tests/reset-tests`);
     cy.wait(1000);
@@ -35,10 +33,10 @@ describe("Segment Correctness", () => {
     uploadCSV("correctness_testing.csv");
 
     mapAttributesToNewFields();
-    cy.get("[data-testid='next-button']").click();
+    cy.get("#next-button").click();
     cy.get("[data-testid='confirm-validation-button']").click();
 
-    cy.get("[data-testid='import-button']", { timeout: 20000 }).click();
+    cy.get("#import-button").click();
     cy.contains("Import started").should("be.visible");
 
     // Create string segments

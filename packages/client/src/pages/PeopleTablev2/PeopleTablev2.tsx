@@ -171,7 +171,7 @@ const PeopleTablev2 = () => {
             onClick={() => {
               navigate("/people/import");
             }}
-            data-testid="import-customer-button"
+            id="import-customer-button"
           >
             Import Customers via CSV
           </Button>
