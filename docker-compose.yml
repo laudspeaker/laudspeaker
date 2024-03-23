@@ -15,7 +15,7 @@ services:
       timeout: 2s
       retries: 20
     networks:
-      - laudspeaker_default
+      - laudspeaker_default_1
 
   postgres:
     image: postgres:14.4-alpine
@@ -29,7 +29,7 @@ services:
       - "5432:5432"
     restart: unless-stopped
     networks:
-      - laudspeaker_default
+      - laudspeaker_default_1
 
   mongo:
     image: "mongo:latest"
@@ -53,7 +53,7 @@ services:
       timeout: 2s
       retries: 20
     networks:
-      - laudspeaker_default
+      - laudspeaker_default_1
 
   clickhouse:
     hostname: clickhouse
@@ -69,7 +69,7 @@ services:
       - "8123:8123"
       - "9000:9000"
     networks:
-      - laudspeaker_default
+      - laudspeaker_default_1
 
   #### START kafka related containers
   zoo1:
@@ -82,7 +82,7 @@ services:
       ZOO_SERVERS: zoo1:2888:3888
       ALLOW_ANONYMOUS_LOGIN: yes
     networks:
-      - laudspeaker_default
+      - laudspeaker_default_1
 
   kafka1:
     image: bitnami/kafka:3.6.0
@@ -108,7 +108,7 @@ services:
     depends_on:
       - zoo1
     networks:
-      - laudspeaker_default
+      - laudspeaker_default_1
 
   #### END kafka related containers
 
@@ -130,7 +130,7 @@ services:
       kafka1:
         condition: service_healthy
     networks:
-      - laudspeaker_default
+      - laudspeaker_default_1
     command:
       - bash
       - -c
@@ -152,7 +152,7 @@ services:
       kafka-connect1:
         condition: service_healthy
     networks:
-      - laudspeaker_default
+      - laudspeaker_default_1
 
   ping-server:
     image: jaredhanson11/ping-server:latest
@@ -162,12 +162,12 @@ services:
     environment:
       PORT: 8555
     networks:
-      - laudspeaker_default
+      - laudspeaker_default_1
 
   laudspeaker:
     profiles:
       - "testing"
-    image: ${LAUDSPEAKER_IMAGE:-laudspeaker/laudspeaker:latest}
+    image: ${LAUDSPEAKER_IMAGE:-local-laudspeaker:latest}
     container_name: laudspeaker
     ports:
       - "8080:8080"
@@ -182,7 +182,7 @@ services:
     env_file:
       - ./local-env/env-docker-compose
     networks:
-      - laudspeaker_default
+      - laudspeaker_default_1
 
   # GUIs for all supporting services.
   # currently:
@@ -208,7 +208,7 @@ services:
       KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: kafka-connect
       DYNAMIC_CONFIG_ENABLED: "true"
     networks:
-      - laudspeaker_default
+      - laudspeaker_default_1
 
   redis-gui:
     container_name: redis-gui
@@ -223,7 +223,7 @@ services:
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:5540/healthcheck || exit 1
     networks:
-      - laudspeaker_default
+      - laudspeaker_default_1
 
   init-guis:
     profiles:
@@ -236,9 +236,9 @@ services:
       redis-gui:
         condition: service_healthy
     networks:
-      - laudspeaker_default
+      - laudspeaker_default_1
 
 networks:
-  laudspeaker_default:
+  laudspeaker_default_1:
     driver: bridge
-    name: laudspeaker_default
+    name: laudspeaker_default_1
