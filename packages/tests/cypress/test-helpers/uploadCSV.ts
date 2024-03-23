@@ -3,7 +3,8 @@ import "@4tw/cypress-drag-drop";
 export const uploadCSV = (filename: string) => {
   cy.visit("/people");
 
-  cy.get("#import-customer-button", { timeout: 40000 }).click({
+  cy.wait(5000);
+  cy.get("#import-customer-button").click({
     force: true,
   });
 
@@ -18,7 +19,10 @@ export const uploadCSV = (filename: string) => {
     }
   );
 
-  cy.get("#import-file-name", { timeout: 80000 }).should("be.visible");
+  // wait for the upload to complete
+  cy.wait(20000);
+
+  cy.get("#import-file-name", { timeout: 40000 }).should("be.visible");
 
   cy.get("#next-button").click({ force: true });
 };
