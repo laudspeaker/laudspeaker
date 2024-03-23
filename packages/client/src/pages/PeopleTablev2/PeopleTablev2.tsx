@@ -316,7 +316,7 @@ const PeopleTablev2 = () => {
               rowsData={rows}
               rows={rows.map((row) => [
                 <button
-                  className="text-[#6366F1]"
+                  className="id-cell text-[#6366F1]"
                   onClick={() => navigate(`/person/${row.id}`)}
                   id="personIdLink"
                 >

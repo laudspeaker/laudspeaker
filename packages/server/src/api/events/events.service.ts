@@ -983,8 +983,6 @@ export class EventsService {
     try {
       //if(MobileBatchDto.batch.length <= 1){
       for (const thisEvent of MobileBatchDto.batch) {
-        console.log('this is the event', JSON.stringify(thisEvent, null, 2));
-        
         switch (thisEvent.event) {
           case '$identify':
             // Handle $identify event
@@ -1026,6 +1024,7 @@ export class EventsService {
           default:
             // Handle any other event
             /*
+
               const eventStruct: EventDto = {
                 correlationKey: '_id',
                 correlationValue: customer.id,
@@ -1039,18 +1038,9 @@ export class EventsService {
               thisEvent,
               session
             );
-            console.log(
-              'Handling other event for correlationKey:',
-              thisEvent.event
-            );
-            console.log(
-              'Handling other event for correlationKey:',
-              thisEvent.correlationValue
-            );
             if (!thisEvent.correlationValue) {
-              console.log("this is the event with empty", JSON.stringify(thisEvent, null, 2));
-              throw new Error("correlation value is empty");
-          }
+              throw new Error('correlation value is empty');
+            }
             // Your logic to handle other types of events
             break;
         }
