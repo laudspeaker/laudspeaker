@@ -713,7 +713,7 @@ export class EventsService {
     }
 
     await this.customersService.CustomerModel.updateOne(
-      { _id: customer.id },
+      { _id: customer._id },
       {
         [body.type === PushPlatforms.ANDROID
           ? 'androidDeviceToken'
@@ -721,7 +721,7 @@ export class EventsService {
       }
     );
 
-    return customer.id;
+    return customer._id;
   }
 
   async identifyCustomer(
@@ -780,23 +780,26 @@ export class EventsService {
       });
 
     if (identifiedCustomer) {
-      await this.customersService.deleteEverywhere(customer.id);
+      await this.customersService.deleteEverywhere(customer._id);
 
       await customer.deleteOne();
 
-      return identifiedCustomer.id;
+      return identifiedCustomer._id;
     } else {
-      await this.customersService.CustomerModel.findByIdAndUpdate(customer.id, {
-        ...customer.toObject(),
-        ...body.optionalProperties,
-        //...uniqueProperties,
-        [primaryKey.key]: body.__PrimaryKey,
-        workspaceId: workspace.id,
-        isAnonymous: false,
-      });
+      await this.customersService.CustomerModel.findByIdAndUpdate(
+        customer._id,
+        {
+          ...customer.toObject(),
+          ...body.optionalProperties,
+          //...uniqueProperties,
+          [primaryKey.key]: body.__PrimaryKey,
+          workspaceId: workspace.id,
+          isAnonymous: false,
+        }
+      );
     }
 
-    return customer.id;
+    return customer._id;
   }
 
   async setCustomerProperties(
@@ -827,7 +830,7 @@ export class EventsService {
       );
     }
 
-    await this.customersService.CustomerModel.findByIdAndUpdate(customer.id, {
+    await this.customersService.CustomerModel.findByIdAndUpdate(customer._id, {
       ...customer.toObject(),
       ...body.optionalProperties,
       workspaceId: workspace.id,
@@ -1443,7 +1446,7 @@ export class EventsService {
       }
     }
 
-    if (customer.id !== event.correlationValue) {
+    if (customer._id !== event.correlationValue) {
       await this.deduplication(customer, event.correlationValue);
     }
 

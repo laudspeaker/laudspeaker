@@ -296,7 +296,7 @@ export class CustomersController {
       createCustomerDto,
       session
     );
-    return cust.id;
+    return cust._id;
   }
 
   @Post('/upsert/')
