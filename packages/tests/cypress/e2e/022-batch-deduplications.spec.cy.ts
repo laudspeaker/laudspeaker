@@ -9,14 +9,11 @@ import signup from "../test-helpers/signup";
 const { email, password, firstName, lastName, organizationName, timeZone } =
   credentials;
 
-  describe("Initial testing", () => {
-    it("successfully loads index", () => {
-      cy.visit("/");
-    });
+describe("Initial testing", () => {
+  it("successfully loads index", () => {
+    cy.visit("/");
   });
-
-  
-/*
+});
 
 describe("batch and deduplication", () => {
   beforeEach(() => {
@@ -150,7 +147,7 @@ describe("batch and deduplication", () => {
           }).then(() => {
             cy.wait(1000);
             cy.get("#users").click();
-            cy.get(".personId:first").click();
+            cy.get(".id-cell:first").click();
             cy.contains("FBBBCB26-B75E-4342-B40B-568BF879F7C5").should("exist");
             cy.contains("00000B26-B75E-4342-B40B-568BF879F7C5").should("exist");
             cy.contains("mkt_agree").should("exist");
@@ -160,4 +157,3 @@ describe("batch and deduplication", () => {
       });
   });
 });
-*/
