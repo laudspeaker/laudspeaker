@@ -19,10 +19,7 @@ export const uploadCSV = (filename: string) => {
     }
   );
 
-  // wait for the upload to complete
-  cy.wait(20000);
-
-  cy.get("#import-file-name", { timeout: 40000 }).should("be.visible");
+  cy.get("#import-file-name", { timeout: 60000 }).should("be.visible");
 
   cy.get("#next-button").click({ force: true });
 };

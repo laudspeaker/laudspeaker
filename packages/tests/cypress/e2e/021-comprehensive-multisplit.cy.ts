@@ -11,7 +11,7 @@ const createWebhook = (
   name = "WH_1",
   url = "https://jsonplaceholder.typicode.com/todos/1"
 ) => {
-  cy.visit("http://localhost:3000/templates");
+  cy.visit("/templates");
   cy.wait(1000);
   cy.get("#create-template-button").click();
   cy.get("#name").click();
@@ -129,7 +129,7 @@ describe("Comprehensive MultiSplit", { retries: 2 }, () => {
     createWebhook();
 
     // create multi-split journey
-    cy.visit("http://localhost:3000/flow");
+    cy.visit("/flow");
     cy.get("#create-journey").click();
     cy.get("#journey-name-input").click();
     cy.get("#journey-name-input").type("TM_2");
