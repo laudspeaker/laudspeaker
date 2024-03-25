@@ -22,7 +22,7 @@ export const ExperimentNode: FC<NodeProps<ExperimentNodeData>> = ({
 
   return (
     <div
-      className={`relative wait-until-node w-[260px] h-[80px] rounded bg-white font-inter ${
+      className={`relative experiment-node w-[260px] h-[80px] rounded bg-white font-inter ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
       } ${selected ? "border-2 border-[#6366F1]" : "border border-[#E5E7EB]"}`}
       data-testid="experiment-node"

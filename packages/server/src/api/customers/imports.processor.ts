@@ -93,9 +93,6 @@ export class ImportProcessor extends WorkerHost {
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
-    console.log(
-      '\n\n------\n\n------\n\n------\n\n------\n\n------\n\n------\n\n------\n\n'
-    );
     const {
       fileData,
       clearedMapping,

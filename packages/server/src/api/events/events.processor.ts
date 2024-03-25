@@ -38,7 +38,7 @@ export enum EventType {
 }
 
 @Injectable()
-@Processor('events', { removeOnComplete: { count: 100 }, concurrency: 5 })
+@Processor('events', { removeOnComplete: { count: 1000 }, concurrency: 5 })
 export class EventsProcessor extends WorkerHost {
   private providerMap: Record<
     EventType,
@@ -489,7 +489,7 @@ export class EventsProcessor extends WorkerHost {
         this.warn(
           `${JSON.stringify({
             warning: 'Customer not in step',
-            customerID: job.data.customer.id,
+            customerID: job.data.customer._id,
             stepToQueue,
           })}`,
           this.process.name,
@@ -500,7 +500,7 @@ export class EventsProcessor extends WorkerHost {
         // a tracker event
         if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
           await this.websocketGateway.sendProcessed(
-            job.data.customer.id,
+            job.data.customer._id,
             job.data.event.event,
             job.data.event.payload.trackerId
           );
@@ -517,7 +517,7 @@ export class EventsProcessor extends WorkerHost {
       );
       if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
         await this.websocketGateway.sendProcessed(
-          job.data.customer.id,
+          job.data.customer._id,
           job.data.event.event,
           job.data.event.payload.trackerId
         );

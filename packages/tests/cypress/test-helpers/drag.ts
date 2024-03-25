@@ -22,5 +22,6 @@ export default (
   });
   cy.get(dragSourceSelector).trigger("dragend", {
     dataTransfer,
+    force: true,
   });
 };
