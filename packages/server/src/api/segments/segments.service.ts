@@ -170,7 +170,6 @@ export class SegmentsService {
     search = '',
     session: string
   ) {
-    //this.debug(`In findAllSegmentsForCustomer`, this.findAllSegmentsForCustomer.name, session, account.id);
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const totalPages = Math.ceil(
@@ -220,141 +219,6 @@ export class SegmentsService {
     });
   }
 
-  //test code
-  public async testSegment(
-    account: Account,
-    createSegmentDTO: CreateSegmentDTO,
-    session: string
-  ) {
-    let err;
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-
-      const segment = await queryRunner.manager.save(Segment, {
-        ...createSegmentDTO,
-        workspace: { id: workspace.id },
-      });
-
-      this.debug(`In test Segment`, this.create.name, session, account.id);
-
-      this.debug(
-        `SegmentDTO is: ${JSON.stringify(createSegmentDTO, null, 2)}`,
-        this.create.name,
-        session,
-        account.id
-      );
-
-      this.debug(
-        `inclusionCriteria.query (argument to test func) is: ${JSON.stringify(
-          createSegmentDTO.inclusionCriteria.query,
-          null,
-          2
-        )}`,
-        this.create.name,
-        session,
-        account.id
-      );
-
-      // test code
-      // this.customersService.createSegmentQuery(createSegmentDTO.inclusionCriteria.query);
-      if (segment.type === SegmentType.AUTOMATIC) {
-        // test code getSegmentCustomersFromQuery
-        /*
-        const testResult = await this.customersService.testCustomerInSegment(
-          createSegmentDTO.inclusionCriteria.query,
-          account
-        );
-        console.log('testResult is', testResult);
-        return segment;
-        return testResult;
-        await queryRunner.commitTransaction();
-        */
-        const collectionPrefix = this.generateRandomString();
-        const customersInSegment =
-          await this.customersService.getSegmentCustomersFromQuery(
-            createSegmentDTO.inclusionCriteria.query,
-            account,
-            session,
-            true,
-            0,
-            collectionPrefix
-          );
-        this.debug(
-          `we have customersInSegment: ${customersInSegment}`,
-          this.create.name,
-          session,
-          account.id
-        );
-
-        const batchSize = 500; // Set an appropriate batch size
-        const collectionName = customersInSegment; // Name of the MongoDB collection
-        const mongoCollection = this.connection.db.collection(collectionName);
-
-        let processedCount = 0;
-        const totalDocuments = await mongoCollection.countDocuments();
-
-        console.log('looks like top level segment is created in mongo');
-        console.log('going to save', totalDocuments);
-        console.log('saving to', segment.id);
-
-        while (processedCount < totalDocuments) {
-          // Fetch a batch of documents
-          const customerDocuments = await mongoCollection
-            .find({})
-            .skip(processedCount)
-            .limit(batchSize)
-            .toArray();
-          // Map the MongoDB documents to SegmentCustomers entities
-          const segmentCustomersArray: SegmentCustomers[] =
-            customerDocuments.map((doc) => {
-              const segmentCustomer = new SegmentCustomers();
-              segmentCustomer.customerId = doc._id.toString();
-              segmentCustomer.segment = segment.id;
-              segmentCustomer.workspace =
-                account?.teams?.[0]?.organization?.workspaces?.[0];
-              // Set other properties as needed
-              return segmentCustomer;
-            });
-          // Batch insert into PostgreSQL database
-          await queryRunner.manager.save(
-            SegmentCustomers,
-            segmentCustomersArray
-          );
-          // Update the count of processed documents
-          processedCount += customerDocuments.length;
-        }
-
-        try {
-          console.log('trying to release collection', customersInSegment);
-          await this.deleteCollectionsWithPrefix(collectionPrefix);
-          //await this.connection.db.collection(customersInSegment).drop();
-
-          console.log('Collection dropped successfully');
-        } catch (e) {
-          console.error('Error dropping collection:', e);
-        }
-      }
-      await queryRunner.commitTransaction();
-
-      console.log('customers saved to segment');
-
-      return segment;
-    } catch (e) {
-      console.log('oi oi');
-      err = e;
-      this.error(e, this.create.name, session, account.email);
-      await queryRunner.rollbackTransaction();
-    } finally {
-      await queryRunner.release();
-      if (err) {
-        throw err;
-      }
-    }
-  }
-
   /*
    * Helper function for customers.service getCusotmersFromsegment()
    */
@@ -366,15 +230,13 @@ export class SegmentsService {
     collectionName: string
   ) {
     const records = await this.segmentCustomersRepository.findBy({
-      segment: segmentId, //{ id: segment.id },
+      segment: segmentId,
     });
-    //console.log("In get segment customers");
     const collectionHandle = this.connection.db.collection(collectionName);
 
     for (const record of records) {
       const customerId = record.customerId; // Assuming customerId is a field in record
       // Update the collection: increment the count for this customerId
-      //const objectId = new Types.ObjectId(customerId);
       const objectId = customerId;
       await collectionHandle.updateOne(
         { _id: objectId } as unknown as Filter<Document>,
@@ -382,9 +244,6 @@ export class SegmentsService {
         { upsert: true }
       );
     }
-
-    //const allValues = await collectionHandle.find({}).toArray();
-    //console.log("All values in the collection:", allValues);
 
     return collectionName;
   }
@@ -429,17 +288,7 @@ export class SegmentsService {
   //to do add debugs
   async deleteCollectionsWithPrefix(prefix: string): Promise<void> {
     try {
-      //console.log("deleting collections with prefix");
-      // List all collections in the database
-      //to do
       const collections = await this.connection.db.listCollections().toArray();
-      //console.log("collections are", collections);
-      // this.debug(
-      //   `collections are: ${collections}`,
-      //   this.deleteCollectionsWithPrefix.name,
-      //   session,
-      //   account.id
-      // );
 
       // Filter collections that start with the given prefix
       const collectionsToDelete = collections
@@ -450,14 +299,10 @@ export class SegmentsService {
       for (const collectionName of collectionsToDelete) {
         //toggle for testing segments
         await this.connection.db.collection(collectionName).drop();
-        //console.log(`Deleted collection: ${collectionName}`);
       }
     } catch (error) {
       const session = randomUUID();
-      this.debug(`could not drop: ${prefix}`, this.create.name, session);
-      this.error(error, this.create.name, session);
-      //console.error('Error deleting collections:', error);
-      //throw error; // Rethrow the error for further handling if necessary
+      this.error(error, this.deleteCollectionsWithPrefix.name, session);
     }
   }
 
@@ -512,7 +357,6 @@ export class SegmentsService {
         const result = await mongoCollection.insertMany(
           mongoDocuments as unknown[]
         );
-        //console.log('Batch of documents inserted:', result);
         mongoDocuments = []; // Reset batch after insertion
       } catch (err) {
         //console.error('Error inserting documents:', err);
@@ -548,10 +392,6 @@ export class SegmentsService {
     let processedCount = 0;
     const totalDocuments = await mongoCollection.countDocuments();
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-
-    //console.log("looks like top level segment is created in mongo");
-    //console.log("going to save", totalDocuments);
-    //console.log("saving to", segment.id);
 
     while (processedCount < totalDocuments) {
       // Fetch a batch of documents
@@ -642,10 +482,6 @@ export class SegmentsService {
         let processedCount = 0;
         const totalDocuments = await mongoCollection.countDocuments();
 
-        //console.log("looks like top level segment is created in mongo");
-        //console.log("going to save", totalDocuments);
-        //console.log("saving to", segment.id);
-
         while (processedCount < totalDocuments) {
           // Fetch a batch of documents
           const customerDocuments = await mongoCollection
@@ -674,28 +510,12 @@ export class SegmentsService {
         }
 
         try {
-          //console.log("trying to release collection", customersInSegment);
           await this.deleteCollectionsWithPrefix(collectionPrefix);
-          //await this.connection.db.collection(customersInSegment).drop();
-          //console.log('Collection dropped successfully');
         } catch (e) {
-          this.debug(
-            `could not drop: ${customersInSegment}`,
-            this.create.name,
-            session,
-            account.id
-          );
-          //console.error('Error dropping collection:', e);
+          this.error(e, this.create.name, session, account.id);
         }
       }
       await queryRunner.commitTransaction();
-      this.debug(
-        `we have created segment successfully`,
-        this.create.name,
-        session,
-        account.id
-      );
-
       return segment;
     } catch (e) {
       err = e;
@@ -721,8 +541,6 @@ export class SegmentsService {
     createSegmentDTO: CountSegmentUsersSizeDTO,
     session: string
   ) {
-    console.log('In segment size');
-
     this.debug(
       `SegmentDTO is: ${JSON.stringify(
         createSegmentDTO.inclusionCriteria.query.type,
@@ -735,7 +553,6 @@ export class SegmentsService {
     );
 
     if (createSegmentDTO.inclusionCriteria.query.type === 'any') {
-      //console.log("in any");
       const collectionPrefix = this.generateRandomString();
       const customersInSegment =
         await this.customersService.getSegmentCustomersFromQuery(
@@ -759,23 +576,12 @@ export class SegmentsService {
         session
       );
       try {
-        //console.log("trying to release collection", customersInSegment);
         await this.deleteCollectionsWithPrefix(collectionPrefix);
-        //await this.connection.db.collection(customersInSegment).drop();
-        //console.log('Collection dropped successfully');
       } catch (e) {
-        this.debug(
-          `could not drop: ${collectionPrefix}`,
-          this.size.name,
-          session,
-          account.id
-        );
         this.error(e, this.size.name, session, account.id);
-        //console.error('Error dropping collection:', e);
       }
       return { size: segmentDocuments, total: totalCount };
     } else if (createSegmentDTO.inclusionCriteria.query.type === 'all') {
-      //console.log("in all");
       const collectionPrefix = this.generateRandomString();
       const customersInSegment =
         await this.customersService.getSegmentCustomersFromQuery(
@@ -799,10 +605,7 @@ export class SegmentsService {
         session
       );
       try {
-        //console.log("trying to release collection", customersInSegment);
         await this.deleteCollectionsWithPrefix(collectionPrefix);
-        //await this.connection.db.collection(customersInSegment).drop();
-        //console.log('Collection dropped successfully');
       } catch (e) {
         this.debug(
           `could not drop: ${collectionPrefix}`,
@@ -814,32 +617,8 @@ export class SegmentsService {
       }
       return { size: segmentDocuments, total: totalCount };
     } else {
-      //console.log("DTO type", createSegmentDTO.inclusionCriteria.type);
-      //should never get here
-      return { size: 12, total: 17 };
+      throw new Error(`Shouldn't be making it here`);
     }
-
-    //real
-    //async getSegmentCustomersFromQuery(query: any, account: Account, session: string, topLevel: boolean, count: number, intermediateCollection?: string): Promise<string>  {
-    //test
-    /*
-    const customersInSegment =
-      await this.customersService.getSegmentCustomersFromQuery(
-        createSegmentDTO.inclusionCriteria.query,
-        account,
-        session,
-        true,
-        0,
-        "name"
-      );
-    const totalCount = await this.customersService.customersSize(
-      account,
-      session
-    );
-    */
-    //to do change back
-    return { size: 12, total: 17 };
-    //return { size: customersInSegment.size, total: totalCount };
   }
 
   public async update(
@@ -976,7 +755,7 @@ export class SegmentsService {
     return {
       data: customers.map((customer) => ({
         ...(customer?.toObject() || {}),
-        id: customer.id,
+        id: customer._id,
         createdAt: customer.createdAt,
         dataSource: 'segmentPeople',
       })),
@@ -1004,9 +783,6 @@ export class SegmentsService {
     const segments = await this.getSegments(account, undefined, queryRunner);
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    //if we need to optimize later make call once here
-    //const allCustomerKeys = await this.customersService.getKeysAndTypes(workspace.id)
-
     for (const segment of segments) {
       try {
         // We skip manual segments and empty inclusion criteria
@@ -1026,7 +802,6 @@ export class SegmentsService {
           );
         }
 
-        //console.log("segment is", JSON.stringify(segment, null, 2));
         const doInclude = await this.customersService.checkCustomerMatchesQuery(
           segment.inclusionCriteria.query,
           account,
@@ -1040,8 +815,6 @@ export class SegmentsService {
           session,
           account.id
         );
-        //let doInclude = true;
-        //console.log("before isMemberOf");
         const isMemberOf = await this.isCustomerMemberOf(
           account,
           segment.id,
@@ -1050,7 +823,6 @@ export class SegmentsService {
         );
         if (doInclude && !isMemberOf) {
           // If should include but not a member of, then add
-          //console.log("before addCustomerToSe");
           await this.addCustomerToSegment(
             account,
             segment.id,
@@ -1061,7 +833,6 @@ export class SegmentsService {
           addedToSegments.push(segment);
         } else if (!doInclude && isMemberOf) {
           // If should not include but is a member of, then remove
-          //console.log("before removeCustomerFromSegment");
           await this.removeCustomerFromSegment(
             segment.id,
             customerId,
@@ -1430,7 +1201,7 @@ export class SegmentsService {
     customer: CustomerDocument,
     session: string
   ) {
-    await this.deleteCustomerFromAllAutomaticSegments(account, customer.id);
+    await this.deleteCustomerFromAllAutomaticSegments(account, customer._id);
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const segments = await this.segmentRepository.findBy({
@@ -1449,7 +1220,7 @@ export class SegmentsService {
             session
           )
         )
-          await this.assignCustomer(account, segment.id, customer.id, session);
+          await this.assignCustomer(account, segment.id, customer._id, session);
       } catch (e) {
         this.logger.error(e);
       }
@@ -1492,30 +1263,17 @@ export class SegmentsService {
         customerId,
       });
     } else {
-      //looks like this is the issue
-      //console.log("this is the issue");
-      //console.log("id is", id);
       try {
-        /*
-        const segment = await queryRunner.manager.findOne(Segment,{
-          where: {
-            id: id,
-          }
-        });
-        */
         record = await queryRunner.manager.findOne(SegmentCustomers, {
           where: {
             segment: id, // {id},//{ id, owner: { id: account.id } },
             customerId,
           },
-          //segment: segment.id,// {id},//{ id, owner: { id: account.id } },
-          //customerId,
         });
       } catch (e) {
         this.error(e, this.isCustomerMemberOf.name, 'dafd');
         throw e;
       }
-      //console.log("no this is the issue");
     }
 
     return !!record;

@@ -118,10 +118,4 @@ export class SlackController {
       session
     );
   }
-
-  @Post('events')
-  handleEvents(@Body() body: any, @Res() res: Response) {
-    const session = randomUUID();
-    this.slackService.handleEvent(res, body, session);
-  }
 }

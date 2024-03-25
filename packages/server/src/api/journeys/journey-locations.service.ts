@@ -124,7 +124,7 @@ export class JourneyLocationsService {
   ) {
     this.log(
       JSON.stringify({
-        info: `Creating JourneyLocation (${journey.id}, ${customer.id})`,
+        info: `Creating JourneyLocation (${journey.id}, ${customer._id})`,
       }),
       this.createAndLock.name,
       session,
@@ -139,20 +139,20 @@ export class JourneyLocationsService {
         where: {
           journey: journey.id,
           workspace: { id: workspace.id },
-          customer: customer.id,
+          customer: customer._id,
         },
       });
 
       if (location)
         throw new Error(
-          `Customer ${customer.id} already enrolled in journey ${journey.id}; located in step ${location.step.id}`
+          `Customer ${customer._id} already enrolled in journey ${journey.id}; located in step ${location.step.id}`
         );
 
       // Step 2: Create new journey Location row, add time that user entered the journey
       await queryRunner.manager.save(JourneyLocation, {
         journey: journey.id,
         workspace,
-        customer: customer.id ?? customer._id.toString(),
+        customer: customer._id,
         step: step,
         stepEntry: Date.now(),
         moveStarted: Date.now(),
@@ -162,17 +162,17 @@ export class JourneyLocationsService {
         where: {
           journey: journey.id,
           workspace: { id: workspace.id },
-          customer: customer.id,
+          customer: customer._id,
         },
       });
       if (location)
         throw new Error(
-          `Customer ${customer.id} already enrolled in journey ${journey.id}; located in step ${location.step.id}`
+          `Customer ${customer._id} already enrolled in journey ${journey.id}; located in step ${location.step.id}`
         );
       await this.journeyLocationsRepository.save({
         journey: journey.id,
         workspace,
-        customer: customer.id,
+        customer: customer._id,
         step: step,
         stepEntry: Date.now(),
         moveStarted: Date.now(),
@@ -293,7 +293,7 @@ export class JourneyLocationsService {
   ): Promise<JourneyLocation> {
     this.log(
       JSON.stringify({
-        info: `Finding JourneyLocation (${journey.id}, ${customer.id})`,
+        info: `Finding JourneyLocation (${journey.id}, ${customer._id})`,
       }),
       this.findForWrite.name,
       session,
@@ -306,7 +306,7 @@ export class JourneyLocationsService {
         where: {
           journey: journey.id,
           workspace: workspace ? { id: workspace.id } : undefined,
-          customer: customer.id,
+          customer: customer._id,
         },
         relations: ['step'],
       });
@@ -316,7 +316,7 @@ export class JourneyLocationsService {
           journey: journey.id,
           workspace: workspace ? { id: workspace.id } : undefined,
 
-          customer: customer.id,
+          customer: customer._id,
         },
         relations: ['step'],
       });
@@ -468,7 +468,7 @@ export class JourneyLocationsService {
           journey: journey.id,
           workspace: workspace ? { id: workspace.id } : undefined,
 
-          customer: customer.id,
+          customer: customer._id,
         },
         relations: ['workspace', 'journey', 'step'],
       });
@@ -478,7 +478,7 @@ export class JourneyLocationsService {
           journey: journey.id,
           workspace: workspace ? { id: workspace.id } : undefined,
 
-          customer: customer.id,
+          customer: customer._id,
         },
         relations: ['workspace', 'journey', 'step'],
       });
@@ -604,36 +604,6 @@ export class JourneyLocationsService {
       );
     }
   }
-
-  /**
-   * Mark a customer as no longer moving through a journey.
-   *
-   * @param {Account} account
-   * @param {Journey} journey
-   * @param {CustomerDocument} customer
-   * @param {String} session
-   * @param {QueryRunner} [queryRunner]
-   */
-  // async findAndUnlock(
-  //   journey: Journey,
-  //   customer: CustomerDocument,
-  //   session: string,
-  //   account?: Account,
-  //   queryRunner?: QueryRunner
-  // ) {
-  //   const location = await this.findForWrite(
-  //     journey,
-  //     customer,
-  //     session,
-  //     account,
-  //     queryRunner
-  //   );
-  //   if (!location)
-  //     throw new Error(
-  //       `Customer ${location.customer} is not in journey ${location.journey}`
-  //     );
-  //   await this.unlock(location, session, account, queryRunner);
-  // }
 
   /**
    * Mark a customer as no longer moving through a journey.
