@@ -455,7 +455,8 @@ export class MessageSender {
     customerID: string,
     stepID: string,
     filteredTags: any,
-    accountID: string
+    accountID: string,
+    quietHours: any
   ): Promise<ClickHouseMessage[]> {
     if (!iosDeviceToken) {
       return;
@@ -528,6 +529,9 @@ export class MessageSender {
 
     const messageId = await messaging.send({
       token: iosDeviceToken,
+      data:{
+        quietHours,
+      },
       notification: {
         title: titleWithInsertedTags.slice(0, this.MAXIMUM_PUSH_TITLE_LENGTH),
         body: textWithInsertedTags.slice(0, this.MAXIMUM_PUSH_LENGTH),

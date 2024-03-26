@@ -843,6 +843,9 @@ export class TransitionProcessor extends WorkerHost {
                   trackingEmail: email,
                   filteredTags: filteredTags,
                   templateID: template.id,
+                  quietHours: journey.journeySettings.quietHours.enabled
+                    ? journey.journeySettings?.quietHours
+                    : undefined,
                 }),
                 session
               );
