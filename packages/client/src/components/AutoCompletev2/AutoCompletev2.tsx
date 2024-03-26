@@ -22,6 +22,8 @@ interface AutoCompleteProps<T = unknown> {
   noDataFoundPlaceholder?: string;
   includedItems: ItemsSetter<T> | ItemsGetter<T>;
   getKey?: (item: T) => string;
+  id?: string;
+  className?: string;
 }
 
 const AutoComplete = <T,>({
@@ -34,6 +36,8 @@ const AutoComplete = <T,>({
   placeholder,
   noDataFoundPlaceholder = "",
   getKey,
+  id,
+  className,
 }: AutoCompleteProps<T>) => {
   const [query, setQuery] = useState(initialValue || "");
   const [items, setItems] = useState<T[]>(
@@ -73,7 +77,10 @@ const AutoComplete = <T,>({
         <Combobox.Input
           onChange={(event) => setQuery(event.target.value)}
           placeholder={placeholder}
-          className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] focus:border-[#6366F1]"
+          id={id}
+          className={`w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] focus:border-[#6366F1] ${
+            className ? className : ""
+          }`}
         />
         <Combobox.Options className="translate-y-[4px] absolute w-full border z-[99999999]">
           <div className="py-[4px] bg-white rounded-sm">
