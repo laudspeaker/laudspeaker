@@ -147,24 +147,35 @@ describe("eligible users", () => {
 
       cy.get(".filterBuilderAttributePicker").clear();
       cy.wait(5000);
-      cy.get(".filterBuilderAttributePicker").type("numarr", {
+      cy.get(".filterBuilderAttributePicker").type("date", {
         waitForAnimations: true,
       });
-      cy.get("select:last").select(3);
-      cy.get(".stringInput").clear().type("3");
-      cy.wait(5000);
-      cy.contains("of users estimated reached ≈ 1").should("exist");
+      cy.get(".dateInput").then(([dateInput]) => {
+        setDate(dateInput as HTMLInputElement, format(new Date(), "yyyy-MM-dd"));
+        cy.wait(5000);
+        cy.contains("of users estimated reached ≈ 1").should("exist");
 
-      cy.contains("Attribute").click();
-      cy.get('[data-option="Segment"]').click();
+        cy.get(".filterBuilderAttributePicker").clear();
+        cy.wait(5000);
+        cy.get(".filterBuilderAttributePicker").type("numarr", {
+          waitForAnimations: true,
+        });
+        cy.get("select:last").select(3);
+        cy.get(".stringInput").clear().type("3");
+        cy.wait(5000);
+        cy.contains("of users estimated reached ≈ 1").should("exist");
 
-      cy.get("select:last").select(1);
-      cy.wait(5000);
-      cy.contains("of users estimated reached ≈ 41").should("exist");
+        cy.contains("Attribute").click();
+        cy.get('[data-option="Segment"]').click();
 
-      cy.get("select:last").select(2);
-      cy.wait(5000);
-      cy.contains("of users estimated reached ≈ 1").should("exist");
+        cy.get("select:last").select(1);
+        cy.wait(5000);
+        cy.contains("of users estimated reached ≈ 41").should("exist");
+
+        cy.get("select:last").select(2);
+        cy.wait(5000);
+        cy.contains("of users estimated reached ≈ 1").should("exist");
+      });
     });
   });
 });
