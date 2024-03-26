@@ -83,7 +83,8 @@ export class MessageSender {
         job.customerID,
         job.stepID,
         job.filteredTags,
-        job.accountID
+        job.accountID,
+        job.quietHours
       );
     },
     [MessageType.ANDROID]: async (job) => {

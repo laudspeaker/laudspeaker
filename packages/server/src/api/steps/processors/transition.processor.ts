@@ -609,11 +609,18 @@ export class TransitionProcessor extends WorkerHost {
         quietHours.endTime,
         workspace.timezoneUTCOffset
       );
-      const isQuietHour = isWithinInterval(
+      const isQuietHour = false;/*isWithinInterval(
         utcStartTime,
         utcEndTime,
         utcNowString
       );
+      const isQuietHour = true;/*isWithinInterval(
+        utcStartTime,
+        utcEndTime,
+        utcNowString
+      );
+      */
+
 
       this.phClient.capture({
         distinctId: owner.email,
