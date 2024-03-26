@@ -678,14 +678,17 @@ export class MessageSender {
 
     const messaging = admin.messaging(firebaseApp);
 
+    let data = {
+      title: titleWithInsertedTags.slice(0, this.MAXIMUM_PUSH_TITLE_LENGTH),
+      body: textWithInsertedTags.slice(0, this.MAXIMUM_PUSH_LENGTH),
+      sound: 'default',
+    };
+
+    if (quietHours) data[quietHours] = JSON.stringify(quietHours);
+
     const messageId = await messaging.send({
       token: androidDeviceToken,
-      data: {
-        title: titleWithInsertedTags.slice(0, this.MAXIMUM_PUSH_TITLE_LENGTH),
-        body: textWithInsertedTags.slice(0, this.MAXIMUM_PUSH_LENGTH),
-        sound: 'default',
-        quietHours,
-      },
+      data: data,
       android: {
         priority: 'high',
       },
