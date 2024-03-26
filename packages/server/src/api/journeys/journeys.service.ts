@@ -766,7 +766,7 @@ export class JourneysService {
         )
       ) {
         this.log(
-          `Max customer limit reached on journey: ${journey.id}. Preventing customer: ${customer.id} from being enrolled.`,
+          `Max customer limit reached on journey: ${journey.id}. Preventing customer: ${customer._id} from being enrolled.`,
           this.enrollCustomersInJourney.name,
           session,
           account.id
@@ -781,7 +781,7 @@ export class JourneysService {
           step: step,
           location: locations.find((location: JourneyLocation) => {
             return (
-              location.customer === (customer.id ?? customer._id.toString()) &&
+              location.customer === (customer._id ?? customer._id.toString()) &&
               location.journey === journey.id
             );
           }),
@@ -1004,16 +1004,12 @@ export class JourneysService {
         relations: ['latestChanger'],
       });
 
-      const journeysWithEnrolledCustomersCount = await Promise.all(
-        journeys.map(async (journey) => ({
-          ...journey,
-          latestChanger: null,
-          latestChangerEmail: journey.latestChanger?.email,
-          enrolledCustomers: await this.CustomerModel.count({
-            journeys: journey.id,
-          }),
-        }))
-      );
+      const journeysWithEnrolledCustomersCount = journeys.map((journey) => ({
+        ...journey,
+        latestChanger: null,
+        latestChangerEmail: journey.latestChanger?.email,
+        enrolledCustomers: +journey.enrollment_count,
+      }));
 
       return { data: journeysWithEnrolledCustomersCount, totalPages };
     } catch (err) {

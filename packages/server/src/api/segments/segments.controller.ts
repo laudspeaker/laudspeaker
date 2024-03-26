@@ -159,19 +159,6 @@ export class SegmentsController {
     @Body() createSegmentDTO: CreateSegmentDTO
   ) {
     const session = randomUUID();
-    //console.log("**** in save segment /n\n");
-    //console.log("the segmentDTO is", JSON.stringify(createSegmentDTO, null, 2) );
-    //test switch back to segmentsService.create
-    /*
-    return await this.segmentsService.testSegment(
-      <Account>user,
-      createSegmentDTO,
-      session
-    );
-    */
-
-    this.debug(`post saving segment`, this.create.name, session);
-
     return await this.segmentsService.create(
       <Account>user,
       createSegmentDTO,

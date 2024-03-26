@@ -117,23 +117,34 @@ const FilterViewer: FC<FilterViewerProps> = ({
 
                     {statement.time.timeAfter && (
                       <div className="px-[12px] py-[5px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
-                        {format(
-                          new Date(statement.time.timeAfter),
-                          "MM/dd/yyyy HH:mm"
-                        )}
+                        {statement.time.dateComparisonType ===
+                        DateComparisonType.ABSOLUTE
+                          ? format(
+                              new Date(statement.time.timeAfter),
+                              "MM/dd/yyyy HH:mm"
+                            )
+                          : statement.time.timeAfter}
                       </div>
                     )}
                     {statement.time.comparisonType ===
-                      ComparisonType.DURING && <div>-</div>}
-                    {((statement.time.timeBefore && statement.time.timeAfter) ||
-                      statement.time.timeBefore) && (
+                      ComparisonType.DURING && (
                       <>
-                        <div className="px-[12px] py-[5px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
-                          {format(
-                            new Date(statement.time.timeBefore),
-                            "MM/dd/yyyy HH:mm"
-                          )}
-                        </div>
+                        {((statement.time.timeBefore &&
+                          statement.time.timeAfter) ||
+                          statement.time.timeBefore) && (
+                          <>
+                            <div>-</div>
+                            <div className="px-[12px] py-[5px] text-[#4B5563] border border-[#E5E7EB] rounded-sm bg-white">
+                              {statement.time.dateComparisonType ===
+                              DateComparisonType.ABSOLUTE
+                                ? format(
+                                    new Date(statement.time.timeBefore),
+                                    "MM/dd/yyyy HH:mm"
+                                  )
+                                : statement.time.timeBefore}
+                            </div>
+                          </>
+                        )}
                       </>
                     )}
                   </div>

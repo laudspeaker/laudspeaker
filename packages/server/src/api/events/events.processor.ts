@@ -9,7 +9,7 @@ import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { Account } from '../accounts/entities/accounts.entity';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { CustomersService } from '../customers/customers.service';
-import { DataSource, QueryRunner } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import mongoose, { ClientSession } from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Step } from '../steps/entities/step.entity';
@@ -28,6 +28,8 @@ import { WebsocketGateway } from '@/websockets/websocket.gateway';
 import * as _ from 'lodash';
 import * as Sentry from '@sentry/node';
 import { JourneyLocationsService } from '../journeys/journey-locations.service';
+import { Workspace } from 'aws-sdk/clients/workspaces';
+import { InjectRepository } from '@nestjs/typeorm';
 
 export enum EventType {
   EVENT = 'event',
@@ -36,45 +38,20 @@ export enum EventType {
 }
 
 @Injectable()
-@Processor('events', { removeOnComplete: { count: 100 } })
+@Processor('events', { removeOnComplete: { count: 1000 }, concurrency: 5 })
 export class EventsProcessor extends WorkerHost {
   private providerMap: Record<
     EventType,
-    (
-      job: Job<any, any, string>,
-      queryRunner: QueryRunner,
-      transactionSession: ClientSession,
-      session: string
-    ) => Promise<void>
+    (job: Job<any, any, string>) => Promise<void>
   > = {
-    [EventType.EVENT]: async (
-      job,
-      queryRunner,
-      transactionSession,
-      session
-    ) => {
-      await this.handleEvent(job, queryRunner, transactionSession, session);
+    [EventType.EVENT]: async (job) => {
+      await this.handleEvent(job);
     },
-    [EventType.ATTRIBUTE]: async (
-      job,
-      queryRunner,
-      transactionSession,
-      session
-    ) => {
-      await this.handleAttributeChange(
-        job,
-        queryRunner,
-        transactionSession,
-        session
-      );
+    [EventType.ATTRIBUTE]: async (job) => {
+      await this.handleAttributeChange(job);
     },
-    [EventType.MESSAGE]: async (
-      job,
-      queryRunner,
-      transactionSession,
-      session
-    ) => {
-      await this.handleMessage(job, queryRunner, transactionSession, session);
+    [EventType.MESSAGE]: async (job) => {
+      await this.handleMessage(job);
     },
   };
   constructor(
@@ -89,7 +66,8 @@ export class EventsProcessor extends WorkerHost {
     private websocketGateway: WebsocketGateway,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
     @Inject(JourneyLocationsService)
-    private readonly journeyLocationsService: JourneyLocationsService
+    private readonly journeyLocationsService: JourneyLocationsService,
+    @InjectRepository(Step) private readonly stepsRepository: Repository<Step>
   ) {
     super();
   }
@@ -154,28 +132,13 @@ export class EventsProcessor extends WorkerHost {
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
-    const session = randomUUID();
     let err: any;
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    const transactionSession = await this.connection.startSession();
-    await transactionSession.startTransaction();
     try {
-      await this.providerMap[job.name](
-        job,
-        queryRunner,
-        transactionSession,
-        session
-      );
+      await this.providerMap[job.name](job);
     } catch (e) {
       this.error(e, this.process.name, job.data.session);
       err = e;
-      await transactionSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
     } finally {
-      await transactionSession.endSession();
-      await queryRunner.release();
       if (err?.code === 'CUSTOMER_STILL_MOVING') {
         throw err;
       } else if (err) {
@@ -185,68 +148,54 @@ export class EventsProcessor extends WorkerHost {
   }
 
   async handleEvent(
-    job: Job<any, any, string>,
-    queryRunner: QueryRunner,
-    transactionSession: ClientSession,
-    session: string
+    job: Job<
+      {
+        account: Account;
+        workspace: Workspace;
+        journey: Journey;
+        customer: CustomerDocument;
+        event: any;
+        session: string;
+      },
+      any,
+      string
+    >
   ): Promise<any> {
     let branch: number;
     const stepsToQueue: Step[] = [];
-    //Account associated with event
-    const account: Account = await queryRunner.manager.findOne(Account, {
-      where: { id: job.data.accountID },
-      relations: ['teams.organization.workspaces'],
-    });
-    // Multiple journeys can consume the same event, but only one step per journey,
-    // so we create an event job for every journey
-    const journey: Journey = await queryRunner.manager.findOneBy(Journey, {
-      id: job.data.journeyID,
-    });
-    //Customer associated with event
-    const customer: CustomerDocument =
-      await this.customersService.findByCorrelationKVPair(
-        account,
-        job.data.event.correlationKey,
-        job.data.event.correlationValue,
-        session,
-        transactionSession
-      );
-    //Have to take lock before you read the customers in the step, so before you read the step
 
     const location = await this.journeyLocationsService.findForWrite(
-      journey,
-      customer,
-      session,
-      account,
-      queryRunner
+      job.data.journey,
+      job.data.customer,
+      job.data.session,
+      job.data.account
     );
 
     if (!location) {
       this.warn(
         `${JSON.stringify({
           warning: 'Customer not in Journey',
-          customer,
-          journey,
+          customer: job.data.customer,
+          journey: job.data.journey,
         })}`,
         this.process.name,
-        session,
-        account.email
+        job.data.session,
+        job.data.account.email
       );
       return;
     }
 
     await this.journeyLocationsService.lock(
       location,
-      session,
-      account,
-      queryRunner
+      job.data.session,
+      job.data.account
     );
     // All steps in `journey` that might be listening for this event
     const steps = (
-      await queryRunner.manager.find(Step, {
+      await this.stepsRepository.find({
         where: {
           type: StepType.WAIT_UNTIL_BRANCH,
-          journey: { id: journey.id },
+          journey: { id: job.data.journey.id },
         },
         relations: ['workspace.organization.owner', 'journey'],
       })
@@ -528,34 +477,30 @@ export class EventsProcessor extends WorkerHost {
         await this.transitionQueue.add(stepToQueue.type, {
           step: stepToQueue,
           branch: branch,
-          customer: customer,
-          owner: account, //stepToQueue.workspace.organization.owner.id,
+          customer: job.data.customer,
+          owner: job.data.account, //stepToQueue.workspace.organization.owner.id,
           location,
           session: job.data.session,
-          journey: journey,
+          journey: job.data.journey,
           event: job.data.event.event,
         });
       } else {
-        await this.journeyLocationsService.unlock(
-          location,
-          location.step,
-          queryRunner
-        );
+        await this.journeyLocationsService.unlock(location, location.step);
         this.warn(
           `${JSON.stringify({
             warning: 'Customer not in step',
-            customerID: customer.id,
+            customerID: job.data.customer._id,
             stepToQueue,
           })}`,
           this.process.name,
-          session,
-          account.email
+          job.data.session,
+          job.data.account.email
         );
         // Acknowledge that event is finished processing to frontend if its
         // a tracker event
         if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
           await this.websocketGateway.sendProcessed(
-            customer.id,
+            job.data.customer._id,
             job.data.event.event,
             job.data.event.payload.trackerId
           );
@@ -563,20 +508,16 @@ export class EventsProcessor extends WorkerHost {
         return;
       }
     } else {
-      await this.journeyLocationsService.unlock(
-        location,
-        location.step,
-        queryRunner
-      );
+      await this.journeyLocationsService.unlock(location, location.step);
       this.warn(
         `${JSON.stringify({ warning: 'No step matches event' })}`,
         this.process.name,
-        session,
-        account.email
+        job.data.session,
+        job.data.account.email
       );
       if (job.data.event.source === AnalyticsProviderTypes.TRACKER) {
         await this.websocketGateway.sendProcessed(
-          customer.id,
+          job.data.customer._id,
           job.data.event.event,
           job.data.event.payload.trackerId
         );
@@ -586,12 +527,8 @@ export class EventsProcessor extends WorkerHost {
     return;
   }
 
-  async handleAttributeChange(
-    job: Job<any, any, string>,
-    queryRunner: QueryRunner,
-    transactionSession: ClientSession,
-    session: string
-  ): Promise<any> {
+  async handleAttributeChange(job: Job<any, any, string>): Promise<any> {
+    /*
     let branch: number;
     const stepsToQueue: Step[] = [];
     //Account associated with event
@@ -774,14 +711,10 @@ export class EventsProcessor extends WorkerHost {
       return;
     }
     return;
+    */
   }
 
-  async handleMessage(
-    job: Job<any, any, string>,
-    queryRunner: QueryRunner,
-    transactionSession: ClientSession,
-    session: string
-  ): Promise<any> {
+  async handleMessage(job: Job<any, any, string>): Promise<any> {
     let branch: number;
     const stepsToQueue: Step[] = [];
 

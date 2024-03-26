@@ -443,12 +443,12 @@ export class TransitionProcessor extends WorkerHost {
 
     // 5. Attempt delivery. If delivered, record delivery event
     const isDelivered = await this.websocketGateway.sendCustomComponentState(
-      customer.id,
+      customer._id,
       humanReadableName,
       customer.customComponents[humanReadableName]
     );
     await this.websocketGateway.sendProcessed(
-      customer.id,
+      customer._id,
       event,
       humanReadableName
     );

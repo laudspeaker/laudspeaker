@@ -203,12 +203,12 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
             )
               break;
             customer = await this.customersService.findByCustomerId(
-              message.documentKey._id['$oid'],
+              message.documentKey._id,
               clientSession
             );
             if (!customer) {
               this.logger.warn(
-                `No customer with id ${message.documentKey._id['$oid']}. Can't process ${CustomersConsumerService.name}.`
+                `No customer with id ${message.documentKey._id}. Can't process ${CustomersConsumerService.name}.`
               );
               break;
             }
@@ -217,16 +217,15 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
                 customer.workspaceId,
                 session
               );
-            //console.log("in change stream",message);
             await this.segmentsService.updateCustomerSegments(
               account,
-              customer.id,
+              customer._id,
               session,
               queryRunner
             );
             await this.journeysService.updateEnrollmentForCustomer(
               account,
-              customer.id,
+              customer._id,
               message.operationType === 'insert' ? 'NEW' : 'CHANGE',
               session,
               queryRunner,
@@ -242,7 +241,7 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
             break;
           case 'delete': {
             // TODO_JH: remove customerID from all steps also
-            const customerId = message.documentKey._id['$oid'];
+            const customerId = message.documentKey._id;
             await this.segmentsService.removeCustomerFromAllSegments(
               customerId,
               queryRunner

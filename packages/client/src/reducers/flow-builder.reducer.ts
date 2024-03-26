@@ -167,6 +167,7 @@ export interface MessageEventQuery {
       | ComparisonType.DURING;
     timeAfter?: string;
     timeBefore?: string;
+    dateComparisonType: DateComparisonType;
   };
 }
 
@@ -280,7 +281,7 @@ export enum DateComparisonType {
 export interface AttributeQueryStatement {
   type: QueryStatementType.ATTRIBUTE;
   key: string;
-  valueType: StatementValueType;
+  valueType?: StatementValueType;
   comparisonType: ComparisonType;
   subComparisonType: ObjectKeyComparisonType;
   subComparisonValue: string;
@@ -320,6 +321,7 @@ export interface EventQueryStatement {
       | ComparisonType.DURING;
     timeAfter?: string;
     timeBefore?: string;
+    dateComparisonType: DateComparisonType;
   };
 }
 

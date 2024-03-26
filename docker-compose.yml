@@ -1,12 +1,19 @@
 version: "3.7"
 services:
   redis:
+    hostname: redis
+    container_name: redis
     image: redis:alpine
     command: redis-server
     ports:
       - "6379:6379"
     environment:
       - REDIS_REPLICATION_MODE=master
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
     networks:
       - laudspeaker_default
 
@@ -49,8 +56,15 @@ services:
       - laudspeaker_default
 
   clickhouse:
+    hostname: clickhouse
+    container_name: clickhouse
     image: clickhouse/clickhouse-server:latest
     restart: on-failure
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
+      interval: 5s
+      timeout: 2s
+      retries: 20
     ports:
       - "8123:8123"
       - "9000:9000"
@@ -96,19 +110,6 @@ services:
     networks:
       - laudspeaker_default
 
-  # kafka-gui:
-  #   image: provectuslabs/kafka-ui
-  #   hostname: kafka-gui
-  #   container_name: kafak-gui
-  #   environment:
-  #     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:29092
-  #     KAFKA_CLUSTERS_0_NAME: local
-  #   ports:
-  #     - "1002:8080"
-  #   depends_on:
-  #     - kafka1
-  #   networks:
-  #     - laudspeaker_default
   #### END kafka related containers
 
   #### START kafka connect related containers
@@ -146,8 +147,32 @@ services:
         condition: service_healthy
       kafka1:
         condition: service_started
+      clickhouse:
+        condition: service_healthy
       kafka-connect1:
         condition: service_healthy
+      s3:
+        condition: service_healthy
+    networks:
+      - laudspeaker_default
+    command:
+      - "environment"
+
+  s3:
+    image: quay.io/minio/minio
+    command: "server /data --console-address :9123"
+    ports:
+      - "9123:9123"
+      - "9001:9000"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      MINIO_ROOT_USER: test
+      MINIO_ROOT_PASSWORD: 12345678
+    container_name: s3
     networks:
       - laudspeaker_default
 
@@ -176,12 +201,102 @@ services:
     depends_on:
       init-environment:
         condition: service_completed_successfully
-    volumes:
-      - ./local-env/1a_init_kafka_engine.sql:/app/packages/server/src/migrations/clickhouse/1_init.sql
+      s3-createbuckets:
+        condition: service_completed_successfully
     env_file:
       - ./local-env/env-docker-compose
     networks:
       - laudspeaker_default
+
+  s3-createbuckets:
+    image: minio/mc
+    profiles:
+      - "testing"
+    depends_on:
+      s3:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add s3 http://s3:9000 test 12345678;
+      /usr/bin/mc mb s3/$$AWS_S3_CUSTOMERS_IMPORT_BUCKET;
+      /usr/bin/mc mb s3/$$AWS_S3_BUCKET;
+      exit 0;
+      "
+    env_file:
+      - ./local-env/env-docker-compose
+    networks:
+      - laudspeaker_default
+
+  init-connectors:
+    build:
+      context: ./local-env/
+      dockerfile: Dockerfile.initenv
+    container_name: init-connectors
+    profiles:
+      - testing
+    depends_on:
+      laudspeaker:
+        condition: service_healthy
+    networks:
+      - laudspeaker_default
+    command:
+      - "connectors"
+
+  # GUIs for all supporting services.
+  # currently:
+  #   - no gui setup for postgres
+  #   - clickhouse gui is deployed with the clickhouse server
+
+  kafka-gui:
+    container_name: kafka-gui
+    image: provectuslabs/kafka-ui:latest
+    profiles:
+      - gui
+    ports:
+      - 8090:8080
+    depends_on:
+      kafka1:
+        condition: service_started
+      kafka-connect1:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: laudspeaker
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:29092
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect1:8083
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: kafka-connect
+      DYNAMIC_CONFIG_ENABLED: "true"
+    networks:
+      - laudspeaker_default
+
+  redis-gui:
+    container_name: redis-gui
+    image: redis/redisinsight:latest
+    profiles:
+      - gui
+    ports:
+      - 8091:5540
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:5540/healthcheck || exit 1
+    networks:
+      - laudspeaker_default
+
+  init-guis:
+    profiles:
+      - gui
+    build:
+      context: ./local-env/
+      dockerfile: Dockerfile.initenv
+    container_name: init-gui
+    depends_on:
+      redis-gui:
+        condition: service_healthy
+    networks:
+      - laudspeaker_default
+    command:
+      - "guis"
 
 networks:
   laudspeaker_default:
