@@ -97,7 +97,8 @@ export class MessageSender {
         job.customerID,
         job.stepID,
         job.filteredTags,
-        job.accountID
+        job.accountID,
+        job.quietHours
       );
     },
     [MessageType.SLACK]: async (job) => {
@@ -602,7 +603,8 @@ export class MessageSender {
     customerID: string,
     stepID: string,
     filteredTags: any,
-    accountID: string
+    accountID: string,
+    quietHours: any
   ): Promise<ClickHouseMessage[]> {
     if (!androidDeviceToken) {
       return;
@@ -673,20 +675,18 @@ export class MessageSender {
 
     const messageId = await messaging.send({
       token: androidDeviceToken,
-      notification: {
+      data: {
         title: titleWithInsertedTags.slice(0, this.MAXIMUM_PUSH_TITLE_LENGTH),
         body: textWithInsertedTags.slice(0, this.MAXIMUM_PUSH_LENGTH),
+        sound: 'default',
+        quietHours,
       },
       android: {
-        notification: {
-          sound: 'default',
-          clickAction: 'FLUTTER_NOTIFICATION_CLICK',
-        },
         priority: 'high',
       },
       apns: {
         headers: {
-          'apns-priority': '5', // Specify priority as needed
+          'apns-priority': '5',
         },
         payload: {
           aps: {
