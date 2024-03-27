@@ -155,6 +155,8 @@ services:
         condition: service_healthy
     networks:
       - laudspeaker_default
+    command:
+      - "environment"
 
   s3:
     image: quay.io/minio/minio
@@ -225,6 +227,21 @@ services:
     networks:
       - laudspeaker_default
 
+  init-connectors:
+    build:
+      context: ./local-env/
+      dockerfile: Dockerfile.initenv
+    container_name: init-connectors
+    profiles:
+      - testing
+    depends_on:
+      laudspeaker:
+        condition: service_healthy
+    networks:
+      - laudspeaker_default
+    command:
+      - "connectors"
+
   # GUIs for all supporting services.
   # currently:
   #   - no gui setup for postgres
@@ -271,13 +288,15 @@ services:
       - gui
     build:
       context: ./local-env/
-      dockerfile: Dockerfile.initgui
+      dockerfile: Dockerfile.initenv
     container_name: init-gui
     depends_on:
       redis-gui:
         condition: service_healthy
     networks:
       - laudspeaker_default
+    command:
+      - "guis"
 
 networks:
   laudspeaker_default:
