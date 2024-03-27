@@ -5,6 +5,7 @@ interface CheckBoxProps extends React.HTMLAttributes<HTMLDivElement> {
   initValue?: boolean;
   propControl?: boolean;
   onCheck: (checked: boolean) => void;
+  disabled?: boolean;
 }
 
 const CheckBox = ({
@@ -13,6 +14,7 @@ const CheckBox = ({
   initValue,
   propControl,
   onCheck,
+  disabled,
   ...props
 }: CheckBoxProps) => {
   const [checked, setChecked] = useState(!!initValue);
@@ -30,7 +32,9 @@ const CheckBox = ({
 
   return (
     <div
-      className={`flex items-center select-none ${className || ""}`}
+      className={`flex items-center select-none ${
+        disabled ? "pointer-events-none grayscale" : ""
+      } ${className || ""}`}
       onClick={handleCheck}
       {...props}
     >
