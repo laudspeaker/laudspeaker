@@ -420,8 +420,6 @@ export interface EntryTimingRecurrence {
   endsOn: RecurrenceEndsOption;
   endAdditionalValue?: number | string; // string as Date (Ends after number occurnecs or on Specific string Date )
   weeklyOn: number[]; // Day of week number
-  continueOccurence: boolean;
-  continueOccurenceEnrollment: boolean;
 }
 
 export interface EntryTimingSpecificTime {
@@ -1393,8 +1391,6 @@ const flowBuilderSlice = createSlice({
             repeatEvery: 1,
             weeklyOn: [...new Array(7)].map(() => 0),
             endAdditionalValue: undefined,
-            continueOccurence: false,
-            continueOccurenceEnrollment: false,
           },
           userLocalTimeZone: false,
         };
