@@ -299,7 +299,10 @@ const MappingTab = ({
                             {
                               key: "_NEW_RECORD_;-;_NEW_RECORD_",
                               title: (
-                                <div className="flex items-center">
+                                <div
+                                  className="flex items-center"
+                                  id="addNewField"
+                                >
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     width="12"
@@ -379,6 +382,7 @@ const MappingTab = ({
                           placeholder={"Select an attribute"}
                           onChange={handleSelectChange(head)}
                           dataTestId={`mapping-select-${head}`}
+                          id={`select-${head}`}
                         />
                       </td>
                       {!fileData.primaryAttribute && (
@@ -405,6 +409,7 @@ const MappingTab = ({
                               !isProperAttribute(head) &&
                               "opacity-70 pointer-events-none"
                             }`}
+                            data-testid={`${head}-primary-key-option`}
                           />
                         </td>
                       )}

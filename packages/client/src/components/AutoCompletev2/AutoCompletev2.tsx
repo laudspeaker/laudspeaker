@@ -76,6 +76,7 @@ const AutoComplete = <T,>({
           onChange={(event) => setQuery(event.target.value)}
           placeholder={placeholder}
           className="w-full px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] placeholder:font-inter placeholder:font-normal placeholder:text-[14px] placeholder:leading-[22px] placeholder:text-[#9CA3AF] focus:border-[#6366F1]"
+          id="autoCompleteInput"
           data-testid={inputDataTestId}
         />
         <Combobox.Options className="translate-y-[4px] absolute w-full border z-[99999999]">

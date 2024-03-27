@@ -14,6 +14,7 @@ const RadioOption = <T,>({
     <RadioGroup.Option
       value={value}
       className={`flex items-center select-none ${className || ""}`}
+      id="radioButton"
       {...props}
     >
       {({ checked }) => (

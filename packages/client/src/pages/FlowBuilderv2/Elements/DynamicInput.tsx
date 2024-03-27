@@ -113,6 +113,7 @@ export const DateComponent: FC<
           setRelativeCount(num);
         }}
         type="number"
+        id="relative-days-dynamic-input"
       />
       <Select
         value={relativeUnit}
