@@ -170,27 +170,38 @@ export class StepsService {
     if (startStep.length !== 1)
       throw new Error('Can only have one start step per journey.');
 
-    const customers = await this.customersService.find(
-      account,
-      query,
-      session,
-      null,
-      0,
-      audienceSize,
-      collectionName
-    );
+    const CUSTOMERS_PER_BATCH = 50000;
+    let batch = 0;
 
-    await this.journeyLocationsService.createAndLockBulk(
-      journey.id,
-      customers.map((document) => {
-        return document._id.toString();
-      }),
-      startStep[0],
-      session,
-      account,
-      queryRunner,
-      client
-    );
+    while (batch * CUSTOMERS_PER_BATCH <= audienceSize) {
+      const customers = await this.customersService.find(
+        account,
+        query,
+        session,
+        null,
+        batch * CUSTOMERS_PER_BATCH,
+        CUSTOMERS_PER_BATCH,
+        collectionName
+      );
+      this.log(
+        `Skip ${batch * CUSTOMERS_PER_BATCH}, limit: ${CUSTOMERS_PER_BATCH}`,
+        this.triggerStart.name,
+        session
+      );
+      batch++;
+
+      await this.journeyLocationsService.createAndLockBulk(
+        journey.id,
+        customers.map((document) => {
+          return document._id.toString();
+        }),
+        startStep[0],
+        session,
+        account,
+        queryRunner,
+        client
+      );
+    }
 
     return {
       collectionName,
