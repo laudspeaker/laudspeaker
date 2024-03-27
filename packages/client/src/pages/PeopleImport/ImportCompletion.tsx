@@ -80,6 +80,7 @@ const ImportCompletion = ({
                   Create a Segment from this Import
                 </span>
               }
+              id="createSegmentCheckbox"
             />
             {segment.withSegment && (
               <>
@@ -95,6 +96,7 @@ const ImportCompletion = ({
                     placeholder={"Segment name"}
                     wrapperClassName="!max-w-full w-full"
                     className="w-full"
+                    id="segmentNameInput"
                   />
                 </div>
                 <div className="mt-[10px]">

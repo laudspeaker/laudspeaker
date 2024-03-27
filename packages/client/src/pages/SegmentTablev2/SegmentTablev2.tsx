@@ -141,6 +141,7 @@ const SegmentTablev2 = () => {
               { key: SegmentType.AUTOMATIC, title: "Dynamic rules" },
             ]}
             value=""
+            id="createSegmentSelect"
             onChange={(value) => {
               if (value === SegmentType.MANUAL)
                 navigate("/segment/create/manual");
