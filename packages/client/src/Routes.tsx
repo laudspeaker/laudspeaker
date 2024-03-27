@@ -64,6 +64,7 @@ import ManualSegmentCreator from "pages/ManualSegmentCreator";
 import SegmentViewer from "pages/SegmentViewer";
 import DataTransferTable from "pages/DataTransferTable";
 import DataTransfer from "pages/DataTransfer";
+import Billing from "pages/Billing";
 
 interface IProtected {
   children: ReactElement;
@@ -306,6 +307,14 @@ const RouteComponent: React.FC = () => {
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
+          }
+        />
+        <Route
+          path="/billing"
+          element={
+            <DrawerLayout>
+              <Billing />
+            </DrawerLayout>
           }
         />
         <Route
