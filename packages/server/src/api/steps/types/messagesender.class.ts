@@ -84,7 +84,8 @@ export class MessageSender {
         job.customerID,
         job.stepID,
         job.filteredTags,
-        job.accountID
+        job.accountID,
+        job.quietHours
       );
     },
     [MessageType.ANDROID]: async (job) => {
@@ -456,7 +457,8 @@ export class MessageSender {
     customerID: string,
     stepID: string,
     filteredTags: any,
-    accountID: string
+    accountID: string,
+    quietHours: any
   ): Promise<ClickHouseMessage[]> {
     if (!iosDeviceToken) {
       return;
@@ -527,8 +529,19 @@ export class MessageSender {
 
     const messaging = admin.messaging(firebaseApp);
 
+    let data = {
+      stepID,
+      customerID,
+      messageID: randomUUID(),
+      templateID: templateID.toString(),
+      workspaceID: workspace.id,
+    };
+
+    if (quietHours) data['quietHours'] = JSON.stringify(quietHours);
+
     const messageId = await messaging.send({
       token: iosDeviceToken,
+      data,
       notification: {
         title: titleWithInsertedTags.slice(0, this.MAXIMUM_PUSH_TITLE_LENGTH),
         body: textWithInsertedTags.slice(0, this.MAXIMUM_PUSH_LENGTH),
@@ -552,6 +565,7 @@ export class MessageSender {
         },
       },
     });
+
     ret = [
       {
         stepId: stepID,
