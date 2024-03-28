@@ -66,6 +66,11 @@ import {
 import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
 import { MobileBatchDto } from './dto/mobile-batch.dto';
 import e from 'express';
+import {
+  ClickHouseEventProvider,
+  ClickHouseMessage,
+  WebhooksService,
+} from '../webhooks/webhooks.service';
 
 @Injectable()
 export class EventsService {
@@ -73,6 +78,8 @@ export class EventsService {
     private dataSource: DataSource,
     @Inject(forwardRef(() => CustomersService))
     private readonly customersService: CustomersService,
+    @Inject(forwardRef(() => WebhooksService))
+    private readonly webhooksService: WebhooksService,
     @InjectModel(CustomerKeys.name)
     public CustomerKeysModel: Model<CustomerKeysDocument>,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -980,81 +987,62 @@ export class EventsService {
   ) {
     let err: any;
 
-    //console.log("in batch events service");
-    //console.log("here is the whole batch", JSON.stringify(MobileBatchDto, null, 2));
-
     try {
-      //if(MobileBatchDto.batch.length <= 1){
       for (const thisEvent of MobileBatchDto.batch) {
-        switch (thisEvent.event) {
-          case '$identify':
-            // Handle $identify event
-            // You can add your logic here, for example:
-            this.debug(
-              `Handling $identify event for correlationKey: ${thisEvent.correlationValue}`,
-              this.handleIdentify.name,
-              session,
-              auth.account.id
-            );
-            //console.log('Handling $identify event for correlationKey:', thisEvent.correlationValue);
-            await this.handleIdentify(auth, thisEvent, session);
-            break;
-          // Your logic to handle $identify event
-          case '$set':
-            // Handle $set event
-            this.debug(
-              `Handling $set event for correlationKey: ${thisEvent.correlationValue}`,
-              this.handleIdentify.name,
-              session,
-              auth.account.id
-            );
-            //console.log('Handling $set event for correlationKey:', thisEvent.correlationValue);
-            await this.handleSet(auth, thisEvent, session);
-            // Your logic to handle $set event
-            break;
-          case '$fcm':
-            // Handle $set event
-            this.debug(
-              `Handling $fcm event for correlationKey: ${thisEvent.correlationValue}`,
-              this.handleIdentify.name,
-              session,
-              auth.account.id
-            );
-            //console.log('Handling $fcm event for correlationKey:', thisEvent.correlationValue);
-            await this.handleFCM(auth, thisEvent, session);
-            // Your logic to handle $set event
-            break;
-          default:
-            // Handle any other event
-            /*
-
-              const eventStruct: EventDto = {
-                correlationKey: '_id',
-                correlationValue: customer.id,
-                source: AnalyticsProviderTypes.MOBILE,
-                payload: payloadObj,
-                event: eventName,
-              };
-              */
-            await this.customPayload(
-              { account: auth.account, workspace: auth.workspace },
-              thisEvent,
-              session
-            );
-            if (!thisEvent.correlationValue) {
-              throw new Error('correlation value is empty');
-            }
-            // Your logic to handle other types of events
-            break;
+        if (thisEvent.source === 'message') {
+          const clickHouseRecord: ClickHouseMessage = {
+            workspaceId: thisEvent.payload.workspaceID,
+            stepId: thisEvent.payload.stepID,
+            customerId: thisEvent.payload.customerID,
+            templateId: String(thisEvent.payload.templateID),
+            messageId: thisEvent.payload.messageID,
+            event: thisEvent.event === '$delivered' ? 'delivered' : 'opened',
+            eventProvider: ClickHouseEventProvider.PUSH,
+            processed: false,
+            createdAt: new Date().toISOString(),
+          };
+          await this.webhooksService.insertMessageStatusToClickhouse(
+            [clickHouseRecord],
+            session
+          );
+        } else {
+          switch (thisEvent.event) {
+            case '$identify':
+              this.debug(
+                `Handling $identify event for correlationKey: ${thisEvent.correlationValue}`,
+                this.batch.name,
+                session,
+                auth.account.id
+              );
+              await this.handleIdentify(auth, thisEvent, session);
+              break;
+            case '$set':
+              this.debug(
+                `Handling $set event for correlationKey: ${thisEvent.correlationValue}`,
+                this.batch.name,
+                session,
+                auth.account.id
+              );
+              await this.handleSet(auth, thisEvent, session);
+              break;
+            default:
+              await this.customPayload(
+                { account: auth.account, workspace: auth.workspace },
+                thisEvent,
+                session
+              );
+              if (!thisEvent.correlationValue) {
+                throw new Error('correlation value is empty');
+              }
+              break;
+          }
         }
       }
       //}
     } catch (e) {
       this.error(e, this.batch.name, session);
-      //await queryRunner.rollbackTransaction();
       err = e;
     } finally {
-      //await queryRunner.release();
       if (err) throw err;
     }
   }
@@ -1090,41 +1078,11 @@ export class EventsService {
 
     const { customer, findType } = await this.findOrCreateCustomer(
       workspaceId,
+      session,
       null,
       null,
-      event.correlationValue
+      event
     );
-
-    /*
-    let customer = await this.customersService.CustomerModel.findOne({
-      _id: event.correlationValue, // Assuming the correlationValue is the customer ID
-      workspaceId,
-    });
-  
-    if (!customer) {
-      this.debug(
-        `Customer not found`,
-        this.handleSet.name,
-        session,
-        auth.account.id
-      );
-      // Optionally, handle the scenario where the customer doesn't exist
-      customer = new this.customersService.CustomerModel({
-        _id: event.correlationValue,
-        workspaceId,
-        //isAnonymous: true, // Adjust based on your logic
-      });
-      try {
-        await customer.save(); // Use await if within an async function
-        // Handle success, e.g., logging or further actions
-        console.log('Customer saved successfully.');
-      } catch (error) {
-        // Handle errors, e.g., logging or error responses
-        console.error('Error saving customer:', error);
-      }
-      //return;
-    }
-    */
 
     // Filter and validate the event payload against CustomerKeys
     // Exclude the primary key and 'other_ids' from updates
@@ -1225,76 +1183,43 @@ export class EventsService {
     const deleteResult = await this.customersService.CustomerModel.deleteMany({
       _id: correlationValue,
     });
-
-    //console.log('Delete result:', deleteResult);
   }
 
   async findOrCreateCustomer(
     workspaceId: string,
+    session: string,
     primaryKeyValue?: string,
     primaryKeyName?: string,
-    correlationValue?: string | string[]
+    event?: EventDto
   ): Promise<{ customer: any; findType: number }> {
     let customer;
     let findType;
 
     // Try to find by primary key if provided
     if (primaryKeyValue) {
-      this.debug(
-        `searcing for customer by primary key: ${primaryKeyValue}`,
-        this.findOrCreateCustomer.name,
-        '000'
-      );
-
-      //console.log("searcing for customer by primary key", primaryKeyName, primaryKeyValue)
       customer = await this.customersService.CustomerModel.findOne({
         [primaryKeyName]: primaryKeyValue,
         workspaceId,
       });
-      //console.log("customer is", JSON.stringify(customer, null, 2))
-      this.debug(
-        `customer is: ${customer}`,
-        this.findOrCreateCustomer.name,
-        '000'
-      );
       if (customer) findType = 1;
     }
 
     // If not found by primary key, try finding by _id
-    if (!customer && correlationValue) {
-      console.log(
-        'searcing for customer by correlationValue',
-        correlationValue
-      );
+    if (!customer && event.correlationValue) {
       customer = await this.customersService.CustomerModel.findOne({
-        _id: correlationValue,
+        _id: event.correlationValue,
         workspaceId,
       });
-      this.debug(
-        `customer is: ${customer}`,
-        this.findOrCreateCustomer.name,
-        '000'
-      );
 
       if (customer) findType = 2;
     }
 
     // If still not found, try finding by other_ids array containing the correlationValue
-    if (!customer && correlationValue) {
-      console.log(
-        'searcing for customer by correlationValue in other ids',
-        correlationValue
-      );
+    if (!customer && event.correlationValue) {
       customer = await this.customersService.CustomerModel.findOne({
-        other_ids: { $in: [correlationValue] },
+        other_ids: { $in: [event.correlationValue] },
         workspaceId,
       });
-      this.debug(
-        `customer is: ${customer}`,
-        this.findOrCreateCustomer.name,
-        '000'
-      );
-
       if (customer) findType = 3;
     }
 
@@ -1302,7 +1227,7 @@ export class EventsService {
     if (!customer) {
       const upsertData = {
         $setOnInsert: {
-          _id: correlationValue,
+          _id: event.correlationValue,
           workspaceId,
         },
       };
@@ -1314,39 +1239,45 @@ export class EventsService {
 
       try {
         customer = await this.customersService.CustomerModel.findOneAndUpdate(
-          { _id: correlationValue, workspaceId },
+          { _id: event.correlationValue, workspaceId },
           upsertData,
           { upsert: true, new: true }
-        );
-        this.debug(
-          `upserted customer is: ${customer}`,
-          this.findOrCreateCustomer.name,
-          '000'
         );
         findType = 4; // Set findType to 4 to indicate an upsert operation
       } catch (error: any) {
         // Check if the error is a duplicate key error
         if (error.code === 11000) {
-          // Handle the duplicate key error, for example, by fetching the existing customer
-          console.error(
-            'Duplicate key error encountered. Fetching existing customer.'
-          );
           customer = await this.customersService.CustomerModel.findOne({
-            _id: correlationValue,
+            _id: event.correlationValue,
             workspaceId,
           });
-          this.debug(
-            `fetched existing customer after duplicate key error: ${customer}`,
-            this.findOrCreateCustomer.name,
-            '000'
-          );
           findType = 5; // Optionally, set a different findType to indicate handling of a duplicate key error
         } else {
-          // Re-throw the error if it is not a duplicate key error
-          this.error(error, this.findOrCreateCustomer.name, '000');
-          //throw error;
+          this.error(error, this.findOrCreateCustomer.name, session);
         }
       }
+    }
+
+    if (event.$fcm) {
+      const { iosDeviceToken, androidDeviceToken } = event.$fcm;
+      const deviceTokenField = iosDeviceToken
+        ? 'iosDeviceToken'
+        : 'androidDeviceToken';
+      const deviceTokenValue = iosDeviceToken || androidDeviceToken;
+      const deviceTokenSetAtField = iosDeviceToken
+        ? 'iosDeviceTokenSetAt'
+        : 'androidDeviceTokenSetAt';
+      if (customer[deviceTokenField] !== deviceTokenValue)
+        customer = await this.customersService.CustomerModel.findOneAndUpdate(
+          { _id: customer._id, workspaceId },
+          {
+            $set: {
+              [deviceTokenField]: deviceTokenValue,
+              [deviceTokenSetAtField]: new Date(), // Dynamically sets the appropriate deviceTokenSetAt field
+            },
+          },
+          { new: true }
+        );
     }
 
     return { customer, findType };
@@ -1363,29 +1294,15 @@ export class EventsService {
     event: EventDto, // Assuming EventDto has all the necessary fields including payload
     session: string
   ) {
-    this.debug(
-      ` in handleIdentify`,
-      this.handleIdentify.name,
-      session,
-      auth.account.id
-    );
-
     const primaryKeyValue = event.payload?.distinct_id; // Adjust based on your actual primary key field
     if (!primaryKeyValue) {
-      this.debug(
-        ` no primary key provided in identify call --so return`,
+      this.warn(
+        `No primary key provided in $identify event:${JSON.stringify(event)}`,
         this.handleIdentify.name,
         session,
-        auth.account.id
+        auth.account.email
       );
-
       return;
-      /*
-      throw new HttpException(
-        'No Primary Key given in payload',
-        HttpStatus.NOT_ACCEPTABLE
-      );
-      */
     }
 
     const workspaceId = auth.workspace.id;
@@ -1425,9 +1342,10 @@ export class EventsService {
 
     const { customer, findType } = await this.findOrCreateCustomer(
       workspaceId,
+      session,
       primaryKeyValue,
       primaryKeyName,
-      event.correlationValue
+      event
     );
     //check the customer does not have another primary key already if it does this is not supported right now
     if (findType == 2) {
@@ -1477,7 +1395,6 @@ export class EventsService {
         ) {
           otherIdsUpdates.push(anonId);
         } else {
-          //console.warn(`Skipping update for $anon_distinct_id: Type mismatch or already exists.`);
         }
       } else {
         // Handle other keys normally
@@ -1488,27 +1405,12 @@ export class EventsService {
         ) {
           filteredPayload[key] = event.payload[key];
         } else {
-          //console.warn(`Skipping update for key ${key}: Type mismatch or key not allowed.`);
         }
       }
     });
 
-    // Add $anon_distinct_id updates if any
-    /*
-    if (otherIdsUpdates.length > 0) {
-      filteredPayload['other_ids'] = { $each: otherIdsUpdates };
-    }
-    */
-
     // Assuming the merging logic or creation of a new customer has been handled before this
     // Update the customer with validated and filtered payload, including handling of arrays
-    //console.log("about to update customer in identify")
-    this.debug(
-      `about to update customer in identify`,
-      this.handleIdentify.name,
-      session,
-      auth.account.id
-    );
     await this.customersService.CustomerModel.updateOne(
       { _id: customer._id },
       {
@@ -1524,8 +1426,6 @@ export class EventsService {
       event: event.event,
       workspaceId: workspaceId,
       payload: filteredPayload,
-      //we should really standardize on .toISOString() or .toUTCString()
-      //createdAt: new Date().toUTCString(),
       createdAt: new Date().toISOString(),
     });
 
@@ -1537,15 +1437,8 @@ export class EventsService {
     event: EventDto,
     session: string
   ) {
-    this.debug(
-      `Handling FCM event`,
-      this.handleFCM.name,
-      session,
-      auth.account.id
-    );
-
     // Extract device tokens from the event payload
-    const { iosDeviceToken, androidDeviceToken } = event.payload;
+    const { iosDeviceToken, androidDeviceToken } = event.$fcm;
     const customerId = event.correlationValue; // Or distinct_id, assuming they are meant to represent the same identifier
 
     // Determine which device token is provided
@@ -1573,41 +1466,11 @@ export class EventsService {
     const workspaceId = auth.workspace.id;
     const { customer, findType } = await this.findOrCreateCustomer(
       workspaceId,
+      session,
       null,
       null,
-      event.correlationValue
+      event
     );
-
-    /*
-    let customer = await this.customersService.CustomerModel.findOne({
-      _id: customerId,
-      workspaceId,
-    });
-    
-  
-    if (!customer) {
-      this.debug(
-        `Customer not found for FCM event`,
-        this.handleFCM.name,
-        session,
-        auth.account.id
-      );
-      customer = new this.customersService.CustomerModel({
-        _id: event.correlationValue,
-        workspaceId,
-        isAnonymous: true, // Adjust based on your logic
-      });
-      try {
-        await customer.save(); // Use await if within an async function
-        // Handle success, e.g., logging or further actions
-        console.log('Customer saved successfully.');
-      } catch (error) {
-        // Handle errors, e.g., logging or error responses
-        console.error('Error saving customer:', error);
-      }
-      //return;
-    }
-    */
 
     // Update the customer with the provided device token
     const updatedCustomer =
