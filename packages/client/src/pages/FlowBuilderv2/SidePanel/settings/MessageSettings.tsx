@@ -63,16 +63,38 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
   }, [nodeData.template]);
 
   useEffect(() => {
+    if (
+      ![MessageType.EMAIL, MessageType.SMS, MessageType.PUSH].includes(
+        templateType
+      )
+    ) {
+      return;
+    }
+
     (async () => {
       const {
-        data: { mailgunConnections, sendgridConnections, resendConnections },
+        data: {
+          mailgunConnections,
+          sendgridConnections,
+          resendConnections,
+          twilioConnections,
+          pushConnections,
+        },
       } = await ApiService.get({ url: "/workspaces/channels" });
 
-      setConnectionList([
-        ...mailgunConnections,
-        ...sendgridConnections,
-        ...resendConnections,
-      ]);
+      setConnectionList(
+        templateType === MessageType.EMAIL
+          ? [
+              ...mailgunConnections,
+              ...sendgridConnections,
+              ...resendConnections,
+            ]
+          : templateType === MessageType.SMS
+          ? [...twilioConnections]
+          : templateType === MessageType.PUSH
+          ? [...pushConnections]
+          : []
+      );
     })();
   }, []);
 
@@ -192,7 +214,7 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
   if (!templateType) return <>Unknown template type!</>;
 
   return (
-    <div className="flex flex-col gap-[10px]">
+    <div className="flex flex-col gap-[10px] font-inter font-normal text-[14px] leading-[22px]">
       {templateType !== MessageType.PUSH ? (
         <div className="font-inter font-normal text-[14px] leading-[22px]">
           <div className="flex p-5 justify-between items-center">
@@ -227,55 +249,6 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
                   </option>
                 ))}
               </select>
-            </div>
-          </div>
-          <div className="flex gap-2.5 p-5 justify-between items-center">
-            <div>Connection</div>
-            <div className="flex flex-col gap-[10px]">
-              <Select
-                className="w-[200px] min-h-[32px]"
-                buttonClassName="w-[200px] min-h-[32px]"
-                buttonInnerWrapperClassName="w-[200px] min-h-[32px]"
-                value={nodeData.connectionId}
-                onChange={(value) =>
-                  setNodeData({ ...nodeData, connectionId: value })
-                }
-                options={connectionList.map((connection) => ({
-                  key: connection.id,
-                  title: connection.name,
-                }))}
-                placeholder="select connection"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2.5 p-5 justify-between items-center">
-            <div>Sending option</div>
-            <div className="flex flex-col gap-[10px]">
-              <Select
-                className="w-[200px] min-h-[32px]"
-                buttonClassName="w-[200px] min-h-[32px]"
-                buttonInnerWrapperClassName="w-[200px] min-h-[32px]"
-                value={nodeData.sendingOptionId}
-                onChange={(value) =>
-                  setNodeData({ ...nodeData, sendingOptionId: value })
-                }
-                options={
-                  nodeData.connectionId
-                    ? connectionList
-                        .find(
-                          (connection) =>
-                            connection.id === nodeData.connectionId
-                        )
-                        ?.sendingOptions.map((option) => ({
-                          key: option.id,
-                          title: `${option.sendingEmail}${
-                            option.sendingName ? ` <${option.sendingName}>` : ""
-                          }`,
-                        })) || []
-                    : []
-                }
-                placeholder="select option"
-              />
             </div>
           </div>
         </div>
@@ -434,6 +407,59 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
           )}
         </>
       )}
+
+      <div className="flex gap-2.5 p-5 justify-between items-center font-inter font-normal text-[14px] leading-[22px]">
+        <div>Connection</div>
+        <div className="flex flex-col gap-[10px]">
+          <Select
+            className="w-[200px] min-h-[32px]"
+            buttonClassName="w-[200px] min-h-[32px]"
+            buttonInnerWrapperClassName="w-[200px] min-h-[32px]"
+            value={nodeData.connectionId}
+            onChange={(value) =>
+              setNodeData({ ...nodeData, connectionId: value })
+            }
+            options={connectionList.map((connection) => ({
+              key: connection.id,
+              title: connection.name,
+            }))}
+            placeholder="select connection"
+          />
+        </div>
+      </div>
+
+      {templateType === MessageType.EMAIL && (
+        <div className="flex gap-2.5 p-5 justify-between items-center">
+          <div>Sending option</div>
+          <div className="flex flex-col gap-[10px]">
+            <Select
+              className="w-[200px] min-h-[32px]"
+              buttonClassName="w-[200px] min-h-[32px]"
+              buttonInnerWrapperClassName="w-[200px] min-h-[32px]"
+              value={nodeData.sendingOptionId}
+              onChange={(value) =>
+                setNodeData({ ...nodeData, sendingOptionId: value })
+              }
+              options={
+                nodeData.connectionId
+                  ? connectionList
+                      .find(
+                        (connection) => connection.id === nodeData.connectionId
+                      )
+                      ?.sendingOptions.map((option) => ({
+                        key: option.id,
+                        title: `${option.sendingEmail}${
+                          option.sendingName ? ` <${option.sendingName}>` : ""
+                        }`,
+                      })) || []
+                  : []
+              }
+              placeholder="select option"
+            />
+          </div>
+        </div>
+      )}
+
       {showErrors && !selectedTemplate && (
         <span className="px-5 mt-[10px] font-inter font-normal text-[14px] leading-[22px] text-[#F43F5E]">
           No template is selected
