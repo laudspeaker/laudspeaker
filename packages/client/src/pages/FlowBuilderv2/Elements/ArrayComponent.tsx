@@ -10,7 +10,14 @@ const MAX_ARR_LENGTH = 15;
 
 export const ArrayComponent: FC<
   ValueChanger & { type: StatementValueType; dateFormat?: string }
-> = ({ value, onChange, type, placeholder, dateFormat }) => {
+> = ({
+  value,
+  onChange,
+  type,
+  placeholder,
+  dateFormat,
+  dataTestId = "array-component",
+}) => {
   const [isFirstRender, setIsFirstRender] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -20,6 +27,7 @@ export const ArrayComponent: FC<
     <div
       className="w-full h-[32px] px-3 py-[5px] border border-[#E5E7EB] cursor-pointer"
       onClick={() => setIsModalOpen(true)}
+      data-testid={dataTestId}
     >
       <div>{generateAttributeView(arr, type, true, dateFormat)}</div>
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
@@ -33,12 +41,14 @@ export const ArrayComponent: FC<
                   arr[i] = val;
                   onChange([...arr]);
                 }}
+                dataTestId={`${dataTestId}-${i}`}
               />
               <button
                 onClick={() => {
                   arr.splice(i, 1);
                   onChange([...arr]);
                 }}
+                data-testid={`${dataTestId}-${i}-button`}
               >
                 <TrashIcon />
               </button>
@@ -49,6 +59,7 @@ export const ArrayComponent: FC<
             type={ButtonType.SECONDARY}
             onClick={() => onChange([...arr, ""])}
             disabled={arr.length >= MAX_ARR_LENGTH}
+            data-testid={`${dataTestId}-add-button`}
           >
             Add item
           </Button>
@@ -56,6 +67,7 @@ export const ArrayComponent: FC<
           <Button
             type={ButtonType.PRIMARY}
             onClick={() => setIsModalOpen(false)}
+            data-testid={`${dataTestId}-save-button`}
           >
             Save
           </Button>

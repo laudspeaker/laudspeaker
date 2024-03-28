@@ -111,12 +111,24 @@ const FlowBuilderMultisplitModal = ({
         </div>
       </div>
       <div className="flex justify-end items-center gap-[10px] mt-6">
-        <Button type={ButtonType.SECONDARY} onClick={handleCancel}>
+        <Button
+          type={ButtonType.SECONDARY}
+          onClick={handleCancel}
+          data-testid={`flow-builder-multisplit-${
+            isViewMode ? "ok" : "cancel"
+          }-button`}
+        >
           {isViewMode ? "OK" : "Cancel"}
         </Button>
 
         {!isViewMode && (
-          <Button type={ButtonType.PRIMARY} onClick={handleSave}>
+          <Button
+            type={ButtonType.PRIMARY}
+            onClick={handleSave}
+            data-testid={`flow-builder-multisplit-${
+              branch ? "save" : "add"
+            }-button`}
+          >
             {branch ? "Save" : "Add"}
           </Button>
         )}

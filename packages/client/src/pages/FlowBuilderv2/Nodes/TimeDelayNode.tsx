@@ -20,6 +20,7 @@ export const TimeDelayNode: FC<NodeProps<TimeDelayNodeData>> = ({
       className={`time-delay relative w-[260px] h-[80px] rounded bg-white font-inter ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
       } ${selected ? "border-2 border-[#6366F1]" : "border border-[#E5E7EB]"}`}
+      data-testid="time-delay-node"
     >
       <Handle
         position={Position.Top}

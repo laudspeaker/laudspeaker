@@ -52,7 +52,7 @@ const Select = <T, U = any>({
   buttonInnerWrapperClassName,
   customBTN,
   disabled,
-  dataTestId,
+  dataTestId = "select",
 }: SelectProps<T, U>) => {
   const scrollableRef = useRef(null);
 

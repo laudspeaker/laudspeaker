@@ -273,6 +273,7 @@ const FlowEditor: FC<FlowEditorProps> = ({
             },
           }}
           ref={flowRef}
+          data-testid="flow-editor"
         >
           <NodeDraggingProvider flowRef={flowRef} />
           <Controls

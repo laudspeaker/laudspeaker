@@ -2,6 +2,7 @@ export default (email: string) => {
   cy.contains("Audience").click();
   cy.contains("People").click();
   cy.get(':contains("Settings"):last').click();
+  cy.wait(1000);
   cy.contains("Add attribute").click();
   cy.get("input").clear().type("email");
   cy.contains("String").click();
