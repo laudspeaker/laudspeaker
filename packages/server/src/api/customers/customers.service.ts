@@ -69,7 +69,7 @@ import {
   validateKeyForMutations,
 } from '@/utils/customer-key-name-validator';
 import { UpsertCustomerDto } from './dto/upsert-customer.dto';
-import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { DeleteCustomerDto } from './dto/delete-customer.dto';
@@ -1159,12 +1159,12 @@ export class CustomersService {
   }
 
   async findOrCreateByCorrelationKVPair(
-    workspace: Workspaces,
+    workspace: Workspace,
     dto: EventDto,
     transactionSession: ClientSession
   ): Promise<Correlation> {
     let customer: CustomerDocument; // Found customer
-    let queryParam = {
+    const queryParam = {
       workspaceId: workspace.id,
       $or: [
         { [dto.correlationKey]: dto.correlationValue },
@@ -1181,7 +1181,7 @@ export class CustomersService {
     if (!customer) {
       // When no customer is found with the given correlation, create a new one
       // If the correlationKey is '_id', use it to set the _id of the new customer
-      let newCustomerData: any = {
+      const newCustomerData: any = {
         workspaceId: workspace.id,
         createdAt: new Date(),
       };
@@ -1225,7 +1225,7 @@ export class CustomersService {
    */
 
   async upsert(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     upsertCustomerDto: UpsertCustomerDto,
     session: string
   ): Promise<{ id: string }> {
@@ -1281,7 +1281,7 @@ export class CustomersService {
    */
 
   async delete(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     deleteCustomerDto: DeleteCustomerDto,
     session: string
   ): Promise<{ primary_key: any }> {
@@ -1332,7 +1332,7 @@ export class CustomersService {
    */
 
   async read(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     readCustomerDto: ReadCustomerDto,
     session: string
   ): Promise<CustomerDocument> {
@@ -5205,9 +5205,15 @@ export class CustomersService {
 
     const deviceTokenConditions = {
       $or: [
-        { androidDeviceToken: { $exists: true, $ne: '' } },
-        { iosDeviceToken: { $exists: true, $ne: '' } },
+        { 'androidFCMTokens.0': { $exists: true } },
+        { 'iosFCMTokens.0': { $exists: true } },
       ],
+      /*
+      $or: [
+        { androidFCMTokens: { $exists: true, $size: { $gt: 0 } } },
+        { iosFCMTokens: { $exists: true, $size: { $gt: 0 } } },
+      ],
+      */
     };
 
     const pk = await this.CustomerKeysModel.findOne({
@@ -5220,20 +5226,23 @@ export class CustomersService {
 
       const searchConditions = {
         $or: [
-          ...(search ? [{ _id: search }] : []),
-          //...(isValidObjectId(search) ? [{ _id: search }] : []),
+          ...(isValidObjectId(search) ? [{ _id: search }] : []),
           { email: findRegexp },
           { phone: findRegexp },
           ...(pk ? [{ [pk.key]: findRegexp }] : []),
         ],
       };
-
+      //console.log("and--")
       query['$and'] = [deviceTokenConditions, searchConditions];
     } else {
+      //console.log("or--")
       query['$or'] = deviceTokenConditions['$or'];
     }
 
+    //console.log("query to execute is", JSON.stringify(query,null,2));
+
     const totalCustomers = await this.CustomerModel.count(query).exec();
+    //console.log("totalCustomers are", totalCustomers);
     const totalPages = Math.ceil(totalCustomers / take) || 1;
 
     const customers = await this.CustomerModel.find(query)
@@ -5949,7 +5958,7 @@ export class CustomersService {
   }
 
   async sendFCMToken(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     body: SendFCMDto,
     session: string
   ) {
@@ -5987,7 +5996,7 @@ export class CustomersService {
   }
 
   async identifyCustomer(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     body: IdentifyCustomerDTO,
     session: string
   ) {
@@ -6058,7 +6067,7 @@ export class CustomersService {
   }
 
   async setCustomerProperties(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     body: SetCustomerPropsDTO,
     session: string
   ) {

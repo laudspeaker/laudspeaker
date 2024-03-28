@@ -1,7 +1,7 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Select from "components/Elements/Selectv2";
 import { useEffect, useState } from "react";
-import { PushBuilderData, PushPlatforms } from "./PushBuilderContent";
+import { PushBuilderData, PushPlatform } from "./PushBuilderContent";
 import IOS_BG from "./assets/images/iosbg.jpg";
 import IOS_BG_BANNER from "./assets/images/iosBaner.jpg";
 import NO_APP_ICON from "./assets/images/noAppIcon.jpg";
@@ -20,18 +20,18 @@ enum PreviewOptions {
 
 const previewOptionsMap = (
   option: string | PreviewOptions,
-  platform: PushPlatforms
+  platform: PushPlatform
 ) =>
   ({
     [PreviewOptions.LOCK]: "Lock screen",
     [PreviewOptions.EXPANDED]: "Expanded",
     [PreviewOptions.BANER]:
-      platform === PushPlatforms.IOS ? "Banner (iOS)" : "Heads-up (Android)",
+      platform === PushPlatform.IOS ? "Banner (iOS)" : "Heads-up (Android)",
   }[option]);
 
 const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
   const [currentPreviewPlatform, setCurrentPreviewPlatform] = useState(
-    PushPlatforms.IOS
+    PushPlatform.IOS
   );
   const [currentPreviewMode, setCurrentPreviewMode] = useState(
     PreviewOptions.LOCK
@@ -40,9 +40,9 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
   useEffect(() => {
     if (!data.platform[currentPreviewPlatform]) {
       setCurrentPreviewPlatform(
-        currentPreviewPlatform === PushPlatforms.ANDROID
-          ? PushPlatforms.IOS
-          : PushPlatforms.ANDROID
+        currentPreviewPlatform === PushPlatform.ANDROID
+          ? PushPlatform.IOS
+          : PushPlatform.ANDROID
       );
     }
   }, [data]);
@@ -51,7 +51,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
     <>
       <div className="flex gap-5 mt-[15px] px-5">
         <div className="flex ">
-          {Object.values(PushPlatforms).map((el, i) => (
+          {Object.values(PushPlatform).map((el, i) => (
             <Button
               className={`${
                 currentPreviewPlatform !== el &&
@@ -84,12 +84,12 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
           <div className="relative min-w-[380px] max-w-[380px] min-h-[794px] max-h-[794px]">
             <img
               className={`${
-                currentPreviewPlatform === PushPlatforms.IOS
+                currentPreviewPlatform === PushPlatform.IOS
                   ? "rounded-[44.3px]"
                   : "rounded-2xl"
               }  border-[7px] border-white min-w-[380px] max-w-[380px] min-h-[794px] max-h-[794px]`}
               src={
-                currentPreviewPlatform === PushPlatforms.ANDROID
+                currentPreviewPlatform === PushPlatform.ANDROID
                   ? currentPreviewMode === PreviewOptions.BANER
                     ? ANDROID_UNLOCK
                     : ANDROID_LOCK
@@ -99,7 +99,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
               }
               alt=""
             />
-            {currentPreviewPlatform === PushPlatforms.IOS &&
+            {currentPreviewPlatform === PushPlatform.IOS &&
               currentPreviewMode !== PreviewOptions.BANER && (
                 <>
                   <div className="left-1/2 -translate-x-[48%] top-[73px] absolute w-[219.01px] h-6 backdrop-blur-[18.47px] flex-col justify-start items-center inline-flex">
@@ -213,7 +213,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
               )}
             <div
               className={`${
-                currentPreviewPlatform === PushPlatforms.IOS
+                currentPreviewPlatform === PushPlatform.IOS
                   ? currentPreviewMode === PreviewOptions.EXPANDED
                     ? `bg-white ${
                         !data.settings[currentPreviewPlatform].image
@@ -236,13 +236,13 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
               <img
                 src={NO_APP_ICON}
                 className={`${
-                  currentPreviewPlatform === PushPlatforms.ANDROID
+                  currentPreviewPlatform === PushPlatform.ANDROID
                     ? "min-w-[22px] rounded min-h-[22px] max-w-[22px] max-h-[22px]"
                     : "min-w-[35px] rounded-lg min-h-[35px] max-w-[35px] max-h-[35px]"
                 }`}
                 alt=""
               />
-              {currentPreviewPlatform === PushPlatforms.IOS &&
+              {currentPreviewPlatform === PushPlatform.IOS &&
                 currentPreviewMode === PreviewOptions.EXPANDED &&
                 data.settings[currentPreviewPlatform].image && (
                   <div className="absolute bg-white w-full h-[186px] top-full left-0 rounded-b-[22px]">
@@ -257,12 +257,12 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                 )}
               <div
                 className={`${
-                  currentPreviewPlatform === PushPlatforms.IOS
+                  currentPreviewPlatform === PushPlatform.IOS
                     ? "ml-[9px]"
                     : "ml-[14px]"
                 }  flex flex-col`}
               >
-                {currentPreviewPlatform === PushPlatforms.ANDROID &&
+                {currentPreviewPlatform === PushPlatform.ANDROID &&
                   currentPreviewMode === PreviewOptions.EXPANDED && (
                     <div className="flex items-center text-[#3F4946] font-roboto text-[11px] leading-[14px] mb-[14px]">
                       <span>App name</span>
@@ -272,7 +272,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                   )}
                 <div
                   className={`${
-                    currentPreviewPlatform === PushPlatforms.ANDROID
+                    currentPreviewPlatform === PushPlatform.ANDROID
                       ? `max-w-[240px] ${
                           data.settings[currentPreviewPlatform].image &&
                           "!max-w-[189px] min-w-[189px]"
@@ -286,14 +286,14 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                 >
                   <div
                     className={`whitespace-nowrap overflow-hidden text-ellipsis ${
-                      currentPreviewPlatform === PushPlatforms.IOS
+                      currentPreviewPlatform === PushPlatform.IOS
                         ? "max-w-[215px] w-full text-sm font-semibold font-['PingFang HK'] leading-[18.47px] text-black"
                         : "max-w-full font-roboto text-[13px] font-medium leading-[18px]"
                     }`}
                   >
                     {data.settings[currentPreviewPlatform].title || "Title"}
                   </div>
-                  {currentPreviewPlatform === PushPlatforms.ANDROID &&
+                  {currentPreviewPlatform === PushPlatform.ANDROID &&
                     currentPreviewMode !== PreviewOptions.EXPANDED && (
                       <>
                         <span className="mx-1 text-[11px] leading-[14px] font-roboto">
@@ -304,7 +304,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                         </span>
                       </>
                     )}
-                  {currentPreviewPlatform === PushPlatforms.IOS && (
+                  {currentPreviewPlatform === PushPlatform.IOS && (
                     <span
                       className={`${
                         currentPreviewMode === PreviewOptions.EXPANDED
@@ -334,7 +334,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                       currentPreviewMode === PreviewOptions.EXPANDED &&
                       "line-clamp-4"
                     } ${
-                      currentPreviewPlatform === PushPlatforms.ANDROID &&
+                      currentPreviewPlatform === PushPlatform.ANDROID &&
                       `!font-roboto !text-[13px] !text-[#3F4946] ${
                         data.settings[currentPreviewPlatform].image
                           ? "!max-w-[189px] min-w-[189px]"
@@ -346,7 +346,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                       "Description"}
                   </div>
                   {data.settings[currentPreviewPlatform].image &&
-                    currentPreviewPlatform === PushPlatforms.IOS &&
+                    currentPreviewPlatform === PushPlatform.IOS &&
                     currentPreviewMode !== PreviewOptions.EXPANDED && (
                       <img
                         src={
@@ -358,7 +358,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                     )}
                 </div>
                 {data.settings[currentPreviewPlatform].image &&
-                  currentPreviewPlatform === PushPlatforms.ANDROID &&
+                  currentPreviewPlatform === PushPlatform.ANDROID &&
                   currentPreviewMode === PreviewOptions.EXPANDED && (
                     <img
                       src={
@@ -370,7 +370,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                   )}
               </div>
               {data.settings[currentPreviewPlatform].image &&
-                currentPreviewPlatform === PushPlatforms.ANDROID &&
+                currentPreviewPlatform === PushPlatform.ANDROID &&
                 currentPreviewMode !== PreviewOptions.EXPANDED && (
                   <img
                     src={data.settings[currentPreviewPlatform].image?.imageSrc}
@@ -378,7 +378,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
                     alt=""
                   />
                 )}
-              {currentPreviewPlatform === PushPlatforms.ANDROID && (
+              {currentPreviewPlatform === PushPlatform.ANDROID && (
                 <div
                   className={`${
                     !data.settings[currentPreviewPlatform].image?.imageSrc &&
@@ -404,7 +404,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
               )}
             </div>
             {currentPreviewMode === PreviewOptions.EXPANDED &&
-              currentPreviewPlatform === PushPlatforms.IOS && (
+              currentPreviewPlatform === PushPlatform.IOS && (
                 <div className="absolute top-0 left-0 p-[7px] w-full h-full">
                   <div className="w-full h-full rounded-[44.3px] backdrop-blur-[10px] bg-[rgba(24,19,43,0.21)]"></div>
                 </div>
@@ -412,7 +412,7 @@ const PushBuilderPreviewer = ({ data }: PushBuilderPreviewerProps) => {
             <div className="absolute w-[138px] rounded-[100px] h-[5px] bg-white left-1/2 -translate-x-1/2 bottom-[14px]" />
           </div>
         </div>
-        {currentPreviewPlatform === PushPlatforms.IOS && (
+        {currentPreviewPlatform === PushPlatform.IOS && (
           <div className="w-full text-center mt-[14px] font-inter text-[14px] leading-[22px] text-[#4B5563]">
             In iOS 16, notifications will appear at the bottom
           </div>

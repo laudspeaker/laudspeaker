@@ -9,12 +9,12 @@ import signup from "../test-helpers/signup";
 const { email, password, firstName, lastName, organizationName, timeZone } =
   credentials;
 
-  describe("Initial testing", () => {
-    it("successfully loads index", () => {
-      cy.visit("/");
-    });
+describe("Initial testing", () => {
+  it("successfully loads index", () => {
+    cy.visit("/");
   });
-  
+});
+
 /*
 describe("multisplit event", () => {
   beforeEach(() => {

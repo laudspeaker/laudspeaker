@@ -22,7 +22,7 @@ import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
 import { Recovery } from './entities/recovery.entity';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 import { OrganizationInvites } from '../organizations/entities/organization-invites.entity';
 import { OrganizationTeam } from '../organizations/entities/organization-team.entity';
 import { randomUUID } from 'node:crypto';
@@ -40,8 +40,8 @@ export class AuthService {
     public readonly verificationRepository: Repository<Verification>,
     @InjectRepository(Recovery)
     public readonly recoveryRepository: Repository<Recovery>,
-    @InjectRepository(Workspaces)
-    public readonly workspacesRepository: Repository<Workspaces>,
+    @InjectRepository(Workspace)
+    public readonly workspacesRepository: Repository<Workspace>,
     @InjectRepository(OrganizationTeam)
     public organizationTeamRepository: Repository<OrganizationTeam>,
     @Inject(AuthHelper)
@@ -207,7 +207,7 @@ export class AuthService {
   // For now return account from workspaces owner perspective
   public async validateAPIKey(
     apiKey: string
-  ): Promise<{ account: Account; workspace: Workspaces } | never> {
+  ): Promise<{ account: Account; workspace: Workspace } | never> {
     const workspace = await this.workspacesRepository.findOne({
       where: {
         apiKey,

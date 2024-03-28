@@ -9,7 +9,7 @@ import {
   MessageSMSEventCondition,
   StatementValueType,
 } from "reducers/flow-builder.reducer";
-import { PushPlatforms } from "../../PushBuilder/PushBuilderContent";
+import { PushPlatform } from "../../PushBuilder/PushBuilderContent";
 import { MessageType, ProviderType } from "types/Workflow";
 import { NodeType } from "../FlowEditor";
 
@@ -220,7 +220,7 @@ export interface CommonNodeData {
 }
 
 export type MessageTemplatePushbuilderData = PushBuilderData & {
-  selectedPlatform: "All" | PushPlatforms;
+  selectedPlatform: "All" | PushPlatform;
 };
 
 export interface MessageNodeData<T extends MessageType = MessageType>
@@ -235,6 +235,8 @@ export interface MessageNodeData<T extends MessageType = MessageType>
       pushBuilder?: MessageTemplatePushbuilderData;
     };
   };
+  connectionId?: string;
+  sendingOptionId?: string;
 }
 
 export interface WaitUntilNodeData extends CommonNodeData {

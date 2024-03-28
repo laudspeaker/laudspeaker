@@ -5,7 +5,7 @@ import { DragEvent, useState } from "react";
 import { toast } from "react-toastify";
 import { PushSettingsConfiguration } from "./PushSettings";
 import TrashIcon from "@heroicons/react/24/outline/TrashIcon";
-import { PushPlatforms } from "pages/PushBuilder/PushBuilderContent";
+import { PushPlatform } from "pages/PushBuilder/PushBuilderContent";
 import tokenService from "services/token.service";
 import { API_BASE_URL_KEY } from "config";
 

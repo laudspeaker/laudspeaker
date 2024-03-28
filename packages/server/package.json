@@ -101,6 +101,7 @@
     "pg": "^8.7.3",
     "pg-copy-streams": "^6.0.6",
     "pg-cursor": "^2.8.0",
+    "pg-query-stream": "^4.5.3",
     "posthog-node": "^2.5.4",
     "reactflow": "^11.5.6",
     "redis": "^4.6.7",

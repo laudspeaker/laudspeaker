@@ -536,6 +536,9 @@ export class WebsocketGateway implements OnGatewayConnection {
     if (identifiedCustomer) {
       await this.customersService.deleteEverywhere(customer.id);
 
+      identifiedCustomer.previousAnonymousIds.push(customer.id);
+
+      await identifiedCustomer.save();
       await customer.deleteOne();
 
       socket.data.customerId = identifiedCustomer.id;
@@ -967,14 +970,47 @@ export class WebsocketGateway implements OnGatewayConnection {
       socket.emit('customerId', customer.id);
     }
 
-    await this.customersService.CustomerModel.updateOne(
-      { _id: customerId },
-      {
-        [type === PushPlatforms.ANDROID
-          ? 'androidDeviceToken'
-          : 'iosDeviceToken']: token,
-      }
-    );
+    const conflictingCustomer =
+      await this.customersService.CustomerModel.findOne({
+        workspaceId: workspace.id,
+        [type === PushPlatforms.ANDROID ? 'androidFCMTokens' : 'iosFCMTokens']:
+          token,
+        _id: {
+          $ne: customerId,
+        },
+      }).exec();
+
+    //console.log("printing conflicting customer");
+    //console.log(JSON.stringify(conflictingCustomer, null, 2));
+
+    if (conflictingCustomer) {
+      if (!customer.isAnonymous)
+        //&&(!conflictingCustomer.isAnonymous))
+        throw new WsException(
+          'Non-anonymous conflicting customers with this FCM token found'
+        );
+
+      socket.emit('log', 'Conflicting customer found, merging...');
+
+      const pk = await this.CustomerKeysModel.findOne({
+        workspaceId: workspace.id,
+        isPrimary: true,
+      });
+
+      await this.handleIdentify(socket, {
+        __PrimaryKey: conflictingCustomer[pk.key],
+      });
+      return;
+    }
+
+    const tokenStorage =
+      customer[
+        type === PushPlatforms.ANDROID ? 'androidFCMTokens' : 'iosFCMTokens'
+      ];
+    if (tokenStorage.includes(token)) return;
+
+    tokenStorage.push(token);
+    await customer.save();
   }
   */
 }

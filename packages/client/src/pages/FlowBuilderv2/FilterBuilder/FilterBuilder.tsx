@@ -662,6 +662,14 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     });
   };
 
+  const loadPossibleEvents = async (query: string) => {
+    const { data } = await ApiService.get<string[]>({
+      url: `/events/possible-names?search=${query}`,
+    });
+
+    return data;
+  };
+
   const statementsErrors: QueryStatementError[][] = [];
 
   for (const statement of settings.query.statements) {

@@ -1,7 +1,7 @@
 import { Account } from '@/api/accounts/entities/accounts.entity';
 import { Customer } from '@/api/customers/schemas/customer.schema';
 import { Journey } from '@/api/journeys/entities/journey.entity';
-import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
+import { Workspace } from '@/api/workspaces/entities/workspace.entity';
 import {
   BaseEntity,
   Column,
@@ -24,7 +24,7 @@ export interface DevModeState {
 export class DevMode extends BaseEntity {
   @PrimaryColumn('uuid')
   @JoinColumn({ name: 'workspaceId' })
-  @ManyToOne(() => Workspaces, (workspace) => workspace.id, {
+  @ManyToOne(() => Workspace, (workspace) => workspace.id, {
     onDelete: 'CASCADE',
   })
   workspaceId: string;

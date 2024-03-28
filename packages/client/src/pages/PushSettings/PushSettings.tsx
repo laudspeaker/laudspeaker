@@ -1,8 +1,8 @@
 import BackButton from "components/BackButton";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Chip from "components/Elements/Chip";
-import { PushPlatforms } from "pages/PushBuilder/PushBuilderContent";
-import { useEffect, useState } from "react";
+import { PushPlatform } from "pages/PushBuilder/PushBuilderContent";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PushSettingsAddUsers from "./PushSettingsAddUsers";
 import TrashIcon from "@heroicons/react/24/outline/TrashIcon";
@@ -13,11 +13,12 @@ import ApiService from "services/api.service";
 import { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import CheckBox from "components/Checkbox/Checkbox";
-import Account from "types/Account";
+import Account, { WorkspacePushConnection } from "types/Account";
 import MapValidationErrors from "pages/PeopleImport/Modals/MapValidationErrors";
+import { useParams } from "react-router-dom";
 
 export type ConnectedPushFirebasePlatforms = Record<
-  PushPlatforms,
+  PushPlatform,
   | {
       fileName: string;
       isTrackingDisabled: boolean;
@@ -26,7 +27,7 @@ export type ConnectedPushFirebasePlatforms = Record<
 >;
 
 const platformIcons = {
-  [PushPlatforms.ANDROID]: (
+  [PushPlatform.ANDROID]: (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="40"
@@ -41,7 +42,7 @@ const platformIcons = {
       />
     </svg>
   ),
-  [PushPlatforms.IOS]: (
+  [PushPlatform.IOS]: (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="40"
@@ -70,7 +71,7 @@ const setupTabs = [
 
 export interface PushSettingsConfiguration {
   configFile: Record<
-    PushPlatforms,
+    PushPlatform,
     | {
         fileName: string;
         credentials: JSON;
@@ -78,17 +79,23 @@ export interface PushSettingsConfiguration {
     | undefined
   >;
   isTrackingDisabled: boolean;
-  selectedPlatforms: Record<PushPlatforms, boolean>;
+  selectedPlatforms: Record<PushPlatform, boolean>;
   connectedPlatforms: ConnectedPushFirebasePlatforms;
 }
 
 const PushSettings = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  const isCreating = useMemo(() => id === "create", [id]);
+
   const [tabIndex, setTabIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isTestLoading, setIsTestLoading] = useState(false);
-  const [disconnectPlarform, setDisconnectPlarform] = useState<PushPlatforms>();
+  const [disconnectPlarform, setDisconnectPlarform] = useState<PushPlatform>();
+  const [name, setName] = useState("Push");
+  const [isNameEditing, setIsNameEditing] = useState(false);
   const [config, setConfig] = useState<PushSettingsConfiguration>({
     configFile: {
       Android: undefined,
@@ -105,7 +112,7 @@ const PushSettings = () => {
     },
   });
   const [testToken, setTestToken] = useState("");
-  const [viewConnected, setViewConnected] = useState<PushPlatforms>();
+  const [viewConnected, setViewConnected] = useState<PushPlatform>();
 
   const handleUpdateConfig = (values: Partial<PushSettingsConfiguration>) => {
     setConfig((prev) => ({ ...prev, ...values }));
@@ -118,10 +125,24 @@ const PushSettings = () => {
 
   const clarifyData = async () => {
     setIsLoadingSettings(true);
-    try {
-      const { data } = await ApiService.get<Account>({ url: "/accounts" });
-      const { pushPlatforms } = data.workspace;
 
+    if (isCreating) {
+      handleUpdateConfig({
+        connectedPlatforms: {
+          iOS: undefined,
+          Android: undefined,
+        },
+      });
+      setIsLoadingSettings(false);
+      return;
+    }
+
+    try {
+      const { data } = await ApiService.get<WorkspacePushConnection>({
+        url: `/workspaces/channels/push/${id}`,
+      });
+      const { name: newName, pushPlatforms } = data;
+      setName(newName);
       handleUpdateConfig({
         connectedPlatforms: {
           iOS: pushPlatforms?.iOS,
@@ -154,7 +175,7 @@ const PushSettings = () => {
 
   useEffect(() => {
     clarifyData();
-  }, []);
+  }, [isCreating]);
 
   const tabs: Record<number, React.ReactElement> = {
     1: (
@@ -178,20 +199,32 @@ const PushSettings = () => {
         const object: Record<string, any> = {};
 
         Object.keys(config.selectedPlatforms).forEach((el) => {
-          if (config.selectedPlatforms[el as PushPlatforms]) {
+          if (config.selectedPlatforms[el as PushPlatform]) {
             object[el] = {
-              ...config.configFile[el as PushPlatforms],
+              ...config.configFile[el as PushPlatform],
               isTrackingDisabled: config.isTrackingDisabled,
             };
           }
         });
 
-        await ApiService.patch({
-          url: "/accounts",
-          options: {
-            pushPlatforms: object,
-          },
-        });
+        if (isCreating) {
+          await ApiService.post({
+            url: `/workspaces/channels/push`,
+            options: {
+              name,
+              pushPlatforms: object,
+            },
+          });
+        } else {
+          await ApiService.patch({
+            url: `/workspaces/channels/push/${id}`,
+            options: {
+              name,
+              pushPlatforms: object,
+            },
+          });
+        }
+
         await clarifyData();
         handleUpdateConfig({
           configFile: {
@@ -204,6 +237,7 @@ const PushSettings = () => {
           },
           isTrackingDisabled: true,
         });
+        navigate("/settings");
       } catch (err) {
         toast.error("Error saving credentials, please try again.");
       } finally {
@@ -259,9 +293,45 @@ const PushSettings = () => {
                 : navigate("/settings")
             }
           />
-          <div className="text-[20px] font-semibold leading-[28px] text-black">
-            {viewConnected} Push
-          </div>
+          {isNameEditing ? (
+            <Input
+              value={name}
+              onChange={(value) => setName(value)}
+              placeholder="name"
+              onBlur={() => setIsNameEditing(false)}
+            />
+          ) : (
+            <div className="text-[20px] font-semibold leading-[28px] text-black">
+              {viewConnected} {name}
+            </div>
+          )}
+
+          {!isNameEditing && (
+            <div
+              className="cursor-pointer"
+              onClick={() => setIsNameEditing(true)}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <g clipPath="url(#clip0_2222_57368)">
+                  <path
+                    d="M3.45921 12.284C3.49492 12.284 3.53064 12.2805 3.56635 12.2751L6.56992 11.7483C6.60564 11.7412 6.63957 11.7251 6.66457 11.6983L14.2342 4.12868C14.2508 4.11216 14.2639 4.09254 14.2729 4.07094C14.2818 4.04934 14.2864 4.02618 14.2864 4.00279C14.2864 3.9794 14.2818 3.95625 14.2729 3.93464C14.2639 3.91304 14.2508 3.89342 14.2342 3.8769L11.2664 0.907254C11.2324 0.873326 11.1878 0.855469 11.1396 0.855469C11.0914 0.855469 11.0467 0.873326 11.0128 0.907254L3.44314 8.4769C3.41635 8.50368 3.40028 8.53583 3.39314 8.57154L2.86635 11.5751C2.84898 11.6708 2.85519 11.7692 2.88443 11.862C2.91368 11.9547 2.96509 12.0389 3.03421 12.1073C3.15207 12.2215 3.30028 12.284 3.45921 12.284ZM4.66278 9.16975L11.1396 2.69475L12.4485 4.00368L5.97171 10.4787L4.38421 10.759L4.66278 9.16975ZM14.5717 13.784H1.42885C1.11278 13.784 0.857422 14.0394 0.857422 14.3555V14.9983C0.857422 15.0769 0.921708 15.1412 1.00028 15.1412H15.0003C15.0789 15.1412 15.1431 15.0769 15.1431 14.9983V14.3555C15.1431 14.0394 14.8878 13.784 14.5717 13.784Z"
+                    fill="#6366F1"
+                  />
+                </g>
+                <defs>
+                  <clipPath id="clip0_2222_57368">
+                    <rect width="16" height="16" fill="white" />
+                  </clipPath>
+                </defs>
+              </svg>
+            </div>
+          )}
         </div>
         <div className="bg-white p-5 flex flex-col gap-5">
           {viewConnected ? (
@@ -382,18 +452,18 @@ const PushSettings = () => {
                       {Object.keys(config.connectedPlatforms)
                         .filter(
                           (el) =>
-                            !!config.connectedPlatforms[el as PushPlatforms]
+                            !!config.connectedPlatforms[el as PushPlatform]
                         )
                         .map((el) => (
                           <div
                             key={el}
                             className="rounded border-[#E5E7EB] border px-5 py-6 flex items-center justify-between cursor-pointer select-none"
                             onClick={() => {
-                              setViewConnected(el as PushPlatforms);
+                              setViewConnected(el as PushPlatform);
                             }}
                           >
                             <div className="flex items-center [&>svg]:mr-[10px] [&>svg]:max-w-[30px] [&>svg]:min-w-[30px] [&>svg]:min-h-[30px] [&>svg]:max-h-[30px]">
-                              {platformIcons[el as PushPlatforms]}
+                              {platformIcons[el as PushPlatform]}
                               <span className="text-[#18181B] text-base font-inter">
                                 {el}
                               </span>
@@ -441,7 +511,7 @@ const PushSettings = () => {
                   )}
                   {!isBothConnected && (
                     <div className="flex gap-5 h-[66px] items-center">
-                      {Object.values(PushPlatforms)
+                      {Object.values(PushPlatform)
                         .filter((el) => !config.connectedPlatforms[el])
                         .map((el, i) => (
                           <div

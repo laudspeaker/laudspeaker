@@ -21,7 +21,7 @@ import { State } from './entities/state.entity';
 import { platform, release } from 'os';
 import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 
 interface ResponseError extends Error {
   status?: number;
@@ -49,8 +49,8 @@ export class SlackService {
     private installationRepository: Repository<Installation>,
     @InjectRepository(State)
     private stateRepository: Repository<State>,
-    @InjectRepository(Workspaces)
-    private workspacesRepository: Repository<Workspaces>,
+    @InjectRepository(Workspace)
+    private workspacesRepository: Repository<Workspace>,
     @InjectRepository(Account)
     private readonly accountsRepository: Repository<Account>,
     @InjectQueue('slack') private readonly slackQueue: Queue,
