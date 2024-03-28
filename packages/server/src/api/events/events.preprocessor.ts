@@ -32,6 +32,7 @@ import { EventType } from './events.processor';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { EventsService } from './events.service';
 
 export enum ProviderType {
   LAUDSPEAKER = 'laudspeaker',
@@ -64,6 +65,8 @@ export class EventsPreProcessor extends WorkerHost {
     @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(forwardRef(() => CustomersService))
     private readonly customersService: CustomersService,
+    @Inject(forwardRef(() => EventsService))
+    private readonly eventsService: EventsService,
     @Inject(forwardRef(() => JourneysService))
     private readonly journeysService: JourneysService,
     @InjectModel(Event.name)
@@ -160,11 +163,16 @@ export class EventsPreProcessor extends WorkerHost {
     let err: any;
     try {
       //find customer associated with event or create new customer if not found
-      const correlation: Correlation =
-        await this.customersService.findOrCreateByCorrelationKVPair(
-          job.data.workspace,
-          job.data.event,
-          transactionSession
+      const {
+        customer,
+        findType,
+      }: { customer: CustomerDocument; findType: number } =
+        await this.eventsService.findOrCreateCustomer(
+          job.data.workspace.id,
+          job.data.session,
+          null,
+          null,
+          job.data.event
         );
       //get all the journeys that are active, and pipe events to each journey in case they are listening for event
       const journeys = await this.journeysRepository.find({
@@ -203,7 +211,7 @@ export class EventsPreProcessor extends WorkerHost {
             workspace: job.data.workspace,
             event: job.data.event,
             journey: journeys[i],
-            customer: correlation.cust,
+            customer: customer,
             session: job.data.session,
           },
           {

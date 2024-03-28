@@ -25,6 +25,16 @@ export class IsArrayOrString implements ValidatorConstraintInterface {
   }
 }
 
+export class FCMToken {
+  @IsString()
+  @IsOptional()
+  public androidDeviceToken?: string;
+
+  @IsString()
+  @IsOptional()
+  public iosDeviceToken?: string;
+}
+
 export class EventDto {
   @IsString()
   @Trim()
@@ -42,6 +52,9 @@ export class EventDto {
 
   @IsOptional()
   public payload?: any;
+
+  @IsOptional()
+  public $fcm?: FCMToken;
 
   @IsNotEmpty()
   public event: any;

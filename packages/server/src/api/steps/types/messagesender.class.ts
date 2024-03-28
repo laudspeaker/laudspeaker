@@ -299,7 +299,7 @@ export class MessageSender {
           'v:stepId': stepID,
           'v:customerId': customerID,
           'v:templateId': templateID,
-          'v:accountId': accountID,
+          'v:workspaceId': workspace.id,
         });
         msg = mailgunMessage;
         ret = [
@@ -710,10 +710,14 @@ export class MessageSender {
     let data = {
       title: titleWithInsertedTags.slice(0, this.MAXIMUM_PUSH_TITLE_LENGTH),
       body: textWithInsertedTags.slice(0, this.MAXIMUM_PUSH_LENGTH),
+      stepID,
+      customerID,
+      templateID: templateID.toString(),
+      workspaceID: workspace.id,
       sound: 'default',
     };
 
-    if (quietHours) data[quietHours] = JSON.stringify(quietHours);
+    if (quietHours) data['quietHours'] = JSON.stringify(quietHours);
 
     const messageId = await messaging.send({
       token: androidDeviceToken,
