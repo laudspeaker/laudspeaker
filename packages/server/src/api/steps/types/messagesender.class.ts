@@ -528,7 +528,12 @@ export class MessageSender {
 
     const messaging = admin.messaging(firebaseApp);
 
-    let data = {};
+    let data = {
+      stepID,
+      customerID,
+      templateID: templateID.toString(),
+      workspaceID: workspace.id,
+    };
 
     if (quietHours) data["quietHours"] = JSON.stringify(quietHours);
 
