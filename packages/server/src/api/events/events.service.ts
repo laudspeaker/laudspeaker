@@ -1304,6 +1304,7 @@ export class EventsService {
         $setOnInsert: {
           _id: correlationValue,
           workspaceId,
+          createdAt: new Date(),
         },
       };
 
