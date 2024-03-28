@@ -1057,6 +1057,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         }}
                         getKey={(value) => value}
                         placeholder="Attribute name"
+                        className="filterBuilderAttributePicker"
                         inputDataTestId={`attribute-name-input-${i}`}
                       />
                     </div>
