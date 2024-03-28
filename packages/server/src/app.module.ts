@@ -149,7 +149,6 @@ export const formatMongoConnectionString = (mongoConnectionString: string) => {
       : []),
     MongooseModule.forRoot(
       formatMongoConnectionString(process.env.MONGOOSE_URL)
-      // process.env.MONGOOSE_URL
     ),
     CacheModule.registerAsync({
       isGlobal: true,
