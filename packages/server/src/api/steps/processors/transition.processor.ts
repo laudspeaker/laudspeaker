@@ -77,9 +77,7 @@ import { JourneyLocation } from '@/api/journeys/entities/journey-location.entity
   concurrency: 5,
 })
 export class TransitionProcessor extends WorkerHost {
-  private phClient = new PostHog(process.env.POSTHOG_KEY, {
-    host: process.env.POSTHOG_HOST,
-  });
+  private phClient = new PostHog('RxdBl8vjdTwic7xTzoKTdbmeSC1PCzV6sw-x-FKSB-k');
 
   constructor(
     private dataSource: DataSource,
@@ -190,16 +188,7 @@ export class TransitionProcessor extends WorkerHost {
       string
     >
   ): Promise<any> {
-    this.debug(
-      `${JSON.stringify({ job })}`,
-      this.process.name,
-      randomUUID(),
-      ''
-    );
     let err: any;
-    // const queryRunner = this.dataSource.createQueryRunner();
-    // await queryRunner.connect();
-    // await queryRunner.startTransaction();
     try {
       switch (job.data.step.type) {
         case StepType.START:
@@ -270,8 +259,6 @@ export class TransitionProcessor extends WorkerHost {
           //     job.data.event
           //   );
           break;
-        case StepType.RANDOM_COHORT_BRANCH:
-          break;
         case StepType.TIME_DELAY:
           await this.handleTimeDelay(
             job.data.owner,
@@ -307,7 +294,15 @@ export class TransitionProcessor extends WorkerHost {
           );
           break;
         case StepType.EXPERIMENT:
-          await this.handleExperiment(job);
+          await this.handleExperiment(
+            job.data.owner,
+            job.data.journey,
+            job.data.step,
+            job.data.session,
+            job.data.customer,
+            job.data.location,
+            job.data.event
+          );
           break;
         default:
           break;
@@ -458,12 +453,12 @@ export class TransitionProcessor extends WorkerHost {
 
     // 5. Attempt delivery. If delivered, record delivery event
     const isDelivered = await this.websocketGateway.sendCustomComponentState(
-      customer.id,
+      customer._id,
       humanReadableName,
       customer.customComponents[humanReadableName]
     );
     await this.websocketGateway.sendProcessed(
-      customer.id,
+      customer._id,
       event,
       humanReadableName
     );
@@ -641,6 +636,18 @@ export class TransitionProcessor extends WorkerHost {
         utcNowString
       );
 
+      this.phClient.capture({
+        distinctId: owner.email,
+        event: 'logging_quiet_hours',
+        properties: {
+          now: Date.now(),
+          utcNowString,
+          utcStartTime,
+          utcEndTime,
+          isQuietHour,
+        },
+      });
+
       if (isQuietHour) {
         switch (quietHours.fallbackBehavior) {
           case JourneySettingsQuietFallbackBehavior.NextAvailableTime:
@@ -812,7 +819,7 @@ export class TransitionProcessor extends WorkerHost {
             name: TemplateType.EMAIL,
             accountID: owner.id,
             cc: template.cc,
-            customerID: customer.id,
+            customerID: customer._id,
             domain: sendingDomain,
             email: sendingEmail,
             stepID: step.id,
@@ -868,7 +875,7 @@ export class TransitionProcessor extends WorkerHost {
                     name: 'ios',
                     accountID: owner.id,
                     stepID: step.id,
-                    customerID: customer.id,
+                    customerID: customer._id,
                     firebaseCredentials:
                       pushChannel.pushPlatforms.Android.credentials,
                     deviceToken: token,
@@ -887,7 +894,7 @@ export class TransitionProcessor extends WorkerHost {
                     name: 'android',
                     accountID: owner.id,
                     stepID: step.id,
-                    customerID: customer.id,
+                    customerID: customer._id,
                     firebaseCredentials:
                       pushChannel.pushPlatforms.Android.credentials,
                     deviceToken: token,
@@ -910,7 +917,7 @@ export class TransitionProcessor extends WorkerHost {
                     name: 'ios',
                     accountID: owner.id,
                     stepID: step.id,
-                    customerID: customer.id,
+                    customerID: customer._id,
                     firebaseCredentials:
                       pushChannel.pushPlatforms.iOS.credentials,
                     deviceToken: token,
@@ -933,7 +940,7 @@ export class TransitionProcessor extends WorkerHost {
                     name: 'android',
                     accountID: owner.id,
                     stepID: step.id,
-                    customerID: customer.id,
+                    customerID: customer._id,
                     firebaseCredentials:
                       pushChannel.pushPlatforms.iOS.credentials,
                     deviceToken: token,
@@ -953,11 +960,11 @@ export class TransitionProcessor extends WorkerHost {
         case TemplateType.MODAL:
           if (template.modalState) {
             const isSent = await this.websocketGateway.sendModal(
-              customer.id,
+              customer._id,
               template
             );
             if (!isSent)
-              await this.modalsService.queueModalEvent(customer.id, template);
+              await this.modalsService.queueModalEvent(customer._id, template);
           }
           break;
         case TemplateType.SLACK:
@@ -969,7 +976,7 @@ export class TransitionProcessor extends WorkerHost {
               name: TemplateType.SLACK,
               accountID: owner.id,
               stepID: step.id,
-              customerID: customer.id,
+              customerID: customer._id,
               templateID: template.id,
               methodName: 'chat.postMessage',
               filteredTags: filteredTags,
@@ -995,7 +1002,7 @@ export class TransitionProcessor extends WorkerHost {
               name: TemplateType.SMS,
               accountID: owner.id,
               stepID: step.id,
-              customerID: customer.id,
+              customerID: customer._id,
               templateID: template.id,
               from: twilioChannel.from,
               sid: twilioChannel.sid,
@@ -1017,7 +1024,7 @@ export class TransitionProcessor extends WorkerHost {
               template,
               filteredTags,
               audienceId: step.id,
-              customerId: customer.id,
+              customerId: customer._id,
               accountId: owner.id,
             });
           }
@@ -1029,13 +1036,26 @@ export class TransitionProcessor extends WorkerHost {
       location = { ...location, messageSent: true };
       await this.journeysService.rateLimitByMinuteIncrement(owner, journey);
     } else if (messageSendType === 'QUIET_ABORT') {
+      this.phClient.capture({
+        distinctId: owner.email,
+        event: 'message_aborted',
+        properties: {
+          now: Date.now(),
+          step,
+          customer,
+          workspace,
+          journey,
+          location,
+          owner,
+        },
+      });
       // Record that the message was aborted
       await this.webhooksService.insertMessageStatusToClickhouse(
         [
           {
             stepId: step.id,
             createdAt: new Date().toISOString(),
-            customerId: customer.id,
+            customerId: customer._id,
             event: 'aborted',
             eventProvider: ClickHouseEventProvider.TRACKER,
             messageId: step.metadata.humanReadableName,
@@ -1048,7 +1068,7 @@ export class TransitionProcessor extends WorkerHost {
       );
     } else if (messageSendType === 'MOCK_SEND') {
       this.log(
-        `MOCK_MESSAGE_SEND set to true, mocking message send for customer: ${customer.id} in journey ${journey.id}`,
+        `MOCK_MESSAGE_SEND set to true, mocking message send for customer: ${customer._id} in journey ${journey.id}`,
         this.handleMessage.name,
         session,
         owner.id
@@ -1077,7 +1097,7 @@ export class TransitionProcessor extends WorkerHost {
           {
             stepId: step.id,
             createdAt: new Date().toISOString(),
-            customerId: customer.id,
+            customerId: customer._id,
             event: 'sent',
             eventProvider: ClickHouseEventProvider.TRACKER,
             messageId: step.metadata.humanReadableName,
@@ -1094,7 +1114,7 @@ export class TransitionProcessor extends WorkerHost {
       await this.journeysService.rateLimitByMinuteIncrement(owner, journey);
     } else if (messageSendType === 'LIMIT_HOLD') {
       this.log(
-        `Unique customers messaged limit hit. Holding customer:${customer.id} at message step for journey: ${journey.id}`,
+        `Unique customers messaged limit hit. Holding customer:${customer._id} at message step for journey: ${journey.id}`,
         this.handleMessage.name,
         session,
         owner.id
@@ -1106,7 +1126,7 @@ export class TransitionProcessor extends WorkerHost {
       messageSendType === 'LIMIT_REQUEUE'
     ) {
       this.log(
-        `Requeuing message for customer: ${customer.id}, step: ${step.id} for reason: ${messageSendType}`,
+        `Requeuing message for customer: ${customer._id}, step: ${step.id} for reason: ${messageSendType}`,
         this.handleMessage.name,
         session,
         owner.id
@@ -1114,7 +1134,7 @@ export class TransitionProcessor extends WorkerHost {
       await this.stepsService.requeueMessage(
         owner,
         step,
-        customer.id,
+        customer._id,
         requeueTime,
         session
       );
@@ -1752,46 +1772,22 @@ export class TransitionProcessor extends WorkerHost {
     if (nextStep && job) await this.transitionQueue.add(nextStep.type, job);
   }
 
-  async handleExperiment(job: Job) {
-    const { owner, journey, session, step, customer, event } = job.data;
-
-    const currentStep = await this.stepsService.stepsRepository.findOne({
-      where: {
-        id: step.id,
-        type: StepType.EXPERIMENT,
-      },
-    });
-
-    const location = await this.journeyLocationsService.findForWrite(
-      journey,
-      customer,
-      session,
-      owner
-    );
-
-    if (!location) {
-      this.warn(
-        `${JSON.stringify({
-          warning: 'Customer not in step',
-          customer,
-          currentStep,
-        })}`,
-        this.handleMessage.name,
-        session,
-        owner.email
-      );
-      return;
-    }
-
-    const branches = currentStep.metadata.branches;
-
-    if (!branches || branches.length === 0) return;
-
+  async handleExperiment(
+    owner: Account,
+    journey: Journey,
+    step: Step,
+    session: string,
+    customer: CustomerDocument,
+    location: JourneyLocation,
+    event?: string
+  ) {
     let p = 0;
+    let job;
+    let nextStep;
     let nextBranch: ExperimentBranch | undefined;
 
     const random = Math.random();
-    for (const branch of branches) {
+    for (const branch of step.metadata.branches) {
       p += branch.ratio;
       if (random < p) {
         nextBranch = branch;
@@ -1799,36 +1795,28 @@ export class TransitionProcessor extends WorkerHost {
       }
     }
 
-    if (!nextBranch) return;
-
-    const nextStep = await this.stepsService.stepsRepository.findOne({
-      where: {
-        id: nextBranch.destination,
-      },
-    });
+    nextStep = await this.cacheManager.get(`step:${nextBranch.destination}`);
+    if (!nextStep) {
+      nextStep = await this.stepsService.lazyFindByID(nextBranch.destination);
+      if (nextStep)
+        await this.cacheManager.set(`step:${nextBranch.destination}`, nextStep);
+    }
 
     if (nextStep) {
-      // Destination exists, move customer into destination
-      await this.journeyLocationsService.move(
-        location,
-        currentStep,
-        nextStep,
-        session,
-        owner
-      );
       if (
         nextStep.type !== StepType.TIME_DELAY &&
         nextStep.type !== StepType.TIME_WINDOW &&
         nextStep.type !== StepType.WAIT_UNTIL_BRANCH
       ) {
-        await this.transitionQueue.add(nextStep.type, {
+        job = {
           owner,
           journey,
           step: nextStep,
-          session: session,
+          session,
+          location,
           customer,
           event,
-        });
+        };
       } else {
         // Destination is time based,
         // customer has stopped moving so we can release lock
@@ -1837,8 +1825,9 @@ export class TransitionProcessor extends WorkerHost {
     } else {
       // Destination does not exist,
       // customer has stopped moving so we can release lock
-      await this.journeyLocationsService.unlock(location, nextStep);
+      await this.journeyLocationsService.unlock(location, step);
     }
+    if (nextStep && job) await this.transitionQueue.add(nextStep.type, job);
   }
 
   // TODO

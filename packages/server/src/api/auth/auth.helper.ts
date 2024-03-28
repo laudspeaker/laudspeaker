@@ -111,11 +111,13 @@ export class AuthHelper extends BaseJwtHelper {
 
   // Get User by User ID we get from decode()
   public async validateUser(decoded: { id: string }): Promise<Account> {
+    /*
     this.log(
       `Finding user: ${JSON.stringify(decoded)}`,
       this.validateUser.name,
       randomUUID()
     );
+    */
     const user = await this.repository.findOne({
       where: { id: decoded.id },
       relations: [
@@ -128,11 +130,13 @@ export class AuthHelper extends BaseJwtHelper {
         'teams.organization.owner',
       ],
     });
+    /*
     this.log(
       `Found user: ${JSON.stringify(user)}`,
       this.validateUser.name,
       randomUUID()
     );
+    */
 
     return user;
   }

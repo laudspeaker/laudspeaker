@@ -153,8 +153,9 @@ export class StepsService {
     query: any,
     audienceSize: number,
     queryRunner: QueryRunner,
-    transactionSession: ClientSession,
-    session: string
+    client?: any,
+    session?: string,
+    collectionName?: string
   ): Promise<{ collectionName: string; job: { name: string; data: any } }> {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -169,16 +170,26 @@ export class StepsService {
     if (startStep.length !== 1)
       throw new Error('Can only have one start step per journey.');
 
-    const { collectionName, customers } = await this.customersService.find(
-      account,
-      query,
-      session,
-      transactionSession,
-      0,
-      audienceSize
-    );
+    const CUSTOMERS_PER_BATCH = 50000;
+    let batch = 0;
 
-    const journeyLocations =
+    while (batch * CUSTOMERS_PER_BATCH <= audienceSize) {
+      const customers = await this.customersService.find(
+        account,
+        query,
+        session,
+        null,
+        batch * CUSTOMERS_PER_BATCH,
+        CUSTOMERS_PER_BATCH,
+        collectionName
+      );
+      this.log(
+        `Skip ${batch * CUSTOMERS_PER_BATCH}, limit: ${CUSTOMERS_PER_BATCH}`,
+        this.triggerStart.name,
+        session
+      );
+      batch++;
+
       await this.journeyLocationsService.createAndLockBulk(
         journey.id,
         customers.map((document) => {
@@ -187,8 +198,10 @@ export class StepsService {
         startStep[0],
         session,
         account,
-        queryRunner
+        queryRunner,
+        client
       );
+    }
 
     return {
       collectionName,
@@ -202,6 +215,7 @@ export class StepsService {
           query,
           skip: 0,
           limit: audienceSize,
+          collectionName,
         },
       },
     };

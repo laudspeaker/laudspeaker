@@ -747,7 +747,7 @@ export class JourneysService {
     locations: JourneyLocation[],
     session: string,
     queryRunner: QueryRunner,
-    clientSession: ClientSession
+    clientSession?: ClientSession
   ): Promise<{ name: string; data: any }[]> {
     const jobs: { name: string; data: any }[] = [];
     const step = await this.stepsService.findByJourneyAndType(
@@ -766,7 +766,7 @@ export class JourneysService {
         )
       ) {
         this.log(
-          `Max customer limit reached on journey: ${journey.id}. Preventing customer: ${customer.id} from being enrolled.`,
+          `Max customer limit reached on journey: ${journey.id}. Preventing customer: ${customer._id} from being enrolled.`,
           this.enrollCustomersInJourney.name,
           session,
           account.id
@@ -781,7 +781,7 @@ export class JourneysService {
           step: step,
           location: locations.find((location: JourneyLocation) => {
             return (
-              location.customer === (customer.id ?? customer._id.toString()) &&
+              location.customer === (customer._id ?? customer._id.toString()) &&
               location.journey === journey.id
             );
           }),
@@ -790,16 +790,7 @@ export class JourneysService {
         },
       };
       jobs.push(job);
-      await this.customersService.updateJourneyList(
-        [customer],
-        journey.id,
-        session,
-        clientSession
-      );
     }
-    // if (jobs.length) {
-    //   await this.transitionQueue.addBulk(jobs);
-    // }
     return jobs;
   }
 
@@ -1013,16 +1004,12 @@ export class JourneysService {
         relations: ['latestChanger'],
       });
 
-      const journeysWithEnrolledCustomersCount = await Promise.all(
-        journeys.map(async (journey) => ({
-          ...journey,
-          latestChanger: null,
-          latestChangerEmail: journey.latestChanger?.email,
-          enrolledCustomers: await this.CustomerModel.count({
-            journeys: journey.id,
-          }),
-        }))
-      );
+      const journeysWithEnrolledCustomersCount = journeys.map((journey) => ({
+        ...journey,
+        latestChanger: null,
+        latestChangerEmail: journey.latestChanger?.email,
+        enrolledCustomers: +journey.enrollment_count,
+      }));
 
       return { data: journeysWithEnrolledCustomersCount, totalPages };
     } catch (err) {
@@ -1481,16 +1468,8 @@ export class JourneysService {
       collectionName: string;
       job: { name: string; data: any };
     };
-    this.debug(
-      `${JSON.stringify({ account, journeyID })}`,
-      this.start.name,
-      session,
-      account.email
-    );
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
     const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
+    const client = await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
@@ -1551,7 +1530,7 @@ export class JourneysService {
           account,
           journey.inclusionCriteria,
           session,
-          transactionSession
+          null
         );
       if (
         journey.journeyEntrySettings.entryTiming.type ===
@@ -1573,8 +1552,9 @@ export class JourneysService {
             ? parseInt(journey?.journeySettings?.maxEntries?.maxEntries)
             : count,
           queryRunner,
-          transactionSession,
-          session
+          client,
+          session,
+          collectionName
         );
       } else {
         await queryRunner.manager.save(Journey, {
@@ -1586,17 +1566,8 @@ export class JourneysService {
 
       await this.trackChange(account, journeyID, queryRunner);
 
-      await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
-      if (collectionName) {
-        await this.connection.dropCollection(collectionName);
-      }
       if (triggerStartTasks) {
-        if (triggerStartTasks.collectionName) {
-          await this.connection.dropCollection(
-            triggerStartTasks.collectionName
-          );
-        }
         await this.startQueue.add(
           triggerStartTasks.job.name,
           triggerStartTasks.job.data
@@ -1605,10 +1576,8 @@ export class JourneysService {
     } catch (e) {
       err = e;
       this.error(e, this.start.name, session, account.email);
-      await transactionSession.abortTransaction();
       await queryRunner.rollbackTransaction();
     } finally {
-      await transactionSession.endSession();
       await queryRunner.release();
       if (err) throw err;
     }

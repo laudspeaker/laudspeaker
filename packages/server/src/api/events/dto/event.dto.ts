@@ -45,4 +45,10 @@ export class EventDto {
 
   @IsNotEmpty()
   public event: any;
+
+  @IsOptional()
+  public timestamp?: Date;
+
+  @IsOptional()
+  public uuid?: string;
 }

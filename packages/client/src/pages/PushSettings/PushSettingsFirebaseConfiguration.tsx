@@ -202,6 +202,7 @@ const PushSettingsFirebaseConfiguration = ({
         propControl={true}
         className="-mt-[10px]"
         onCheck={(isTrackingDisabled) => updateConfig({ isTrackingDisabled })}
+        disabled
       />
       {config.selectedPlatforms.iOS && (
         <div>

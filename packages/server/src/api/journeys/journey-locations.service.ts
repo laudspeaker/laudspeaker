@@ -18,6 +18,8 @@ import { JourneyLocation } from './entities/journey-location.entity';
 import { StepType } from '../steps/types/step.interface';
 import { date } from 'liquidjs/dist/builtin/filters';
 import { randomUUID } from 'crypto';
+import { Readable } from 'node:stream';
+import * as copyFrom from 'pg-copy-streams';
 
 const LOCATION_LOCK_TIMEOUT_MS = +process.env.LOCATION_LOCK_TIMEOUT_MS;
 
@@ -122,7 +124,7 @@ export class JourneyLocationsService {
   ) {
     this.log(
       JSON.stringify({
-        info: `Creating JourneyLocation (${journey.id}, ${customer.id})`,
+        info: `Creating JourneyLocation (${journey.id}, ${customer._id})`,
       }),
       this.createAndLock.name,
       session,
@@ -137,20 +139,20 @@ export class JourneyLocationsService {
         where: {
           journey: journey.id,
           workspace: { id: workspace.id },
-          customer: customer.id,
+          customer: customer._id,
         },
       });
 
       if (location)
         throw new Error(
-          `Customer ${customer.id} already enrolled in journey ${journey.id}; located in step ${location.step.id}`
+          `Customer ${customer._id} already enrolled in journey ${journey.id}; located in step ${location.step.id}`
         );
 
       // Step 2: Create new journey Location row, add time that user entered the journey
       await queryRunner.manager.save(JourneyLocation, {
         journey: journey.id,
         workspace,
-        customer: customer.id ?? customer._id.toString(),
+        customer: customer._id,
         step: step,
         stepEntry: Date.now(),
         moveStarted: Date.now(),
@@ -160,17 +162,17 @@ export class JourneyLocationsService {
         where: {
           journey: journey.id,
           workspace: { id: workspace.id },
-          customer: customer.id,
+          customer: customer._id,
         },
       });
       if (location)
         throw new Error(
-          `Customer ${customer.id} already enrolled in journey ${journey.id}; located in step ${location.step.id}`
+          `Customer ${customer._id} already enrolled in journey ${journey.id}; located in step ${location.step.id}`
         );
       await this.journeyLocationsRepository.save({
         journey: journey.id,
         workspace,
-        customer: customer.id,
+        customer: customer._id,
         step: step,
         stepEntry: Date.now(),
         moveStarted: Date.now(),
@@ -204,32 +206,49 @@ export class JourneyLocationsService {
     step: Step,
     session: string,
     account: Account,
-    queryRunner: QueryRunner
-  ): Promise<JourneyLocation[]> {
-    if (!customers.length) return [];
+    queryRunner: QueryRunner,
+    client: any
+  ): Promise<void> {
+    if (!customers.length) return;
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-    const valuesPlaceholder = customers
-      .map(
-        (_, index) =>
-          `($1, $${index + 2}, $${customers.length + 2}, $${
-            customers.length + 3
-          }, $${customers.length + 4}, $${customers.length + 5})`
+    const moveStarted = Date.now(),
+      stepEntry = Date.now(),
+      journeyEntry = Date.now();
+
+    // Create a readable stream from your customers array
+    const readableStream = new Readable({
+      read() {
+        customers.forEach((customerId) => {
+          this.push(
+            `${journeyId}\t${customerId}\t${step.id}\t${workspace.id}\t${moveStarted}\t${stepEntry}\t${journeyEntry}\n`
+          );
+        });
+        this.push(null); // No more data
+      },
+    });
+
+    const stream = client.query(
+      copyFrom.from(
+        `COPY journey_location ("journeyId", "customer", "stepId", "workspaceId", "moveStarted", "stepEntry", "journeyEntry") FROM STDIN WITH (FORMAT text)`
       )
-      .join(', ');
-    const query = `
-        INSERT INTO journey_location ("journeyId", customer, "stepId", "workspaceId", "stepEntry", "moveStarted")
-        VALUES ${valuesPlaceholder}
-        RETURNING *
-      `;
-    const result = await queryRunner.query(query, [
-      journeyId,
-      ...customers,
-      step.id,
-      workspace.id,
-      Date.now(),
-      Date.now(),
-    ]);
-    return result;
+    );
+
+    // Error handling
+    stream.on('error', (error) => {
+      this.error(error, this.createAndLockBulk.name, session, account.email);
+      throw error;
+    });
+    stream.on('finish', () => {
+      this.debug(
+        `Finished creating journey location rows for ${journeyId}`,
+        this.createAndLockBulk.name,
+        session,
+        account.email
+      );
+    });
+
+    // Pipe the readable stream to the COPY command
+    readableStream.pipe(stream);
   }
 
   /**
@@ -274,7 +293,7 @@ export class JourneyLocationsService {
   ): Promise<JourneyLocation> {
     this.log(
       JSON.stringify({
-        info: `Finding JourneyLocation (${journey.id}, ${customer.id})`,
+        info: `Finding JourneyLocation (${journey.id}, ${customer._id})`,
       }),
       this.findForWrite.name,
       session,
@@ -287,7 +306,7 @@ export class JourneyLocationsService {
         where: {
           journey: journey.id,
           workspace: workspace ? { id: workspace.id } : undefined,
-          customer: customer.id,
+          customer: customer._id,
         },
         relations: ['step'],
       });
@@ -297,7 +316,7 @@ export class JourneyLocationsService {
           journey: journey.id,
           workspace: workspace ? { id: workspace.id } : undefined,
 
-          customer: customer.id,
+          customer: customer._id,
         },
         relations: ['step'],
       });
@@ -309,6 +328,7 @@ export class JourneyLocationsService {
     customers: string[],
     queryRunner?: QueryRunner
   ): Promise<JourneyLocation[]> {
+    if (!customers.length) return [];
     if (queryRunner) {
       return await queryRunner.manager
         .createQueryBuilder(JourneyLocation, 'journeyLocation')
@@ -448,7 +468,7 @@ export class JourneyLocationsService {
           journey: journey.id,
           workspace: workspace ? { id: workspace.id } : undefined,
 
-          customer: customer.id,
+          customer: customer._id,
         },
         relations: ['workspace', 'journey', 'step'],
       });
@@ -458,7 +478,7 @@ export class JourneyLocationsService {
           journey: journey.id,
           workspace: workspace ? { id: workspace.id } : undefined,
 
-          customer: customer.id,
+          customer: customer._id,
         },
         relations: ['workspace', 'journey', 'step'],
       });
@@ -584,36 +604,6 @@ export class JourneyLocationsService {
       );
     }
   }
-
-  /**
-   * Mark a customer as no longer moving through a journey.
-   *
-   * @param {Account} account
-   * @param {Journey} journey
-   * @param {CustomerDocument} customer
-   * @param {String} session
-   * @param {QueryRunner} [queryRunner]
-   */
-  // async findAndUnlock(
-  //   journey: Journey,
-  //   customer: CustomerDocument,
-  //   session: string,
-  //   account?: Account,
-  //   queryRunner?: QueryRunner
-  // ) {
-  //   const location = await this.findForWrite(
-  //     journey,
-  //     customer,
-  //     session,
-  //     account,
-  //     queryRunner
-  //   );
-  //   if (!location)
-  //     throw new Error(
-  //       `Customer ${location.customer} is not in journey ${location.journey}`
-  //     );
-  //   await this.unlock(location, session, account, queryRunner);
-  // }
 
   /**
    * Mark a customer as no longer moving through a journey.

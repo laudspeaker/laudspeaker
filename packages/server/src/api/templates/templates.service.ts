@@ -340,7 +340,7 @@ export class TemplatesService extends QueueEventsHost {
     event: EventDto,
     audienceId?: string
   ): Promise<string | number> {
-    const customerId = customer.id;
+    const customerId = customer._id;
     let template: Template,
       job: Job<any>, // created jobId
       installation: Installation,

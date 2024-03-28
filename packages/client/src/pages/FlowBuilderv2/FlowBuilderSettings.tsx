@@ -13,6 +13,7 @@ import {
   setJourneySettingsMaxEntries,
   setMaxMessageSends,
   setJourneySettingsTags,
+  setJourneyFrequencyCappingRules,
 } from "reducers/flow-builder.reducer";
 import { useAppSelector } from "store/hooks";
 
@@ -53,6 +54,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
         <div className="flex flex-col gap-[10px]">
           <div className="flex items-center">
             <span
+              id="quietHoursToggle"
               className="flex cursor-pointer select-none"
               onClick={() => {
                 dispatch(
@@ -93,6 +95,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                           })
                         );
                       }}
+                      id="quietHoursStartTimeInput"
                       type="time"
                       className="w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
                       placeholder="Select start time"
@@ -114,6 +117,7 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                           })
                         );
                       }}
+                      id="quietHoursEndTimeInput"
                       type="time"
                       className="w-full h-[32px] px-[12px] py-[5px] font-roboto text-[14px] leading-[22px] rounded-sm border border-[#E5E7EB]"
                       placeholder="Select date"
@@ -143,10 +147,12 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                   value={JourneySettingsQuietFallbackBehavior.NextAvailableTime}
                   radioText="Send at next available time"
                   className={"mb-[10px]"}
+                  id="quietHoursFallbackNextTime"
                 />
                 <RadioOption
                   value={JourneySettingsQuietFallbackBehavior.Abort}
                   radioText="Abort message"
+                  id="quietHoursFallbackAbort"
                 />
               </RadioGroup>
             </div>
@@ -335,6 +341,53 @@ const FlowBuilderSettings: FC<FlowBuilderSettingsProps> = ({
                 </div>
               )}
             </div>
+          )}
+        </div>
+        <div className="w-[calc(100%+40px)] h-[1px] bg-[#E5E7EB] -translate-x-[20px]" />
+        <div className="flex flex-col gap-[10px]">
+          <div className="flex items-center">
+            <span
+              className="flex cursor-pointer select-none"
+              onClick={() => {
+                dispatch(
+                  setJourneyFrequencyCappingRules({
+                    ...journeySettings.frequencyCapping,
+                    enabled: !journeySettings.frequencyCapping.enabled,
+                  })
+                );
+              }}
+            >
+              <ToggleSwitch
+                checked={journeySettings.frequencyCapping.enabled}
+                iconRequired={false}
+              />
+              <div className="ml-[10px] font-semibold text-base">
+                Frequency capping
+              </div>
+            </span>
+          </div>
+          <div className="text-[#4B5563] font-inter text-[12px] leading-5 font-normal">
+            Specify frequency capping settings
+          </div>
+          {journeySettings.frequencyCapping.enabled && (
+            <Button
+              type={ButtonType.SECONDARY}
+              onClick={() => {
+                return void 0;
+              }}
+              /*
+              onClick={() => {
+                window.open(
+                  "/settings?tab=FREQUENCY_CAPPING",
+                  "_blank",
+                  "noopener,noreferrer"
+                );
+              }}
+              */
+              className="w-fit"
+            >
+              Frequency capping rules
+            </Button>
           )}
         </div>
 

@@ -21,7 +21,7 @@ export const MultisplitNode: FC<NodeProps<MultisplitNodeData>> = ({
 
   return (
     <div
-      className={`relative wait-until-node w-[260px] h-[80px] rounded bg-white font-inter ${
+      className={`relative multisplit-until-node w-[260px] h-[80px] rounded bg-white font-inter ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
       } ${selected ? "border-2 border-[#6366F1]" : "border border-[#E5E7EB]"}`}
     >

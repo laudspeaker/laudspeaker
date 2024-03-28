@@ -22,7 +22,7 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
           checkKey = await this.cacheManager.get(apikey);
           if (!checkKey) {
             checkKey = await this.authService.validateAPIKey(apikey);
-            await this.cacheManager.set(apikey, checkKey);
+            await this.cacheManager.set(apikey, checkKey, 60000);
           }
         } catch (e) {
           return done(e, false);

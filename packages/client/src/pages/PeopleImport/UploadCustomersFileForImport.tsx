@@ -111,8 +111,8 @@ const UploadCustomersFileForImport = ({
       if (file.type !== "text/csv") {
         toast.error("File must have .csv extension");
         return;
-      } else if (file.size >= 1073741824) {
-        toast.error("File size should not more than 1GB");
+      } else if (file.size >= 10737418240) {
+        toast.error("File size cannot exceed 10GB");
         return;
       }
       setIsLoading(true);
@@ -131,9 +131,7 @@ const UploadCustomersFileForImport = ({
             handleUploadFile(results, file);
           },
           error(err) {
-            toast.error(
-              "Error processing file, make sure you upload CSV file."
-            );
+            toast.error(`Error processing file: ${err}`);
             clearFileInput();
             setIsFileValidating(false);
             setIsLoading(false);
@@ -195,7 +193,10 @@ const UploadCustomersFileForImport = ({
   return fileData?.file ? (
     <>
       <div className="w-full flex justify-between text-[#6366F1] p-[10px] border font-semibold border-[#E5E7EB] bg-[#F9FAFB] ">
-        <div className="whitespace-nowrap overflow-hidden max-w-full text-ellipsis text-sm font-inter">
+        <div
+          id="import-file-name"
+          className="whitespace-nowrap overflow-hidden max-w-full text-ellipsis text-sm font-inter"
+        >
           {fileData.file.fileName}
         </div>
         <TrashIcon

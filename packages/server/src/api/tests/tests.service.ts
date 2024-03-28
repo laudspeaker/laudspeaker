@@ -142,22 +142,33 @@ export class TestsService {
     try {
       const testAccount = await queryRunner.manager.findOne(Account, {
         where: { email: process.env.TEST_USER_EMAIL },
+        relations: ['teams.organization.workspaces'],
       });
-      if (testAccount) {
-        const removeResult = await queryRunner.manager.remove(
-          Account,
-          testAccount
-        );
+      if (!testAccount) return;
 
-        this.debug(
-          JSON.stringify({
-            message: `Removed test user from db`,
-            removeResult,
-          }),
-          this.resetTestData.name,
-          session
-        );
+      const workspaces = testAccount?.teams?.[0]?.organization?.workspaces;
+
+      if (workspaces) {
+        for (const workspace of workspaces) {
+          await this.customersService.CustomerModel.deleteMany({
+            workspaceId: workspace.id,
+          });
+        }
       }
+
+      const removeResult = await queryRunner.manager.remove(
+        Account,
+        testAccount
+      );
+
+      this.debug(
+        JSON.stringify({
+          message: `Removed test user from db`,
+          removeResult,
+        }),
+        this.resetTestData.name,
+        session
+      );
 
       // TODO:  Require full rework to new structure
       // await this.authService.verificationRepository.delete({

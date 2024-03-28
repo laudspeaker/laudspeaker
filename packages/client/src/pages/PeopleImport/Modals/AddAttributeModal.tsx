@@ -188,6 +188,7 @@ const AddAttributeModal = ({
                 placeholder="field name you want to import"
                 value={newName}
                 onChange={setNewName}
+                id="fieldNameInput"
               />
             </div>
             <div className="flex justify-between items-center">
@@ -195,6 +196,7 @@ const AddAttributeModal = ({
               <Select
                 value={type}
                 placeholder="Select type"
+                id="selectTypeInput"
                 className="max-w-[300px] w-full"
                 options={Object.values(StatementValueType)
                   .slice(0, 6)
@@ -208,7 +210,10 @@ const AddAttributeModal = ({
             {type &&
               (type === StatementValueType.DATE ||
                 type === StatementValueType.DATE_TIME) && (
-                <div className="flex justify-between items-center mt-3">
+                <div
+                  className="flex justify-between items-center mt-3"
+                  id="dateFormatPicker"
+                >
                   <span className="text-sm text-[#111827] font-inter">
                     {type === StatementValueType.DATE ? "Date" : "Date-time"}{" "}
                     format
@@ -243,6 +248,7 @@ const AddAttributeModal = ({
               }
               type={ButtonType.PRIMARY}
               onClick={handleSave}
+              id="saveAddAttributeModalButton"
             >
               Save
             </Button>

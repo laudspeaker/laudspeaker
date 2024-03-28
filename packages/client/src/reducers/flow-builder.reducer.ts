@@ -167,6 +167,7 @@ export interface MessageEventQuery {
       | ComparisonType.DURING;
     timeAfter?: string;
     timeBefore?: string;
+    dateComparisonType: DateComparisonType;
   };
 }
 
@@ -280,7 +281,7 @@ export enum DateComparisonType {
 export interface AttributeQueryStatement {
   type: QueryStatementType.ATTRIBUTE;
   key: string;
-  valueType: StatementValueType;
+  valueType?: StatementValueType;
   comparisonType: ComparisonType;
   subComparisonType: ObjectKeyComparisonType;
   subComparisonValue: string;
@@ -320,6 +321,7 @@ export interface EventQueryStatement {
       | ComparisonType.DURING;
     timeAfter?: string;
     timeBefore?: string;
+    dateComparisonType: DateComparisonType;
   };
 }
 
@@ -418,8 +420,6 @@ export interface EntryTimingRecurrence {
   endsOn: RecurrenceEndsOption;
   endAdditionalValue?: number | string; // string as Date (Ends after number occurnecs or on Specific string Date )
   weeklyOn: number[]; // Day of week number
-  continueOccurence: boolean;
-  continueOccurenceEnrollment: boolean;
 }
 
 export interface EntryTimingSpecificTime {
@@ -484,11 +484,16 @@ export interface JourneySettingsMaxMessageSends {
   maxSendRate?: MaxOptions;
 }
 
+export interface JourneySettingsEnableFrequencyCapping {
+  enabled: boolean;
+}
+
 export interface JourneySettings {
   tags: string[];
   quietHours: JourneySettingsQuietHours;
   maxEntries: JourneySettingsMaxUserEntries;
   maxMessageSends: JourneySettingsMaxMessageSends;
+  frequencyCapping: JourneySettingsEnableFrequencyCapping;
 }
 
 export interface TemplateInlineEditor {
@@ -502,7 +507,7 @@ export interface TemplateInlineEditor {
   };
 }
 
-interface FlowBuilderState {
+export interface FlowBuilderState {
   flowId: string;
   flowName: string;
   nodes: Node<NodeData>[];
@@ -590,6 +595,9 @@ export const defaultJourneySettings = {
     enabled: false,
     maxSendRate: undefined,
     maxUsersReceive: undefined,
+  },
+  frequencyCapping: {
+    enabled: false,
   },
 };
 
@@ -1354,6 +1362,13 @@ const flowBuilderSlice = createSlice({
     ) {
       state.journeySettings.quietHours = action.payload;
     },
+    setJourneyFrequencyCappingRules(
+      state,
+      action: PayloadAction<JourneySettingsEnableFrequencyCapping>
+    ) {
+      state.journeySettings.frequencyCapping = action.payload;
+    },
+
     setMaxMessageSends(
       state,
       action: PayloadAction<JourneySettingsMaxMessageSends>
@@ -1376,8 +1391,6 @@ const flowBuilderSlice = createSlice({
             repeatEvery: 1,
             weeklyOn: [...new Array(7)].map(() => 0),
             endAdditionalValue: undefined,
-            continueOccurence: false,
-            continueOccurenceEnrollment: false,
           },
           userLocalTimeZone: false,
         };
@@ -1566,6 +1579,7 @@ export const {
   setMaxMessageSends,
   setAvailableTags,
   setTemplateInlineCreator,
+  setJourneyFrequencyCappingRules,
   setIsStarting,
 } = flowBuilderSlice.actions;
 

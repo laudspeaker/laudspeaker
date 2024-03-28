@@ -46,6 +46,7 @@ import Select from "components/Elements/Selectv2";
 import { Workflow } from "types/Workflow";
 import axios, { CancelTokenSource } from "axios";
 import deepCopy from "utils/deepCopy";
+import AutoComplete from "../../../components/AutoCompletev2/AutoCompletev2";
 
 interface FilterBuilderProps {
   settings: ConditionalSegmentsSettings | SegmentsSettings;
@@ -296,6 +297,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     {
       key: string;
       type: StatementValueType;
+      isArray?: boolean;
     }[]
   >([]);
 
@@ -888,11 +890,20 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     ...(possibleMessages[`${channel};;${specId}`] || []),
   ];
 
+  const retriveEventNames = async (query: string) => {
+    const { data } = await ApiService.get<string[]>({
+      url: `/events/possible-names?search=${query}`,
+    });
+
+    return data;
+  };
+
   return (
     <div className="flex w-full flex-col gap-[10px] pr-[10px]">
       <div className="flex relative w-full gap-[10px] items-center">
         <div>
           <select
+            data-testid="filter-builder-condition-select"
             value={settings.query.type}
             onChange={(e) =>
               onSettingsChange({
@@ -1015,24 +1026,53 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         }}
                         retrieveLabel={(item) => item}
                         onQueryChange={(q) => {
-                          handleChangeStatement(i, { ...statement, key: q });
+                          const attribute = possibleKeys.find(
+                            (attr) => attr.key === q
+                          );
+
+                          const valueType = attribute?.isArray
+                            ? StatementValueType.ARRAY
+                            : attribute?.type || undefined;
+
+                          handleChangeStatement(i, {
+                            ...statement,
+                            key: q,
+                            valueType,
+                            comparisonType: valueType
+                              ? valueTypeToComparisonTypesMap[valueType][0]
+                              : ComparisonType.EQUALS,
+                          });
                           setKeysQuery(q);
                         }}
                         onSelect={(value) => {
+                          const attribute = possibleKeys.find(
+                            (attr) => attr.key === value
+                          );
+
+                          const valueType = attribute?.isArray
+                            ? StatementValueType.ARRAY
+                            : attribute?.type || undefined;
+
                           handleChangeStatement(i, {
                             ...statement,
                             key: value,
+                            valueType,
+                            comparisonType: valueType
+                              ? valueTypeToComparisonTypesMap[valueType][0]
+                              : ComparisonType.EQUALS,
                           });
                           setKeysQuery(value);
                         }}
                         getKey={(value) => value}
                         placeholder="Attribute name"
+                        inputDataTestId={`attribute-name-input-${i}`}
                       />
                     </div>
                     <div>
                       <select
                         value={`${statement.valueType};;${statement.comparisonType}`}
                         className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
+                        id="comparison-type-select"
                         onChange={(ev) => {
                           if (!ev.target.value) return;
 
@@ -1046,9 +1086,15 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               comparisonValueType as ComparisonType,
                           });
                         }}
+                        data-testid={`attribute-statement-select-${i}`}
                       >
-                        {Object.values(StatementValueType).map(
-                          (comparisonType, j) => (
+                        {Object.values(StatementValueType)
+                          .filter((valueType) =>
+                            statement.valueType
+                              ? statement.valueType === valueType
+                              : true
+                          )
+                          .map((comparisonType, j) => (
                             <optgroup key={j} label={comparisonType}>
                               {valueTypeToComparisonTypesMap[
                                 comparisonType
@@ -1056,13 +1102,13 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                 <option
                                   key={k}
                                   value={`${comparisonType};;${comparisonValueType}`}
+                                  id={`comparison-type-${comparisonType}-${comparisonValueType}`}
                                 >
                                   {comparisonValueType}
                                 </option>
                               ))}
                             </optgroup>
-                          )
-                        )}
+                          ))}
                       </select>
                     </div>
 
@@ -1076,6 +1122,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           buttonClassName="!w-fit"
                           className="!w-fit"
                           value={statement.dateComparisonType}
+                          id="date-comparison-type-select"
                           onChange={(value) =>
                             handleChangeStatement(i, {
                               ...statement,
@@ -1096,6 +1143,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               title: "relative date",
                             },
                           ]}
+                          dataTestId={`attribute-name-${i}-date-select`}
                         />
                       </>
                     )}
@@ -1117,13 +1165,16 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               value: +value ? value : "0",
                             })
                           }
+                          dataTestId={`attribute-statement-${i}`}
                         />
                       ) : (
                         statement.comparisonType !== ComparisonType.EXIST &&
                         statement.comparisonType !==
                           ComparisonType.NOT_EXIST && (
                           <FilterBuilderDynamicInput
-                            type={statement.valueType}
+                            type={
+                              statement.valueType || StatementValueType.STRING
+                            }
                             value={statement.value}
                             isRelativeDate={
                               statement.dateComparisonType ===
@@ -1135,6 +1186,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                 value,
                               })
                             }
+                            dataTestId={`attribute-statement-${i}`}
                           />
                         )
                       )}
@@ -1159,6 +1211,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                   subComparisonValue: value,
                                 });
                               }}
+                              dataTestId={`attribute-statement-${i}`}
                             />
                           </div>
                         </>
@@ -1175,6 +1228,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                             })
                           }
                           className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
+                          data-testid={`attribute-name-object-select-${i}`}
                         >
                           {Object.values(ObjectKeyComparisonType).map(
                             (comparisonType, j) => (
@@ -1201,6 +1255,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                 subComparisonValue: value,
                               })
                             }
+                            dataTestId={`attribute-statement-${i}`}
                           />
                         </div>
                       )}
@@ -1237,24 +1292,25 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                   <>
                     <div className="flex gap-[10px]">
                       <div>
-                        <FlowBuilderAutoComplete
+                        <AutoComplete
                           value={statement.eventName}
-                          includedItems={{
-                            type: "setter",
-                            getItems: loadPossibleEvents,
-                          }}
-                          retrieveLabel={(item) => item}
-                          onQueryChange={(query) => {
-                            handleChangeStatement(i, {
-                              ...statement,
-                              eventName: query,
-                            });
-                          }}
-                          onSelect={(value) => {
+                          onQueryChange={(value) =>
                             handleChangeStatement(i, {
                               ...statement,
                               eventName: value,
-                            });
+                            })
+                          }
+                          inputDataTestId={`attribute-statement-${i}`}
+                          onSelect={(value) =>
+                            handleChangeStatement(i, {
+                              ...statement,
+                              eventName: value,
+                            })
+                          }
+                          retrieveLabel={(item) => item}
+                          includedItems={{
+                            type: "setter",
+                            getItems: retriveEventNames,
                           }}
                           placeholder="Name"
                         />
@@ -1308,7 +1364,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                       )}
                     </div>
 
-                    {statement.time !== undefined && (
+                    {statement.time && (
                       <div className="min-w-full flex items-center px-5 py-[14px] border border-[#E5E7EB] bg-white gap-[10px]">
                         <Select
                           value={statement.time.comparisonType}
@@ -1325,10 +1381,47 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               ...statement,
                               time: {
                                 comparisonType: e as any,
+                                dateComparisonType: DateComparisonType.ABSOLUTE,
                               },
                             })
                           }
                           className="max-w-[145px]"
+                        />
+
+                        <Select
+                          buttonClassName="!w-fit"
+                          className="!w-fit"
+                          value={statement.time.dateComparisonType}
+                          onChange={(value) =>
+                            handleChangeStatement(i, {
+                              ...statement,
+                              time: {
+                                ...statement.time,
+                                comparisonType:
+                                  statement.time?.comparisonType ||
+                                  ComparisonType.AFTER,
+                                dateComparisonType: value,
+                                timeBefore:
+                                  value === DateComparisonType.ABSOLUTE
+                                    ? ""
+                                    : "1 days ago",
+                                timeAfter:
+                                  value === DateComparisonType.ABSOLUTE
+                                    ? ""
+                                    : "1 days ago",
+                              },
+                            })
+                          }
+                          options={[
+                            {
+                              key: DateComparisonType.ABSOLUTE,
+                              title: "absolute date",
+                            },
+                            {
+                              key: DateComparisonType.RELATIVE,
+                              title: "relative date",
+                            },
+                          ]}
                         />
 
                         <FilterBuilderDynamicInput
@@ -1339,6 +1432,10 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               ? statement.time.timeBefore
                               : statement.time.timeAfter) || ""
                           }
+                          isRelativeDate={
+                            statement.time.dateComparisonType ===
+                            DateComparisonType.RELATIVE
+                          }
                           onChange={(value) => {
                             handleChangeStatement(i, {
                               ...statement,
@@ -1347,14 +1444,23 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                 ...(statement.time?.comparisonType ===
                                 ComparisonType.BEFORE
                                   ? {
-                                      timeBefore: new Date(value).toISOString(),
+                                      timeBefore:
+                                        statement.time.dateComparisonType ===
+                                        DateComparisonType.ABSOLUTE
+                                          ? new Date(value).toISOString()
+                                          : value,
                                     }
                                   : {
-                                      timeAfter: new Date(value).toISOString(),
+                                      timeAfter:
+                                        statement.time?.dateComparisonType ===
+                                        DateComparisonType.ABSOLUTE
+                                          ? new Date(value).toISOString()
+                                          : value,
                                     }),
                               },
                             });
                           }}
+                          dataTestId={`attribute-statement-${i}`}
                         />
                         {statement.time?.comparisonType ===
                           ComparisonType.DURING && (
@@ -1363,15 +1469,24 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                             <FilterBuilderDynamicInput
                               type={StatementValueType.DATE}
                               value={statement.time.timeBefore || ""}
+                              isRelativeDate={
+                                statement.time.dateComparisonType ===
+                                DateComparisonType.RELATIVE
+                              }
                               onChange={(value) => {
                                 handleChangeStatement(i, {
                                   ...statement,
                                   time: {
                                     ...statement.time!,
-                                    timeBefore: new Date(value).toISOString(),
+                                    timeBefore:
+                                      statement.time!.dateComparisonType ===
+                                      DateComparisonType.ABSOLUTE
+                                        ? new Date(value).toISOString()
+                                        : value,
                                   },
                                 });
                               }}
+                              dataTestId={`attribute-statement-${i}`}
                             />
                           </>
                         )}
@@ -1561,6 +1676,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                                   }
                                                 )
                                               }
+                                              dataTestId={`attribute-statement-${i}`}
                                             />
                                           ) : (
                                             property.comparisonType !==
@@ -1580,6 +1696,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                                     }
                                                   )
                                                 }
+                                                dataTestId={`attribute-statement-${i}`}
                                               />
                                             )
                                           )}
@@ -1608,6 +1725,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                                       }
                                                     );
                                                   }}
+                                                  dataTestId={`attribute-statement-${i}`}
                                                 />
                                               </div>
                                             </>
@@ -1629,6 +1747,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                                 )
                                               }
                                               className="w-[145px] px-[12px] py-[5px] font-inter font-normal text-[14px] leading-[22px] border border-[#E5E7EB] rounded-sm"
+                                              id="selectComparisonType"
                                             >
                                               {Object.values(
                                                 ObjectKeyComparisonType
@@ -1667,6 +1786,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                                     }
                                                   )
                                                 }
+                                                dataTestId={`attribute-statement-${i}`}
                                               />
                                             </div>
                                           )}
@@ -1758,6 +1878,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               time: {
                                 comparisonType: ComparisonType.BEFORE,
                                 timeBefore: new Date().toISOString(),
+                                dateComparisonType: DateComparisonType.ABSOLUTE,
                               },
                             })
                           }
@@ -1942,6 +2063,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               time: {
                                 comparisonType: ComparisonType.BEFORE,
                                 timeBefore: new Date().toISOString(),
+                                dateComparisonType: DateComparisonType.ABSOLUTE,
                               },
                             } as MessageEventQuery)
                           }
@@ -1970,14 +2092,59 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                               ...statement,
                               time: {
                                 comparisonType: e as any,
+                                dateComparisonType: DateComparisonType.ABSOLUTE,
                               },
                             } as MessageEventQuery)
                           }
                           className="max-w-[145px]"
                         />
 
+                        <Select
+                          buttonClassName="!w-fit"
+                          className="!w-fit"
+                          value={
+                            (statement as MessageEventQuery).time
+                              ?.dateComparisonType
+                          }
+                          onChange={(value) =>
+                            handleChangeStatement(i, {
+                              ...statement,
+                              time: {
+                                ...(statement as MessageEventQuery).time,
+                                comparisonType:
+                                  (statement as MessageEventQuery).time
+                                    ?.comparisonType || ComparisonType.AFTER,
+                                dateComparisonType: value,
+                                timeBefore:
+                                  value === DateComparisonType.ABSOLUTE
+                                    ? ""
+                                    : "1 days ago",
+                                timeAfter:
+                                  value === DateComparisonType.ABSOLUTE
+                                    ? ""
+                                    : "1 days ago",
+                              },
+                            } as MessageEventQuery)
+                          }
+                          options={[
+                            {
+                              key: DateComparisonType.ABSOLUTE,
+                              title: "absolute date",
+                            },
+                            {
+                              key: DateComparisonType.RELATIVE,
+                              title: "relative date",
+                            },
+                          ]}
+                        />
+
                         <FilterBuilderDynamicInput
                           type={StatementValueType.DATE}
+                          isRelativeDate={
+                            (statement as MessageEventQuery).time
+                              ?.dateComparisonType ===
+                            DateComparisonType.RELATIVE
+                          }
                           value={
                             ((statement as MessageEventQuery).time
                               ?.comparisonType === ComparisonType.BEFORE
@@ -1994,14 +2161,25 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                 ...((statement as MessageEventQuery).time
                                   ?.comparisonType === ComparisonType.BEFORE
                                   ? {
-                                      timeBefore: new Date(value).toISOString(),
+                                      timeBefore:
+                                        (statement as MessageEventQuery).time
+                                          ?.dateComparisonType ===
+                                        DateComparisonType.ABSOLUTE
+                                          ? new Date(value).toISOString()
+                                          : value,
                                     }
                                   : {
-                                      timeAfter: new Date(value).toISOString(),
+                                      timeAfter:
+                                        (statement as MessageEventQuery).time
+                                          ?.dateComparisonType ===
+                                        DateComparisonType.ABSOLUTE
+                                          ? new Date(value).toISOString()
+                                          : value,
                                     }),
                               },
                             } as MessageEventQuery);
                           }}
+                          dataTestId={`attribute-statement-${i}`}
                         />
                         {(statement as MessageEventQuery).time
                           ?.comparisonType === ComparisonType.DURING && (
@@ -2009,6 +2187,11 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                             -
                             <FilterBuilderDynamicInput
                               type={StatementValueType.DATE}
+                              isRelativeDate={
+                                (statement as MessageEventQuery).time
+                                  ?.dateComparisonType ===
+                                DateComparisonType.RELATIVE
+                              }
                               value={
                                 (statement as MessageEventQuery).time
                                   ?.timeBefore || ""
@@ -2018,10 +2201,16 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                   ...statement,
                                   time: {
                                     ...(statement as MessageEventQuery).time!,
-                                    timeBefore: new Date(value).toISOString(),
+                                    timeBefore:
+                                      (statement as MessageEventQuery).time
+                                        ?.dateComparisonType ===
+                                      DateComparisonType.ABSOLUTE
+                                        ? new Date(value).toISOString()
+                                        : value,
                                   },
                                 } as MessageEventQuery);
                               }}
+                              dataTestId={`attribute-statement-${i}`}
                             />
                           </>
                         )}
@@ -2126,6 +2315,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                   className={`${
                     isLoading && "opacity-70 animate-pulse pointer-events-none"
                   } relative flex items-center py-[8.45px] max-w-[360px] px-[11.45px] rounded bg-[#F3F4F6]`}
+                  id="users-reached"
                 >
                   <div
                     className="mr-[2px] min-w-[15px] min-h-[15px] border border-[#6366F1] rounded-full"
@@ -2148,7 +2338,10 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         <span className="text-[#6366F1] font-roboto font-semibold text-[14px] leading-[22px]">
                           {percentage}%
                         </span>
-                        <span className="ml-[6px] text-[#4B5563] font-roboto text-[14px] leading-[22px]">
+                        <span
+                          className="ml-[6px] text-[#4B5563] font-roboto text-[14px] leading-[22px]"
+                          id="users-reached-span-number"
+                        >
                           of users estimated reached ≈{" "}
                           {Intl.NumberFormat("en", {
                             notation: "compact",
@@ -2168,6 +2361,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
           type={ButtonType.SECONDARY}
           onClick={handleAddStatement}
           className="max-w-[120px] whitespace-nowrap"
+          data-testid="filter-builder-add-condition-button"
         >
           Add condition
         </Button>
@@ -2175,6 +2369,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
           type={ButtonType.LINK}
           onClick={handleAddGroup}
           className="max-w-[130px] text-[#6366F1] whitespace-nowrap"
+          data-testid="filter-builder-add-logic-group-button"
         >
           Add logic group
         </Button>
@@ -2185,6 +2380,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
               onSubBuilderUngroup(settings.query.statements);
             }}
             className="max-w-[130px] text-[#6366F1] whitespace-nowrap"
+            data-testid="filter-builder-ungroup-button"
           >
             Ungroup
           </Button>

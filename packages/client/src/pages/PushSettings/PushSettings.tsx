@@ -363,6 +363,7 @@ const PushSettings = () => {
                 propControl={true}
                 className="grayscale opacity-70"
                 onCheck={() => {}}
+                disabled
               />
             </>
           ) : (
