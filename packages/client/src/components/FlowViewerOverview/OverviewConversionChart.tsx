@@ -127,11 +127,11 @@ const OverviewConversionChart = () => {
           content={<CustomTooltip />}
           cursor={{ strokeDasharray: "5 5", stroke: "#4B5563" }}
         />
-        <Line dataKey="a" stroke="#6366F1" strokeWidth={1.8} dot={false} />
+        {/* <Line dataKey="a" stroke="#6366F1" strokeWidth={1.8} dot={false} />
         <Line dataKey="b" stroke="#0EA5E3" strokeWidth={1.8} dot={false} />
         <Line dataKey="c" stroke="#EAB308" strokeWidth={1.8} dot={false} />
         <Line dataKey="d" stroke="#22C55E" strokeWidth={1.8} dot={false} />
-        <Line dataKey="e" stroke="#111827" strokeWidth={1.8} dot={false} />
+        <Line dataKey="e" stroke="#111827" strokeWidth={1.8} dot={false} /> */}
       </LineChart>
     </ResponsiveContainer>
   );
