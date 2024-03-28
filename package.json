@@ -17,6 +17,7 @@
     "test:e2e:server": "npm run test -w packages/server",
     "test:run": "npm run cypress:run:single -w packages/tests -- cypress/e2e/${npm_config_num}*",
     "tests:run": "npm run cypress:run -w packages/tests",
+    "tests:open": "npm run cypress:open -w packages/tests",
     "lint": "concurrently 'npm run lint:client' 'npm run lint:server'",
     "lint:client": "npm run lint -w packages/client",
     "lint:server": "npm run lint -w packages/server",

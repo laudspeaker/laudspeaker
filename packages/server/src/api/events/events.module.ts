@@ -48,6 +48,7 @@ import { StepsModule } from '../steps/steps.module';
 import { S3Service } from '../s3/s3.service';
 import { Step } from '../steps/entities/step.entity';
 import { Journey } from '../journeys/entities/journey.entity';
+import { WebhooksModule } from '../webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -97,6 +98,7 @@ import { Journey } from '../journeys/entities/journey.entity';
     }),
     forwardRef(() => AuthModule),
     forwardRef(() => CustomersModule),
+    forwardRef(() => WebhooksModule),
     forwardRef(() => AccountsModule),
     forwardRef(() => TemplatesModule),
     forwardRef(() => WorkflowsModule),

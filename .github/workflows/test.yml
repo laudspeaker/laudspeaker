@@ -27,8 +27,9 @@ jobs:
         with:
           node-version: 16
       - name: Setup environment
+        # TODO remove the || true from the below run once https://github.com/docker/compose/pull/11649 is merged allowing init containers to exit 0 with --wait-allow-exit over --wait
         run: |
-          LAUDSPEAKER_IMAGE=${{ inputs.image }} docker compose --profile testing up --wait --quiet-pull
+          LAUDSPEAKER_IMAGE=${{ inputs.image }} docker compose --profile testing up --wait --quiet-pull || true
       - name: Install cypress dependencies
         run: |
           npm install -w packages/tests

@@ -67,8 +67,13 @@ export const messageFixtures: Record<
         renderLabel: (value) => compatNumberFormatter.format(value),
       },
       {
-        key: "clickedPercentage",
-        name: "Clicked",
+        key: "delivered",
+        name: "Delivered",
+        renderLabel: (value) => compatNumberFormatter.format(value),
+      },
+      {
+        key: "openedPercentage",
+        name: "Opened",
         renderLabel: (value) => `${compatNumberFormatter.format(value)}%`,
       },
     ],

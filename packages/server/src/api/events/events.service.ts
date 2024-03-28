@@ -66,6 +66,11 @@ import {
 import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
 import { MobileBatchDto } from './dto/mobile-batch.dto';
 import e from 'express';
+import {
+  ClickHouseEventProvider,
+  ClickHouseMessage,
+  WebhooksService,
+} from '../webhooks/webhooks.service';
 
 @Injectable()
 export class EventsService {
@@ -73,6 +78,8 @@ export class EventsService {
     private dataSource: DataSource,
     @Inject(forwardRef(() => CustomersService))
     private readonly customersService: CustomersService,
+    @Inject(forwardRef(() => WebhooksService))
+    private readonly webhooksService: WebhooksService,
     @InjectModel(CustomerKeys.name)
     public CustomerKeysModel: Model<CustomerKeysDocument>,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -982,35 +989,53 @@ export class EventsService {
 
     try {
       for (const thisEvent of MobileBatchDto.batch) {
-        switch (thisEvent.event) {
-          case '$identify':
-            this.debug(
-              `Handling $identify event for correlationKey: ${thisEvent.correlationValue}`,
-              this.batch.name,
-              session,
-              auth.account.id
-            );
-            await this.handleIdentify(auth, thisEvent, session);
-            break;
-          case '$set':
-            this.debug(
-              `Handling $set event for correlationKey: ${thisEvent.correlationValue}`,
-              this.batch.name,
-              session,
-              auth.account.id
-            );
-            await this.handleSet(auth, thisEvent, session);
-            break;
-          default:
-            await this.customPayload(
-              { account: auth.account, workspace: auth.workspace },
-              thisEvent,
-              session
-            );
-            if (!thisEvent.correlationValue) {
-              throw new Error('correlation value is empty');
-            }
-            break;
+        if (thisEvent.source === 'message') {
+          const clickHouseRecord: ClickHouseMessage = {
+            workspaceId: thisEvent.payload.workspaceID,
+            stepId: thisEvent.payload.stepID,
+            customerId: thisEvent.payload.customerID,
+            templateId: String(thisEvent.payload.templateID),
+            messageId: thisEvent.payload.messageID,
+            event: thisEvent.event === '$delivered' ? 'delivered' : 'opened',
+            eventProvider: ClickHouseEventProvider.PUSH,
+            processed: false,
+            createdAt: new Date().toISOString(),
+          };
+          await this.webhooksService.insertMessageStatusToClickhouse(
+            [clickHouseRecord],
+            session
+          );
+        } else {
+          switch (thisEvent.event) {
+            case '$identify':
+              this.debug(
+                `Handling $identify event for correlationKey: ${thisEvent.correlationValue}`,
+                this.batch.name,
+                session,
+                auth.account.id
+              );
+              await this.handleIdentify(auth, thisEvent, session);
+              break;
+            case '$set':
+              this.debug(
+                `Handling $set event for correlationKey: ${thisEvent.correlationValue}`,
+                this.batch.name,
+                session,
+                auth.account.id
+              );
+              await this.handleSet(auth, thisEvent, session);
+              break;
+            default:
+              await this.customPayload(
+                { account: auth.account, workspace: auth.workspace },
+                thisEvent,
+                session
+              );
+              if (!thisEvent.correlationValue) {
+                throw new Error('correlation value is empty');
+              }
+              break;
+          }
         }
       }
       //}

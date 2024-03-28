@@ -66,7 +66,11 @@ const MapValidationErrors: FC<MapValidationErrorsProps> = ({
         </div>
         <div className="flex justify-end items-center mt-[24px] gap-2">
           {cancelText && (
-            <Button type={ButtonType.SECONDARY} onClick={onClose}>
+            <Button
+              type={ButtonType.SECONDARY}
+              onClick={onClose}
+              data-testid="cancel-validation-button"
+            >
               {cancelText}
             </Button>
           )}
@@ -74,6 +78,7 @@ const MapValidationErrors: FC<MapValidationErrorsProps> = ({
             type={confirmButtonType}
             className={confirmTextClassName}
             onClick={onConfirm}
+            data-testid="confirm-validation-button"
           >
             {confirmText}
           </Button>

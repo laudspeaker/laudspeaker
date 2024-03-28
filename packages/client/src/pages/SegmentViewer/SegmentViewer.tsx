@@ -108,6 +108,7 @@ const SegmentViewer = () => {
           <Button
             type={ButtonType.SECONDARY}
             onClick={() => setIsEditing(true)}
+            id="edit-segment-button"
           >
             Edit
           </Button>
@@ -181,7 +182,11 @@ const SegmentViewer = () => {
 
           {isEditing && (
             <div className="flex items-center gap-2.5 px-5">
-              <Button type={ButtonType.PRIMARY} onClick={handleSave}>
+              <Button
+                type={ButtonType.PRIMARY}
+                onClick={handleSave}
+                id="save-edit-segment-button"
+              >
                 Save
               </Button>
               <Button type={ButtonType.SECONDARY} onClick={handleCancel}>
