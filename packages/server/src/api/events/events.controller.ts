@@ -325,11 +325,6 @@ export class EventsController {
     @Body() body: any
   ): Promise<void | HttpException> {
     const session = randomUUID();
-    this.debug(
-      `Handling batch: ${JSON.stringify(body, null, 2)}`,
-      this.testEndpoint.name,
-      session
-    );
     this.eventsService.batch(
       <{ account: Account; workspace: Workspace }>user,
       body,

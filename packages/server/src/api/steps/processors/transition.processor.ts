@@ -860,11 +860,6 @@ export class TransitionProcessor extends WorkerHost {
 
           switch (step.metadata.selectedPlatform) {
             case 'All':
-              const tokenStorageAndroid = [...customer.androidFCMTokens].reduce(
-                (acc, el) => (acc.includes(el) ? acc : [...acc, el]),
-                [] as string[]
-              );
-
               const tokenStorageAndroidIOS = [...customer.iosFCMTokens].reduce(
                 (acc, el) => (acc.includes(el) ? acc : [...acc, el]),
                 [] as string[]
@@ -888,7 +883,7 @@ export class TransitionProcessor extends WorkerHost {
                   session
                 );
               }
-              for (const token of tokenStorageAndroid) {
+              for (const token of tokenStorageAndroidIOS) {
                 await this.webhooksService.insertMessageStatusToClickhouse(
                   await sender.process({
                     name: 'android',

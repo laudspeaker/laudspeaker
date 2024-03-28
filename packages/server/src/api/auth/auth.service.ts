@@ -214,11 +214,6 @@ export class AuthService {
       },
       relations: ['organization.owner.teams.organization.workspaces'],
     });
-    this.warn(
-      `Retrieved workspace:${JSON.stringify(workspace, null, 2)}`,
-      this.validateAPIKey.name,
-      randomUUID()
-    );
     return { account: workspace.organization.owner, workspace: workspace };
   }
 
