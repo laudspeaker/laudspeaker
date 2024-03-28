@@ -14,6 +14,7 @@ import { WebClient } from '@slack/web-api';
 import { Account } from '@/api/accounts/entities/accounts.entity';
 import { Repository } from 'typeorm';
 import { Resend } from 'resend';
+import { randomUUID } from 'crypto';
 
 export enum MessageType {
   SMS = 'sms',
@@ -680,6 +681,7 @@ export class MessageSender {
       customerID,
       templateID: templateID.toString(),
       workspaceID: workspace.id,
+      messageID: randomUUID(),
       sound: 'default',
     };
 
