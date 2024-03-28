@@ -33,7 +33,7 @@ const CheckBox = ({
   return (
     <div
       className={`flex items-center select-none ${
-        disabled ? "pointer-events-none grayscale" : ""
+        disabled ? "pointer-events-none grayscale opacity-70" : ""
       } ${className || ""}`}
       onClick={handleCheck}
       {...props}

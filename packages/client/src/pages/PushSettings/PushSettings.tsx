@@ -282,7 +282,10 @@ const PushSettings = () => {
               </div>
               <div className="w-full flex text-[#111827] px-3 py-[5px] border border-[#E5E7EB] bg-[#F9FAFB] ">
                 <div className="whitespace-nowrap overflow-hidden max-w-full text-ellipsis text-sm font-inter">
-                  exampleurl.com
+                  {process.env.REACT_APP_API_BASE_URL}
+                  {process.env.REACT_APP_SERVE_CLIENT_FROM_NEST === "true"
+                    ? "/api"
+                    : ""}
                 </div>
               </div>
               <CheckBox
@@ -291,7 +294,6 @@ const PushSettings = () => {
                   config.connectedPlatforms[viewConnected]?.isTrackingDisabled
                 }
                 propControl={true}
-                className="grayscale opacity-70"
                 onCheck={() => {}}
                 disabled
               />
