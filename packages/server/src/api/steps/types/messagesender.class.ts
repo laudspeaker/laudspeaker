@@ -528,11 +528,13 @@ export class MessageSender {
 
     const messaging = admin.messaging(firebaseApp);
 
+    let data = {};
+
+    if (quietHours) data["quietHours"] = JSON.stringify(quietHours);
+
     const messageId = await messaging.send({
       token: iosDeviceToken,
-      data:{
-        quietHours,
-      },
+      data,
       notification: {
         title: titleWithInsertedTags.slice(0, this.MAXIMUM_PUSH_TITLE_LENGTH),
         body: textWithInsertedTags.slice(0, this.MAXIMUM_PUSH_LENGTH),
@@ -556,6 +558,33 @@ export class MessageSender {
         },
       },
     });
+
+    console.log(JSON.stringify({
+      token: iosDeviceToken,
+      data: data,
+      notification: {
+        title: titleWithInsertedTags.slice(0, this.MAXIMUM_PUSH_TITLE_LENGTH),
+        body: textWithInsertedTags.slice(0, this.MAXIMUM_PUSH_LENGTH),
+      },
+      android: {
+        notification: {
+          sound: 'default',
+          clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+        },
+        priority: 'high',
+      },
+      apns: {
+        headers: {
+          'apns-priority': '5', // Specify priority as needed
+        },
+        payload: {
+          aps: {
+            badge: 1,
+            sound: 'default',
+          },
+        },
+      },
+    }, null, 2));
     ret = [
       {
         stepId: stepID,
