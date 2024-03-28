@@ -227,6 +227,7 @@ const SegmentBuilder = () => {
           className="!text-[white]"
           disabled={!name || isLoadingSegment}
           onClick={id ? handleUpdateClick : handleSaveClick}
+          id="saveSegmentButton"
         >
           {id ? "Update" : "Save"}
         </Button>

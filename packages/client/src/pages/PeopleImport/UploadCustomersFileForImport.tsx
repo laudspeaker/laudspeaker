@@ -193,7 +193,10 @@ const UploadCustomersFileForImport = ({
   return fileData?.file ? (
     <>
       <div className="w-full flex justify-between text-[#6366F1] p-[10px] border font-semibold border-[#E5E7EB] bg-[#F9FAFB] ">
-        <div className="whitespace-nowrap overflow-hidden max-w-full text-ellipsis text-sm font-inter">
+        <div
+          id="import-file-name"
+          className="whitespace-nowrap overflow-hidden max-w-full text-ellipsis text-sm font-inter"
+        >
           {fileData.file.fileName}
         </div>
         <TrashIcon
