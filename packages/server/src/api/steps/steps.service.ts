@@ -158,7 +158,7 @@ export class StepsService {
     session?: string,
     collectionName?: string
   ): Promise<{ collectionName: string; job: { name: string; data: any } }> {
-    return Sentry.startSpan({ name: "StepsService.triggerStart" }, async () => {
+    return Sentry.startSpan({ name: 'StepsService.triggerStart' }, async () => {
       const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
       const startStep = await queryRunner.manager.find(Step, {

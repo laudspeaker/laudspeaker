@@ -73,14 +73,15 @@ export class TemplatesService extends QueueEventsHost {
     this.tagEngine.registerFilter('date', (input, formatString) => {
       const date = input === 'now' ? new Date() : parseISO(input);
       // Adjust the formatString to fit JavaScript's date formatting if necessary
-      const adjustedFormatString = formatString.replace(/%Y/g, 'yyyy')
-                                               .replace(/%m/g, 'MM')
-                                               .replace(/%d/g, 'dd')
-                                               .replace(/%H/g, 'HH')
-                                               .replace(/%M/g, 'mm')
-                                               .replace(/%S/g, 'ss');
+      const adjustedFormatString = formatString
+        .replace(/%Y/g, 'yyyy')
+        .replace(/%m/g, 'MM')
+        .replace(/%d/g, 'dd')
+        .replace(/%H/g, 'HH')
+        .replace(/%M/g, 'mm')
+        .replace(/%S/g, 'ss');
       return format(date, adjustedFormatString);
-  });
+    });
   }
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -868,11 +869,9 @@ export class TemplatesService extends QueueEventsHost {
   }
 
   async testWebhookTemplate(testWebhookDto: TestWebhookDto, session: string) {
-
     let customer = await this.customerModel.findOne({
       _id: testWebhookDto.testCustomerId,
     });
-
 
     if (!customer) {
       customer = new this.customerModel({});
@@ -882,7 +881,6 @@ export class TemplatesService extends QueueEventsHost {
     const filteredTags = cleanTagsForSending(tags);
 
     const { method, mimeType } = testWebhookDto.webhookData;
-
 
     let { body, headers, url } = testWebhookDto.webhookData;
 
