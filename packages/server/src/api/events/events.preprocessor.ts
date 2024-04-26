@@ -147,9 +147,12 @@ export class EventsPreProcessor extends WorkerHost {
     const fn = this.providerMap[job.name];
     const that = this;
 
-    return Sentry.startSpan({ name: `EventsPreProcessor.${fn.name}` }, async () => {
-      await fn.call(that, job);
-    });
+    return Sentry.startSpan(
+      { name: `EventsPreProcessor.${fn.name}` },
+      async () => {
+        await fn.call(that, job);
+      }
+    );
   }
 
   async handleCustom(

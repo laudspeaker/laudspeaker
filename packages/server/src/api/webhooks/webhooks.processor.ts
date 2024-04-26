@@ -41,15 +41,15 @@ export class WebhooksProcessor extends WorkerHost {
     this.tagEngine.registerFilter('date', (input, formatString) => {
       const date = input === 'now' ? new Date() : parseISO(input);
       // Adjust the formatString to fit JavaScript's date formatting if necessary
-      const adjustedFormatString = formatString.replace(/%Y/g, 'yyyy')
-                                               .replace(/%m/g, 'MM')
-                                               .replace(/%d/g, 'dd')
-                                               .replace(/%H/g, 'HH')
-                                               .replace(/%M/g, 'mm')
-                                               .replace(/%S/g, 'ss');
+      const adjustedFormatString = formatString
+        .replace(/%Y/g, 'yyyy')
+        .replace(/%m/g, 'MM')
+        .replace(/%d/g, 'dd')
+        .replace(/%H/g, 'HH')
+        .replace(/%M/g, 'mm')
+        .replace(/%S/g, 'ss');
       return format(date, adjustedFormatString);
-  });
-
+    });
   }
 
   log(message, method, session, user = 'ANONYMOUS') {

@@ -542,7 +542,7 @@ export class SegmentsService {
     createSegmentDTO: CountSegmentUsersSizeDTO,
     session: string
   ) {
-    return Sentry.startSpan({ name: "SegmentsService.size" }, async () => {
+    return Sentry.startSpan({ name: 'SegmentsService.size' }, async () => {
       this.debug(
         `SegmentDTO is: ${JSON.stringify(
           createSegmentDTO.inclusionCriteria.query.type,
@@ -570,7 +570,8 @@ export class SegmentsService {
           return { size: 0, total: 1 };
         }
 
-        const mongoCollection = this.connection.db.collection(customersInSegment);
+        const mongoCollection =
+          this.connection.db.collection(customersInSegment);
 
         const segmentDocuments = await mongoCollection.countDocuments();
         const totalCount = await this.customersService.customersSize(
@@ -599,7 +600,8 @@ export class SegmentsService {
           return { size: 0, total: 1 };
         }
 
-        const mongoCollection = this.connection.db.collection(customersInSegment);
+        const mongoCollection =
+          this.connection.db.collection(customersInSegment);
 
         const segmentDocuments = await mongoCollection.countDocuments();
         const totalCount = await this.customersService.customersSize(
