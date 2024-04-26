@@ -9,7 +9,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Database } from './database.entity';
-import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
+import { Workspace } from '@/api/workspaces/entities/workspace.entity';
 
 export enum IntegrationType {
   DATABASE = 'database',
@@ -27,10 +27,10 @@ export class Integration extends BaseEntity {
   id!: string;
 
   @JoinColumn()
-  @ManyToOne(() => Workspaces, (workspace) => workspace.id, {
+  @ManyToOne(() => Workspace, (workspace) => workspace.id, {
     onDelete: 'CASCADE',
   })
-  workspace: Workspaces;
+  workspace: Workspace;
 
   @Column()
   name: string;

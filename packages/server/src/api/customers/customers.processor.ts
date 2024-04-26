@@ -28,7 +28,8 @@ export class CustomersProcessor extends WorkerHost {
       if (res?.data?.results.length > 0) {
         await this.customersService.addPhCustomers(
           res.data.results,
-          job.data.account
+          job.data.account,
+          job.data.workspace
         );
       }
       while (res.data?.next) {
@@ -42,7 +43,8 @@ export class CustomersProcessor extends WorkerHost {
         if (res?.data?.results.length > 0) {
           await this.customersService.addPhCustomers(
             res.data.results,
-            job.data.account
+            job.data.account,
+            job.data.workspace
           );
         }
       }

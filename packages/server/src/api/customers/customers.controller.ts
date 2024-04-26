@@ -33,7 +33,7 @@ import { ImportCustomersDTO } from './dto/import-customers.dto';
 import { extname } from 'path';
 import { UpdatePK_DTO } from './dto/update-pk.dto';
 import { UpsertCustomerDto } from './dto/upsert-customer.dto';
-import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 import { DeleteCustomerDto } from './dto/delete-customer.dto';
 import { ReadCustomerDto } from './dto/read-customer.dto';
 import { ModifyAttributesDto } from './dto/modify-attributes.dto';
@@ -280,6 +280,7 @@ export class CustomersController {
       posthogId,
       workflows,
       customComponents,
+      previousAnonymousIds,
       ...customer
     } = await this.customersService.findOne(<Account>user, id, session);
     const createdAt = customer.createdAt;
@@ -332,7 +333,7 @@ export class CustomersController {
       (<Account>user).id
     );
     return await this.customersService.upsert(
-      <{ account: Account; workspace: Workspaces }>user,
+      <{ account: Account; workspace: Workspace }>user,
       upsertCustomerDto,
       session
     );
@@ -347,7 +348,7 @@ export class CustomersController {
   ) {
     const session = randomUUID();
     return await this.customersService.delete(
-      <{ account: Account; workspace: Workspaces }>user,
+      <{ account: Account; workspace: Workspace }>user,
       deleteCustomerDto,
       session
     );
@@ -362,7 +363,7 @@ export class CustomersController {
   ) {
     const session = randomUUID();
     return await this.customersService.read(
-      <{ account: Account; workspace: Workspaces }>user,
+      <{ account: Account; workspace: Workspace }>user,
       readCustomerDto,
       session
     );
@@ -476,7 +477,7 @@ export class CustomersController {
       return new HttpException(e, 500);
     }
     account = <Account>user;
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     //to do will eventually need to make it so it does not take the top g
     try {
@@ -625,7 +626,7 @@ export class CustomersController {
   async sendFCMToken(@Req() { user }: Request, @Body() body: SendFCMDto) {
     const session = randomUUID();
     return this.customersService.sendFCMToken(
-      <{ account: Account; workspace: Workspaces }>user,
+      <{ account: Account; workspace: Workspace }>user,
       body,
       session
     );
@@ -640,7 +641,7 @@ export class CustomersController {
   ) {
     const session = randomUUID();
     return this.customersService.identifyCustomer(
-      <{ account: Account; workspace: Workspaces }>user,
+      <{ account: Account; workspace: Workspace }>user,
       body,
       session
     );
@@ -655,7 +656,7 @@ export class CustomersController {
   ) {
     const session = randomUUID();
     return this.customersService.setCustomerProperties(
-      <{ account: Account; workspace: Workspaces }>user,
+      <{ account: Account; workspace: Workspace }>user,
       body,
       session
     );

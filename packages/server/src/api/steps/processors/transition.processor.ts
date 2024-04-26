@@ -1,5 +1,11 @@
 /* eslint-disable no-case-declarations */
-import { HttpException, HttpStatus, Inject, Logger } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Logger,
+  forwardRef,
+} from '@nestjs/common';
 import * as http from 'node:http';
 import https from 'https';
 import { Injectable } from '@nestjs/common';
@@ -56,7 +62,8 @@ import { JourneySettingsQuietFallbackBehavior } from '@/api/journeys/types/addit
 import { StepsService } from '../steps.service';
 import { Journey } from '@/api/journeys/entities/journey.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
+import { Workspace } from '@/api/workspaces/entities/workspace.entity';
+import { WorkspacesService } from '@/api/workspaces/workspaces.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { JourneyLocation } from '@/api/journeys/entities/journey-location.entity';
@@ -80,8 +87,8 @@ export class TransitionProcessor extends WorkerHost {
     @InjectQueue('transition') private readonly transitionQueue: Queue,
     @InjectQueue('webhooks') private readonly webhooksQueue: Queue,
     @InjectConnection() private readonly connection: mongoose.Connection,
-    @InjectRepository(Workspaces)
-    private workspacesRepository: Repository<Workspaces>,
+    @InjectRepository(Workspace)
+    private workspacesRepository: Repository<Workspace>,
     @InjectRepository(Account)
     private accountRepository: Repository<Account>,
     @Inject(WebhooksService)
@@ -100,6 +107,8 @@ export class TransitionProcessor extends WorkerHost {
     @Inject(JourneyLocationsService)
     private journeyLocationsService: JourneyLocationsService,
     @Inject(StepsService) private stepsService: StepsService,
+    @Inject(forwardRef(() => WorkspacesService))
+    private workspacesService: WorkspacesService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {
     super();
@@ -169,6 +178,7 @@ export class TransitionProcessor extends WorkerHost {
       {
         step: Step;
         owner: Account;
+        workspace: Workspace;
         journey: Journey;
         customer: CustomerDocument;
         location: JourneyLocation;
@@ -184,143 +194,182 @@ export class TransitionProcessor extends WorkerHost {
     try {
       switch (job.data.step.type) {
         case StepType.START:
-          return Sentry.startSpan({ name: "TransitionProcessor.handleStart" }, async () => {
-            await this.handleStart(
-              job.data.owner,
-              job.data.journey,
-              job.data.step,
-              job.data.session,
-              job.data.customer,
-              job.data.location,
-              job.data.event
-            );
-          });
+          return Sentry.startSpan(
+            { name: 'TransitionProcessor.handleStart' },
+            async () => {
+              await this.handleStart(
+                job.data.owner,
+                job.data.workspace,
+                job.data.journey,
+                job.data.step,
+                job.data.session,
+                job.data.customer,
+                job.data.location,
+                job.data.event
+              );
+            }
+          );
           break;
         case StepType.EXIT:
-          return Sentry.startSpan({name: "TransitionProcessor.handleExit"}, async () => {
-            await this.handleExit(
-              job.data.owner,
-              job.data.journey,
-              job.data.step,
-              job.data.session,
-              job.data.customer,
-              job.data.location
-            );
-          });
+          return Sentry.startSpan(
+            { name: 'TransitionProcessor.handleExit' },
+            async () => {
+              await this.handleExit(
+                job.data.owner,
+                job.data.journey,
+                job.data.step,
+                job.data.session,
+                job.data.customer,
+                job.data.location
+              );
+            }
+          );
           break;
         case StepType.MESSAGE:
-          return Sentry.startSpan({name: "TransitionProcessor.handleMessage"}, async () => {
-            await this.handleMessage(
-              job.data.owner,
-              job.data.journey,
-              job.data.step,
-              job.data.session,
-              job.data.customer,
-              job.data.location,
-              job.data.event
-            );
-          });
+          return Sentry.startSpan(
+            { name: 'TransitionProcessor.handleMessage' },
+            async () => {
+              await this.handleMessage(
+                job.data.owner,
+                job.data.workspace,
+                job.data.journey,
+                job.data.step,
+                job.data.session,
+                job.data.customer,
+                job.data.location,
+                job.data.event
+              );
+            }
+          );
           break;
         case StepType.LOOP:
-          return Sentry.startSpan({name: "TransitionProcessor.handleLoop"}, async () => {
-            await this.handleLoop(
-              job.data.owner,
-              job.data.journey,
-              job.data.step,
-              job.data.session,
-              job.data.customer,
-              job.data.location,
-              job.data.event
-            );
-          });
+          return Sentry.startSpan(
+            { name: 'TransitionProcessor.handleLoop' },
+            async () => {
+              await this.handleLoop(
+                job.data.owner,
+                job.data.workspace,
+                job.data.journey,
+                job.data.step,
+                job.data.session,
+                job.data.customer,
+                job.data.location,
+                job.data.event
+              );
+            }
+          );
           break;
         case StepType.AB_TEST:
           break;
         case StepType.MULTISPLIT:
-          return Sentry.startSpan({name: "TransitionProcessor.handleMultisplit"}, async () => {
-            await this.handleMultisplit(
-              job.data.owner,
-              job.data.journey,
-              job.data.step,
-              job.data.session,
-              job.data.customer,
-              job.data.location,
-              job.data.event
-            );
-          });
+          return Sentry.startSpan(
+            { name: 'TransitionProcessor.handleMultisplit' },
+            async () => {
+              await this.handleMultisplit(
+                job.data.owner,
+                job.data.workspace,
+                job.data.journey,
+                job.data.step,
+                job.data.session,
+                job.data.customer,
+                job.data.location,
+                job.data.event
+              );
+            }
+          );
           break;
         case StepType.TRACKER:
-          return Sentry.startSpan({name: "TransitionProcessor.handleCustomComponent"}, async () => {
-            //   await this.handleCustomComponent(
-            //     job.data.owner,
-            //     job.data.journey,
-            //     job.data.step,
-            //     job.data.session,
-            //     job.data.customerID,
-            //     queryRunner,
-            //     transactionSession,
-            //     job.data.event
-            //   );
-          });
+          return Sentry.startSpan(
+            { name: 'TransitionProcessor.handleCustomComponent' },
+            async () => {
+              //   await this.handleCustomComponent(
+              //     job.data.owner,
+              //     job.data.journey,
+              //     job.data.step,
+              //     job.data.session,
+              //     job.data.customerID,
+              //     queryRunner,
+              //     transactionSession,
+              //     job.data.event
+              //   );
+            }
+          );
           break;
         case StepType.TIME_DELAY:
-          return Sentry.startSpan({name: "TransitionProcessor.handleTimeDelay"}, async () => {
-            await this.handleTimeDelay(
-              job.data.owner,
-              job.data.journey,
-              job.data.step,
-              job.data.session,
-              job.data.customer,
-              job.data.location,
-              job.data.event
-            );
-          });
+          return Sentry.startSpan(
+            { name: 'TransitionProcessor.handleTimeDelay' },
+            async () => {
+              await this.handleTimeDelay(
+                job.data.owner,
+                job.data.workspace,
+                job.data.journey,
+                job.data.step,
+                job.data.session,
+                job.data.customer,
+                job.data.location,
+                job.data.event
+              );
+            }
+          );
           break;
         case StepType.TIME_WINDOW:
-          return Sentry.startSpan({name: "TransitionProcessor.handleTimeWindow"}, async () => {
-            await this.handleTimeWindow(
-              job.data.owner,
-              job.data.journey,
-              job.data.step,
-              job.data.session,
-              job.data.customer,
-              job.data.location,
-              job.data.event
-            );
-          });
+          return Sentry.startSpan(
+            { name: 'TransitionProcessor.handleTimeWindow' },
+            async () => {
+              await this.handleTimeWindow(
+                job.data.owner,
+                job.data.workspace,
+                job.data.journey,
+                job.data.step,
+                job.data.session,
+                job.data.customer,
+                job.data.location,
+                job.data.event
+              );
+            }
+          );
           break;
         case StepType.WAIT_UNTIL_BRANCH:
-          return Sentry.startSpan({name: "TransitionProcessor.handleWaitUntil"}, async () => {
-            await this.handleWaitUntil(
-              job.data.owner,
-              job.data.journey,
-              job.data.step,
-              job.data.session,
-              job.data.customer,
-              job.data.location,
-              job.data.event,
-              job.data.branch
-            );
-          });
+          return Sentry.startSpan(
+            { name: 'TransitionProcessor.handleWaitUntil' },
+            async () => {
+              await this.handleWaitUntil(
+                job.data.owner,
+                job.data.workspace,
+                job.data.journey,
+                job.data.step,
+                job.data.session,
+                job.data.customer,
+                job.data.location,
+                job.data.event,
+                job.data.branch
+              );
+            }
+          );
           break;
         case StepType.EXPERIMENT:
-          return Sentry.startSpan({name: "TransitionProcessor.handleExperiment"}, async () => {
-            await this.handleExperiment(
-              job.data.owner,
-              job.data.journey,
-              job.data.step,
-              job.data.session,
-              job.data.customer,
-              job.data.location,
-              job.data.event
-            );
-          });
+          return Sentry.startSpan(
+            { name: 'TransitionProcessor.handleExperiment' },
+            async () => {
+              await this.handleExperiment(
+                job.data.owner,
+                job.data.workspace,
+                job.data.journey,
+                job.data.step,
+                job.data.session,
+                job.data.customer,
+                job.data.location,
+                job.data.event
+              );
+            }
+          );
           break;
         default:
           break;
       }
       // await queryRunner.commitTransaction();
     } catch (e) {
+      console.error(e);
       this.error(e, this.process.name, job.data.session);
       err = e;
       // await queryRunner.rollbackTransaction();
@@ -337,245 +386,251 @@ export class TransitionProcessor extends WorkerHost {
    * @param queryRunner
    * @param transactionSession
    */
-  async handleCustomComponent(
-    ownerID: string,
-    stepID: string,
-    session: string,
-    customerID: string,
-    journeyID: string,
-    queryRunner: QueryRunner,
-    transactionSession: mongoose.mongo.ClientSession,
-    event?: string
-  ) {
-    /**
-     * Boilerplate Step One Start
-     */
-    const owner = await queryRunner.manager.findOne(Account, {
-      where: { id: ownerID },
-      relations: ['teams.organization.workspaces'],
-    });
-    const workspace = owner.teams?.[0]?.organization?.workspaces?.[0];
+  // async handleCustomComponent(
+  //   ownerID: string,
+  //   workspaceID: string,
+  //   stepID: string,
+  //   session: string,
+  //   customerID: string,
+  //   journeyID: string,
+  //   queryRunner: QueryRunner,
+  //   transactionSession: mongoose.mongo.ClientSession,
+  //   event?: string
+  // ) {
+  //   /**
+  //    * Boilerplate Step One Start
+  //    */
+  //   const owner = await queryRunner.manager.findOne(Account, {
+  //     where: { id: ownerID },
+  //     relations: ['teams.organization.workspaces'],
+  //   });
+  //   const workspace = await queryRunner.manager.findOne(Workspace, {
+  //     where: { id: workspaceID },
+  //   });
 
-    const journey = await this.journeysService.findByID(
-      owner,
-      journeyID,
-      session,
-      queryRunner
-    );
+  //   const journey = await this.journeysService.findByID(
+  //     owner,
+  //     journeyID,
+  //     session,
+  //     queryRunner
+  //   );
 
-    const currentStep = await queryRunner.manager.findOne(Step, {
-      where: {
-        id: stepID,
-        type: StepType.TRACKER,
-      },
-      lock: { mode: 'pessimistic_write' },
-    });
+  //   const currentStep = await queryRunner.manager.findOne(Step, {
+  //     where: {
+  //       id: stepID,
+  //       type: StepType.TRACKER,
+  //     },
+  //     lock: { mode: 'pessimistic_write' },
+  //   });
 
-    const customer = await this.customersService.findById(owner, customerID);
+  //   const customer = await this.customersService.findById(
+  //     workspace,
+  //     customerID
+  //   );
 
-    const location = await this.journeyLocationsService.findForWrite(
-      journey,
-      customer,
-      session,
-      owner,
-      queryRunner
-    );
+  //   const location = await this.journeyLocationsService.findForWrite(
+  //     journey,
+  //     customer,
+  //     session,
+  //     owner,
+  //     queryRunner
+  //   );
 
-    if (!location) {
-      this.warn(
-        `${JSON.stringify({
-          warning: 'Customer not in step',
-          customerID,
-          currentStep,
-        })}`,
-        this.handleCustomComponent.name,
-        session,
-        owner.email
-      );
-      return;
-    }
+  //   if (!location) {
+  //     this.warn(
+  //       `${JSON.stringify({
+  //         warning: 'Customer not in step',
+  //         customerID,
+  //         currentStep,
+  //       })}`,
+  //       this.handleCustomComponent.name,
+  //       session,
+  //       owner.email
+  //     );
+  //     return;
+  //   }
 
-    const nextStep = await queryRunner.manager.findOne(Step, {
-      where: {
-        id: currentStep.metadata.destination,
-      },
-    });
-    /**
-     * Boilerplate Step One Finish
-     */
+  //   const nextStep = await queryRunner.manager.findOne(Step, {
+  //     where: {
+  //       id: currentStep.metadata.destination,
+  //     },
+  //   });
+  //   /**
+  //    * Boilerplate Step One Finish
+  //    */
 
-    /**
-     * Step Business Logic Start
-     */
-    const templateID = currentStep.metadata.template;
-    const template = await this.templatesService.transactionalFindOneById(
-      owner,
-      templateID.toString(),
-      queryRunner
-    );
+  //   /**
+  //    * Step Business Logic Start
+  //    */
+  //   const templateID = currentStep.metadata.template;
+  //   const template = await this.templatesService.transactionalFindOneById(
+  //     owner,
+  //     templateID.toString(),
+  //     queryRunner
+  //   );
 
-    if (template.type !== TemplateType.CUSTOM_COMPONENT) {
-      throw new Error(
-        `Cannot use ${template.type} template for a custom component step`
-      );
-    }
-    const { action, humanReadableName, pushedValues } = currentStep.metadata;
+  //   if (template.type !== TemplateType.CUSTOM_COMPONENT) {
+  //     throw new Error(
+  //       `Cannot use ${template.type} template for a custom component step`
+  //     );
+  //   }
+  //   const { action, humanReadableName, pushedValues } = currentStep.metadata;
 
-    //1. Check if custom components exists on this customer
-    if (!customer.customComponents) customer.customComponents = {};
+  //   //1. Check if custom components exists on this customer
+  //   if (!customer.customComponents) customer.customComponents = {};
 
-    // 2. Check if this specific component exists on this customer,
-    // If not, create it and put in the default values from the template
-    if (!customer.customComponents[humanReadableName])
-      customer.customComponents[humanReadableName] = {
-        hidden: true,
-        ...template.customFields,
-        delivered: false,
-      };
+  //   // 2. Check if this specific component exists on this customer,
+  //   // If not, create it and put in the default values from the template
+  //   if (!customer.customComponents[humanReadableName])
+  //     customer.customComponents[humanReadableName] = {
+  //       hidden: true,
+  //       ...template.customFields,
+  //       delivered: false,
+  //     };
 
-    // 3. Update the custom component to reflect the
-    // details outlined in the step that triggers this component.
-    customer.customComponents[humanReadableName].hidden =
-      action === CustomComponentAction.HIDE ? true : false;
-    customer.customComponents[humanReadableName].step = stepID;
-    customer.customComponents[humanReadableName].template = String(templateID);
-    customer.customComponents[humanReadableName] = {
-      ...customer.customComponents[humanReadableName],
-      ...pushedValues,
-    };
+  //   // 3. Update the custom component to reflect the
+  //   // details outlined in the step that triggers this component.
+  //   customer.customComponents[humanReadableName].hidden =
+  //     action === CustomComponentAction.HIDE ? true : false;
+  //   customer.customComponents[humanReadableName].step = stepID;
+  //   customer.customComponents[humanReadableName].template = String(templateID);
+  //   customer.customComponents[humanReadableName] = {
+  //     ...customer.customComponents[humanReadableName],
+  //     ...pushedValues,
+  //   };
 
-    // 4. Record that the message was sent
-    await this.webhooksService.insertMessageStatusToClickhouse(
-      [
-        {
-          stepId: stepID,
-          createdAt: new Date().toISOString(),
-          customerId: customerID,
-          event: 'sent',
-          eventProvider: ClickHouseEventProvider.TRACKER,
-          messageId: humanReadableName,
-          templateId: String(templateID),
-          workspaceId: workspace.id,
-          processed: true,
-        },
-      ],
-      session
-    );
+  //   // 4. Record that the message was sent
+  //   await this.webhooksService.insertMessageStatusToClickhouse(
+  //     [
+  //       {
+  //         stepId: stepID,
+  //         createdAt: new Date().toISOString(),
+  //         customerId: customerID,
+  //         event: 'sent',
+  //         eventProvider: ClickHouseEventProvider.TRACKER,
+  //         messageId: humanReadableName,
+  //         templateId: String(templateID),
+  //         workspaceId: workspace.id,
+  //         processed: true,
+  //       },
+  //     ],
+  //     session
+  //   );
 
-    // 5. Attempt delivery. If delivered, record delivery event
-    const isDelivered = await this.websocketGateway.sendCustomComponentState(
-      customer._id,
-      humanReadableName,
-      customer.customComponents[humanReadableName]
-    );
-    await this.websocketGateway.sendProcessed(
-      customer._id,
-      event,
-      humanReadableName
-    );
-    if (isDelivered)
-      await this.webhooksService.insertMessageStatusToClickhouse(
-        [
-          {
-            stepId: stepID,
-            createdAt: new Date().toISOString(),
-            customerId: customerID,
-            event: 'delivered',
-            eventProvider: ClickHouseEventProvider.TRACKER,
-            messageId: humanReadableName,
-            templateId: String(templateID),
-            workspaceId: workspace.id,
-            processed: true,
-          },
-        ],
-        session
-      );
+  //   // 5. Attempt delivery. If delivered, record delivery event
+  //   const isDelivered = await this.websocketGateway.sendCustomComponentState(
+  //     customer._id,
+  //     humanReadableName,
+  //     customer.customComponents[humanReadableName]
+  //   );
+  //   await this.websocketGateway.sendProcessed(
+  //     customer._id,
+  //     event,
+  //     humanReadableName
+  //   );
+  //   if (isDelivered)
+  //     await this.webhooksService.insertMessageStatusToClickhouse(
+  //       [
+  //         {
+  //           stepId: stepID,
+  //           createdAt: new Date().toISOString(),
+  //           customerId: customerID,
+  //           event: 'delivered',
+  //           eventProvider: ClickHouseEventProvider.TRACKER,
+  //           messageId: humanReadableName,
+  //           templateId: String(templateID),
+  //           workspaceId: workspace.id,
+  //           processed: true,
+  //         },
+  //       ],
+  //       session
+  //     );
 
-    // 6. Set delivery status.
-    customer.customComponents[humanReadableName].delivered = isDelivered;
+  //   // 6. Set delivery status.
+  //   customer.customComponents[humanReadableName].delivered = isDelivered;
 
-    // 7. Commit customer changes to the db
-    const res = await this.customerModel
-      .findByIdAndUpdate(customer.id, {
-        $set: { customComponents: { ...customer.customComponents } },
-      })
-      .session(transactionSession)
-      .exec();
-    this.debug(
-      `${JSON.stringify({ res: res })}`,
-      this.handleCustomComponent.name,
-      session
-    );
-    this.phClient.capture({
-      distinctId: owner.email,
-      event: 'message_sent',
-      properties: {
-        type: 'custom_component',
-        step: stepID,
-        customer: customerID,
-        template: templateID,
-        provider: ClickHouseEventProvider.TRACKER,
-      },
-    });
+  //   // 7. Commit customer changes to the db
+  //   const res = await this.customerModel
+  //     .findByIdAndUpdate(customer.id, {
+  //       $set: { customComponents: { ...customer.customComponents } },
+  //     })
+  //     .session(transactionSession)
+  //     .exec();
+  //   this.debug(
+  //     `${JSON.stringify({ res: res })}`,
+  //     this.handleCustomComponent.name,
+  //     session
+  //   );
+  //   this.phClient.capture({
+  //     distinctId: owner.email,
+  //     event: 'message_sent',
+  //     properties: {
+  //       type: 'custom_component',
+  //       step: stepID,
+  //       customer: customerID,
+  //       template: templateID,
+  //       provider: ClickHouseEventProvider.TRACKER,
+  //     },
+  //   });
 
-    /**
-     * Step Business Logic Finish
-     */
+  //   /**
+  //    * Step Business Logic Finish
+  //    */
 
-    /**
-     * Boilerplate Step Two Start
-     */
-    if (nextStep) {
-      // Destination exists, move customer into destination
-      nextStep.customers.push(
-        JSON.stringify({
-          customerID,
-          timestamp: Temporal.Now.instant().toString(),
-        })
-      );
-      _.remove(currentStep.customers, (customer) => {
-        return JSON.parse(customer).customerID === customerID;
-      });
-      await queryRunner.manager.save(currentStep);
-      const newNext = await queryRunner.manager.save(nextStep);
+  //   /**
+  //    * Boilerplate Step Two Start
+  //    */
+  //   if (nextStep) {
+  //     // Destination exists, move customer into destination
+  //     nextStep.customers.push(
+  //       JSON.stringify({
+  //         customerID,
+  //         timestamp: Temporal.Now.instant().toString(),
+  //       })
+  //     );
+  //     _.remove(currentStep.customers, (customer) => {
+  //       return JSON.parse(customer).customerID === customerID;
+  //     });
+  //     await queryRunner.manager.save(currentStep);
+  //     const newNext = await queryRunner.manager.save(nextStep);
 
-      if (
-        newNext.type !== StepType.TIME_DELAY &&
-        newNext.type !== StepType.TIME_WINDOW &&
-        newNext.type !== StepType.WAIT_UNTIL_BRANCH
-      )
-        await this.transitionQueue.add(newNext.type, {
-          ownerID,
-          step: newNext,
-          session: session,
-          customerID,
-          journeyID,
-          event,
-        });
-      else {
-        await this.journeyLocationsService.unlock(location, null);
-        this.warn(
-          `${JSON.stringify({ warning: 'Releasing lock' })}`,
-          this.handleCustomComponent.name,
-          session,
-          owner.email
-        );
-      }
-    } else {
-      // Destination does not exist, customer has stopped moving so
-      // we can release lock
-      await this.journeyLocationsService.unlock(location, null);
-      this.warn(
-        `${JSON.stringify({ warning: 'Releasing lock' })}`,
-        this.handleCustomComponent.name,
-        session,
-        owner.email
-      );
-    }
-    /**
-     * Boilerplate Step Two Finish
-     */
-  }
+  //     if (
+  //       newNext.type !== StepType.TIME_DELAY &&
+  //       newNext.type !== StepType.TIME_WINDOW &&
+  //       newNext.type !== StepType.WAIT_UNTIL_BRANCH
+  //     )
+  //       await this.transitionQueue.add(newNext.type, {
+  //         ownerID,
+  //         step: newNext,
+  //         session: session,
+  //         customerID,
+  //         journeyID,
+  //         event,
+  //       });
+  //     else {
+  //       await this.journeyLocationsService.unlock(location, null);
+  //       this.warn(
+  //         `${JSON.stringify({ warning: 'Releasing lock' })}`,
+  //         this.handleCustomComponent.name,
+  //         session,
+  //         owner.email
+  //       );
+  //     }
+  //   } else {
+  //     // Destination does not exist, customer has stopped moving so
+  //     // we can release lock
+  //     await this.journeyLocationsService.unlock(location, null);
+  //     this.warn(
+  //       `${JSON.stringify({ warning: 'Releasing lock' })}`,
+  //       this.handleCustomComponent.name,
+  //       session,
+  //       owner.email
+  //     );
+  //   }
+  //   /**
+  //    * Boilerplate Step Two Finish
+  //    */
+  // }
 
   /**
    * Handle message step;
@@ -586,6 +641,7 @@ export class TransitionProcessor extends WorkerHost {
    */
   async handleMessage(
     owner: Account,
+    workspace: Workspace,
     journey: Journey,
     step: Step,
     session: string,
@@ -593,8 +649,19 @@ export class TransitionProcessor extends WorkerHost {
     location: JourneyLocation,
     event?: string
   ) {
+    owner = await this.accountRepository.findOne({
+      where: { id: owner.id },
+      relations: [
+        'teams.organization.workspaces',
+        'currentWorkspace',
+        'currentWorkspace.mailgunConnections.sendingOptions',
+        'currentWorkspace.sendgridConnections.sendingOptions',
+        'currentWorkspace.resendConnections.sendingOptions',
+        'currentWorkspace.twilioConnections',
+        'currentWorkspace.pushConnections',
+      ],
+    });
     let job;
-    const workspace = owner.teams?.[0]?.organization?.workspaces?.[0];
 
     // Rate limiting and sending quiet hours will be stored here
     type MessageSendType =
@@ -749,56 +816,82 @@ export class TransitionProcessor extends WorkerHost {
 
       const { email } = owner;
 
-      const {
-        mailgunAPIKey,
-        sendingName,
-        testSendingEmail,
-        testSendingName,
-        sendgridApiKey,
-        sendgridFromEmail,
-        resendSendingDomain,
-        resendAPIKey,
-        resendSendingName,
-        resendSendingEmail,
-      } = workspace;
-
-      let { sendingDomain, sendingEmail } = workspace;
-
-      let key = mailgunAPIKey;
-      let from = sendingName;
-
       const { _id, workspaceId, workflows, journeys, ...tags } = customer;
       const filteredTags = cleanTagsForSending(tags);
-      const sender = new MessageSender(this.logger, this.accountRepository);
+      const sender = new MessageSender(this.workspacesRepository);
 
       switch (template.type) {
         case TemplateType.EMAIL:
-          if (workspace.emailProvider === 'free3') {
-            if (workspace.freeEmailsCount === 0)
-              throw new HttpException(
-                'You exceeded limit of 3 emails',
-                HttpStatus.PAYMENT_REQUIRED
+          const mailgunChannel = workspace.mailgunConnections.find(
+            (connection) => connection.id === step.metadata.connectionId
+          );
+          const sendgridChannel = workspace.sendgridConnections.find(
+            (connection) => connection.id === step.metadata.connectionId
+          );
+          const resendChannel = workspace.resendConnections.find(
+            (connection) => connection.id === step.metadata.connectionId
+          );
+
+          const emailProvider = mailgunChannel
+            ? 'mailgun'
+            : sendgridChannel
+            ? 'sendgrid'
+            : resendChannel
+            ? 'resend'
+            : undefined;
+
+          // if (emailProvider === 'free3') {
+          //   if (workspace.freeEmailsCount === 0)
+          //     throw new HttpException(
+          //       'You exceeded limit of 3 emails',
+          //       HttpStatus.PAYMENT_REQUIRED
+          //     );
+          //   sendingDomain = process.env.MAILGUN_TEST_DOMAIN;
+          //   key = process.env.MAILGUN_API_KEY;
+          //   from = testSendingName;
+          //   sendingEmail = testSendingEmail;
+          //   workspace.freeEmailsCount--;
+          // }
+
+          let key: string,
+            sendingDomain: string,
+            from: string,
+            sendingEmail: string;
+
+          switch (emailProvider) {
+            case 'mailgun':
+              key = mailgunChannel.apiKey;
+              sendingDomain = mailgunChannel.sendingDomain;
+              const mailgunSendingOption = mailgunChannel.sendingOptions.find(
+                ({ id }) => id === step.metadata.sendingOptionId
               );
-            sendingDomain = process.env.MAILGUN_TEST_DOMAIN;
-            key = process.env.MAILGUN_API_KEY;
-            from = testSendingName;
-            sendingEmail = testSendingEmail;
-            workspace.freeEmailsCount--;
+              from = mailgunSendingOption.sendingName;
+              sendingEmail = mailgunSendingOption.sendingEmail;
+              break;
+            case 'sendgrid':
+              key = sendgridChannel.apiKey;
+              const sendgridSendingOption = sendgridChannel.sendingOptions.find(
+                ({ id }) => id === step.metadata.sendingOptionId
+              );
+              from = sendgridSendingOption.sendingEmail;
+              break;
+            case 'resend':
+              sendingDomain = resendChannel.sendingDomain;
+              key = resendChannel.apiKey;
+              const resendSendingOption = resendChannel.sendingOptions.find(
+                ({ id }) => id === step.metadata.sendingOptionId
+              );
+              from = resendSendingOption.sendingName;
+              sendingEmail = resendSendingOption.sendingEmail;
+              break;
+            default:
+              break;
           }
 
-          if (workspace.emailProvider === 'resend') {
-            sendingDomain = workspace.resendSendingDomain;
-            key = workspace.resendAPIKey;
-            from = workspace.resendSendingName;
-            sendingEmail = workspace.resendSendingEmail;
-          }
-          if (workspace.emailProvider === 'sendgrid') {
-            key = sendgridApiKey;
-            from = sendgridFromEmail;
-          }
           const ret = await sender.process({
             name: TemplateType.EMAIL,
             accountID: owner.id,
+            workspaceID: workspace.id,
             cc: template.cc,
             customerID: customer._id,
             domain: sendingDomain,
@@ -818,7 +911,7 @@ export class TransitionProcessor extends WorkerHost {
             ),
             tags: filteredTags,
             templateID: template.id,
-            eventProvider: workspace.emailProvider,
+            eventProvider: emailProvider,
             session,
           });
           this.debug(
@@ -830,22 +923,30 @@ export class TransitionProcessor extends WorkerHost {
             ret,
             session
           );
-          if (workspace.emailProvider === 'free3') {
-            await owner.save();
-            await workspace.save();
-          }
+          // if (emailProvider === 'free3') {
+          //   await owner.save();
+          //   await workspace.save();
+          // }
           break;
         case TemplateType.PUSH:
+          const pushAndroidChannel = workspace.pushConnections.find(
+            (connection) => connection.id === step.metadata.connectionId
+          );
+          const pushIosChannel = workspace.pushConnections.find(
+            (connection) => connection.id === step.metadata.connectionIosId
+          );
+
           switch (step.metadata.selectedPlatform) {
             case 'All':
               await this.webhooksService.insertMessageStatusToClickhouse(
                 await sender.process({
                   name: 'android',
+                  workspaceID: workspace.id,
                   accountID: owner.id,
                   stepID: step.id,
                   customerID: customer._id,
                   firebaseCredentials:
-                    workspace.pushPlatforms.Android.credentials,
+                    pushAndroidChannel.pushPlatforms.Android.credentials,
                   deviceToken: customer.androidDeviceToken,
                   pushTitle: template.pushObject.settings.Android.title,
                   pushText: template.pushObject.settings.Android.description,
@@ -863,10 +964,12 @@ export class TransitionProcessor extends WorkerHost {
               await this.webhooksService.insertMessageStatusToClickhouse(
                 await sender.process({
                   name: 'ios',
+                  workspaceID: workspace.id,
                   accountID: owner.id,
                   stepID: step.id,
                   customerID: customer._id,
-                  firebaseCredentials: workspace.pushPlatforms.iOS.credentials,
+                  firebaseCredentials:
+                    pushIosChannel.pushPlatforms.iOS.credentials,
                   deviceToken: customer.iosDeviceToken,
                   pushTitle: template.pushObject.settings.iOS.title,
                   pushText: template.pushObject.settings.iOS.description,
@@ -881,15 +984,18 @@ export class TransitionProcessor extends WorkerHost {
                 }),
                 session
               );
+
               break;
             case 'iOS':
               await this.webhooksService.insertMessageStatusToClickhouse(
                 await sender.process({
                   name: 'ios',
+                  workspaceID: workspace.id,
                   accountID: owner.id,
                   stepID: step.id,
                   customerID: customer._id,
-                  firebaseCredentials: workspace.pushPlatforms.iOS.credentials,
+                  firebaseCredentials:
+                    pushIosChannel.pushPlatforms.iOS.credentials,
                   deviceToken: customer.iosDeviceToken,
                   pushTitle: template.pushObject.settings.iOS.title,
                   pushText: template.pushObject.settings.iOS.description,
@@ -909,11 +1015,12 @@ export class TransitionProcessor extends WorkerHost {
               await this.webhooksService.insertMessageStatusToClickhouse(
                 await sender.process({
                   name: 'android',
+                  workspaceID: workspace.id,
                   accountID: owner.id,
                   stepID: step.id,
                   customerID: customer._id,
                   firebaseCredentials:
-                    workspace.pushPlatforms.Android.credentials,
+                    pushAndroidChannel.pushPlatforms.Android.credentials,
                   deviceToken: customer.androidDeviceToken,
                   pushTitle: template.pushObject.settings.Android.title,
                   pushText: template.pushObject.settings.Android.description,
@@ -949,6 +1056,7 @@ export class TransitionProcessor extends WorkerHost {
             await sender.process({
               name: TemplateType.SLACK,
               accountID: owner.id,
+              workspaceID: workspace.id,
               stepID: step.id,
               customerID: customer._id,
               templateID: template.id,
@@ -968,22 +1076,27 @@ export class TransitionProcessor extends WorkerHost {
           );
           break;
         case TemplateType.SMS:
+          const twilioChannel = workspace.twilioConnections.find(
+            (connection) => connection.id === step.metadata.connectionId
+          );
+
           await this.webhooksService.insertMessageStatusToClickhouse(
             await sender.process({
               name: TemplateType.SMS,
               accountID: owner.id,
+              workspaceID: workspace.id,
               stepID: step.id,
               customerID: customer._id,
               templateID: template.id,
-              from: workspace.smsFrom,
-              sid: workspace.smsAccountSid,
+              from: twilioChannel.from,
+              sid: twilioChannel.sid,
               tags: filteredTags,
               text: await this.templatesService.parseApiCallTags(
                 template.smsText,
                 filteredTags
               ),
               to: customer.phPhoneNumber || customer.phone,
-              token: workspace.smsAuthToken,
+              token: twilioChannel.token,
               trackingEmail: email,
               session,
             }),
@@ -1105,6 +1218,7 @@ export class TransitionProcessor extends WorkerHost {
       );
       await this.stepsService.requeueMessage(
         owner,
+        workspace,
         step,
         customer._id,
         requeueTime,
@@ -1116,7 +1230,7 @@ export class TransitionProcessor extends WorkerHost {
 
     let nextStep: Step;
 
-    if(step.metadata.destination) {
+    if (step.metadata.destination) {
       nextStep = await this.cacheManager.get(
         `step:${step.metadata.destination}`
       );
@@ -1139,6 +1253,7 @@ export class TransitionProcessor extends WorkerHost {
       ) {
         job = {
           owner,
+          workspace,
           journey,
           step: nextStep,
           session,
@@ -1171,6 +1286,7 @@ export class TransitionProcessor extends WorkerHost {
    */
   async handleStart(
     owner: Account,
+    workspace: Workspace,
     journey: Journey,
     step: Step,
     session: string,
@@ -1200,6 +1316,7 @@ export class TransitionProcessor extends WorkerHost {
       ) {
         job = {
           owner,
+          workspace,
           journey,
           step: nextStep,
           session,
@@ -1251,6 +1368,7 @@ export class TransitionProcessor extends WorkerHost {
    */
   async handleTimeDelay(
     owner: Account,
+    workspace: Workspace,
     journey: Journey,
     step: Step,
     session: string,
@@ -1285,6 +1403,7 @@ export class TransitionProcessor extends WorkerHost {
         ) {
           job = {
             owner,
+            workspace,
             journey,
             step: nextStep,
             session,
@@ -1320,6 +1439,7 @@ export class TransitionProcessor extends WorkerHost {
    */
   async handleTimeWindow(
     owner: Account,
+    workspace: Workspace,
     journey: Journey,
     step: Step,
     session: string,
@@ -1387,6 +1507,7 @@ export class TransitionProcessor extends WorkerHost {
         ) {
           job = {
             owner,
+            workspace,
             journey,
             step: nextStep,
             session,
@@ -1425,6 +1546,7 @@ export class TransitionProcessor extends WorkerHost {
    */
   async handleWaitUntil(
     owner: Account,
+    workspace: Workspace,
     journey: Journey,
     step: Step,
     session: string,
@@ -1534,6 +1656,7 @@ export class TransitionProcessor extends WorkerHost {
           ) {
             job = {
               owner,
+              workspace,
               journey,
               step: nextStep,
               session,
@@ -1624,6 +1747,7 @@ export class TransitionProcessor extends WorkerHost {
    */
   async handleMultisplit(
     owner: Account,
+    workspace: Workspace,
     journey: Journey,
     step: Step,
     session: string,
@@ -1645,6 +1769,7 @@ export class TransitionProcessor extends WorkerHost {
         await this.customersService.checkCustomerMatchesQuery(
           step.metadata.branches[branchIndex].conditions.query,
           owner,
+          workspace,
           session,
           customer
         )
@@ -1670,6 +1795,7 @@ export class TransitionProcessor extends WorkerHost {
       ) {
         job = {
           owner,
+          workspace,
           journey,
           step: nextStep,
           session,
@@ -1699,6 +1825,7 @@ export class TransitionProcessor extends WorkerHost {
    */
   async handleLoop(
     owner: Account,
+    workspace: Workspace,
     journey: Journey,
     step: Step,
     session: string,
@@ -1728,6 +1855,7 @@ export class TransitionProcessor extends WorkerHost {
       ) {
         job = {
           owner,
+          workspace,
           journey,
           step: nextStep,
           session,
@@ -1750,6 +1878,7 @@ export class TransitionProcessor extends WorkerHost {
 
   async handleExperiment(
     owner: Account,
+    workspace: Workspace,
     journey: Journey,
     step: Step,
     session: string,
@@ -1786,6 +1915,7 @@ export class TransitionProcessor extends WorkerHost {
       ) {
         job = {
           owner,
+          workspace,
           journey,
           step: nextStep,
           session,

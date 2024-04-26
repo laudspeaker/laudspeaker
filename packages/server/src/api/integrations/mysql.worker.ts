@@ -33,7 +33,7 @@ const handleMySqlSync = async (
     const connection = mysql.createConnection(connectionString);
 
     const stream = connection.query(query).stream({ objectMode: true });
-    const workspace = owner?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = owner.currentWorkspace;
 
     for await (const customer of stream) {
       if (!customer.id) continue;

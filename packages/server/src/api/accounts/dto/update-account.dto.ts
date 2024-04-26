@@ -13,6 +13,20 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+export class WorkspaceEmailConnectionDto {
+  @IsNotEmpty()
+  @IsString()
+  emailProvider: string;
+
+  @IsNotEmpty()
+  @IsString()
+  sendingEmail: string;
+
+  @IsNotEmpty()
+  @IsString()
+  sendingName: string;
+}
+
 class PlatformCredentials {
   @IsString()
   @IsNotEmpty()
@@ -197,4 +211,10 @@ export class UpdateAccountDto {
   @IsString()
   @IsOptional()
   public resendSendingName: string;
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => WorkspaceEmailConnectionDto)
+  emailConnections?: WorkspaceEmailConnectionDto[];
 }

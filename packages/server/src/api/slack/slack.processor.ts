@@ -34,11 +34,7 @@ export class SlackProcessor extends WorkerHost {
     try {
       let textWithInsertedTags;
       const { tags, text, ...args } = job.data.args;
-      const account = await this.accountRepository.findOne({
-        where: { id: job.data.accountId },
-        relations: ['teams.organization.workspaces'],
-      });
-      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+      const workspace = job.data.workspace;
       try {
         if (text) {
           textWithInsertedTags = await this.tagEngine.parseAndRender(

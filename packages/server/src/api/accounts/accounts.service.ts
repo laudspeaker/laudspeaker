@@ -35,9 +35,11 @@ import { StepType } from '../steps/types/step.interface';
 import { randomUUID } from 'crypto';
 import admin from 'firebase-admin';
 import { update } from 'lodash';
-import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { OrganizationTeam } from '../organizations/entities/organization-team.entity';
+import { OrganizationService } from '../organizations/organizations.service';
+import { WorkspaceMailgunConnection } from '../workspaces/entities/workspace-mailgun-connection.entity';
 
 @Injectable()
 export class AccountsService extends BaseJwtHelper {
@@ -50,8 +52,8 @@ export class AccountsService extends BaseJwtHelper {
     private dataSource: DataSource,
     @InjectRepository(Account)
     public accountsRepository: Repository<Account>,
-    @InjectRepository(Workspaces)
-    public workspacesRepository: Repository<Workspaces>,
+    @InjectRepository(Workspace)
+    public workspacesRepository: Repository<Workspace>,
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @Inject(forwardRef(() => AuthService)) private authService: AuthService,
@@ -63,7 +65,9 @@ export class AccountsService extends BaseJwtHelper {
     private stepsService: StepsService,
     @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(forwardRef(() => WebhooksService))
-    private webhookService: WebhooksService
+    private webhookService: WebhooksService,
+    @Inject(forwardRef(() => OrganizationService))
+    private organizationService: OrganizationService
   ) {
     super();
     if (
@@ -135,7 +139,7 @@ export class AccountsService extends BaseJwtHelper {
 
   findAll(): Promise<Account[]> {
     return this.accountsRepository.find({
-      relations: ['teams.organization.workspaces'],
+      relations: ['teams.organization.workspaces', 'currentWorkspace'],
     });
   }
 
@@ -157,7 +161,7 @@ export class AccountsService extends BaseJwtHelper {
         where: {
           id: owner.id,
         },
-        relations: ['teams.organization.workspaces'],
+        relations: ['teams.organization.workspaces', 'currentWorkspace'],
       });
 
       if (!account) {
@@ -186,7 +190,7 @@ export class AccountsService extends BaseJwtHelper {
     try {
       const account = await this.accountsRepository.findOne({
         where: { id: (<Account>user).id },
-        relations: ['teams.organization.workspaces'],
+        relations: ['teams.organization.workspaces', 'currentWorkspace'],
       });
 
       if (!account) {
@@ -222,7 +226,7 @@ export class AccountsService extends BaseJwtHelper {
       where: {
         id: workspace.organization.owner.id,
       },
-      relations: ['teams.organization.workspaces'],
+      relations: ['teams.organization.workspaces', 'currentWorkspace'],
     });
 
     return account;
@@ -386,7 +390,7 @@ export class AccountsService extends BaseJwtHelper {
     await queryRunner.startTransaction();
     let err;
     try {
-      const workspace = oldUser.teams?.[0]?.organization?.workspaces?.[0];
+      const workspace = oldUser.currentWorkspace;
 
       oldUser.password = password;
       oldUser.verified = verified;
@@ -418,6 +422,10 @@ export class AccountsService extends BaseJwtHelper {
         resendSigningSecret,
         resendSendingName,
         resendSendingEmail,
+        firstName,
+        lastName,
+        email,
+        emailConnections,
       } = updateUserDto;
 
       const newPushPlatforms = {
@@ -460,8 +468,13 @@ export class AccountsService extends BaseJwtHelper {
         resendSendingEmail,
       };
 
-      const updatedUser = await queryRunner.manager.save(oldUser);
-      await queryRunner.manager.save(Workspaces, newWorkspace);
+      const updatedUser = await queryRunner.manager.save(Account, {
+        ...oldUser,
+        firstName,
+        lastName,
+        email,
+      });
+      await queryRunner.manager.save(Workspace, newWorkspace);
 
       if (needEmailUpdate)
         await this.authService.requestVerification(
@@ -530,15 +543,6 @@ export class AccountsService extends BaseJwtHelper {
     let transactionSession: ClientSession;
     try {
       const account = await this.findOne(user, session);
-      /*
-      this.debug(
-        `Found ${JSON.stringify({ id: account.id })}`,
-        this.remove.name,
-        session,
-        (<Account>user).id
-      );
-    */
-      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
       if (!bcrypt.compareSync(removeAccountDto.password, account.password))
         throw new BadRequestException('Password is incorrect');
@@ -546,35 +550,47 @@ export class AccountsService extends BaseJwtHelper {
       transactionSession = await this.connection.startSession();
       transactionSession.startTransaction();
 
-      await this.customersService.CustomerModel.deleteMany(
-        {
-          workspaceId: workspace.id,
-        },
-        { session: transactionSession }
-      )
-        .session(transactionSession)
-        .exec();
-      this.debug(
-        `Deleted customers for ${JSON.stringify({ id: account.id })}`,
-        this.remove.name,
-        session,
-        (<Account>user).id
-      );
+      const organizationToClean =
+        await this.organizationService.organizationRepository.findOne({
+          where: {
+            owner: { id: account.id },
+          },
+          relations: ['workspaces'],
+        });
 
-      await this.customersService.CustomerKeysModel.deleteMany(
-        {
-          workspaceId: workspace.id,
-        },
-        { session: transactionSession }
-      )
-        .session(transactionSession)
-        .exec();
-      this.debug(
-        `Deleted customer keys for ${JSON.stringify({ id: account.id })}`,
-        this.remove.name,
-        session,
-        (<Account>user).id
-      );
+      if (organizationToClean) {
+        for (const workspace of organizationToClean.workspaces) {
+          await this.customersService.CustomerModel.deleteMany(
+            {
+              workspaceId: workspace.id,
+            },
+            { session: transactionSession }
+          )
+            .session(transactionSession)
+            .exec();
+          this.debug(
+            `Deleted customers for ${JSON.stringify({ id: workspace.id })}`,
+            this.remove.name,
+            session,
+            (<Account>user).id
+          );
+
+          await this.customersService.CustomerKeysModel.deleteMany(
+            {
+              workspaceId: workspace.id,
+            },
+            { session: transactionSession }
+          )
+            .session(transactionSession)
+            .exec();
+          this.debug(
+            `Deleted customer keys for ${JSON.stringify({ id: account.id })}`,
+            this.remove.name,
+            session,
+            (<Account>user).id
+          );
+        }
+      }
 
       await this.accountsRepository.delete(account.id);
       this.debug(
@@ -627,13 +643,17 @@ export class AccountsService extends BaseJwtHelper {
         });
         await queryRunner.manager.save(organization);
 
-        const workspace = await queryRunner.manager.create(Workspaces, {
+        const workspace = await queryRunner.manager.create(Workspace, {
           name: organization.companyName + ' workspace',
           organization,
           apiKey: process.env.ONBOARDING_ACCOUNT_API_KEY,
           timezoneUTCOffset: 'UTC+00:00',
         });
         await queryRunner.manager.save(workspace);
+        await queryRunner.manager.save(Account, {
+          id: account.id,
+          currentWorkspace: { id: workspace.id },
+        });
 
         const team = await queryRunner.manager.create(OrganizationTeam, {
           teamName: 'Default team',
@@ -660,10 +680,10 @@ export class AccountsService extends BaseJwtHelper {
       where: {
         email: process.env.ONBOARDING_ACCOUNT_EMAIL,
       },
-      relations: ['teams.organization.workspaces'],
+      relations: ['teams.organization.workspaces', 'currentWorkspace'],
     });
 
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     let trackerTemplate = await this.templatesService.findOne(
       account,
@@ -758,6 +778,7 @@ export class AccountsService extends BaseJwtHelper {
                     (
                       await this.stepsService.findOne(
                         account,
+                        workspace,
                         node.data.stepId,
                         session
                       )
@@ -766,6 +787,7 @@ export class AccountsService extends BaseJwtHelper {
                       ? (
                           await this.stepsService.insert(
                             account,
+                            workspace,
                             {
                               journeyID: journey.id,
                               type: node.data.type as StepType,

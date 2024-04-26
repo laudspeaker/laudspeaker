@@ -24,7 +24,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { randomUUID } from 'crypto';
 import { RavenInterceptor } from 'nest-raven';
 import { CustomerPushTest } from './dto/customer-push-test.dto';
-import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 import { SendFCMDto } from './dto/send-fcm.dto';
 import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
 import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
@@ -117,7 +117,7 @@ export class EventsController {
   ): Promise<void | HttpException> {
     const session = randomUUID();
     return this.eventsService.customPayload(
-      <{ account: Account; workspace: Workspaces }>user,
+      <{ account: Account; workspace: Workspace }>user,
       body,
       session
     );
@@ -129,7 +129,7 @@ export class EventsController {
   async sendFCMToken(@Req() { user }: Request, @Body() body: SendFCMDto) {
     const session = randomUUID();
     return this.eventsService.sendFCMToken(
-      <{ account: Account; workspace: Workspaces }>user,
+      <{ account: Account; workspace: Workspace }>user,
       body,
       session
     );
@@ -144,7 +144,7 @@ export class EventsController {
   ) {
     const session = randomUUID();
     return this.eventsService.identifyCustomer(
-      <{ account: Account; workspace: Workspaces }>user,
+      <{ account: Account; workspace: Workspace }>user,
       body,
       session
     );
@@ -159,7 +159,7 @@ export class EventsController {
   ) {
     const session = randomUUID();
     return this.eventsService.setCustomerProperties(
-      <{ account: Account; workspace: Workspaces }>user,
+      <{ account: Account; workspace: Workspace }>user,
       body,
       session
     );
@@ -284,7 +284,8 @@ export class EventsController {
     @Req() { user }: Request,
     @Query('take') take?: string,
     @Query('skip') skip?: string,
-    @Query('search') search?: string
+    @Query('search') search?: string,
+    @Query('customerId') customerId?: string
   ) {
     const session = randomUUID();
     return this.eventsService.getCustomEvents(
@@ -292,7 +293,8 @@ export class EventsController {
       session,
       take && +take,
       skip && +skip,
-      search
+      search,
+      customerId
     );
   }
 
@@ -324,7 +326,7 @@ export class EventsController {
   ): Promise<void | HttpException> {
     const session = randomUUID();
     this.eventsService.batch(
-      <{ account: Account; workspace: Workspaces }>user,
+      <{ account: Account; workspace: Workspace }>user,
       body,
       session
     );

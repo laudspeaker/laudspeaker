@@ -95,7 +95,7 @@ export class IntegrationsProcessor extends WorkerHost {
     });
     const pgClient = await pool.connect();
     const cursor = pgClient.query(new Cursor(database.query));
-    const workspace = owner?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = owner.currentWorkspace;
     let lastReadLength = Infinity;
     while (lastReadLength !== 0) {
       const customers = await cursor.read(BATCH_SiZE);

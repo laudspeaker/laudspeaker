@@ -29,7 +29,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Job, Queue, UnrecoverableError } from 'bullmq';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import mongoose, { ClientSession, Model } from 'mongoose';
+import mongoose, {
+  ClientSession,
+  FilterQuery,
+  Model,
+  isValidObjectId,
+} from 'mongoose';
 import { EventDocument, Event } from './schemas/event.schema';
 import mockData from '../../fixtures/mockData';
 import { EventKeys, EventKeysDocument } from './schemas/event-keys.schema';
@@ -55,7 +60,7 @@ import {
   PlatformSettings,
   PushPlatforms,
 } from '../templates/entities/template.entity';
-import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 import { ProviderType } from './events.preprocessor';
 import { SendFCMDto } from './dto/send-fcm.dto';
 import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
@@ -297,7 +302,7 @@ export class EventsService {
   }
 
   async customPayload(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     eventDto: EventDto,
     session: string
   ) {
@@ -347,9 +352,9 @@ export class EventsService {
   ) {
     const account = await this.accountsRepository.findOne({
       where: { id: ownerId },
-      relations: ['teams.organization.workspaces'],
+      relations: ['teams.organization.workspaces', 'currentWorkspace'],
     });
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     const attributes = await this.EventKeysModel.find({
       $and: [
@@ -369,11 +374,7 @@ export class EventsService {
   }
 
   async getPossibleEventNames(account: Account, search: string) {
-    account = await this.accountsRepository.findOne({
-      where: { id: account.id },
-      relations: ['teams.organization.workspaces'],
-    });
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     const eventNames = await this.EventModel.find({
       $and: [
@@ -392,11 +393,7 @@ export class EventsService {
     event: string,
     search: string
   ) {
-    account = await this.accountsRepository.findOne({
-      where: { id: account.id },
-      relations: ['teams.organization.workspaces'],
-    });
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     const records = await this.EventModel.find({
       $and: [{ workspaceId: workspace.id }, { event }],
@@ -493,7 +490,8 @@ export class EventsService {
     session: string,
     take = 100,
     skip = 0,
-    search = ''
+    search = '',
+    customerId?: string
   ) {
     this.debug(
       ` in customEvents`,
@@ -502,18 +500,37 @@ export class EventsService {
       account.id
     );
 
+    let customer: CustomerDocument | undefined;
+    if (customerId && isValidObjectId(customerId)) {
+      customer = await this.customersService.CustomerModel.findById(
+        customerId
+      ).exec();
+    }
+
+    const pk: string | undefined = await this.customersService.getPrimaryKey(
+      account.currentWorkspace,
+      ''
+    );
+
     //console.log("in customEvents")
     const searchRegExp = new RegExp(`.*${search}.*`, 'i');
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
+
+    const filterObject: FilterQuery<EventDocument> = {
+      event: searchRegExp,
+      workspaceId: workspace.id,
+      ...(customer
+        ? {
+            $or: [
+              { correlationKey: '_id', correlationValue: customerId },
+              { correlationKey: pk, correlationValue: customer[pk] },
+            ],
+          }
+        : {}),
+    };
 
     const totalPages =
-      Math.ceil(
-        (await this.EventModel.count({
-          event: searchRegExp,
-          workspaceId: workspace.id,
-          //ownerId: (<Account>account).id,
-        }).exec()) / take
-      ) || 1;
+      Math.ceil((await this.EventModel.count(filterObject).exec()) / take) || 1;
 
     //console.log("regex", searchRegExp );
     //console.log("ownderId", (<Account>account).id );
@@ -533,11 +550,7 @@ export class EventsService {
     */
     const customEvents = await this.EventModel.aggregate([
       {
-        $match: {
-          event: searchRegExp,
-          workspaceId: workspace.id,
-          //ownerId: (<Account>account).id,
-        },
+        $match: filterObject,
       },
       {
         $addFields: {
@@ -605,7 +618,7 @@ export class EventsService {
   }
 
   async sendTestPush(account: Account, token: string) {
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     const hasConnected = Object.values(workspace.pushPlatforms).some(
       (el) => !!el
@@ -699,7 +712,7 @@ export class EventsService {
   }
 
   async sendFCMToken(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     body: SendFCMDto,
     session: string
   ) {
@@ -737,7 +750,7 @@ export class EventsService {
   }
 
   async identifyCustomer(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     body: IdentifyCustomerDTO,
     session: string
   ) {
@@ -815,7 +828,7 @@ export class EventsService {
   }
 
   async setCustomerProperties(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     body: SetCustomerPropsDTO,
     session: string
   ) {
@@ -850,7 +863,7 @@ export class EventsService {
   }
 
   async sendTestPushByCustomer(account: Account, body: CustomerPushTest) {
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     const hasConnected = Object.values(workspace.pushPlatforms).some(
       (el) => !!el
@@ -864,7 +877,7 @@ export class EventsService {
     }
 
     const customer = await this.customersService.findById(
-      account,
+      workspace,
       body.customerId
     );
 
@@ -990,7 +1003,7 @@ export class EventsService {
   }
 
   async batch(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     MobileBatchDto: MobileBatchDto,
     session: string
   ) {
@@ -1057,7 +1070,7 @@ export class EventsService {
   }
 
   async handleSet(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     event: EventDto,
     session: string
   ) {
@@ -1300,7 +1313,7 @@ export class EventsService {
    */
 
   async handleIdentify(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     event: EventDto, // Assuming EventDto has all the necessary fields including payload
     session: string
   ) {
@@ -1443,7 +1456,7 @@ export class EventsService {
   }
 
   async handleFCM(
-    auth: { account: Account; workspace: Workspaces },
+    auth: { account: Account; workspace: Workspace },
     event: EventDto,
     session: string
   ) {

@@ -16,6 +16,7 @@ import { JobsService } from '../jobs/jobs.service';
 import { DateTime } from 'luxon';
 import { TimeJobType } from '../jobs/entities/job.entity';
 import { InclusionCriteria } from '../segments/types/segment.type';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 
 @Injectable()
 export class AudiencesService {
@@ -397,6 +398,7 @@ export class AudiencesService {
    */
   async moveCustomer(
     account: Account,
+    workspace: Workspace,
     from: string | null | undefined,
     to: string | null | undefined,
     customer: CustomerDocument,
@@ -607,7 +609,6 @@ export class AudiencesService {
         }
 
         let toTemplates = toAud.templates.map((item) => item.id);
-        const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
         if (workspace?.emailProvider === 'free3' && toTemplates.length) {
           const data = await queryRunner.manager.find(Template, {
@@ -652,6 +653,7 @@ export class AudiencesService {
             );
             jobId = await this.templatesService.queueMessage(
               account,
+              workspace,
               toTemplates[templateIndex],
               customer,
               event,
@@ -696,6 +698,7 @@ export class AudiencesService {
    */
   async moveCustomers(
     account: Account,
+    workspace: Workspace,
     fromAud: Audience | null | undefined,
     toAud: Audience | null | undefined,
     customers: CustomerDocument[],
@@ -717,6 +720,7 @@ export class AudiencesService {
 
         const { jobIds: jobIdArr } = await this.moveCustomer(
           account,
+          workspace,
           fromAud?.id,
           toAud?.id,
           customers[index],

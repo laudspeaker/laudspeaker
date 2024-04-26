@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import arrowRightIconImage from "../svg/arrow-right.svg";
 import emailCardIconImage from "../svg/email-card-icon.svg";
 import twilioCardIconImage from "../svg/twilio-card-icon.svg";
@@ -9,10 +9,11 @@ import { useNavigate } from "react-router-dom";
 import Account from "types/Account";
 import ApiService from "services/api.service";
 import { toast } from "react-toastify";
-import { EmailSendingService } from "pages/EmailSettings/EmailSettings";
 
 export enum MessageChannel {
-  EMAIL,
+  MAILGUN,
+  SENDGRID,
+  RESEND,
   TWILIO,
   CUSTOM_MODAL,
   SLACK,
@@ -25,34 +26,94 @@ interface MessageChannelAdditionalInfoFixture {
 }
 
 interface MessageChannelCardFixture {
-  id: MessageChannel;
+  id: string;
+  channel: MessageChannel;
   title: string;
   icon: string;
   beta?: boolean;
   commingSoon?: boolean;
   disabled?: boolean;
-  onClick?: () => void;
   connected?: boolean;
   additionalInfo?: MessageChannelAdditionalInfoFixture[];
 }
 
-const emailServiceToAdditionalInfoMap: Record<
-  EmailSendingService,
-  MessageChannelAdditionalInfoFixture[]
+// const emailServiceToAdditionalInfoMap: Record<
+//   EmailSendingService,
+//   MessageChannelAdditionalInfoFixture[]
+// > = {
+//   [EmailSendingService.MAILGUN]: [
+//     { key: "sendingDomain", title: "Domain" },
+//     { key: "sendingName", title: "Sending name" },
+//     { key: "sendingEmail", title: "Sending email" },
+//   ],
+//   [EmailSendingService.SENDGRID]: [
+//     { key: "sendgridFromEmail", title: "Sending email" },
+//   ],
+//   [EmailSendingService.RESEND]: [
+//     { key: "resendSendingDomain", title: "Domain" },
+//     { key: "resendSendingName", title: "Sending name" },
+//     { key: "resendSendingEmail", title: "Sending email" },
+//   ],
+// };
+
+const messageChannelToLinkMap: Record<MessageChannel, string> = {
+  [MessageChannel.MAILGUN]: "/settings/email/mailgun",
+  [MessageChannel.SENDGRID]: "/settings/email/sendgrid",
+  [MessageChannel.RESEND]: "/settings/email/resend",
+  [MessageChannel.TWILIO]: "/settings/twilio",
+  [MessageChannel.PUSH]: "/settings/push",
+  [MessageChannel.CUSTOM_MODAL]: "",
+  [MessageChannel.SLACK]: "",
+};
+
+const supportedMessageChannelCardsFixtures: Record<
+  MessageChannel,
+  MessageChannelCardFixture
 > = {
-  [EmailSendingService.MAILGUN]: [
-    { key: "sendingDomain", title: "Domain" },
-    { key: "sendingName", title: "Sending name" },
-    { key: "sendingEmail", title: "Sending email" },
-  ],
-  [EmailSendingService.SENDGRID]: [
-    { key: "sendgridFromEmail", title: "Sending email" },
-  ],
-  [EmailSendingService.RESEND]: [
-    { key: "resendSendingDomain", title: "Domain" },
-    { key: "resendSendingName", title: "Sending name" },
-    { key: "resendSendingEmail", title: "Sending email" },
-  ],
+  [MessageChannel.MAILGUN]: {
+    id: "create",
+    channel: MessageChannel.MAILGUN,
+    title: "Email (mailgun)",
+    icon: emailCardIconImage,
+  },
+  [MessageChannel.SENDGRID]: {
+    id: "create",
+    channel: MessageChannel.SENDGRID,
+    title: "Email (sendgrid)",
+    icon: emailCardIconImage,
+  },
+  [MessageChannel.RESEND]: {
+    id: "create",
+    channel: MessageChannel.RESEND,
+    title: "Email (resend)",
+    icon: emailCardIconImage,
+  },
+  [MessageChannel.TWILIO]: {
+    id: "create",
+    channel: MessageChannel.TWILIO,
+    title: "Twilio SMS",
+    icon: twilioCardIconImage,
+  },
+  [MessageChannel.CUSTOM_MODAL]: {
+    id: "create",
+    channel: MessageChannel.CUSTOM_MODAL,
+    title: "Onboarding Suite",
+    icon: customModalCardIconImage,
+  },
+  [MessageChannel.PUSH]: {
+    id: "create",
+    channel: MessageChannel.PUSH,
+    title: "Push",
+    icon: pushLogoIcon,
+  },
+  [MessageChannel.SLACK]: {
+    id: "create",
+    channel: MessageChannel.SLACK,
+    title: "Slack",
+    icon: slackCardIconImage,
+    commingSoon: true,
+    disabled: true,
+  },
 };
 
 const MessageChannelTab = () => {
@@ -61,86 +122,43 @@ const MessageChannelTab = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [account, setAccount] = useState<Account>();
 
-  const isEmailConnected = Boolean(
-    (account?.workspace?.emailProvider === EmailSendingService.MAILGUN &&
-      account?.workspace?.mailgunAPIKey &&
-      account?.workspace?.sendingDomain &&
-      account?.workspace?.sendingEmail &&
-      account?.workspace?.sendingName) ||
-      (account?.workspace?.emailProvider === EmailSendingService.SENDGRID &&
-        account?.workspace?.sendgridApiKey &&
-        account?.workspace?.sendgridVerificationKey &&
-        account?.workspace?.sendgridFromEmail) ||
-      (account?.workspace?.emailProvider === EmailSendingService.RESEND &&
-        account?.workspace?.resendAPIKey &&
-        account?.workspace?.resendSigningSecret &&
-        account?.workspace?.resendSendingDomain &&
-        account?.workspace?.resendSendingEmail &&
-        account?.workspace?.resendSendingName)
+  const connectedFixtures: MessageChannelCardFixture[] = useMemo(
+    () => [
+      ...(account?.workspace.mailgunConnections.map((connection) => ({
+        id: connection.id,
+        channel: MessageChannel.MAILGUN,
+        title: connection.name,
+        icon: emailCardIconImage,
+      })) || []),
+      ...(account?.workspace.sendgridConnections.map((connection) => ({
+        id: connection.id,
+        channel: MessageChannel.SENDGRID,
+        title: connection.name,
+        icon: emailCardIconImage,
+      })) || []),
+      ...(account?.workspace.resendConnections.map((connection) => ({
+        id: connection.id,
+        channel: MessageChannel.RESEND,
+        title: connection.name,
+        icon: emailCardIconImage,
+      })) || []),
+      ...(account?.workspace.twilioConnections.map((connection) => ({
+        id: connection.id,
+        channel: MessageChannel.TWILIO,
+        title: connection.name,
+        icon: twilioCardIconImage,
+      })) || []),
+      ...(account?.workspace.pushConnections.map((connection) => ({
+        id: connection.id,
+        channel: MessageChannel.PUSH,
+        title: connection.name,
+        icon: pushLogoIcon,
+      })) || []),
+    ],
+    [account]
   );
 
-  const isTwilioConnected = Boolean(
-    account?.workspace?.smsAccountSid &&
-      account?.workspace?.smsAuthToken &&
-      account?.workspace?.smsFrom
-  );
-
-  const messageChannelCardsFixtures: Record<
-    MessageChannel,
-    MessageChannelCardFixture
-  > = {
-    [MessageChannel.EMAIL]: {
-      id: MessageChannel.EMAIL,
-      title: "Email",
-      icon: emailCardIconImage,
-      onClick: () => navigate("/settings/email"),
-      connected: isEmailConnected,
-      additionalInfo: account?.workspace?.emailProvider
-        ? emailServiceToAdditionalInfoMap[
-            account?.workspace?.emailProvider as EmailSendingService
-          ]
-        : undefined,
-    },
-    [MessageChannel.TWILIO]: {
-      id: MessageChannel.TWILIO,
-      title: "Twilio SMS",
-      icon: twilioCardIconImage,
-      onClick: () => navigate("/settings/sms"),
-      connected: isTwilioConnected,
-      additionalInfo: [{ key: "smsFrom", title: "SMS from" }],
-    },
-    [MessageChannel.CUSTOM_MODAL]: {
-      id: MessageChannel.CUSTOM_MODAL,
-      title: "Onboarding Suite",
-      icon: customModalCardIconImage,
-      connected: account?.workspace?.javascriptSnippetSetupped,
-      onClick: () => navigate("/settings/custom-modal"),
-    },
-    [MessageChannel.PUSH]: {
-      id: MessageChannel.PUSH,
-      title: "Push",
-      icon: pushLogoIcon,
-      connected:
-        account?.workspace?.pushPlatforms &&
-        Object.values(account?.workspace?.pushPlatforms).some((el) => !!el),
-      onClick: () => navigate("/settings/push"),
-    },
-    [MessageChannel.SLACK]: {
-      id: MessageChannel.SLACK,
-      title: "Slack",
-      icon: slackCardIconImage,
-      commingSoon: true,
-      disabled: true,
-    },
-  };
-
-  const connectedFixtures = Object.values(messageChannelCardsFixtures).filter(
-    (fixture) => fixture.connected && !fixture.disabled
-  );
-
-  const supportedFixtures = Object.values(messageChannelCardsFixtures).filter(
-    (fixture) => !fixture.connected || fixture.disabled
-  );
+  const supportedFixtures = Object.values(supportedMessageChannelCardsFixtures);
 
   useEffect(() => {
     (async () => {
@@ -179,7 +197,16 @@ const MessageChannelTab = () => {
             <button
               key={i}
               id={fixture.title.split(" ").join("-").toLowerCase()}
-              onClick={fixture.onClick}
+              onClick={
+                fixture.disabled
+                  ? () => {}
+                  : () =>
+                      navigate(
+                        `${messageChannelToLinkMap[fixture.channel]}/${
+                          fixture.id
+                        }`
+                      )
+              }
               className="p-5 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] flex flex-col gap-[10px]"
             >
               <div className="w-full flex justify-between items-center">
@@ -241,7 +268,16 @@ const MessageChannelTab = () => {
             <button
               key={i}
               id={fixture.title.split(" ").join("-").toLowerCase()}
-              onClick={fixture.onClick}
+              onClick={
+                fixture.disabled
+                  ? () => {}
+                  : () =>
+                      navigate(
+                        `${messageChannelToLinkMap[fixture.channel]}/${
+                          fixture.id
+                        }`
+                      )
+              }
               className={`p-5 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] flex justify-between items-center ${
                 fixture.disabled ? "select-none cursor-default grayscale" : ""
               }`}

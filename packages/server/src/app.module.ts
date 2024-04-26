@@ -61,6 +61,7 @@ import { OrganizationsModule } from './api/organizations/organizations.module';
 import { OrganizationInvites } from './api/organizations/entities/organization-invites.entity';
 import { redisStore } from 'cache-manager-redis-yet';
 import { CacheModule } from '@nestjs/cache-manager';
+import { WorkspacesModule } from './api/workspaces/workspaces.module';
 
 const sensitiveKeys = [
   /cookie/i,
@@ -256,6 +257,7 @@ export const formatMongoConnectionString = (mongoConnectionString: string) => {
     RavenModule,
     KafkaModule,
     OrganizationsModule,
+    WorkspacesModule,
   ],
   controllers: [AppController],
   providers: [CronService, RedlockService, JourneyLocationsService],

@@ -47,6 +47,7 @@ import { TestWebhookDto } from './dto/test-webhook.dto';
 import wait from '../../utils/wait';
 import { ModalsService } from '../modals/modals.service';
 import { WebsocketGateway } from '../../websockets/websocket.gateway';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 
 @Injectable()
 @QueueEventsListener('message')
@@ -73,14 +74,15 @@ export class TemplatesService extends QueueEventsHost {
     this.tagEngine.registerFilter('date', (input, formatString) => {
       const date = input === 'now' ? new Date() : parseISO(input);
       // Adjust the formatString to fit JavaScript's date formatting if necessary
-      const adjustedFormatString = formatString.replace(/%Y/g, 'yyyy')
-                                               .replace(/%m/g, 'MM')
-                                               .replace(/%d/g, 'dd')
-                                               .replace(/%H/g, 'HH')
-                                               .replace(/%M/g, 'mm')
-                                               .replace(/%S/g, 'ss');
+      const adjustedFormatString = formatString
+        .replace(/%Y/g, 'yyyy')
+        .replace(/%m/g, 'MM')
+        .replace(/%d/g, 'dd')
+        .replace(/%H/g, 'HH')
+        .replace(/%M/g, 'mm')
+        .replace(/%S/g, 'ss');
       return format(date, adjustedFormatString);
-  });
+    });
   }
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -292,7 +294,7 @@ export class TemplatesService extends QueueEventsHost {
     createTemplateDto: CreateTemplateDto,
     session: string
   ) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     try {
       const template = new Template();
@@ -350,6 +352,7 @@ export class TemplatesService extends QueueEventsHost {
    */
   async queueMessage(
     account: Account,
+    workspace: Workspace,
     templateId: string,
     customer: CustomerDocument,
     event: EventDto,
@@ -361,7 +364,7 @@ export class TemplatesService extends QueueEventsHost {
       installation: Installation,
       message: any;
     try {
-      template = await this.findOneById(account, templateId);
+      template = await this.findOneById(workspace, templateId);
       this.logger.debug(
         'Found template: ' + template.id + ' of type ' + template.type
       );
@@ -373,8 +376,6 @@ export class TemplatesService extends QueueEventsHost {
     const filteredTags = cleanTagsForSending(tags);
 
     const { email } = account;
-
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
     const {
       mailgunAPIKey,
@@ -542,7 +543,7 @@ export class TemplatesService extends QueueEventsHost {
     } else {
       typeConvertedCheck.type = type;
     }
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     const totalPages = Math.ceil(
       (await this.templatesRepository.count({
@@ -577,7 +578,7 @@ export class TemplatesService extends QueueEventsHost {
   }
 
   findOne(account: Account, name: string, session: string): Promise<Template> {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     return this.templatesRepository.findOneBy({
       workspace: {
@@ -587,9 +588,7 @@ export class TemplatesService extends QueueEventsHost {
     });
   }
 
-  findOneById(account: Account, id: string): Promise<Template> {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-
+  findOneById(workspace: Workspace, id: string): Promise<Template> {
     return this.templatesRepository.findOneBy({
       workspace: {
         id: workspace.id,
@@ -633,16 +632,16 @@ export class TemplatesService extends QueueEventsHost {
     }
   }
 
-  findBy(account: Account, type: TemplateType): Promise<Template[]> {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+  // findBy(account: Account, type: TemplateType): Promise<Template[]> {
+  //   const workspace = account.currentWorkspace;
 
-    return this.templatesRepository.findBy({
-      workspace: {
-        id: workspace.id,
-      },
-      type: type,
-    });
-  }
+  //   return this.templatesRepository.findBy({
+  //     workspace: {
+  //       id: workspace.id,
+  //     },
+  //     type: type,
+  //   });
+  // }
 
   update(
     account: Account,
@@ -650,7 +649,7 @@ export class TemplatesService extends QueueEventsHost {
     updateTemplateDto: UpdateTemplateDto,
     session: string
   ) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     return this.templatesRepository.update(
       { workspace: { id: workspace.id }, id },
@@ -659,7 +658,7 @@ export class TemplatesService extends QueueEventsHost {
   }
 
   async remove(account: Account, id: string, session: string): Promise<void> {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     await this.templatesRepository.update(
       {
@@ -671,8 +670,7 @@ export class TemplatesService extends QueueEventsHost {
   }
 
   async duplicate(account: Account, id: string, session: string) {
-    const workspaceFromAccount =
-      account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspaceFromAccount = account.currentWorkspace;
 
     const foundTemplate = await this.templatesRepository.findOne({
       where: {
@@ -741,7 +739,7 @@ export class TemplatesService extends QueueEventsHost {
   }
 
   async findUsedInJourneys(account: Account, id: string, session: string) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     const template = await this.templatesRepository.findOneBy({
       id,
@@ -868,11 +866,9 @@ export class TemplatesService extends QueueEventsHost {
   }
 
   async testWebhookTemplate(testWebhookDto: TestWebhookDto, session: string) {
-
     let customer = await this.customerModel.findOne({
       _id: testWebhookDto.testCustomerId,
     });
-
 
     if (!customer) {
       customer = new this.customerModel({});
@@ -882,7 +878,6 @@ export class TemplatesService extends QueueEventsHost {
     const filteredTags = cleanTagsForSending(tags);
 
     const { method, mimeType } = testWebhookDto.webhookData;
-
 
     let { body, headers, url } = testWebhookDto.webhookData;
 

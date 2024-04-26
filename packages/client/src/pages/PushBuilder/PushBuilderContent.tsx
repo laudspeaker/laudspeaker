@@ -7,7 +7,7 @@ import Input from "components/Elements/Inputv2";
 import TrashIcon from "assets/icons/TrashIcon";
 import PushBuilderPreviewer from "./PushBuilderPreviewer";
 
-export enum PushPlatforms {
+export enum PushPlatform {
   IOS = "iOS",
   ANDROID = "Android",
 }
@@ -30,9 +30,9 @@ export interface PlatformSettings {
 }
 
 export interface PushBuilderData {
-  platform: Record<PushPlatforms, boolean>;
+  platform: Record<PushPlatform, boolean>;
   keepContentConsistent: boolean;
-  settings: Record<PushPlatforms, PlatformSettings>;
+  settings: Record<PushPlatform, PlatformSettings>;
   fields: {
     key: string;
     value: string;
@@ -57,7 +57,7 @@ export const defaultPlatformSettings: PlatformSettings = {
 };
 
 const platformIcons = {
-  [PushPlatforms.ANDROID]: (
+  [PushPlatform.ANDROID]: (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="40"
@@ -72,7 +72,7 @@ const platformIcons = {
       />
     </svg>
   ),
-  [PushPlatforms.IOS]: (
+  [PushPlatform.IOS]: (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="40"
@@ -95,7 +95,7 @@ const platformIcons = {
 
 const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
   const handleChangeData =
-    (platforms: PushPlatforms[]) => (settings: PlatformSettings) => {
+    (platforms: PushPlatform[]) => (settings: PlatformSettings) => {
       const newData = { ...data };
       platforms.forEach((el) => {
         newData.settings[el] = {
@@ -103,7 +103,7 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
           title: settings.title.slice(0, 65),
           description: settings.description.slice(
             0,
-            el === PushPlatforms.IOS ? 178 : 240
+            el === PushPlatform.IOS ? 178 : 240
           ),
         };
       });
@@ -122,8 +122,8 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
         ? {}
         : {
             settings: {
-              [PushPlatforms.ANDROID]: data.settings[PushPlatforms.IOS],
-              [PushPlatforms.IOS]: data.settings[PushPlatforms.IOS],
+              [PushPlatform.ANDROID]: data.settings[PushPlatform.IOS],
+              [PushPlatform.IOS]: data.settings[PushPlatform.IOS],
             },
           }),
     });
@@ -158,7 +158,7 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
             Platform
           </div>
           <div className="flex gap-5">
-            {Object.values(PushPlatforms).map((el, i) => (
+            {Object.values(PushPlatform).map((el, i) => (
               <div
                 key={el}
                 className={`${
@@ -214,23 +214,23 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
           <>
             <div className="px-5">
               <PlatformSettingsComponents
-                data={data.settings[PushPlatforms.IOS]}
+                data={data.settings[PushPlatform.IOS]}
                 onChange={handleChangeData([
-                  PushPlatforms.ANDROID,
-                  PushPlatforms.IOS,
+                  PushPlatform.ANDROID,
+                  PushPlatform.IOS,
                 ])}
               />
             </div>
             <hr className="border-[#E5E7EB] my-5" />
-            {data.platform[PushPlatforms.ANDROID] && (
+            {data.platform[PushPlatform.ANDROID] && (
               <>
                 <div className="px-5">
                   <div className="font-inter text-[16px] font-semibold leading-[24px] mb-[10px]">
                     Android only
                   </div>
                   <AndroidOnlySettings
-                    data={data.settings[PushPlatforms.ANDROID]}
-                    onChange={handleChangeData([PushPlatforms.ANDROID])}
+                    data={data.settings[PushPlatform.ANDROID]}
+                    onChange={handleChangeData([PushPlatform.ANDROID])}
                   />
                 </div>
                 <hr className="border-[#E5E7EB] my-5" />
@@ -239,7 +239,7 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
           </>
         ) : (
           <>
-            {Object.values(PushPlatforms).map((el, i) => (
+            {Object.values(PushPlatform).map((el, i) => (
               <React.Fragment key={el}>
                 {data.platform[el] ? (
                   <>
@@ -256,7 +256,7 @@ const PushBuilderContent = ({ data, onChange }: PushBuilderContentProps) => {
                         onChange={handleChangeData([el])}
                       />
                     </div>
-                    {el === PushPlatforms.ANDROID && (
+                    {el === PushPlatform.ANDROID && (
                       <div className="px-5">
                         <AndroidOnlySettings
                           data={data.settings[el]}

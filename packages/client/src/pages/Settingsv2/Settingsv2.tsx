@@ -14,6 +14,8 @@ import Input from "components/Elements/Inputv2";
 import FrequencyCappingTab from "./tabs/FrequecyCappingTab";
 import { FrequencyCappingModal } from "components/FrequencyCappingModal/FrequencyCappingModal";
 import { useLocation } from "react-router-dom";
+import WorkspaceDetailsTab from "./tabs/WorkspaceDetailsTab";
+import { useAppSelector } from "store/hooks";
 
 export enum SettingsTab {
   ACCOUNT,
@@ -23,7 +25,7 @@ export enum SettingsTab {
   PLAN,
   BILLING,
   TEAM,
-  ORGANIZATION,
+  WORKSPACE,
   FREQUENCY_CAPPING,
 }
 
@@ -31,7 +33,7 @@ const Settingsv2 = () => {
   const { search } = useLocation();
   const searchTab: SettingsTab = search?.split("=")[1];
   const [currentTab, setCurrentTab] = useState(
-    searchTab ? SettingsTab[searchTab] : SettingsTab.ACCOUNT
+    searchTab ? SettingsTab[searchTab] : SettingsTab.WORKSPACE
   );
   const [viewTeamMember, setViewTeamMember] = useState<OrganizationTeamData>();
   const [showModal, setShowModal] = useState(false);
@@ -49,9 +51,7 @@ const Settingsv2 = () => {
       [SettingsTab.MESSAGE_CHANNEL]: <MessageChannelTab />,
       [SettingsTab.EVENT_PROVIDER]: <EventProviderTab />,
       [SettingsTab.API]: <APITab />,
-      [SettingsTab.ORGANIZATION]: (
-        <OrganizationTab setViewTeamMember={setViewTeamMember} />
-      ),
+      [SettingsTab.WORKSPACE]: <WorkspaceDetailsTab />,
       // Removed for 1 release
       // [SettingsTab.PLAN]: <PlanTab />,
       // [SettingsTab.BILLING]: <BillingTab />,

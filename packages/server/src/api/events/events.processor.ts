@@ -28,8 +28,8 @@ import { WebsocketGateway } from '@/websockets/websocket.gateway';
 import * as _ from 'lodash';
 import * as Sentry from '@sentry/node';
 import { JourneyLocationsService } from '../journeys/journey-locations.service';
-import { Workspace } from 'aws-sdk/clients/workspaces';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 
 export enum EventType {
   EVENT = 'event',
@@ -53,7 +53,7 @@ export class EventsProcessor extends WorkerHost {
   > = {
     [EventType.EVENT]: this.handleEvent,
     [EventType.ATTRIBUTE]: this.handleAttributeChange,
-    [EventType.MESSAGE]: this.handleMessage
+    [EventType.MESSAGE]: this.handleMessage,
   };
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -137,10 +137,13 @@ export class EventsProcessor extends WorkerHost {
     try {
       const fn = this.providerMap[job.name];
       const that = this;
-      
-      return Sentry.startSpan({ name: `EventsProcessor.${fn.name}` }, async () => {
-        await fn.call(that, job);
-      });
+
+      return Sentry.startSpan(
+        { name: `EventsProcessor.${fn.name}` },
+        async () => {
+          await fn.call(that, job);
+        }
+      );
     } catch (e) {
       this.error(e, this.process.name, job.data.session);
       err = e;
@@ -194,7 +197,8 @@ export class EventsProcessor extends WorkerHost {
     await this.journeyLocationsService.lock(
       location,
       job.data.session,
-      job.data.account
+      job.data.account,
+      job.data.workspace
     );
     // All steps in `journey` that might be listening for this event
     const steps = (
@@ -485,6 +489,7 @@ export class EventsProcessor extends WorkerHost {
           branch: branch,
           customer: job.data.customer,
           owner: job.data.account, //stepToQueue.workspace.organization.owner.id,
+          workspace: job.data.workspace,
           location,
           session: job.data.session,
           journey: job.data.journey,

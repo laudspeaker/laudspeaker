@@ -20,7 +20,7 @@ import * as os from 'os';
 
 const morgan = require('morgan');
 
-const numCPUs = os.cpus().length;
+const numCPUs = process.env.NODE_ENV === 'development' ? 2 : os.cpus().length;
 
 if (cluster.isPrimary) {
   console.log(`Primary ${process.pid} is running`);

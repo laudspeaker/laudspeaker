@@ -16,6 +16,7 @@ import { Account } from '../../accounts/entities/accounts.entity';
 import { Journey } from '../entities/journey.entity';
 import { Step } from '../../steps/entities/step.entity';
 import { StepsService } from '@/api/steps/steps.service';
+import { Workspace } from '@/api/workspaces/entities/workspace.entity';
 
 @Injectable()
 @Processor('enrollment', { removeOnComplete: { count: 100 } })
@@ -98,6 +99,7 @@ export class EnrollmentProcessor extends WorkerHost {
     job: Job<
       {
         account: Account;
+        workspace: Workspace;
         journey: Journey;
         count: number;
         session: string;
@@ -118,6 +120,7 @@ export class EnrollmentProcessor extends WorkerHost {
     try {
       triggerStartTasks = await this.stepsService.triggerStart(
         job.data.account,
+        job.data.workspace,
         job.data.journey,
         job.data.journey.inclusionCriteria,
         job.data.journey?.journeySettings?.maxEntries?.enabled &&

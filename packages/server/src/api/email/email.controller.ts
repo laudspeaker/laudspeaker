@@ -44,11 +44,12 @@ export class EmailController {
   async send(@Req() { user }: Request, @Body() sendEmailDto: SendEmailDto) {
     const found = <Account>user;
 
-    const workspace = found.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = found.currentWorkspace;
 
     await this.messageQueue.add('email', {
       trackingEmail: found.email,
       accountId: found.id,
+      workspace: found.currentWorkspace,
       key: workspace.mailgunAPIKey,
       from: workspace.sendingName,
       domain: workspace.sendingDomain,
@@ -88,7 +89,7 @@ export class EmailController {
     @Param('audienceName') name: string
   ) {
     const found = <Account>user;
-    const workspace = found?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = found?.currentWorkspace;
     const audienceObj = await this.audienceRepository.findOneBy({
       owner: { id: found.id },
       name: name,
@@ -96,7 +97,7 @@ export class EmailController {
     const jobs = await Promise.all(
       audienceObj.customers.map(async (customerId) => {
         const { email } = (
-          await this.customersService.findById(found, customerId)
+          await this.customersService.findById(workspace, customerId)
         ).toObject();
 
         return {

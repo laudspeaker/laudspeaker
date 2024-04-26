@@ -1,6 +1,6 @@
+import { IsUTCOffset } from '@/api/workspaces/dto/update-workspace.dto';
 import { Trim } from 'class-sanitizer';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { IsUTCOffset } from './update-organization.dto';
 
 export class CreateOrganizationDTO {
   @IsString()

@@ -151,7 +151,10 @@ export class TemplatesController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   findOne(@Req() { user }: Request, @Param('id', ParseIntPipe) id: string) {
-    return this.templatesService.findOneById(<Account>user, id);
+    return this.templatesService.findOneById(
+      (<Account>user).currentWorkspace,
+      id
+    );
   }
 
   @Patch(':id')

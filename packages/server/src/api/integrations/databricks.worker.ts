@@ -23,7 +23,7 @@ const handleDatabricksSync = async (
   });
   const session = await client.openSession();
 
-  const workspace = owner?.teams?.[0]?.organization?.workspaces?.[0];
+  const workspace = owner.currentWorkspace;
 
   if (isReview) {
     const queryOperation = await session.executeStatement(database.query, {

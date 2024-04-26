@@ -18,7 +18,7 @@ import { Recovery } from './entities/recovery.entity';
 import { JourneysModule } from '../journeys/journeys.module';
 import { StepsModule } from '../steps/steps.module';
 import { OrganizationTeam } from '../organizations/entities/organization-team.entity';
-import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 import { OrganizationInvites } from '../organizations/entities/organization-invites.entity';
 
 @Module({
@@ -36,7 +36,7 @@ import { OrganizationInvites } from '../organizations/entities/organization-invi
       Template,
       Verification,
       Workflow,
-      Workspaces,
+      Workspace,
       Recovery,
       OrganizationTeam,
       OrganizationInvites,

@@ -97,7 +97,7 @@ export class DevModeService {
     journey: Journey,
     state: DevModeState
   ) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     try {
       await this.devModeRepository.upsert(

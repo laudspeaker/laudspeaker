@@ -219,7 +219,7 @@ export class OrganizationsController {
         ownerId: (<Account>user)?.teams?.[0]?.organization.owner.id,
       },
       workspace: {
-        id: (<Account>user)?.teams?.[0]?.organization?.workspaces?.[0]?.id,
+        id: (<Account>user).currentWorkspace.id,
         timezoneUTCOffset: (<Account>user)?.teams?.[0]?.organization
           ?.workspaces?.[0]?.timezoneUTCOffset,
       },

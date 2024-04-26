@@ -14,10 +14,11 @@ import { BullModule } from '@nestjs/bullmq';
 import { TemplatesModule } from '../templates/templates.module';
 import { Step } from '../steps/entities/step.entity';
 import { KafkaModule } from '../kafka/kafka.module';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Account, Step]),
+    TypeOrmModule.forFeature([Account, Workspace, Step]),
     BullModule.registerQueue({
       name: 'webhooks',
     }),

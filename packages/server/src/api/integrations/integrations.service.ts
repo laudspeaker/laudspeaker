@@ -65,7 +65,7 @@ export class IntegrationsService {
   public async getAllDatabases(user: Express.User, session: string) {
     const account = await this.accountsService.findOne(user, session);
 
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     const integrations = await this.integrationsRepository.find({
       where: {
@@ -87,7 +87,7 @@ export class IntegrationsService {
 
   public async getOneDatabase(user: Express.User, id: string, session: string) {
     const account = await this.accountsService.findOne(user, session);
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     const integration = await this.integrationsRepository.findOne({
       where: {
@@ -115,7 +115,7 @@ export class IntegrationsService {
     session
   ) {
     const account = await this.accountsService.findOne(user, session);
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     const { name, description, ...dbProperties } = createDBDto;
     const {
@@ -166,7 +166,7 @@ export class IntegrationsService {
     session: string
   ) {
     const account = await this.accountsService.findOne(user, session);
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     const integration = await this.integrationsRepository.findOne({
       where: {
@@ -222,7 +222,7 @@ export class IntegrationsService {
     session: string
   ) {
     const account = await this.accountsService.findOne(user, session);
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     await this.integrationsRepository.update(
       {
@@ -241,7 +241,7 @@ export class IntegrationsService {
     session: string
   ) {
     const account = await this.accountsService.findOne(user, session);
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     await this.integrationsRepository.update(
       {
@@ -256,7 +256,7 @@ export class IntegrationsService {
 
   public async deleteIntegration(user: Express.User, id: string, session) {
     const account = await this.accountsService.findOne(user, session);
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     const integration = await this.integrationsRepository.findOne({
       where: {

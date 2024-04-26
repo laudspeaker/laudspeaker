@@ -50,6 +50,7 @@ import { Template } from '../templates/entities/template.entity';
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { Job, TimeJobType } from '../jobs/entities/job.entity';
 import { Filter } from '../filter/entities/filter.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -752,6 +753,7 @@ export class WorkflowsService {
    */
   async enrollCustomer(
     account: Account,
+    workspace: Workspace,
     customer: CustomerDocument,
     queryRunner: QueryRunner,
     clientSession: ClientSession,
@@ -807,6 +809,7 @@ export class WorkflowsService {
           ) {
             await this.audiencesService.moveCustomer(
               account,
+              workspace,
               null,
               audience?.id,
               customer,
@@ -853,6 +856,7 @@ export class WorkflowsService {
    */
   async tick(
     account: Account,
+    workspace: Workspace,
     event: EventDto | null | undefined,
     queryRunner: QueryRunner,
     transactionSession: ClientSession,
@@ -871,6 +875,7 @@ export class WorkflowsService {
       if (event) {
         customer = await this.customersService.findByCorrelationKVPair(
           account,
+          workspace,
           event.correlationKey,
           event.correlationValue,
           session,
@@ -1099,6 +1104,7 @@ export class WorkflowsService {
                       const { jobIds: jobIdArr, templates } =
                         await this.audiencesService.moveCustomer(
                           account,
+                          workspace,
                           from?.id,
                           to?.id,
                           customer,
@@ -1254,43 +1260,44 @@ export class WorkflowsService {
     return;
   }
 
-  async timeTick(job: Job, session: string) {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      const acct = await queryRunner.manager.findOneBy(Account, {
-        id: job.owner.id,
-      });
-      const found = await queryRunner.manager.findOne(Workflow, {
-        where: { id: job.workflow.id },
-      });
-      this.logger.debug('Found Workflow for Job: ' + found.id);
-      if (found.isActive) {
-        this.logger.debug('Looking for customer...');
-        const customer = await this.customersService.findById(
-          acct,
-          job.customer
-        );
-        this.logger.debug('Found customer for Job: ' + customer.id);
-        await this.audiencesService.moveCustomer(
-          acct,
-          job.from.id,
-          job.to.id,
-          customer,
-          null,
-          queryRunner,
-          found.rules,
-          found.id,
-          session
-        );
-      }
-      await queryRunner.commitTransaction();
-    } catch (e) {
-      await queryRunner.rollbackTransaction();
-      throw e;
-    } finally {
-      await queryRunner.release();
-    }
-  }
+  // async timeTick(job: Job, session: string) {
+  //   const queryRunner = this.dataSource.createQueryRunner();
+  //   await queryRunner.connect();
+  //   await queryRunner.startTransaction();
+  //   try {
+  //     const acct = await queryRunner.manager.findOneBy(Account, {
+  //       id: job.owner.id,
+  //     });
+  //     const found = await queryRunner.manager.findOne(Workflow, {
+  //       where: { id: job.workflow.id },
+  //     });
+  //     this.logger.debug('Found Workflow for Job: ' + found.id);
+  //     if (found.isActive) {
+  //       this.logger.debug('Looking for customer...');
+  //       const customer = await this.customersService.findById(
+  //         acct,
+  //         job.customer
+  //       );
+  //       this.logger.debug('Found customer for Job: ' + customer.id);
+  //       await this.audiencesService.moveCustomer(
+  //         acct,
+  //         job.workspace,
+  //         job.from.id,
+  //         job.to.id,
+  //         customer,
+  //         null,
+  //         queryRunner,
+  //         found.rules,
+  //         found.id,
+  //         session
+  //       );
+  //     }
+  //     await queryRunner.commitTransaction();
+  //   } catch (e) {
+  //     await queryRunner.rollbackTransaction();
+  //     throw e;
+  //   } finally {
+  //     await queryRunner.release();
+  //   }
+  // }
 }

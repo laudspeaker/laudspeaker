@@ -31,7 +31,7 @@ import * as Sentry from '@sentry/node';
 import { EventType } from './events.processor';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
-import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 import { EventsService } from './events.service';
 
 export enum ProviderType {
@@ -147,16 +147,19 @@ export class EventsPreProcessor extends WorkerHost {
     const fn = this.providerMap[job.name];
     const that = this;
 
-    return Sentry.startSpan({ name: `EventsPreProcessor.${fn.name}` }, async () => {
-      await fn.call(that, job);
-    });
+    return Sentry.startSpan(
+      { name: `EventsPreProcessor.${fn.name}` },
+      async () => {
+        await fn.call(that, job);
+      }
+    );
   }
 
   async handleCustom(
     job: Job<
       {
         owner: Account;
-        workspace: Workspaces;
+        workspace: Workspace;
         event: any;
         session: string;
       },

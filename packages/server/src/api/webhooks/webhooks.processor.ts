@@ -22,6 +22,7 @@ import { TemplatesService } from '../templates/templates.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Repository } from 'typeorm';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 
 @Processor('webhooks')
 @Injectable()
@@ -33,23 +34,23 @@ export class WebhooksProcessor extends WorkerHost {
     private readonly logger: Logger,
     private readonly webhooksService: WebhooksService,
     private readonly templatesService: TemplatesService,
-    @InjectRepository(Account)
-    private accountRepository: Repository<Account>
+    @InjectRepository(Workspace)
+    private workspacesRepository: Repository<Workspace>
   ) {
     super();
 
     this.tagEngine.registerFilter('date', (input, formatString) => {
       const date = input === 'now' ? new Date() : parseISO(input);
       // Adjust the formatString to fit JavaScript's date formatting if necessary
-      const adjustedFormatString = formatString.replace(/%Y/g, 'yyyy')
-                                               .replace(/%m/g, 'MM')
-                                               .replace(/%d/g, 'dd')
-                                               .replace(/%H/g, 'HH')
-                                               .replace(/%M/g, 'mm')
-                                               .replace(/%S/g, 'ss');
+      const adjustedFormatString = formatString
+        .replace(/%Y/g, 'yyyy')
+        .replace(/%m/g, 'MM')
+        .replace(/%d/g, 'dd')
+        .replace(/%H/g, 'HH')
+        .replace(/%M/g, 'mm')
+        .replace(/%S/g, 'ss');
       return format(date, adjustedFormatString);
-  });
-
+    });
   }
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -114,9 +115,9 @@ export class WebhooksProcessor extends WorkerHost {
   async process(job: Job<{ template: Template; [key: string]: any }>) {
     const { template, filteredTags } = job.data;
 
-    const { method, retries, fallBackAction } = template.webhookData;
+    const { method, retries, fallBackAction, mimeType } = template.webhookData;
 
-    let { body, headers, url, mimeType } = template.webhookData;
+    let { body, headers, url } = template.webhookData;
 
     url = await this.tagEngine.parseAndRender(url, filteredTags || {}, {
       strictVariables: true,
@@ -164,11 +165,9 @@ export class WebhooksProcessor extends WorkerHost {
       };
     }
 
-    const account = await this.accountRepository.findOne({
-      where: { id: job.data.accountId },
-      relations: ['teams.organization.workspaces'],
+    const workspace = await this.workspacesRepository.findOneBy({
+      id: job.data.workspaceId,
     });
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     let retriesCount = 0;
     let success = false;

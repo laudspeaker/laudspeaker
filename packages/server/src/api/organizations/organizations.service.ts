@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue, tryCatch } from 'bullmq';
@@ -14,7 +15,7 @@ import { Logger } from 'winston';
 import { DisconnectFirebaseDTO } from '../accounts/dto/disconnect-firebase.dto';
 import { Account } from '../accounts/entities/accounts.entity';
 import { AuthHelper } from '../auth/auth.helper';
-import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 import { CreateOrganizationDTO } from './dto/create-ogranization.dto';
 import { InviteMemberDTO } from './dto/invite-user.dto';
 import { UpdateOrganizationDTO } from './dto/update-organization.dto';
@@ -30,18 +31,18 @@ export class OrganizationService {
     private readonly logger: Logger,
     @InjectRepository(Organization)
     public journeysRepository: Repository<Organization>,
-    @InjectRepository(Workspaces)
-    public workspacesRepository: Repository<Workspaces>,
+    @InjectRepository(Workspace)
+    public workspacesRepository: Repository<Workspace>,
     @InjectRepository(OrganizationInvites)
     public organizationInvitesRepository: Repository<OrganizationInvites>,
     @InjectRepository(OrganizationTeam)
     public organizationTeamRepository: Repository<OrganizationTeam>,
-    @Inject(AuthHelper)
-    public readonly helper: AuthHelper,
+    @InjectRepository(Organization)
+    public organizationRepository: Repository<Organization>,
     @InjectRepository(Account)
     public accountRepository: Repository<Account>,
     @InjectQueue('message') private readonly messageQueue: Queue,
-    @Inject(AuthHelper)
+    @Inject(forwardRef(() => AuthHelper))
     public readonly authHelper: AuthHelper
   ) {}
 
@@ -126,16 +127,6 @@ export class OrganizationService {
         }
       );
 
-      await queryRunner.manager.update(
-        Workspaces,
-        {
-          id: account?.teams?.[0]?.organization?.workspaces?.[0]?.id,
-        },
-        {
-          timezoneUTCOffset: body.timezoneUTCOffset,
-        }
-      );
-
       await queryRunner.commitTransaction();
     } catch (err) {
       await queryRunner.rollbackTransaction();
@@ -149,7 +140,7 @@ export class OrganizationService {
     body: CreateOrganizationDTO,
     session: string
   ) {
-    if (account?.teams?.[0]?.organization?.workspaces?.[0]) {
+    if (account.currentWorkspace) {
       throw new BadRequestException('You have already setup organization');
     }
 
@@ -159,23 +150,21 @@ export class OrganizationService {
       await queryRunner.connect();
       await queryRunner.startTransaction();
 
-      const organization = await queryRunner.manager.create(Organization, {
+      const organization = await queryRunner.manager.save(Organization, {
         companyName: body.name,
         owner: {
           id: account.id,
         },
       });
-      await queryRunner.manager.save(organization);
 
-      const workspace = await queryRunner.manager.create(Workspaces, {
+      const workspace = await queryRunner.manager.save(Workspace, {
         name: organization.companyName + ' workspace',
         organization,
         apiKey: this.authHelper.generateApiKey(),
         timezoneUTCOffset: body.timezoneUTCOffset,
       });
-      await queryRunner.manager.save(workspace);
 
-      const team = await queryRunner.manager.create(OrganizationTeam, {
+      await queryRunner.manager.save(OrganizationTeam, {
         teamName: 'Default team',
         organization,
         members: [
@@ -184,9 +173,13 @@ export class OrganizationService {
           },
         ],
       });
-      await queryRunner.manager.save(team);
 
-      await this.helper.generateDefaultData(account, queryRunner, session);
+      await queryRunner.manager.save(Account, {
+        id: account.id,
+        currentWorkspace: { id: workspace.id },
+      });
+
+      await this.authHelper.generateDefaultData(account, queryRunner, session);
 
       await queryRunner.commitTransaction();
     } catch (err) {
@@ -329,7 +322,7 @@ export class OrganizationService {
     body: DisconnectFirebaseDTO,
     session: string
   ) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     if (!workspace) {
       throw new BadRequestException(

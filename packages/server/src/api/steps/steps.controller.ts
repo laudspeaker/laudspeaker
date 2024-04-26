@@ -39,7 +39,12 @@ export class StepsController {
   @UseInterceptors(ClassSerializerInterceptor)
   async findOne(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
-    return await this.stepsService.findOne(<Account>user, id, session);
+    return await this.stepsService.findOne(
+      <Account>user,
+      (<Account>user).currentWorkspace,
+      id,
+      session
+    );
   }
 
   @UseInterceptors(new RavenInterceptor())
@@ -59,6 +64,7 @@ export class StepsController {
     const session = randomUUID();
     return await this.stepsService.insert(
       <Account>user,
+      (<Account>user).currentWorkspace,
       createStepDto,
       session
     );

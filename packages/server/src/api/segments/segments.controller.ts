@@ -272,6 +272,7 @@ export class SegmentsController {
 
     return this.segmentsService.assignCustomer(
       <Account>user,
+      (<Account>user).currentWorkspace,
       id,
       assignCustomerDTO.customerId,
       session

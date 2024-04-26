@@ -83,6 +83,7 @@ import { RedisService } from '@liaoliaots/nestjs-redis';
 import { JourneyChange } from './entities/journey-change.entity';
 import isObjectDeepEqual from '@/utils/isObjectDeepEqual';
 import { JourneyLocation } from './entities/journey-location.entity';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -242,10 +243,8 @@ export class JourneysService {
     @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
-    @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(JourneyLocationsService)
     private readonly journeyLocationsService: JourneyLocationsService,
-    @InjectQueue('transition') private readonly transitionQueue: Queue,
     @Inject(RedisService) private redisService: RedisService,
     @InjectQueue('enrollment') private readonly enrollmentQueue: Queue
   ) {}
@@ -329,7 +328,7 @@ export class JourneysService {
       const journeys = await queryRunner.manager.find(Journey, {
         where: {
           workspace: {
-            id: account.teams?.[0]?.organization?.workspaces?.[0].id,
+            id: account.currentWorkspace.id,
           },
         },
       });
@@ -363,7 +362,7 @@ export class JourneysService {
     try {
       const startNodeUUID = uuid();
       const nextNodeUUID = uuid();
-      const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+      const workspace = account.currentWorkspace;
 
       const journey = await this.journeysRepository.create({
         name,
@@ -385,6 +384,7 @@ export class JourneysService {
 
       const step = await this.stepsService.insert(
         account,
+        account.currentWorkspace,
         {
           type: StepType.START,
           journeyID: journey.id,
@@ -432,14 +432,16 @@ export class JourneysService {
   ) {
     account = await queryRunner.manager.findOne(Account, {
       where: { id: account.id },
-      relations: ['teams.organization.workspaces'],
+      relations: ['teams.organization.workspaces', 'currentWorkspace'],
     });
 
     try {
       const startNodeUUID = uuid();
       const nextNodeUUID = uuid();
 
-      const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+      const workspace =
+        account.currentWorkspace ||
+        account.teams?.[0].organization?.workspaces?.[0];
 
       const journey = await queryRunner.manager.create(Journey, {
         name,
@@ -463,6 +465,7 @@ export class JourneysService {
 
       const step = await this.stepsService.transactionalInsert(
         account,
+        workspace,
         {
           type: StepType.START,
           journeyID: journey.id,
@@ -507,7 +510,7 @@ export class JourneysService {
     await queryRunner.startTransaction();
     let err: any;
 
-    const workspace = user.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = user.currentWorkspace;
     try {
       const oldJourney = await queryRunner.manager.findOne(Journey, {
         where: {
@@ -552,12 +555,14 @@ export class JourneysService {
 
       const oldSteps = await this.stepsService.transactionalfindByJourneyID(
         user,
+        workspace,
         oldJourney.id,
         queryRunner
       );
 
       const startStep = await this.stepsService.transactionalfindByJourneyID(
         user,
+        workspace,
         newJourney.id,
         queryRunner
       );
@@ -638,14 +643,13 @@ export class JourneysService {
    */
   public async updateEnrollmentForCustomer(
     account: Account,
+    workspace: Workspace,
     customerId: string,
     customerUpdateType: 'NEW' | 'CHANGE',
     session: string,
     queryRunner: QueryRunner,
     clientSession: ClientSession
   ) {
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
-
     const journeys = await queryRunner.manager.find(Journey, {
       where: {
         workspace: {
@@ -659,7 +663,7 @@ export class JourneysService {
       },
     });
     const customer = await this.customersService.findById(
-      account,
+      workspace,
       customerId,
       clientSession
     );
@@ -669,6 +673,7 @@ export class JourneysService {
       const doesInclude =
         await this.customersService.isCustomerEnrolledInJourney(
           account,
+          workspace,
           customer,
           journey,
           session,
@@ -680,6 +685,7 @@ export class JourneysService {
         await this.customersService.checkCustomerMatchesQuery(
           journey.inclusionCriteria,
           account,
+          workspace,
           session,
           undefined,
           customerId
@@ -713,6 +719,7 @@ export class JourneysService {
         case 'ADD':
           await this.enrollCustomersInJourney(
             account,
+            workspace,
             journey,
             [customer],
             [],
@@ -743,6 +750,7 @@ export class JourneysService {
    */
   async enrollCustomersInJourney(
     account: Account,
+    workspace: Workspace,
     journey: Journey,
     customers: CustomerDocument[],
     locations: JourneyLocation[],
@@ -752,7 +760,7 @@ export class JourneysService {
   ): Promise<{ name: string; data: any }[]> {
     const jobs: { name: string; data: any }[] = [];
     const step = await this.stepsService.findByJourneyAndType(
-      account,
+      workspace,
       journey.id,
       StepType.START,
       session,
@@ -761,7 +769,7 @@ export class JourneysService {
     for (const customer of customers) {
       if (
         await this.rateLimitEntryByUniqueEnrolledCustomers(
-          account,
+          workspace,
           journey,
           queryRunner
         )
@@ -778,6 +786,7 @@ export class JourneysService {
         name: 'start',
         data: {
           owner: account,
+          workspace,
           journey: journey,
           step: step,
           location: locations.find((location: JourneyLocation) => {
@@ -842,7 +851,7 @@ export class JourneysService {
     session: string
   ): Promise<void> {
     try {
-      const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+      const workspace = account.currentWorkspace;
 
       const journeys = await queryRunner.manager.find(Journey, {
         where: {
@@ -906,6 +915,7 @@ export class JourneysService {
         isStopped: false,
         isPaused: false,
       },
+      relations: ['workspace'],
     });
   }
 
@@ -938,7 +948,7 @@ export class JourneysService {
       const isStopped = filterStatusesParts.includes(JourneyStatus.STOPPED);
       const isDeleted = filterStatusesParts.includes(JourneyStatus.DELETED);
       const isEditable = filterStatusesParts.includes(JourneyStatus.DRAFT);
-      const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+      const workspace = account.currentWorkspace;
 
       const whereOrParts: FindOptionsWhere<Journey>[] = [];
 
@@ -1278,7 +1288,7 @@ export class JourneysService {
    *
    */
   findAllActive(account: Account): Promise<Journey[]> {
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     return this.journeysRepository.find({
       where: {
@@ -1307,12 +1317,7 @@ export class JourneysService {
     session: string,
     queryRunner?: QueryRunner
   ) {
-    account = await this.customersService.accountsRepository.findOne({
-      where: { id: account.id },
-      relations: ['teams.organization.workspaces'],
-    });
-
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     if (queryRunner)
       return await queryRunner.manager.findOne(Journey, {
@@ -1345,7 +1350,7 @@ export class JourneysService {
    */
   async findOne(account: Account, id: string, session: string): Promise<any> {
     if (!isUUID(id)) throw new BadRequestException('Id is not valid uuid');
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     let found: Journey;
     try {
@@ -1390,7 +1395,7 @@ export class JourneysService {
    */
 
   async markDeleted(account: Account, id: string, session: string) {
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     try {
       const result = await this.journeysRepository.update(
@@ -1430,7 +1435,7 @@ export class JourneysService {
     value: boolean,
     session: string
   ) {
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     try {
       const found: Journey = await this.journeysRepository.findOneBy({
@@ -1482,7 +1487,7 @@ export class JourneysService {
 
     try {
       if (!account) throw new HttpException('User not found', 404);
-      const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+      const workspace = account.currentWorkspace;
 
       journey = await queryRunner.manager.findOne(Journey, {
         where: {
@@ -1506,6 +1511,7 @@ export class JourneysService {
       const graph = new Graph();
       const steps = await this.stepsService.transactionalfindByJourneyID(
         account,
+        workspace,
         journey.id,
         queryRunner
       );
@@ -1536,6 +1542,7 @@ export class JourneysService {
       const { collectionName, count } =
         await this.customersService.getAudienceSize(
           account,
+          workspace,
           journey.inclusionCriteria,
           session,
           null
@@ -1565,6 +1572,7 @@ export class JourneysService {
       await queryRunner.commitTransaction();
       await this.enrollmentQueue.add('enroll', {
         account,
+        workspace,
         journey,
         count,
         collectionName,
@@ -1588,7 +1596,7 @@ export class JourneysService {
    * @returns
    */
   async stop(account: Account, id: string, session: string) {
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     try {
       const found: Journey = await this.journeysRepository.findOneBy({
@@ -1787,6 +1795,11 @@ export class JourneysService {
               return node.id === relevantEdges[0].target;
             })[0].data.stepId;
             metadata.channel = nodes[i].data['template']['type'];
+
+            metadata.connectionId = nodes[i].data.connectionId;
+            metadata.connectionIosId = nodes[i].data.connectionIosId;
+            metadata.sendingOptionId = nodes[i].data.sendingOptionId;
+
             metadata.customName = nodes[i].data['customName'] || 'Unknown name';
             if (nodes[i].data['template']['selected'])
               metadata.template = nodes[i].data['template']['selected']['id'];
@@ -2515,7 +2528,7 @@ export class JourneysService {
   }
 
   async getAllJourneyTags(account: Account, session: string): Promise<any> {
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     try {
       const tags = await this.dataSource.query(
@@ -2541,7 +2554,7 @@ export class JourneysService {
     session: string
   ): Promise<any> {
     if (!isUUID(id)) throw new BadRequestException('Id is not valid uuid');
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     try {
       const data = await this.dataSource.query(
@@ -2573,7 +2586,7 @@ export class JourneysService {
    *    false if rate limit not yet reached (aka new customer can be added)
    */
   async rateLimitEntryByUniqueEnrolledCustomers(
-    owner: Account,
+    workspace: Workspace,
     journey: Journey,
     queryRunner?: QueryRunner
   ) {
@@ -2582,7 +2595,7 @@ export class JourneysService {
       const maxEnrollment = parseInt(maxEntriesSettings.maxEntries);
       const currentEnrollment =
         await this.journeyLocationsService.getNumberOfEnrolledCustomers(
-          owner,
+          workspace,
           journey,
           queryRunner
         );

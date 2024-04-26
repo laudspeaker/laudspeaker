@@ -225,7 +225,7 @@ export class ImportProcessor extends WorkerHost {
     const withoutDuplicateKeys = Array.from(
       new Set(data.map((el) => el.pkKeyValue))
     );
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    const workspace = account.currentWorkspace;
 
     const foundExisting = await this.CustomerModel.find({
       workspaceId: workspace.id,

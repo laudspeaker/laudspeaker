@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import React from "react";
+import React, { useState } from "react";
 import { useAppSelector } from "store/hooks";
 import journeyBuilderImage from "./svg/journey-builder.svg";
 import messageChannelsImage from "./svg/message-channels.svg";
@@ -8,6 +8,9 @@ import { useNavigate } from "react-router-dom";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import { AppConfig } from "../../constants";
 import config, { JOURNEY_ONBOARDING_KEY } from "config";
+import StarsIcon from "assets/icons/StarsIcon";
+import CrossIcon from "assets/icons/CrossIcon";
+import BellIcon from "assets/icons/BellIcon";
 
 const Homev2 = () => {
   const navigate = useNavigate();
@@ -64,15 +67,80 @@ const Homev2 = () => {
     ? onboardingFixtures.indexOf(activeFixture)
     : -1;
 
+  const [isReadyToExpandBannerOpen, setIsReadyToExpandBannerOpen] =
+    useState(false);
+
+  const [isLimitReachedBannerOpen, setIsLimitReachedBannerOpen] =
+    useState(false);
+
   return (
     <div className="bg-[#F3F4F6] p-[40px] flex flex-col gap-5 font-inter font-normal text-[14px] text-[#111827] leading-[22px]">
+      {isReadyToExpandBannerOpen && (
+        <div className="w-full px-5 py-4 flex justify-between items-center bg-[#111827] text-white rounded-lg">
+          <div className="flex gap-5 items-center">
+            <div className="flex justify-center items-center w-9 h-9">
+              <StarsIcon />
+            </div>
+            <div className="flex flex-col gap-[2px]">
+              <div className="font-semibold text-[16px] leading-6">
+                Ready to expand?
+              </div>
+              <div>Unlock more potential with our paid plans</div>
+            </div>
+          </div>
+          <div className="flex gap-2.5 items-center">
+            <Button
+              type={ButtonType.PRIMARY}
+              onClick={() => navigate("/settings/workspace/billing")}
+            >
+              Upgrade now
+            </Button>
+            <button
+              className=""
+              onClick={() => setIsReadyToExpandBannerOpen(false)}
+            >
+              <CrossIcon />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isLimitReachedBannerOpen && (
+        <div className="w-full px-5 py-4 flex justify-between items-center bg-[#FEF9C3] rounded-lg">
+          <div className="flex gap-5 items-center">
+            <div className="flex justify-center items-center w-9 h-9">
+              <BellIcon />
+            </div>
+            <div className="flex flex-col gap-[2px]">
+              <div className="font-semibold text-[16px] leading-6">
+                Ready to expand?
+              </div>
+              <div>Unlock more potential with our paid plans</div>
+            </div>
+          </div>
+          <div className="flex gap-2.5 items-center">
+            <Button
+              type={ButtonType.PRIMARY}
+              onClick={() => navigate("/settings/workspace/billing")}
+            >
+              Upgrade now
+            </Button>
+            <button
+              className=""
+              onClick={() => setIsLimitReachedBannerOpen(false)}
+            >
+              <CrossIcon fill="#111827" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-4 items-end">
         <div className="text-[30px] font-roboto font-medium leading-[40px]">
           Hi, {firstName}
         </div>
         <div>{format(new Date(), "MM/dd/yyyy")}</div>
       </div>
-
       {config.get(JOURNEY_ONBOARDING_KEY) === "true" && (
         <div className="flex justify-between gap-5">
           <div className="flex flex-col gap-5 w-full">

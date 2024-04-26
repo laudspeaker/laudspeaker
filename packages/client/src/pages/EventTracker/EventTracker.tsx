@@ -1,5 +1,5 @@
 import Progress from "components/Progress";
-import React, { useEffect, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import ApiService from "services/api.service";
 import tickIcon from "assets/images/tick.svg";
@@ -33,7 +33,11 @@ interface CustomEvent {
   errorMessage?: string;
 }
 
-const EventTracker = () => {
+interface EventTrackerProps {
+  customerId?: string;
+}
+
+const EventTracker: FC<EventTrackerProps> = ({ customerId }) => {
   const [loading, setLoading] = useState(false);
 
   const [posthogEvents, setPosthogEvents] = useState<PosthogEvent[]>([]);
@@ -71,7 +75,7 @@ const EventTracker = () => {
       const { data } = await ApiService.get({
         url: `/events/custom-events?take=${itemsPerPage}&skip=${
           itemsPerPage * (currentPage - 1)
-        }&search=${searchName}`,
+        }&search=${searchName}${customerId ? `&customerId=${customerId}` : ""}`,
       });
       const {
         data: fetchedCustomEvents,

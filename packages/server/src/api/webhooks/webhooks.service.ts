@@ -26,6 +26,7 @@ import { Queue } from 'bullmq';
 import { Webhook } from 'svix';
 import fetch from 'node-fetch'; // Ensure you have node-fetch if you're using Node.js
 import { ProviderType } from '../events/events.preprocessor';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 
 export enum ClickHouseEventProvider {
   MAILGUN = 'mailgun',
@@ -73,8 +74,8 @@ export class WebhooksService {
     private readonly logger: Logger,
     @InjectRepository(Step)
     private stepRepository: Repository<Step>,
-    @InjectRepository(Account)
-    private accountRepository: Repository<Account>,
+    @InjectRepository(Workspace)
+    private workspacesRepository: Repository<Workspace>,
     @Inject(KafkaProducerService)
     private kafkaService: KafkaProducerService,
     @InjectQueue('events_pre')
@@ -314,7 +315,7 @@ export class WebhooksService {
           stepId: string;
           customerId: string;
           templateId: string;
-          accountId: string;
+          workspaceId: string;
         };
       };
     },
@@ -331,21 +332,20 @@ export class WebhooksService {
       message: {
         headers: { 'message-id': id },
       },
-      'user-variables': { stepId, customerId, templateId, accountId },
+      'user-variables': { stepId, customerId, templateId, workspaceId },
     } = body['event-data'];
 
-    const account = await this.accountRepository.findOne({
-      where: { id: accountId },
-      relations: ['teams.organization.workspaces'],
+    const workspace = await this.workspacesRepository.findOneBy({
+      id: workspaceId,
     });
-    if (!account) throw new NotFoundException('Account not found');
+
+    if (!workspace) throw new NotFoundException('Workspace not found');
 
     const value = signatureTimestamp + signatureToken;
 
     const hash = createHmac(
       'sha256',
-      account?.teams?.[0]?.organization?.workspaces?.[0]?.mailgunAPIKey ||
-        process.env.MAILGUN_API_KEY
+      workspace.mailgunAPIKey || process.env.MAILGUN_API_KEY
     )
       .update(value)
       .digest('hex');
@@ -362,7 +362,6 @@ export class WebhooksService {
 
     if (!stepId || !customerId || !templateId || !id) return;
 
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     const clickHouseRecord: ClickHouseMessage = {
       workspaceId: workspace.id,
       stepId,

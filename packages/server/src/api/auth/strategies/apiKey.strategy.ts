@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Inject, Injectable } from '@nestjs/common';
 import { AuthService } from '../auth.service';
 import { Account } from '../../accounts/entities/accounts.entity';
-import { Workspaces } from '../../workspaces/entities/workspaces.entity';
+import { Workspace } from '../../workspaces/entities/workspace.entity';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
@@ -17,7 +17,7 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
       { header: 'Authorization', prefix: 'Api-Key ' },
       true,
       async (apikey, done, req) => {
-        let checkKey: { account: Account; workspace: Workspaces };
+        let checkKey: { account: Account; workspace: Workspace };
         try {
           checkKey = await this.cacheManager.get(apikey);
           if (!checkKey) {

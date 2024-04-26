@@ -16,6 +16,7 @@ import { Repository } from 'typeorm';
 import { Resend } from 'resend';
 import { MIMEType } from '@/api/templates/entities/template.entity';
 import { randomUUID } from 'crypto';
+import { Workspace } from '@/api/workspaces/entities/workspace.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Inject, Logger } from '@nestjs/common';
 
@@ -30,6 +31,8 @@ export enum MessageType {
 }
 
 export class MessageSender {
+  private logger = new Logger(MessageSender.name);
+
   private client: WebClient = new WebClient();
   private MAXIMUM_SMS_LENGTH = 1600;
   private MAXIMUM_PUSH_LENGTH = 256;
@@ -54,7 +57,7 @@ export class MessageSender {
         job.stepID,
         job.customerID,
         job.templateID,
-        job.accountID,
+        job.workspaceID,
         job.email,
         job.domain,
         job.trackingEmail,
@@ -73,7 +76,7 @@ export class MessageSender {
         job.stepID,
         job.customerID,
         job.templateID,
-        job.accountID,
+        job.workspaceID,
         job.trackingEmail,
         job.session
       );
@@ -89,7 +92,7 @@ export class MessageSender {
         job.customerID,
         job.stepID,
         job.filteredTags,
-        job.accountID,
+        job.workspaceID,
         job.quietHours,
         job.kvPairs,
         job.session
@@ -106,7 +109,7 @@ export class MessageSender {
         job.customerID,
         job.stepID,
         job.filteredTags,
-        job.accountID,
+        job.workspaceID,
         job.quietHours,
         job.kvPairs,
         job.session
@@ -115,7 +118,7 @@ export class MessageSender {
     [MessageType.SLACK]: async (job) => {
       return await this.handleSlack(
         job.templateID,
-        job.accountID,
+        job.workspaceID,
         job.stepID,
         job.methodName,
         job.args,
@@ -131,11 +134,8 @@ export class MessageSender {
     },
   };
 
-  constructor(
-    private readonly logger: Logger,
-    private accountRepository: Repository<Account>
-  ) {
-    this.accountRepository = accountRepository;
+  constructor(private workspacesRepository: Repository<Workspace>) {
+    this.workspacesRepository = workspacesRepository;
   }
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -231,7 +231,7 @@ export class MessageSender {
     stepID: string,
     customerID: string,
     templateID: string,
-    accountID: string,
+    workspaceID: string,
     email?: string,
     domain?: string,
     trackingEmail?: string,
@@ -244,11 +244,9 @@ export class MessageSender {
     let textWithInsertedTags, subjectWithInsertedTags: string | undefined;
     let ret: ClickHouseMessage[];
 
-    const account = await this.accountRepository.findOne({
-      where: { id: accountID },
-      relations: ['teams.organization.workspaces'],
+    const workspace = await this.workspacesRepository.findOneBy({
+      id: workspaceID,
     });
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     try {
       if (text)
         textWithInsertedTags = await this.tagEngine.parseAndRender(
@@ -297,6 +295,7 @@ export class MessageSender {
                 stepId: stepID,
                 customerId: customerID,
                 templateId: templateID,
+                workspaceId: workspace.id,
               },
               cc: cc,
             },
@@ -311,7 +310,7 @@ export class MessageSender {
           })}}`,
           this.handleEmail.name,
           session,
-          account.email
+          workspace.id
         );
         msg = sendgridMessage;
         ret = [
@@ -350,8 +349,8 @@ export class MessageSender {
               value: String(templateID),
             },
             {
-              name: 'accountId',
-              value: accountID,
+              name: 'workspaceId',
+              value: workspaceID,
             },
           ],
         });
@@ -364,7 +363,7 @@ export class MessageSender {
           })}}`,
           this.handleEmail.name,
           session,
-          account.email
+          workspace.id
         );
         msg = resendMessage;
         ret = [
@@ -386,7 +385,7 @@ export class MessageSender {
         const mailgun = new Mailgun(formData);
         const mg = mailgun.client({ username: 'api', key: key });
         const mailgunMessage = await mg.messages.create(domain, {
-          from: `${from} <${email}@${domain}>`,
+          from: `${from} <${email}>`,
           to: to,
           cc: cc,
           subject: subjectWithInsertedTags,
@@ -405,7 +404,7 @@ export class MessageSender {
           })}}`,
           this.handleEmail.name,
           session,
-          account.email
+          workspace.id
         );
         msg = mailgunMessage;
         ret = [
@@ -467,7 +466,7 @@ export class MessageSender {
     stepID: string,
     customerID: string,
     templateID: string,
-    accountID: string,
+    workspaceID: string,
     trackingEmail: string,
     session: string
   ): Promise<ClickHouseMessage[]> {
@@ -475,11 +474,10 @@ export class MessageSender {
       return;
     }
     let textWithInsertedTags: string | undefined;
-    const account = await this.accountRepository.findOne({
-      where: { id: accountID },
-      relations: ['teams.organization.workspaces'],
+
+    const workspace = await this.workspacesRepository.findOneBy({
+      id: workspaceID,
     });
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     let ret: ClickHouseMessage[];
     try {
       if (text) {
@@ -521,7 +519,7 @@ export class MessageSender {
       })}}`,
       this.handleSMS.name,
       session,
-      account.email
+      workspace.id
     );
     ret = [
       {
@@ -575,7 +573,7 @@ export class MessageSender {
     customerID: string,
     stepID: string,
     filteredTags: any,
-    accountID: string,
+    workspaceID: string,
     quietHours: any,
     kvPairs: { key: string; value: string }[],
     session: string
@@ -586,11 +584,9 @@ export class MessageSender {
     let textWithInsertedTags, titleWithInsertedTags: string | undefined;
     let ret: ClickHouseMessage[];
 
-    const account = await this.accountRepository.findOne({
-      where: { id: accountID },
-      relations: ['teams.organization.workspaces'],
+    const workspace = await this.workspacesRepository.findOneBy({
+      id: workspaceID,
     });
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     try {
       textWithInsertedTags = await this.tagEngine.parseAndRender(
@@ -621,14 +617,14 @@ export class MessageSender {
     }
     let firebaseApp: admin.app.App;
     try {
-      firebaseApp = admin.app(accountID);
+      firebaseApp = admin.app(workspaceID);
     } catch (e: any) {
       if (e.code == 'app/no-app') {
         firebaseApp = admin.initializeApp(
           {
             credential: admin.credential.cert(firebaseCredentials),
           },
-          accountID
+          workspaceID
         );
       } else {
         return [
@@ -649,7 +645,7 @@ export class MessageSender {
 
     const messaging = admin.messaging(firebaseApp);
 
-    let data = {
+    const data = {
       stepID,
       customerID,
       messageID: randomUUID(),
@@ -697,7 +693,7 @@ export class MessageSender {
       })}}`,
       this.handleIOS.name,
       session,
-      account.email
+      workspace.id
     );
     ret = [
       {
@@ -738,7 +734,7 @@ export class MessageSender {
    * @param customerID
    * @param stepID
    * @param filteredTags
-   * @param accountID
+   * @param workspaceID
    * @returns
    */
   async handleAndroid(
@@ -751,7 +747,7 @@ export class MessageSender {
     customerID: string,
     stepID: string,
     filteredTags: any,
-    accountID: string,
+    workspaceID: string,
     quietHours: any,
     kvPairs: { key: string; value: string }[],
     session: string
@@ -759,11 +755,9 @@ export class MessageSender {
     if (!androidDeviceToken) {
       return;
     }
-    const account = await this.accountRepository.findOne({
-      where: { id: accountID },
-      relations: ['teams.organization.workspaces'],
+    const workspace = await this.workspacesRepository.findOneBy({
+      id: workspaceID,
     });
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     let textWithInsertedTags, titleWithInsertedTags: string | undefined;
     let ret: ClickHouseMessage[];
     try {
@@ -795,14 +789,14 @@ export class MessageSender {
     }
     let firebaseApp: admin.app.App;
     try {
-      firebaseApp = admin.app(accountID);
+      firebaseApp = admin.app(workspaceID);
     } catch (e: any) {
       if (e.code == 'app/no-app') {
         firebaseApp = admin.initializeApp(
           {
             credential: admin.credential.cert(firebaseCredentials),
           },
-          accountID
+          workspaceID
         );
       } else {
         return [
@@ -823,7 +817,7 @@ export class MessageSender {
 
     const messaging = admin.messaging(firebaseApp);
 
-    let data = {
+    const data = {
       title: titleWithInsertedTags.slice(0, this.MAXIMUM_PUSH_TITLE_LENGTH),
       body: textWithInsertedTags.slice(0, this.MAXIMUM_PUSH_LENGTH),
       stepID,
@@ -867,7 +861,7 @@ export class MessageSender {
       })}}`,
       this.handleAndroid.name,
       session,
-      account.email
+      workspace.id
     );
     ret = [
       {
@@ -900,7 +894,7 @@ export class MessageSender {
   /**
    *
    * @param templateID
-   * @param accountID
+   * @param workspaceID
    * @param stepID
    * @param methodName
    * @param args
@@ -910,7 +904,7 @@ export class MessageSender {
    */
   async handleSlack(
     templateID: string,
-    accountID: string,
+    workspaceID: string,
     stepID: string,
     methodName: string,
     args: any,
@@ -918,11 +912,9 @@ export class MessageSender {
     customerID: string,
     trackingEmail: string
   ): Promise<ClickHouseMessage[]> {
-    const account = await this.accountRepository.findOne({
-      where: { id: accountID },
-      relations: ['teams.organization.workspaces'],
+    const workspace = await this.workspacesRepository.findOneBy({
+      id: workspaceID,
     });
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     try {
       if (args.text) {
         args.text = await this.tagEngine.parseAndRender(args.text, tags || {}, {

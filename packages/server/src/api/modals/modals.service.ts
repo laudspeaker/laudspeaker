@@ -15,6 +15,7 @@ import { ModalEvent } from './entities/modal-event.entity';
 import { cleanTagsForSending } from '../../shared/utils/helpers';
 import { Liquid } from 'liquidjs';
 import recursivelyUpdateObject from '../../utils/recursivelyUpdateObject';
+import { WorkspacesService } from '../workspaces/workspaces.service';
 
 @Injectable()
 export class ModalsService {
@@ -23,7 +24,8 @@ export class ModalsService {
   private tagEngine = new Liquid();
 
   constructor(
-    private accountsService: AccountsService,
+    @Inject(forwardRef(() => WorkspacesService))
+    private workspacesService: WorkspacesService,
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectRepository(ModalEvent)
@@ -44,15 +46,12 @@ export class ModalsService {
   }
 
   public async validateModalAccess(apiKey: string, customerId: string) {
-    const account = await this.accountsService.findOneByAPIKey(apiKey);
-    if (!account) throw new NotFoundException('Account not found');
+    const workspace = await this.workspacesService.findOneByAPIKey(apiKey);
 
     const customer = await this.customersService.CustomerModel.findById(
       customerId
     );
     if (!customer) throw new NotFoundException('Customer not found');
-
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     if (customer.workspaceId !== workspace.id)
       throw new ForbiddenException("Customer does't belongs to account");

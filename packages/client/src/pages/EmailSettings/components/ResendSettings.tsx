@@ -7,6 +7,8 @@ import {
   setResendDomainsList,
   setResendSettingsPrivateApiKey,
 } from "reducers/settings.reducer";
+import TrashIcon from "assets/icons/TrashIcon";
+import Button, { ButtonType } from "components/Elements/Buttonv2";
 
 const ResendSettings: FC<SendingServiceSettingsProps> = ({
   formData,
@@ -17,11 +19,9 @@ const ResendSettings: FC<SendingServiceSettingsProps> = ({
   const [possibleDomains, setPossibleDomains] = useState<string[]>([]);
 
   const callDomains = async () => {
-    if (formData.resendAPIKey) {
-      dispatch(setResendSettingsPrivateApiKey(formData.resendAPIKey));
-      const response = await dispatch(
-        setResendDomainsList(formData.resendAPIKey)
-      );
+    if (formData.apiKey) {
+      dispatch(setResendSettingsPrivateApiKey(formData.apiKey));
+      const response = await dispatch(setResendDomainsList(formData.apiKey));
       if (response?.data) {
         setPossibleDomains(
           response?.data?.map((item: { name: string }) => item.name) || []
@@ -32,7 +32,7 @@ const ResendSettings: FC<SendingServiceSettingsProps> = ({
 
   useEffect(() => {
     callDomains();
-  }, [formData.resendAPIKey]);
+  }, [formData.apiKey]);
   return (
     <>
       <div className="flex flex-col gap-[5px]">
@@ -41,10 +41,8 @@ const ResendSettings: FC<SendingServiceSettingsProps> = ({
           id="resend-api-key-input"
           wrapperClassName="!w-full"
           className="w-full"
-          value={formData.resendAPIKey}
-          onChange={(value) =>
-            setFormData({ ...formData, resendAPIKey: value })
-          }
+          value={formData.apiKey}
+          onChange={(value) => setFormData({ ...formData, apiKey: value })}
           type="password"
           placeholder="API Key"
         />
@@ -56,9 +54,9 @@ const ResendSettings: FC<SendingServiceSettingsProps> = ({
           id="resend-api-key-input"
           wrapperClassName="!w-full"
           className="w-full"
-          value={formData.resendSigningSecret}
+          value={formData.signingSecret}
           onChange={(value) =>
-            setFormData({ ...formData, resendSigningSecret: value })
+            setFormData({ ...formData, signingSecret: value })
           }
           type="password"
           placeholder="Signing Secret"
@@ -73,41 +71,79 @@ const ResendSettings: FC<SendingServiceSettingsProps> = ({
             key: domain,
             title: domain,
           }))}
-          value={formData.resendSendingDomain}
+          value={formData.sendingDomain}
           onChange={(value) =>
-            setFormData({ ...formData, resendSendingDomain: value })
+            setFormData({ ...formData, sendingDomain: value })
           }
           placeholder="Email domain"
         />
       </div>
 
-      <div className="flex flex-col gap-[5px]">
-        <div>Sending name</div>
-        <Input
-          id="resend-sending-name-input"
-          wrapperClassName="!w-full"
-          className="w-full"
-          value={formData.resendSendingName}
-          onChange={(value) =>
-            setFormData({ ...formData, resendSendingName: value })
-          }
-          placeholder="Display name"
-        />
-      </div>
+      {formData.sendingOptions.length !== 0 && (
+        <div className="h-[1px] w-full bg-black" />
+      )}
 
-      <div className="flex flex-col gap-[5px]">
-        <div>Sending email</div>
-        <Input
-          id="resend-sending-email-input"
-          wrapperClassName="!w-full"
-          className="w-full"
-          value={formData.resendSendingEmail}
-          onChange={(value) =>
-            setFormData({ ...formData, resendSendingEmail: value })
-          }
-          placeholder="sender@example.com"
-        />
-      </div>
+      {formData.sendingOptions.map((option, i) => (
+        <div className="flex items-center gap-2.5">
+          <div className="flex flex-col gap-[5px] w-full">
+            <div>Sending email</div>
+            <Input
+              id="mailgun-sending-email"
+              //pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" // Regular expression for email validation
+              //title="Please enter a valid email address."
+              type="email" // Specifies that the input should be treated as an email address
+              wrapperClassName="!w-full"
+              className="w-full"
+              value={option.sendingEmail}
+              onChange={(value) => {
+                formData.sendingOptions[i].sendingEmail = value;
+                setFormData({ ...formData });
+              }}
+              placeholder="example@email.com"
+            />
+          </div>
+
+          <div className="flex flex-col gap-[5px] w-full">
+            <div>Sending name</div>
+            <Input
+              id="mailgun-sending-name"
+              wrapperClassName="!w-full"
+              className="w-full"
+              value={option.sendingName || ""}
+              onChange={(value) => {
+                formData.sendingOptions[i].sendingName = value;
+                setFormData({ ...formData });
+              }}
+              placeholder="Sending email"
+            />
+          </div>
+
+          <div
+            className="cursor-pointer"
+            onClick={() => {
+              formData.sendingOptions.splice(i, 1);
+              setFormData({ ...formData });
+            }}
+          >
+            <TrashIcon />
+          </div>
+        </div>
+      ))}
+
+      <Button
+        type={ButtonType.SECONDARY}
+        onClick={() =>
+          setFormData({
+            ...formData,
+            sendingOptions: [
+              ...formData.sendingOptions,
+              { sendingEmail: "", sendingName: "" },
+            ],
+          })
+        }
+      >
+        Add sending option
+      </Button>
     </>
   );
 };

@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 import {
   Inject,
   Injectable,
@@ -25,6 +26,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { ProviderType } from '../events/events.preprocessor';
 import { KEYS_TO_SKIP } from '@/utils/customer-key-name-validator';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 
 const containsUnskippedKeys = (updateDescription) => {
   // Combine keys from updatedFields, removedFields, and the fields of truncatedArrays
@@ -217,14 +219,21 @@ export class CustomersConsumerService implements OnApplicationBootstrap {
                 customer.workspaceId,
                 session
               );
+
+            const workspace = await queryRunner.manager.findOneBy(Workspace, {
+              id: customer.workspaceId,
+            });
+
             await this.segmentsService.updateCustomerSegments(
               account,
+              workspace,
               customer._id,
               session,
               queryRunner
             );
             await this.journeysService.updateEnrollmentForCustomer(
               account,
+              workspace,
               customer._id,
               message.operationType === 'insert' ? 'NEW' : 'CHANGE',
               session,

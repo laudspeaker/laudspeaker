@@ -18,17 +18,13 @@ import { useDispatch } from "react-redux";
 import DrawerLayout from "components/DrawerLayout";
 import Verify from "pages/Verify";
 import SmsBuilder from "pages/SmsBuilder";
-import Database from "pages/Integrations/Database";
-import Integrations from "pages/Integrations/Integrations";
 import Modal from "components/Elements/Modal";
 import ApiService from "services/api.service";
 import Account from "types/Account";
 import { GenericButton } from "components/Elements";
 import ResetPassword from "pages/ResetPassword";
-import ModalBuilder from "pages/ModalBuilder";
 import WebhookBuilder from "pages/WebhookBuilder";
 import EventTracker from "pages/EventTracker";
-import ModalBackgroundProvider from "pages/ModalBuilder/ModalBackgroundProvider";
 import FlowBuilderv2 from "pages/FlowBuilderv2";
 import FlowViewerv2 from "pages/FlowViewerv2";
 import Onboardingv2 from "pages/Onboardingv2";
@@ -48,7 +44,6 @@ import JavascriptSnippetSettings from "pages/JavascriptSnippetSettings";
 import CustomModalSettings from "pages/CustomModalSettings";
 import TrackerTemplateTable from "pages/TrackerTemplateTable";
 import { LaudspeakerProvider } from "@laudspeaker/react";
-import AppConfig from "constants/app";
 import Personv2 from "pages/Personv2";
 import SegmentCreation from "pages/SegmentCreation/index";
 import PushBuilder from "pages/PushBuilder/PushBuilder";
@@ -64,6 +59,11 @@ import ManualSegmentCreator from "pages/ManualSegmentCreator";
 import SegmentViewer from "pages/SegmentViewer";
 import DataTransferTable from "pages/DataTransferTable";
 import DataTransfer from "pages/DataTransfer";
+import WorkspaceAccountSettings from "pages/WorkspaceAccountSettings";
+import WorkspaceDrawerLayout from "components/WorkspaceDrawerLayout";
+import WorkspaceOrganizationSettings from "pages/WorkspaceOrganizationSettings";
+import WorkspaceManage from "pages/WorkspaceManage";
+import Billing from "pages/Billing";
 
 interface IProtected {
   children: ReactElement;
@@ -269,7 +269,7 @@ const RouteComponent: React.FC = () => {
             expectedOnboarding: data.expectedOnboarding,
             verified: data.verified,
             pk: data.workspace.pk,
-            pushPlatforms: data.workspace.pushPlatforms,
+            // pushPlatforms: data.workspace.pushPlatforms,
           },
         });
       } catch (e) {
@@ -308,6 +308,7 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
+
         <Route
           path="/verify-email/:id"
           element={
@@ -769,6 +770,54 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
+          path="/settings/workspace/account"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <WorkspaceDrawerLayout>
+                  <WorkspaceAccountSettings />
+                </WorkspaceDrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/workspace/billing"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <WorkspaceDrawerLayout>
+                  <Billing />
+                </WorkspaceDrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/workspace/organization"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <WorkspaceDrawerLayout>
+                  <WorkspaceOrganizationSettings />
+                </WorkspaceDrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/workspace/manage"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <WorkspaceDrawerLayout>
+                  <WorkspaceManage />
+                </WorkspaceDrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
           path="/settings"
           element={
             <Protected>
@@ -782,6 +831,18 @@ const RouteComponent: React.FC = () => {
         />
         <Route
           path="/settings/email"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <EmailSettings />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/email/:service/:id"
           element={
             <Protected>
               <VerificationProtected>
@@ -807,7 +868,7 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/settings/sms"
+          path="/settings/twilio/:id"
           element={
             <Protected>
               <VerificationProtected>
@@ -819,7 +880,7 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/settings/push"
+          path="/settings/push/:id"
           element={
             <Protected>
               <VerificationProtected>

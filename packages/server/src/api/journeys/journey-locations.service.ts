@@ -20,6 +20,7 @@ import { date } from 'liquidjs/dist/builtin/filters';
 import { randomUUID } from 'crypto';
 import { Readable } from 'node:stream';
 import * as copyFrom from 'pg-copy-streams';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 
 const LOCATION_LOCK_TIMEOUT_MS = +process.env.LOCATION_LOCK_TIMEOUT_MS;
 
@@ -120,6 +121,7 @@ export class JourneyLocationsService {
     step: Step,
     session: string,
     account: Account,
+    workspace: Workspace,
     queryRunner?: QueryRunner
   ) {
     this.log(
@@ -130,8 +132,6 @@ export class JourneyLocationsService {
       session,
       account.email
     );
-
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     if (queryRunner) {
       // Step 1: Check if customer is already enrolled in Journey; if so, throw error
@@ -206,11 +206,11 @@ export class JourneyLocationsService {
     step: Step,
     session: string,
     account: Account,
+    workspace: Workspace,
     queryRunner: QueryRunner,
     client: any
   ): Promise<void> {
     if (!customers.length) return;
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     const moveStarted = Date.now(),
       stepEntry = Date.now(),
       journeyEntry = Date.now();
@@ -267,7 +267,8 @@ export class JourneyLocationsService {
     from: Step,
     to: Step,
     session: string,
-    account?: Account,
+    account: Account,
+    workspace: Workspace,
     queryRunner?: QueryRunner
   ) {
     const location = await this.findForWrite(
@@ -281,7 +282,15 @@ export class JourneyLocationsService {
       throw new Error(
         `Customer ${location.customer} is not in journey ${location.journey}`
       );
-    await this.move(location, from, to, session, account, queryRunner);
+    await this.move(
+      location,
+      from,
+      to,
+      session,
+      account,
+      workspace,
+      queryRunner
+    );
   }
 
   /**
@@ -429,7 +438,8 @@ export class JourneyLocationsService {
     from: Step,
     to: Step,
     session: string,
-    account?: Account,
+    account: Account,
+    workspace: Workspace,
     queryRunner?: QueryRunner
   ) {
     this.log(
@@ -447,8 +457,6 @@ export class JourneyLocationsService {
       session,
       account.email
     );
-
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     if (String(location.step) !== from.id) {
       this.warn(
@@ -504,7 +512,8 @@ export class JourneyLocationsService {
     journey: Journey,
     customer: CustomerDocument,
     session: string,
-    account?: Account,
+    account: Account,
+    workspace: Workspace,
     queryRunner?: QueryRunner
   ): Promise<JourneyLocation> {
     this.log(
@@ -515,7 +524,6 @@ export class JourneyLocationsService {
       session,
       account?.email
     );
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     if (queryRunner) {
       return await queryRunner.manager.findOne(JourneyLocation, {
@@ -673,7 +681,8 @@ export class JourneyLocationsService {
     journey: Journey,
     customer: CustomerDocument,
     session: string,
-    account?: Account,
+    account: Account,
+    workspace: Workspace,
     queryRunner?: QueryRunner
   ) {
     const location = await this.findForWrite(
@@ -687,7 +696,7 @@ export class JourneyLocationsService {
       throw new Error(
         `Customer ${location.customer} is not in journey ${location.journey}`
       );
-    await this.lock(location, session, account, queryRunner);
+    await this.lock(location, session, account, workspace, queryRunner);
   }
 
   /**
@@ -702,7 +711,8 @@ export class JourneyLocationsService {
   async lock(
     location: JourneyLocation,
     session: string,
-    account?: Account,
+    account: Account,
+    workspace: Workspace,
     queryRunner?: QueryRunner
   ) {
     this.log(
@@ -713,7 +723,6 @@ export class JourneyLocationsService {
       session,
       account?.email
     );
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     if (
       location.moveStarted &&
@@ -779,13 +788,13 @@ export class JourneyLocationsService {
    * @returns number of unique customers enrolled in a specific journey
    */
   async getNumberOfEnrolledCustomers(
-    account: Account,
+    workspace: Workspace,
     journey: Journey,
     runner?: QueryRunner
   ) {
     const queryCriteria: FindManyOptions<JourneyLocation> = {
       where: {
-        workspace: { id: account.teams?.[0]?.organization?.workspaces?.[0].id },
+        workspace: { id: workspace.id },
         journey: journey.id,
       },
     };

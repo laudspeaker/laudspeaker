@@ -1,7 +1,7 @@
 import { Inject, Injectable, LoggerService } from '@nestjs/common';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import mongoose, { Model } from 'mongoose';
+import { Model } from 'mongoose';
 import {
   Customer,
   CustomerDocument,
@@ -25,32 +25,15 @@ import {
   IntegrationStatus,
 } from './api/integrations/entities/integration.entity';
 import { Recovery } from './api/auth/entities/recovery.entity';
-import { WebhookJobsService } from './api/webhook-jobs/webhook-jobs.service';
-import {
-  WebhookJobStatus,
-  WebhookProvider,
-} from './api/webhook-jobs/entities/webhook-job.entity';
 import { AccountsService } from './api/accounts/accounts.service';
-import Mailgun from 'mailgun.js';
-import formData from 'form-data';
 import { createClient } from '@clickhouse/client';
-import {
-  ClickHouseEventProvider,
-  ClickHouseMessage,
-} from './api/webhooks/webhooks.service';
-import twilio from 'twilio';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import client from '@sendgrid/client';
-import { ModalsService } from './api/modals/modals.service';
 import { randomUUID } from 'crypto';
 import { StepsService } from './api/steps/steps.service';
 import { StepType } from './api/steps/types/step.interface';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Job, Queue } from 'bullmq';
+import { Queue } from 'bullmq';
 import { JourneysService } from './api/journeys/journeys.service';
-import { RedlockService } from './api/redlock/redlock.service';
-import { Lock } from 'redlock';
-import * as _ from 'lodash';
 import { JourneyLocationsService } from './api/journeys/journey-locations.service';
 import { Journey } from './api/journeys/entities/journey.entity';
 import {
@@ -59,12 +42,11 @@ import {
   RecurrenceEndsOptions,
 } from './api/journeys/types/additional-journey-settings.interface';
 import { OrganizationInvites } from './api/organizations/entities/organization-invites.entity';
-import { JourneyLocation } from './api/journeys/entities/journey-location.entity';
-import { Requeue } from './api/steps/entities/requeue.entity';
 import { KEYS_TO_SKIP } from './utils/customer-key-name-validator';
 import { SegmentsService } from './api/segments/segments.service';
 import { CustomersService } from './api/customers/customers.service';
 import { Temporal } from '@js-temporal/polyfill';
+import { WorkspacesService } from './api/workspaces/workspaces.service';
 import * as os from 'os';
 import * as Sentry from '@sentry/node';
 
@@ -114,17 +96,14 @@ export class CronService {
     @Inject(CustomersService) private customersService: CustomersService,
     @Inject(IntegrationsService)
     private integrationsService: IntegrationsService,
-    @Inject(WebhookJobsService) private webhookJobsService: WebhookJobsService,
     @Inject(AccountsService) private accountsService: AccountsService,
-    @Inject(ModalsService) private modalsService: ModalsService,
+    @Inject(WorkspacesService)
+    private workspacesService: WorkspacesService,
     @Inject(StepsService) private stepsService: StepsService,
     @Inject(JourneyLocationsService)
     private journeyLocationsService: JourneyLocationsService,
     @InjectQueue('transition') private readonly transitionQueue: Queue,
-    @InjectQueue('start') private readonly startQueue: Queue,
-    @Inject(RedlockService)
-    private readonly redlockService: RedlockService,
-    @InjectConnection() private readonly connection: mongoose.Connection
+    @InjectQueue('start') private readonly startQueue: Queue
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -265,7 +244,7 @@ export class CronService {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async minuteTasks() {
-    return Sentry.startSpan({ name: "CronService.minuteTasks" }, async () => {
+    return Sentry.startSpan({ name: 'CronService.minuteTasks' }, async () => {
       const session = randomUUID();
       // Time based steps
       let timeBasedErr: any;
@@ -288,6 +267,8 @@ export class CronService {
               session,
               queryRunner
             );
+          const workspace = journeys[journeyIndex].workspace;
+
           for (
             let locationsIndex = 0;
             locationsIndex < locations.length;
@@ -297,6 +278,7 @@ export class CronService {
               String(locations[locationsIndex].step),
               session,
               null,
+              workspace,
               queryRunner
             );
             let branch;
@@ -314,7 +296,9 @@ export class CronService {
                 if (step.metadata.timeBranch.delay) {
                   if (
                     Date.now() - locations[locationsIndex].stepEntry <
-                    Temporal.Duration.from(step.metadata.timeBranch.delay).total({
+                    Temporal.Duration.from(
+                      step.metadata.timeBranch.delay
+                    ).total({
                       unit: 'millisecond',
                     })
                   ) {
@@ -381,7 +365,9 @@ export class CronService {
                   const now = new Date();
 
                   const startTime = new Date(now.getTime());
-                  startTime.setHours(step.metadata.window.fromTime.split(':')[0]);
+                  startTime.setHours(
+                    step.metadata.window.fromTime.split(':')[0]
+                  );
                   startTime.setMinutes(
                     step.metadata.window.fromTime.split(':')[1]
                   );
@@ -447,6 +433,7 @@ export class CronService {
                 locations[locationsIndex],
                 session,
                 undefined,
+                workspace,
                 queryRunner
               );
               timeBasedJobs.push({
@@ -459,6 +446,7 @@ export class CronService {
                       session
                     ),
                   session: session,
+                  workspace: step.workspace,
                   journey: journeys[journeyIndex],
                   customer: await this.customerModel
                     .findById(locations[locationsIndex].customer)
@@ -562,12 +550,14 @@ export class CronService {
             customer,
             session,
             requeue?.workspace?.organization?.owner,
+            requeue.workspace,
             queryRunner
           );
           await bulkJobs.push({
             name: StepType.MESSAGE,
             data: {
               owner: requeue.workspace?.organization?.owner,
+              workspace: requeue.workspace,
               journey: requeue.step.journey,
               step: requeue.step,
               session,
@@ -615,130 +605,144 @@ export class CronService {
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleEventKeysCron() {
-    return Sentry.startSpan({ name: "CronService.handleEventKeysCron" }, async () => {
-      const session = randomUUID();
-      try {
-        let current = 0;
-        const documentsCount = await this.eventModel
-          .estimatedDocumentCount()
-          .exec();
-
-        const keys: Record<string, { value: any; workspaceId: string }[]> = {};
-
-        while (current < documentsCount) {
-          const batch = await this.eventModel
-            .find()
-            .skip(current)
-            .limit(BATCH_SIZE)
+    return Sentry.startSpan(
+      { name: 'CronService.handleEventKeysCron' },
+      async () => {
+        const session = randomUUID();
+        try {
+          let current = 0;
+          const documentsCount = await this.eventModel
+            .estimatedDocumentCount()
             .exec();
 
-          batch.forEach((event) => {
-            const workspaceId = event.workspaceId;
-            const obj = (event.toObject() as any)?.event || {};
-            for (const key of Object.keys(obj)) {
-              if (KEYS_TO_SKIP.includes(key)) continue;
+          const keys: Record<string, { value: any; workspaceId: string }[]> =
+            {};
 
-              if (keys[key]) {
-                keys[key].push({ value: obj[key], workspaceId });
-                continue;
-              }
-
-              keys[key] = [{ value: obj[key], workspaceId }];
-            }
-          });
-
-          current += BATCH_SIZE;
-        }
-
-        for (const key of Object.keys(keys)) {
-          const validItems = keys[key].filter(
-            (item) =>
-              item.value !== '' && item.value !== undefined && item.value !== null
-          );
-
-          if (!validItems.length) continue;
-
-          let batchToSave = [];
-          for (const validItem of validItems) {
-            const keyType = getType(validItem.value);
-            const isArray = keyType.isArray();
-            let type = isArray ? getType(validItem.value[0]).name : keyType.name;
-
-            if (type === 'String') {
-              if (isEmail(validItem.value)) type = 'Email';
-              if (isDateString(validItem.value)) type = 'Date';
-            }
-
-            const eventKey = {
-              key,
-              type,
-              isArray,
-              workspaceId: validItem.workspaceId,
-            };
-
-            const foundEventKey = await this.eventKeysModel
-              .findOne(eventKey)
+          while (current < documentsCount) {
+            const batch = await this.eventModel
+              .find()
+              .skip(current)
+              .limit(BATCH_SIZE)
               .exec();
 
-            if (!foundEventKey) {
-              batchToSave.push(eventKey);
-            }
+            batch.forEach((event) => {
+              const workspaceId = event.workspaceId;
+              const obj = (event.toObject() as any)?.event || {};
+              for (const key of Object.keys(obj)) {
+                if (KEYS_TO_SKIP.includes(key)) continue;
 
-            if (batchToSave.length > BATCH_SIZE) {
-              await this.eventKeysModel.insertMany(batchToSave);
-              batchToSave = [];
-            }
+                if (keys[key]) {
+                  keys[key].push({ value: obj[key], workspaceId });
+                  continue;
+                }
+
+                keys[key] = [{ value: obj[key], workspaceId }];
+              }
+            });
+
+            current += BATCH_SIZE;
           }
-          await this.eventKeysModel.insertMany(batchToSave);
+
+          for (const key of Object.keys(keys)) {
+            const validItems = keys[key].filter(
+              (item) =>
+                item.value !== '' &&
+                item.value !== undefined &&
+                item.value !== null
+            );
+
+            if (!validItems.length) continue;
+
+            let batchToSave = [];
+            for (const validItem of validItems) {
+              const keyType = getType(validItem.value);
+              const isArray = keyType.isArray();
+              let type = isArray
+                ? getType(validItem.value[0]).name
+                : keyType.name;
+
+              if (type === 'String') {
+                if (isEmail(validItem.value)) type = 'Email';
+                if (isDateString(validItem.value)) type = 'Date';
+              }
+
+              const eventKey = {
+                key,
+                type,
+                isArray,
+                workspaceId: validItem.workspaceId,
+              };
+
+              const foundEventKey = await this.eventKeysModel
+                .findOne(eventKey)
+                .exec();
+
+              if (!foundEventKey) {
+                batchToSave.push(eventKey);
+              }
+
+              if (batchToSave.length > BATCH_SIZE) {
+                await this.eventKeysModel.insertMany(batchToSave);
+                batchToSave = [];
+              }
+            }
+            await this.eventKeysModel.insertMany(batchToSave);
+          }
+        } catch (e) {
+          this.error(e, this.handleEventKeysCron.name, session);
         }
-      } catch (e) {
-        this.error(e, this.handleEventKeysCron.name, session);
       }
-    });
+    );
   }
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleVerificationCheck() {
-    return Sentry.startSpan({ name: "CronService.handleVerificationCheck" }, async () => {
-      const session = randomUUID();
-      try {
-        await this.verificationRepository
-          .createQueryBuilder()
-          .where(
-            `verification.status = 'sent' AND now() > verification."createdAt"::TIMESTAMP + INTERVAL '1 HOUR'`
-          )
-          .update({ status: 'expired' })
-          .execute();
-      } catch (e) {
-        this.error(e, this.handleVerificationCheck.name, session);
+    return Sentry.startSpan(
+      { name: 'CronService.handleVerificationCheck' },
+      async () => {
+        const session = randomUUID();
+        try {
+          await this.verificationRepository
+            .createQueryBuilder()
+            .where(
+              `verification.status = 'sent' AND now() > verification."createdAt"::TIMESTAMP + INTERVAL '1 HOUR'`
+            )
+            .update({ status: 'expired' })
+            .execute();
+        } catch (e) {
+          this.error(e, this.handleVerificationCheck.name, session);
+        }
       }
-    });
+    );
   }
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleIntegrations() {
-    return Sentry.startSpan({ name: "CronService.handleIntegrations" }, async () => {
-      const integrationsNumber = await this.integrationsRepository.countBy({
-        status: IntegrationStatus.ACTIVE,
-      });
-
-      let offset = 0;
-
-      while (offset < integrationsNumber) {
-        const integrationsBatch = await this.integrationsRepository.find({
-          where: { status: IntegrationStatus.ACTIVE },
-          relations: ['database', 'owner'],
-          take: BATCH_SIZE,
-          skip: offset,
+    return Sentry.startSpan(
+      { name: 'CronService.handleIntegrations' },
+      async () => {
+        const integrationsNumber = await this.integrationsRepository.countBy({
+          status: IntegrationStatus.ACTIVE,
         });
 
-        for (const integration of integrationsBatch) {
-          await this.integrationsService.handleIntegration(integration);
-        }
+        let offset = 0;
 
-        offset += BATCH_SIZE;
+        while (offset < integrationsNumber) {
+          const integrationsBatch = await this.integrationsRepository.find({
+            where: { status: IntegrationStatus.ACTIVE },
+            relations: ['database', 'owner'],
+            take: BATCH_SIZE,
+            skip: offset,
+          });
+
+          for (const integration of integrationsBatch) {
+            await this.integrationsService.handleIntegration(integration);
+          }
+
+          offset += BATCH_SIZE;
+        }
       }
-    });
+    );
   }
 
   /*
@@ -746,11 +750,7 @@ export class CronService {
    *
    */
 
-  checkSegmentHasMessageFilters(
-    segmentCriteria: any,
-    orgId: string,
-    session: string
-  ): boolean {
+  checkSegmentHasMessageFilters(segmentCriteria: any): boolean {
     // Convert the segmentCriteria object to a JSON string
     const criteriaString = JSON.stringify(segmentCriteria);
 
@@ -775,119 +775,125 @@ export class CronService {
    */
   @Cron(CronExpression.EVERY_10_MINUTES)
   async updateStatementsWithMessageEvents() {
-    return Sentry.startSpan({ name: "CronService.updateStatementsWithMessageEvents" }, async () => {
-      const session = randomUUID();
-      let err;
-      //console.log("about to run updateStatementsWithMessageEvents");
-      // for each organization, get all segments
-      // to do change this to organisations rather than
-      const accounts = await this.accountsService.findAll();
-      for (let j = 0; j < accounts.length; j++) {
-        const queryRunner = this.dataSource.createQueryRunner();
-        await queryRunner.connect();
-        await queryRunner.startTransaction();
-        const segmentPrefixes: string[] = [];
-        //we keep for logging
-        let segmentError: string;
-        try {
-          const segments = await this.segmentsService.getSegments(
-            accounts[j],
-            undefined,
-            queryRunner
-          );
-          // for each segment check if it has a message component
-          for (const segment of segments) {
-            if (!segment.inclusionCriteria || !segment.inclusionCriteria.query) {
-              continue; // Skip to the next iteration of the loop
-            }
+    return Sentry.startSpan(
+      { name: 'CronService.updateStatementsWithMessageEvents' },
+      async () => {
+        const session = randomUUID();
+        let err;
+        //console.log("about to run updateStatementsWithMessageEvents");
+        // for each organization, get all segments
+        // to do change this to organisations rather than
+        const workspaces =
+          await this.workspacesService.workspacesRepository.find();
 
-            const doInclude = this.checkSegmentHasMessageFilters(
-              segment.inclusionCriteria.query,
-              accounts[j].id,
-              session
+        for (const workspace of workspaces) {
+          const queryRunner = this.dataSource.createQueryRunner();
+          await queryRunner.connect();
+          await queryRunner.startTransaction();
+          const segmentPrefixes: string[] = [];
+          //we keep for logging
+          let segmentError: string;
+          try {
+            const segments = await this.segmentsService.getSegments(
+              workspace,
+              undefined,
+              queryRunner
             );
-            this.debug(
-              `we updated doInclude: ${doInclude}`,
-              this.updateStatementsWithMessageEvents.name,
-              session,
-              accounts[j].id
-            );
-            if (doInclude) {
-              // If segment includes message filters recalculate which customers should be in the segment
-              const collectionPrefix =
-                this.segmentsService.generateRandomString();
-              segmentError = segment.name;
-              this.debug(
-                `segment is: ${segment}`,
-                this.updateStatementsWithMessageEvents.name,
-                session,
-                accounts[j].id
+            // for each segment check if it has a message component
+            for (const segment of segments) {
+              if (
+                !segment.inclusionCriteria ||
+                !segment.inclusionCriteria.query
+              ) {
+                continue; // Skip to the next iteration of the loop
+              }
+
+              const doInclude = this.checkSegmentHasMessageFilters(
+                segment.inclusionCriteria.query
               );
               this.debug(
-                `chron prefix for segment is: ${collectionPrefix}`,
+                `we updated doInclude: ${doInclude}`,
                 this.updateStatementsWithMessageEvents.name,
                 session,
-                accounts[j].id
+                workspace.id
               );
-              segmentPrefixes.push(collectionPrefix);
-              const customersInSegment =
-                await this.customersService.getSegmentCustomersFromQuery(
-                  segment.inclusionCriteria.query,
-                  accounts[j],
+              if (doInclude) {
+                // If segment includes message filters recalculate which customers should be in the segment
+                const collectionPrefix =
+                  this.segmentsService.generateRandomString();
+                segmentError = segment.name;
+                this.debug(
+                  `segment is: ${segment}`,
+                  this.updateStatementsWithMessageEvents.name,
                   session,
-                  true,
-                  0,
+                  workspace.id
+                );
+                this.debug(
+                  `chron prefix for segment is: ${collectionPrefix}`,
+                  this.updateStatementsWithMessageEvents.name,
+                  session,
+                  workspace.id
+                );
+                segmentPrefixes.push(collectionPrefix);
+                const customersInSegment =
+                  await this.customersService.getSegmentCustomersFromQuery(
+                    segment.inclusionCriteria.query,
+                    workspace,
+                    session,
+                    true,
+                    0,
+                    collectionPrefix
+                  );
+
+                this.debug(
+                  `we have customersInSegment: ${customersInSegment}`,
+                  this.updateStatementsWithMessageEvents.name,
+                  session,
+                  workspace.id
+                );
+                // update the segment customer table
+                //try {
+                //collectionName: string,account: Account,segmentId: string,session: string,queryRunner: QueryRunner,batchSize: number = 500 //
+                await this.segmentsService.updateSegmentCustomersBatched(
+                  customersInSegment,
+                  workspace,
+                  segment.id,
+                  session,
+                  queryRunner,
+                  500
+                );
+                // drop the collections after adding customer segments
+                await this.segmentsService.deleteCollectionsWithPrefix(
                   collectionPrefix
                 );
-
-              this.debug(
-                `we have customersInSegment: ${customersInSegment}`,
-                this.updateStatementsWithMessageEvents.name,
-                session,
-                accounts[j].id
-              );
-              // update the segment customer table
-              //try {
-              //collectionName: string,account: Account,segmentId: string,session: string,queryRunner: QueryRunner,batchSize: number = 500 //
-              await this.segmentsService.updateSegmentCustomersBatched(
-                customersInSegment,
-                accounts[j],
-                segment.id,
-                session,
-                queryRunner,
-                500
-              );
-              // drop the collections after adding customer segments
-              await this.segmentsService.deleteCollectionsWithPrefix(
-                collectionPrefix
-              );
+              }
             }
+            await queryRunner.commitTransaction();
+          } catch (error) {
+            this.debug(
+              `error updating segment: ${segmentError}`,
+              this.updateStatementsWithMessageEvents.name,
+              session,
+              workspace.id
+            );
+            this.error(
+              error,
+              this.updateStatementsWithMessageEvents.name,
+              session,
+              workspace.id
+            );
+            //drop extraneous collections in case of error
+            for (const prefix of segmentPrefixes) {
+              await this.segmentsService.deleteCollectionsWithPrefix(prefix);
+            }
+            await queryRunner.rollbackTransaction();
+            err = error;
+          } finally {
+            await queryRunner.release();
           }
-          await queryRunner.commitTransaction();
-        } catch (error) {
-          this.debug(
-            `error updating segment: ${segmentError}`,
-            this.updateStatementsWithMessageEvents.name,
-            session,
-            accounts[j].id
-          );
-          this.error(
-            error,
-            this.updateStatementsWithMessageEvents.name,
-            session,
-            accounts[j].id
-          );
-          //drop extraneous collections in case of error
-          for (const prefix of segmentPrefixes) {
-            await this.segmentsService.deleteCollectionsWithPrefix(prefix);
-          }
-          await queryRunner.rollbackTransaction();
-          err = error;
-        } finally {
-          await queryRunner.release();
         }
       }
-    });
+    );
   }
 
   // @Cron(CronExpression.EVERY_DAY_AT_NOON)
@@ -1241,14 +1247,20 @@ export class CronService {
 
   @Cron(CronExpression.EVERY_30_MINUTES)
   async cleanTrashSteps() {
-    return Sentry.startSpan({ name: "CronService.cleanTrashSteps" }, async () => {
-      const session = randomUUID();
-      const queryRunner = this.dataSource.createQueryRunner();
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
-      this.log('Start cleaning unused steps', this.cleanTrashSteps.name, session);
-      try {
-        const data = await queryRunner.query(`
+    return Sentry.startSpan(
+      { name: 'CronService.cleanTrashSteps' },
+      async () => {
+        const session = randomUUID();
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        this.log(
+          'Start cleaning unused steps',
+          this.cleanTrashSteps.name,
+          session
+        );
+        try {
+          const data = await queryRunner.query(`
             WITH active_journeys AS (
               SELECT id, "visualLayout"
               FROM journey
@@ -1268,151 +1280,158 @@ export class CronService {
           WHERE s."journeyId" IN (SELECT id FROM active_journeys)
           AND (s."journeyId", s.id) NOT IN (SELECT journey_id, step_id FROM step_ids_to_keep);
         `);
-        await queryRunner.commitTransaction();
-        this.log(
-          `Finish cleaning unused steps, removed: ${data[1]}`,
-          this.cleanTrashSteps.name,
-          session
-        );
-      } catch (e) {
-        await queryRunner.rollbackTransaction();
-        this.error(e, this.cleanTrashSteps.name, session);
-      } finally {
-        await queryRunner.release();
+          await queryRunner.commitTransaction();
+          this.log(
+            `Finish cleaning unused steps, removed: ${data[1]}`,
+            this.cleanTrashSteps.name,
+            session
+          );
+        } catch (e) {
+          await queryRunner.rollbackTransaction();
+          this.error(e, this.cleanTrashSteps.name, session);
+        } finally {
+          await queryRunner.release();
+        }
       }
-    });
+    );
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
   async handleEntryTiming() {
-    return Sentry.startSpan({ name: "CronService.handleEntryTiming" }, async () => {
-      const session = randomUUID();
-      let triggerStartTasks;
-      const queryRunner = this.dataSource.createQueryRunner();
-      const client = await queryRunner.connect();
-      await queryRunner.startTransaction();
-      try {
-        // Step 1: Find all journeys that are delayed
-        const delayedJourneys = await queryRunner.manager
-          .createQueryBuilder(Journey, 'journey')
-          .leftJoinAndSelect('journey.workspace', 'workspace') // Assuming 'owner' is the relation property in the Journey entity
-          .leftJoinAndSelect('workspace.organization', 'organization') // Assuming 'owner' is the relation property in the Journey entity
-          .leftJoinAndSelect('organization.owner', 'account') // Assuming 'owner' is the relation property in the Journey entity
-          .leftJoinAndSelect('account.teams', 'teams') // Assuming 'owner' is the relation property in the Journey entity
-          .leftJoinAndSelect('teams.organization', 'organization_two') // Assuming 'owner' is the relation property in the Journey entity
-          .leftJoinAndSelect('organization_two.workspaces', 'workspaces') // Assuming 'owner' is the relation property in the Journey entity
-          .where(
-            'journey."journeyEntrySettings"->\'entryTiming\'->>\'type\' = :type AND journey."isActive" = true',
-            {
-              type: EntryTiming.SpecificTime,
-            }
-          )
-          .getMany();
-        // Step 2: Filter all journeys that are eligible to be re-enrolled
-        for (
-          let journeysIndex = 0;
-          journeysIndex < delayedJourneys.length;
-          journeysIndex++
-        ) {
-          let enroll = false;
-          if (
-            delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time
-              .frequency === EntryTimingFrequency.Once
+    return Sentry.startSpan(
+      { name: 'CronService.handleEntryTiming' },
+      async () => {
+        const session = randomUUID();
+        let triggerStartTasks;
+        const queryRunner = this.dataSource.createQueryRunner();
+        const client = await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+          // Step 1: Find all journeys that are delayed
+          const delayedJourneys = await queryRunner.manager
+            .createQueryBuilder(Journey, 'journey')
+            .leftJoinAndSelect('journey.workspace', 'workspace') // Assuming 'owner' is the relation property in the Journey entity
+            .leftJoinAndSelect('workspace.organization', 'organization') // Assuming 'owner' is the relation property in the Journey entity
+            .leftJoinAndSelect('organization.owner', 'account') // Assuming 'owner' is the relation property in the Journey entity
+            .leftJoinAndSelect('account.teams', 'teams') // Assuming 'owner' is the relation property in the Journey entity
+            .leftJoinAndSelect('teams.organization', 'organization_two') // Assuming 'owner' is the relation property in the Journey entity
+            .leftJoinAndSelect('organization_two.workspaces', 'workspaces') // Assuming 'owner' is the relation property in the Journey entity
+            .where(
+              'journey."journeyEntrySettings"->\'entryTiming\'->>\'type\' = :type AND journey."isActive" = true',
+              {
+                type: EntryTiming.SpecificTime,
+              }
+            )
+            .getMany();
+          // Step 2: Filter all journeys that are eligible to be re-enrolled
+          for (
+            let journeysIndex = 0;
+            journeysIndex < delayedJourneys.length;
+            journeysIndex++
           ) {
+            let enroll = false;
             if (
+              delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming
+                .time.frequency === EntryTimingFrequency.Once
+            ) {
+              if (
+                new Date(
+                  delayedJourneys[
+                    journeysIndex
+                  ].journeyEntrySettings?.entryTiming.time.startDate
+                ).getTime() < Date.now() &&
+                +delayedJourneys[journeysIndex].enrollment_count === 0
+              ) {
+                enroll = true;
+              }
+            } else if (
+              delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming
+                .time.recurrence.endsOn === RecurrenceEndsOptions.After &&
+              +delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming
+                .time.recurrence.endAdditionalValue <=
+                delayedJourneys[journeysIndex].enrollment_count - 1
+            ) {
+              continue;
+            } else if (
+              delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming
+                .time.recurrence.endsOn ===
+                RecurrenceEndsOptions.SpecificDate &&
               new Date(
                 delayedJourneys[
                   journeysIndex
-                ].journeyEntrySettings?.entryTiming.time.startDate
-              ).getTime() < Date.now() &&
-              +delayedJourneys[journeysIndex].enrollment_count === 0
+                ].journeyEntrySettings?.entryTiming.time.recurrence.endAdditionalValue
+              ).getTime() <= Date.now()
             ) {
-              enroll = true;
+              continue;
+            } else {
+              // TODO: Recurring enrollment
             }
-          } else if (
-            delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time
-              .recurrence.endsOn === RecurrenceEndsOptions.After &&
-            +delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time
-              .recurrence.endAdditionalValue <=
-              delayedJourneys[journeysIndex].enrollment_count - 1
-          ) {
-            continue;
-          } else if (
-            delayedJourneys[journeysIndex].journeyEntrySettings?.entryTiming.time
-              .recurrence.endsOn === RecurrenceEndsOptions.SpecificDate &&
-            new Date(
-              delayedJourneys[
-                journeysIndex
-              ].journeyEntrySettings?.entryTiming.time.recurrence.endAdditionalValue
-            ).getTime() <= Date.now()
-          ) {
-            continue;
-          } else {
-            // TODO: Recurring enrollment
-          }
-          if (enroll) {
-            this.log(
-              `Starting enrollment for journey ${delayedJourneys[journeysIndex].id}`,
-              this.handleEntryTiming.name,
-              session
-            );
-            const { collectionName, count } =
-              await this.customersService.getAudienceSize(
-                delayedJourneys[journeysIndex].workspace.organization.owner,
-                delayedJourneys[journeysIndex].inclusionCriteria,
-                session,
-                null
+            if (enroll) {
+              this.log(
+                `Starting enrollment for journey ${delayedJourneys[journeysIndex].id}`,
+                this.handleEntryTiming.name,
+                session
               );
-            // if (collectionName) collectionNames.push(collectionName);
-            // Step 3: Edit journey details
-            await queryRunner.manager.save(Journey, {
-              ...delayedJourneys[journeysIndex],
-              enrollment_count:
-                delayedJourneys[journeysIndex].enrollment_count + 1,
-              last_enrollment_timestamp: Date.now(),
-            });
-            // Step 4: Reenroll customers that have been unenrolled
-            triggerStartTasks = await this.stepsService.triggerStart(
-              delayedJourneys[journeysIndex].workspace.organization.owner,
-              delayedJourneys[journeysIndex],
-              delayedJourneys[journeysIndex].inclusionCriteria,
-              delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
-                ?.enabled &&
-                count >
-                  parseInt(
-                    delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
-                      ?.maxEntries
-                  )
-                ? parseInt(
-                    delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
-                      ?.maxEntries
-                  )
-                : count,
-              queryRunner,
-              client,
-              session,
-              collectionName
-            );
-            // if (triggerStartTasks.collectionName)
-            //   collectionNames.push(triggerStartTasks.collectionName);
+              const { collectionName, count } =
+                await this.customersService.getAudienceSize(
+                  delayedJourneys[journeysIndex].workspace.organization.owner,
+                  delayedJourneys[journeysIndex].workspace,
+                  delayedJourneys[journeysIndex].inclusionCriteria,
+                  session,
+                  null
+                );
+              // if (collectionName) collectionNames.push(collectionName);
+              // Step 3: Edit journey details
+              await queryRunner.manager.save(Journey, {
+                ...delayedJourneys[journeysIndex],
+                enrollment_count:
+                  delayedJourneys[journeysIndex].enrollment_count + 1,
+                last_enrollment_timestamp: Date.now(),
+              });
+              // Step 4: Reenroll customers that have been unenrolled
+              triggerStartTasks = await this.stepsService.triggerStart(
+                delayedJourneys[journeysIndex].workspace.organization.owner,
+                delayedJourneys[journeysIndex].workspace,
+                delayedJourneys[journeysIndex],
+                delayedJourneys[journeysIndex].inclusionCriteria,
+                delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
+                  ?.enabled &&
+                  count >
+                    parseInt(
+                      delayedJourneys[journeysIndex]?.journeySettings
+                        ?.maxEntries?.maxEntries
+                    )
+                  ? parseInt(
+                      delayedJourneys[journeysIndex]?.journeySettings
+                        ?.maxEntries?.maxEntries
+                    )
+                  : count,
+                queryRunner,
+                client,
+                session,
+                collectionName
+              );
+              // if (triggerStartTasks.collectionName)
+              //   collectionNames.push(triggerStartTasks.collectionName);
+            }
           }
+          await queryRunner.commitTransaction();
+          // for (const collection of collectionNames) {
+          //   await this.connection.dropCollection(collection);
+          // }
+          if (triggerStartTasks?.job)
+            await this.startQueue.add(
+              triggerStartTasks.job.name,
+              triggerStartTasks.job.data
+            );
+        } catch (e) {
+          this.error(e, this.handleEntryTiming.name, session);
+          await queryRunner.rollbackTransaction();
+        } finally {
+          await queryRunner.release();
         }
-        await queryRunner.commitTransaction();
-        // for (const collection of collectionNames) {
-        //   await this.connection.dropCollection(collection);
-        // }
-        if (triggerStartTasks?.job)
-          await this.startQueue.add(
-            triggerStartTasks.job.name,
-            triggerStartTasks.job.data
-          );
-      } catch (e) {
-        this.error(e, this.handleEntryTiming.name, session);
-        await queryRunner.rollbackTransaction();
-      } finally {
-        await queryRunner.release();
       }
-    });
+    );
   }
 }
 

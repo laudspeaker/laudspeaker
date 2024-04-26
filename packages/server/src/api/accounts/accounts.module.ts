@@ -15,19 +15,21 @@ import {
   CustomerKeys,
   CustomerKeysSchema,
 } from '../customers/schemas/customer-keys.schema';
-import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { OrganizationsModule } from '../organizations/organizations.module';
+import { Workspace } from '../workspaces/entities/workspace.entity';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: CustomerKeys.name, schema: CustomerKeysSchema },
     ]),
-    TypeOrmModule.forFeature([Account, Workspaces]),
+    TypeOrmModule.forFeature([Account, Workspace]),
     forwardRef(() => AuthModule),
     forwardRef(() => CustomersModule),
     forwardRef(() => JourneysModule),
     forwardRef(() => TemplatesModule),
     forwardRef(() => StepsModule),
+    forwardRef(() => OrganizationsModule),
     WebhooksModule,
   ],
   controllers: [AccountsController],

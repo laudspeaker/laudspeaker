@@ -34,6 +34,7 @@ import sortNoneChevronsImage from "./svg/sort-none-chevrons.svg";
 import { Menu, Transition } from "@headlessui/react";
 import threeDotsIconImage from "./svg/three-dots-icon.svg";
 import { AttributeType } from "pages/PeopleImport/PeopleImport";
+import EventTracker from "pages/EventTracker";
 import { v4 as uuid } from "uuid";
 
 export interface EventObject {
@@ -59,6 +60,7 @@ enum PersonTab {
   OVERVIEW = "Overview",
   JOURNEY = "Journey",
   SEGMENTS = "Segments",
+  EVENTS = "Events",
 }
 
 interface SegmentRowData {
@@ -136,18 +138,36 @@ export const generateAttributeView = (
   switch (type) {
     case StatementValueType.BOOLEAN:
       return value ? "true" : "false";
-      break;
     case StatementValueType.DATE:
     case StatementValueType.DATE_TIME:
       return value && dateFormat ? format(new Date(value), dateFormat) : value;
     default:
       return value;
   }
-
-  return value;
 };
 
 const Personv2 = () => {
+  const predefinedAttributes: Attribute[] = [
+    {
+      id: uuid(),
+      key: "androidFCMTokens",
+      type: StatementValueType.STRING,
+      isArray: true,
+    },
+    {
+      id: uuid(),
+      key: "iosFCMTokens",
+      type: StatementValueType.STRING,
+      isArray: true,
+    },
+    {
+      id: uuid(),
+      key: "isAnonymous",
+      type: StatementValueType.BOOLEAN,
+      isArray: false,
+    },
+  ];
+
   const navigate = useNavigate();
 
   const { id } = useParams();
@@ -185,8 +205,6 @@ const Personv2 = () => {
   });
   const [search, setSearch] = useState("");
 
-  //
-
   const [isFirstRenderSave, setIsFirstRenderSave] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [currentTab, setCurrentTab] = useState(PersonTab.OVERVIEW);
@@ -200,7 +218,7 @@ const Personv2 = () => {
   );
 
   const loadPossibleKeys = async () => {
-    const { data } = await ApiService.get<any[]>({
+    const { data } = await ApiService.get<Attribute[]>({
       url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Email&type=Boolean&type=Date&type=DateTime`,
     });
 
@@ -483,6 +501,14 @@ const Personv2 = () => {
           onClick={() => setCurrentTab(PersonTab.SEGMENTS)}
         >
           Segments
+        </button>
+        <button
+          className={`border-[#4338CA] ${
+            currentTab === PersonTab.EVENTS ? "border-b-2 text-[#4338CA]" : ""
+          }`}
+          onClick={() => setCurrentTab(PersonTab.EVENTS)}
+        >
+          Event
         </button>
       </div>
       <div className="w-full h-[calc(100vh-188px)] p-5 flex gap-5">
@@ -929,6 +955,10 @@ const Personv2 = () => {
                 </div>,
               ])}
             />
+          </div>
+        ) : currentTab === PersonTab.EVENTS ? (
+          <div className="w-full">
+            <EventTracker customerId={id} />
           </div>
         ) : null}
       </div>

@@ -258,25 +258,6 @@ const OrganizationTab = ({ setViewTeamMember }: OrganizationTabProps) => {
             onChange={setCompanyName}
           />
 
-          <p className="text-base mt-5 text-[#111827] font-inter font-semibold">
-            Time zone
-          </p>
-          <div className="text-xs mb-[5px] mt-[10px] font-inter text-[#4B5563]">
-            Set your organization's time zone to ensure accuracy of time-based
-            features.
-          </div>
-          <Select
-            className="max-w-[300px]"
-            value={
-              selectedTimeZone || orgData?.workspace.timezoneUTCOffset || ""
-            }
-            placeholder="Select timezone"
-            options={timezoneList.map((el) => ({
-              key: el.offset,
-              title: el.offset,
-            }))}
-            onChange={setSelectedTimeZone}
-          />
           <hr className="border-[#E5E7EB] my-5" />
           <div className="flex gap-[10px]">
             <Button
