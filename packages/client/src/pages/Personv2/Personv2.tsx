@@ -136,7 +136,6 @@ export const generateAttributeView = (
   switch (type) {
     case StatementValueType.BOOLEAN:
       return value ? "true" : "false";
-      break;
     case StatementValueType.DATE:
     case StatementValueType.DATE_TIME:
       return value && dateFormat ? format(new Date(value), dateFormat) : value;
@@ -572,7 +571,7 @@ const Personv2 = () => {
                             {isArray ? "[]" : ""}){" "}
                             {dateFormat ? <>[{dateFormat}]</> : <></>}
                           </div>
-                          <div>
+                          <div className="overflow-hidden text-ellipsis">
                             {generateAttributeView(
                               personInfoToShow[key],
                               type,
@@ -733,7 +732,7 @@ const Personv2 = () => {
                                   {isArray ? "[]" : ""}){" "}
                                   {dateFormat ? <>[{dateFormat}]</> : <></>}
                                 </div>
-                                <div>
+                                <div className="overflow-hidden text-ellipsis">
                                   {generateAttributeView(
                                     personInfoToShow[key],
                                     type,
@@ -780,7 +779,7 @@ const Personv2 = () => {
                           {isArray ? "[]" : ""}){" "}
                           {dateFormat ? <>[{dateFormat}]</> : <></>}
                         </div>
-                        <div>
+                        <div className="overflow-hidden text-ellipsis">
                           {generateAttributeView(
                             personInfoToShow[key],
                             type,

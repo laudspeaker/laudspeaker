@@ -152,16 +152,30 @@ export interface SystemAttribute {
 export const systemAttributes: SystemAttribute[] = [
   {
     id: uuid(),
-    key: 'androidFCMTokens',
+    key: 'androidDeviceToken',
     type: StatementValueType.STRING,
-    isArray: true,
+    isArray: false,
     isSystem: true,
   },
   {
     id: uuid(),
-    key: 'iosFCMTokens',
+    key: 'androidDeviceTokenSetAt',
     type: StatementValueType.STRING,
-    isArray: true,
+    isArray: false,
+    isSystem: true,
+  },
+  {
+    id: uuid(),
+    key: 'iosDeviceToken',
+    type: StatementValueType.STRING,
+    isArray: false,
+    isSystem: true,
+  },
+  {
+    id: uuid(),
+    key: 'iosDeviceTokenSetAt',
+    type: StatementValueType.STRING,
+    isArray: false,
     isSystem: true,
   },
   {

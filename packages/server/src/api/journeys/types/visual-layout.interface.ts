@@ -108,7 +108,7 @@ export enum StatementValueType {
   STRING = 'String',
   NUMBER = 'Number',
   BOOLEAN = 'Boolean',
-  Email = 'Email',
+  EMAIL = 'Email',
 }
 
 export enum BranchType {

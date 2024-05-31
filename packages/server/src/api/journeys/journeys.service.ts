@@ -552,6 +552,9 @@ export class JourneysService {
           id: newJourney.id,
           name: newName,
           isDynamic: oldJourney.isDynamic,
+          inclusionCriteria: oldJourney.inclusionCriteria,
+          journeyEntrySettings: oldJourney.journeyEntrySettings,
+          journeySettings: oldJourney.journeySettings,
         },
         session,
         queryRunner
@@ -1913,8 +1916,15 @@ export class JourneysService {
       if (journey.isActive || journey.isDeleted || journey.isPaused)
         throw new Error('Journey is no longer editable.');
 
-      const { visualLayout, isDynamic, name, inclusionCriteria } =
-        updateJourneyDto;
+      const {
+        visualLayout,
+        isDynamic,
+        name,
+        inclusionCriteria,
+        changeSegmentOption,
+        journeyEntrySettings,
+        journeySettings,
+      } = updateJourneyDto;
 
       return await queryRunner.manager.save(Journey, {
         ...journey,
@@ -1922,6 +1932,8 @@ export class JourneysService {
         isDynamic,
         name,
         inclusionCriteria,
+        journeyEntrySettings,
+        journeySettings,
       });
     } catch (e) {
       this.error(e, this.update.name, session, account.email);
