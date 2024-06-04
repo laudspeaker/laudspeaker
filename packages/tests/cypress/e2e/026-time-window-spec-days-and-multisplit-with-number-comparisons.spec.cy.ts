@@ -1,8 +1,6 @@
 import credentials from "../fixtures/credentials";
 import createTestCustomer from "../test-helpers/createTestCustomer";
 import drag from "../test-helpers/drag";
-import { loginFunc } from "../test-helpers/loginFunc";
-import setMailgun from "../test-helpers/setMailgun";
 import { setupOrganization } from "../test-helpers/setupOrganization";
 import signup from "../test-helpers/signup";
 
@@ -36,10 +34,12 @@ describe("time triggers + time window spec days + multisplit with number compari
     cy.get("#journey-name-input").clear().type("test2");
     cy.get("#create-journey-modal-button").click();
 
+    cy.wait(1000);
     drag("#timeDelay", ".empty-node");
     cy.get('[placeholder="Mins"]').type("1");
     cy.get("#save-node-data").click();
 
+    cy.wait(1000);
     drag("#timeWindow", ".last-empty-node:last", { fireDragOver: false });
     cy.wait(100);
     cy.get("#time-window-type-select").click();
@@ -51,6 +51,7 @@ describe("time triggers + time window spec days + multisplit with number compari
     cy.get("#time-window-week-day-option-5").click();
     cy.get("#save-node-data").click();
 
+    cy.wait(1000);
     drag("#multisplit", ".last-empty-node:last", { fireDragOver: false });
     ["0.2", "0.5", "1"].forEach((el) => {
       cy.contains("Add branch").click();
@@ -63,9 +64,12 @@ describe("time triggers + time window spec days + multisplit with number compari
     cy.get("#save-node-data").click();
 
     [1, 2, 3, 4].forEach((emailTemplate) => {
+      cy.wait(1000);
       drag("#email", ".last-empty-node:last", { fireDragOver: false });
       cy.get("#template-select").select(emailTemplate);
       cy.get("#save-node-data").click();
+
+      cy.wait(1000);
       drag("#exit", ".last-empty-node:last", { fireDragOver: false });
       cy.get("#flow-builder-sidepanel-cancel").click({ force: true });
       cy.get(".react-flow__controls-fitview").click();

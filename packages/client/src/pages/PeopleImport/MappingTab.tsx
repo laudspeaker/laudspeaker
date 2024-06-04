@@ -381,6 +381,7 @@ const MappingTab = ({
                           ]}
                           placeholder={"Select an attribute"}
                           onChange={handleSelectChange(head)}
+                          dataTestId={`mapping-select-${head}`}
                           id={`select-${head}`}
                         />
                       </td>

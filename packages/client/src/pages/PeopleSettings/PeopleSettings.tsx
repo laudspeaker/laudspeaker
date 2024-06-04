@@ -452,6 +452,7 @@ const PeopleSettings = () => {
                   handleTrackAttributeCreate(newAttribute);
                 }}
                 className="!border-[#E5E7EB] !text-[#111827] !w-fit"
+                id="add-user-attribute-button"
               >
                 Add attribute
               </Button>
