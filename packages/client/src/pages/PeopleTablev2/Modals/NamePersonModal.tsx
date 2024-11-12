@@ -5,17 +5,12 @@ import React, { FC } from "react";
 interface NamePersonModalProps {
   isOpen: boolean;
   onClose: () => void;
-  pkKey: string;
 }
 
-const NamePersonModal: FC<NamePersonModalProps> = ({
-  isOpen,
-  onClose,
-  pkKey,
-}) => {
+const NamePersonModal: FC<NamePersonModalProps> = ({ isOpen, onClose }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <NamePerson isPrimary pkKey={pkKey} />
+      <NamePerson isPrimary />
     </Modal>
   );
 };

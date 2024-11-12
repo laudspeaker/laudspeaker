@@ -379,7 +379,6 @@ const PeopleTablev2 = () => {
       <NamePersonModal
         isOpen={isNamePersonModalOpen}
         onClose={() => setIsNamePersonModalOpen(false)}
-        pkKey={pkKeyName || "email"}
       />
     </div>
   );

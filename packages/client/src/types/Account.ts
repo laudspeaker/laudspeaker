@@ -8,6 +8,7 @@ export interface UserPK {
   key: string;
   isArray: boolean;
   type: AttributeType;
+  dateFormat?: string;
   isPrimary: true;
 }
 

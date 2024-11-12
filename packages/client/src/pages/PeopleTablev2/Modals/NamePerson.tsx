@@ -4,18 +4,20 @@ import { GenericButton, Input } from "components/Elements";
 import { useNavigate } from "react-router-dom";
 import ApiService from "services/api.service";
 import { ApiConfig } from "../../../constants";
+import { useAppSelector } from "store/hooks";
+import DynamicInput from "pages/FlowBuilderv2/Elements/DynamicInput";
+import { enforceType } from "pages/Personv2/Personv2";
 
 export interface INameSegmentForm {
-  pkValue: string;
+  pkValue: any;
   isPrimary: boolean;
 }
 
 interface INameSegment {
   isPrimary: boolean;
-  pkKey: string;
 }
 
-const NamePerson = ({ isPrimary, pkKey }: INameSegment) => {
+const NamePerson = ({ isPrimary }: INameSegment) => {
   // A Segment initally has three Properties:
   //      1. Dynamic: whether new customers are added
   //         after a workflow is live
@@ -26,6 +28,8 @@ const NamePerson = ({ isPrimary, pkKey }: INameSegment) => {
     isPrimary: isPrimary,
   });
 
+  const pk = useAppSelector((state) => state.auth.userData.pk);
+
   const navigate = useNavigate();
 
   // Handling Name and Description Fields
@@ -35,11 +39,13 @@ const NamePerson = ({ isPrimary, pkKey }: INameSegment) => {
     }
   };
 
+  if (!pk) return <>Please, enter primary key in settings!</>;
+
   const handleSubmit = async () => {
     const { data } = await ApiService.post({
       url: `${ApiConfig.customerCreate}`,
       options: {
-        [pkKey]: segmentForm.pkValue,
+        [pk.key || ""]: enforceType(segmentForm.pkValue, pk.type),
       },
     });
     if (data) navigate(`/person/${data}`);
@@ -49,25 +55,17 @@ const NamePerson = ({ isPrimary, pkKey }: INameSegment) => {
     <div>
       <div className="flex items-start justify-center pt-[18px]">
         <div className="bg-white rounded-3xl w-full max-w-[1138px]">
-          <h3>Enter customer's primary value ({pkKey})</h3>
+          <h3>Enter customer's primary value ({pk.key})</h3>
           <Grid container direction={"row"} padding={"10px 0px"}>
             <FormControl variant="standard">
-              <Input
-                isRequired
+              <DynamicInput
                 value={segmentForm.pkValue}
-                placeholder={`Enter primary key value (${pkKey})`}
-                name="pkValue"
-                id="pkValue"
-                style={{
-                  width: "100%",
-                  padding: "15px 16px",
-                  background: "#fff",
-                  border: "1px solid #D1D5DB",
-                  fontFamily: "Inter",
-                  fontWeight: 400,
-                  fontSize: "16px",
-                }}
-                onChange={handleSegmentFormChange}
+                onChange={(value) =>
+                  setSegmentForm({ ...segmentForm, pkValue: value })
+                }
+                type={pk.type}
+                isArray={pk.isArray}
+                dateFormat={pk.dateFormat}
               />
             </FormControl>
           </Grid>
