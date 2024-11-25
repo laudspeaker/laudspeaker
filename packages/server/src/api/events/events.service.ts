@@ -1190,6 +1190,15 @@ export class EventsService {
                 );
                 await this.handleSet(auth, thisEvent, session);
                 break;
+              case '$appOpen':
+                this.debug(
+                  `Handling $set event for correlationKey: ${thisEvent.correlationValue}`,
+                  this.batch.name,
+                  session,
+                  auth.account.id
+                );
+                await this.handleAppOpen(auth, thisEvent, session);
+                break;  
               default:
                 await this.customPayload(
                   { account: auth.account, workspace: auth.workspace },
@@ -1283,6 +1292,110 @@ export class EventsService {
       customer
     );
 
+    return customer._id;
+  }
+
+  async handleAppOpen(
+    auth: { account: Account; workspace: Workspaces },
+    event: EventDto,
+    session: string
+  ) {
+    const customerId = event.correlationValue;
+    const workspaceId = auth.workspace.id;
+  
+    if (!customerId) {
+      throw new Error('Customer ID is missing from the event');
+    }
+
+    this.debug(
+      `Handled $appOpen event: ${JSON.stringify(event, null, 2)}`,
+      this.handleAppOpen.name,
+      session,
+      auth.account.id
+    );
+  
+    const { customer, findType } = await this.findOrCreateCustomer(
+      workspaceId,
+      session,
+      null,
+      null,
+      event
+    );
+  
+    const eventTimestamp = new Date(event.timestamp);
+
+    const updateObj: any = {
+      lastAppOpenAt: eventTimestamp,
+    };
+  
+    if (event.context) {
+      if (event.context.$timezone) {
+        updateObj.timezone = event.context.$timezone;
+      }
+      if (event.context.$app_version) {
+        updateObj.appVersion = event.context.$app_version;
+      }
+      if (event.context.$locale) {
+        updateObj.locale = event.context.$locale;
+      }
+      if (event.context.$device_model) {
+        updateObj.deviceModel = event.context.$device_model;
+      }
+      if (event.context.$device_type) {
+        updateObj.deviceType = event.context.$device_type;
+      }
+      if (event.context.$device_manufacturer) {
+        updateObj.deviceManufacturer = event.context.$device_manufacturer;
+      }
+    }
+  
+    // Check if this is the first app open
+    const existingCustomer = await this.customersService.CustomerModel.findOne({ _id: customer._id });
+    if (!existingCustomer.appFirstOpen) {
+      updateObj.appFirstOpen = eventTimestamp;
+    }
+
+    // Check if app version has changed
+    if (existingCustomer.appVersion !== event.context?.$app_version) {
+      updateObj.lastUpdatedApp = eventTimestamp;
+    }
+
+    this.debug(
+      `Handle updateObj : ${JSON.stringify(updateObj, null, 2)}`,
+      this.handleAppOpen.name,
+      session,
+      auth.account.id
+    );
+
+    // Update the customer record
+    await this.customersService.CustomerModel.updateOne(
+      { _id: customer._id },
+      { $set: updateObj },
+      { new: true }
+    );
+  
+    // Create an event record for the app open
+    await this.EventModel.create({
+      event: event.event,
+      workspaceId: workspaceId,
+      payload: {
+        ...updateObj,
+        deviceType: event.context?.device_type,
+        osName: event.context?.os_name,
+        osVersion: event.context?.os_version,
+        appVersion: event.context?.app_version,
+        libVersion: event.context?.lib_version,
+      },
+      createdAt: new Date().toISOString(),
+    });
+  
+    this.debug(
+      `Handled $appOpen event for customer: ${customerId}, Timestamp: ${eventTimestamp.toISOString()}, Timezone: ${updateObj?.timezone || 'Not provided'}`,
+      this.handleAppOpen.name,
+      session,
+      auth.account.id
+    );
+  
     return customer._id;
   }
 

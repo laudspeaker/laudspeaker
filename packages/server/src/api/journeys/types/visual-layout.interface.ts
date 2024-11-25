@@ -109,6 +109,7 @@ export enum StatementValueType {
   NUMBER = 'Number',
   BOOLEAN = 'Boolean',
   Email = 'Email',
+  DATETIME = 'DateTime'
 }
 
 export enum BranchType {

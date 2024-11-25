@@ -126,6 +126,34 @@ export class Customer {
 
   @Prop()
   laudspeakerSystemSource: string;
+
+  @Prop({ type: String, required: false })
+  timezone?: string;
+
+  @Prop({ type: Date, required: false })
+  lastAppOpenAt?: Date;
+
+  @Prop({ type: Date, required: false })
+  appFirstOpen?: Date;
+
+  @Prop({ type: String, required: false })
+  appVersion?: string;
+
+  @Prop({ type: Date, required: false })
+  lastUpdatedApp?: Date;
+
+  @Prop({ type: String, required: false })
+  locale?: string;
+
+  @Prop({ type: String, required: false })
+  deviceModel?: string;
+
+  @Prop({ type: String, required: false })
+  deviceType?: string;
+
+  @Prop({ type: String, required: false })
+  deviceManufacturer?: string;
+
 }
 
 export const CustomerSchema = SchemaFactory.createForClass(Customer);
