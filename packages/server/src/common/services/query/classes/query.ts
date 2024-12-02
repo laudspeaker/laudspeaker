@@ -8,21 +8,22 @@ import {
   EventNodeInterface,
   ValueNodeInterface,
   Node,
-  PGFormatter,
   LogicalExpressionInterface,
   NodeFactory,
+  QueryConverter,
+  QueryPreparer,
+  QueryExecuter,
 } from "../";
 
 export class Query implements QueryBase {
   expression: LogicalExpressionInterface;
   private nodeFactory = new NodeFactory();
+  private preparer = new QueryPreparer();
+  private executer = new QueryExecuter();
+  private converter;
 
   constructor() {
     this.expression = this.nodeFactory.createLogicalExpression();
-  }
-
-  static fromJSON(jsonObj: Record<string, string>): Query {
-    return new Query();
   }
 
   setMatchingToAll() {
@@ -46,9 +47,22 @@ export class Query implements QueryBase {
   }
 
   toSQL(): string {
-    const formatter = new PGFormatter();
+    this.converter = new QueryConverter(QuerySyntax.Query, this);
 
-    return formatter.process(this.expression);
+    return this.converter.toSQL();
+  }
+
+  getSelect() {
+    return ["*"];
+  }
+
+  getFrom() {
+
+  }
+
+  async execute() {
+    const preparedQuery = this.preparer.prepareQuery(this);
+    const result = this.executer.execute(preparedQuery);
   }
 }
 

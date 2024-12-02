@@ -87,6 +87,12 @@ export enum QuerySyntax {
   AttributeNode                     = 'AttributeNode',
   EventNode                         = 'EventNode',
   ValueNode                         = 'ValueNode',
+
+  // Conversion formats
+  Query                             = 'Query',
+  Expression                        = 'Expression',
+  Postgres                          = 'Postgres',
+  JSON                              = 'JSON',
 }
 
 export type OperatorKind =
@@ -270,4 +276,20 @@ export type ProcessableNodeType =
 
 export type QueryElement = ProcessableNodeType;
 
- 
+export interface QuerySQL {
+  select: string[];
+  from: string[];
+  join: string[];
+  where: string[];
+  order: string[];
+}
+
+export interface QueryResult {
+
+}
+
+export type QueryFormat =
+  | QuerySyntax.Query
+  | QuerySyntax.Expression
+  | QuerySyntax.Postgres
+  | QuerySyntax.JSON;

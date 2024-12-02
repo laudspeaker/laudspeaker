@@ -1,6 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { BaseLaudspeakerService } from '@/common/services/base.laudspeaker.service';
-import { Query, JSONConverter } from './';
+import {
+  Query,
+  QuerySyntax,
+  QueryConverter
+} from './';
 
 @Injectable()
 export class QueryService extends BaseLaudspeakerService {
@@ -9,10 +13,8 @@ export class QueryService extends BaseLaudspeakerService {
   }
 
   fromJSON(jsonQuery: Record<string, any>): Query {
-    const converter = new JSONConverter(jsonQuery);
+    const converter = new QueryConverter(QuerySyntax.JSON, jsonQuery);
 
-    const query = converter.toQuery();
-
-    return query;
+    return converter.toQuery();
   }
 }

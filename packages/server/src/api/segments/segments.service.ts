@@ -25,6 +25,7 @@ import * as Sentry from '@sentry/node';
 import { QueueType } from '../../common/services/queue/types/queue-type';
 import { Producer } from '../../common/services/queue/classes/producer';
 import { CustomerKeysService } from '../customers/customer-keys.service';
+import { QueryService } from '../../common/services/query';
 
 @Injectable()
 export class SegmentsService {
@@ -42,6 +43,7 @@ export class SegmentsService {
     @Inject(forwardRef(() => CustomerKeysService))
     private customerKeysService: CustomerKeysService,
     private readonly stepsHelper: StepsHelper,
+    private readonly queryService: QueryService,
   ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -371,65 +373,12 @@ export class SegmentsService {
         account.id
       );
 
-      if (createSegmentDTO.inclusionCriteria.query.type === 'any') {
-        const collectionPrefix = this.generateRandomString();
-        const customersInSegment =
-          await this.customersService.getSegmentCustomersFromQuery(
-            createSegmentDTO.inclusionCriteria.query,
-            account,
-            session,
-            true,
-            0,
-            collectionPrefix
-          );
+      const query = this.queryService.fromJSON(createSegmentDTO);
+      // const query = this.queryService.fromJSON(createSegmentDTO as unknown as Record<string, unknown>);
 
-        if (!customersInSegment || customersInSegment.length === 0) {
-          return { size: 0, total: 1 };
-        }
+      console.log(`Query: ${query.toSQL()}`);
 
-        const totalCount = await this.customersService.customersSize(
-          account,
-          session
-        );
-        try {
-        } catch (e) {
-          this.error(e, this.size.name, session, account.id);
-        }
-        return { size: 0, total: totalCount };
-      } else if (createSegmentDTO.inclusionCriteria.query.type === 'all') {
-        const collectionPrefix = this.generateRandomString();
-        const customersInSegment =
-          await this.customersService.getSegmentCustomersFromQuery(
-            createSegmentDTO.inclusionCriteria.query,
-            account,
-            session,
-            true,
-            0,
-            collectionPrefix
-          );
-
-        if (!customersInSegment || customersInSegment.length === 0) {
-          return { size: 0, total: 1 };
-        }
-
-        const totalCount = await this.customersService.customersSize(
-          account,
-          session
-        );
-        try {
-        } catch (e) {
-          this.debug(
-            `could not drop: ${collectionPrefix}`,
-            this.size.name,
-            session,
-            account.id
-          );
-          this.error(e, this.size.name, session);
-        }
-        return { size: 0, total: totalCount };
-      } else {
-        throw new Error(`Shouldn't be making it here`);
-      }
+      return { size: 0, total: 0 };
     });
   }
 

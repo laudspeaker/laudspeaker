@@ -1,4 +1,4 @@
-import { QueryConverterBase } from "../";
+import { QueryFormatterBase } from "../";
 import {
   Query,
   QuerySyntax,
@@ -11,7 +11,7 @@ import {
   QueryAttributeType,
 } from "../../";
 
-export class JSONConverter extends QueryConverterBase {
+export class JSONFormatter extends QueryFormatterBase {
 
   toQuery() {
     const logicalExpression = this.processStatement(this.input.inclusionCriteria.query);
