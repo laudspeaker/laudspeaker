@@ -9,7 +9,6 @@ import {
   JSONFormatter,
   PGFormatter,
 } from "../";
-import { DataSource } from 'typeorm';
 
 export class QueryConverter {
   private inputFormat: QueryFormat;
@@ -82,4 +81,3 @@ export class QueryConverter {
     }
   }
 }
-

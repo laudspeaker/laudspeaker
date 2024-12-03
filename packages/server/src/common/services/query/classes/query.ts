@@ -18,7 +18,6 @@ import {
 export class Query implements QueryBase {
   expression: LogicalExpressionInterface;
   private nodeFactory = new NodeFactory();
-  private preparer = new QueryPreparer();
   private executer = new QueryExecuter();
   private converter;
 
@@ -52,17 +51,25 @@ export class Query implements QueryBase {
     return this.converter.toSQL();
   }
 
-  getSelect() {
-    return ["*"];
+  // query.count(*)
+  // query.count(DISTINCT(id))  
+  async count(...fields: string[]) {
   }
 
-  getFrom() {
-
+  async getOne(dataSource) {
+    // return this.executer.getOne(this, dataSource);
   }
 
-  async execute() {
-    const preparedQuery = this.preparer.prepareQuery(this);
-    const result = this.executer.execute(preparedQuery);
+  async getAll(dataSource) {
+    // return this.executer.getAll(this, dataSource);
+  }
+
+  async getCount(dataSource) {
+    return this.executer.getCount(this, dataSource);
+  }
+
+  async execute(dataSource) {
+    return this.executer.execute(this, dataSource);
   }
 }
 

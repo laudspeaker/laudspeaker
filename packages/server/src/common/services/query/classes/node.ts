@@ -15,35 +15,3 @@ export class Node<T extends QuerySyntax> implements NodeInterface {
     this.flags = NodeFlags.None;
   }
 }
-
-// export class NodeList extends Node<QuerySyntax.NodeList> implements NodeListInterface {
-//   public nodes: NodeInterface[];
-//   public operator: QueryMatchType;
-
-//   constructor() {
-//     super(QuerySyntax.NodeList);
-
-//     this.expressions = [];
-//     this.setMatchingToAny();
-//   }
-
-//   add(node: NodeInterface) {
-//     this.expressions.push(node);
-//   }
-
-//   setMatchingToAll() {
-//     this.matchType = QuerySyntax.MatchingTypeAll;
-//   }
-
-//   setMatchingToAny() {
-//     this.matchType = QuerySyntax.MatchingTypeAny;
-//   }
-
-//   getLength(): number {
-//     return this.expressions.length;
-//   }
-
-//   getMatchType(): QueryMatchType {
-//     return this.matchType;
-//   }
-// }

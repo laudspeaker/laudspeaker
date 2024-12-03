@@ -9,4 +9,5 @@ export * from "./formatters/json.formatter";
 export * from "./query";
 export * from "./query-converter";
 export * from "./query-preparer";
+export * from "./query-result-parser";
 export * from "./query-executer";

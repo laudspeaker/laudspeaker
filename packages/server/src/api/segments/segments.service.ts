@@ -373,12 +373,25 @@ export class SegmentsService {
         account.id
       );
 
+      const totalCount = await this.customersService.customersSize(
+        account,
+        session
+      );
+
       const query = this.queryService.fromJSON(createSegmentDTO);
-      // const query = this.queryService.fromJSON(createSegmentDTO as unknown as Record<string, unknown>);
 
-      console.log(`Query: ${query.toSQL()}`);
+      this.debug(
+        `Query SQL: ${query.toSQL()}`,
+        this.size.name,
+        session,
+        account.id
+      );
 
-      return { size: 0, total: 0 };
+      // const result = await this.queryService.executeQuery(query);
+
+      const customerCount = await query.getCount(this.dataSource);
+
+      return { size: customerCount, total: totalCount };
     });
   }
 

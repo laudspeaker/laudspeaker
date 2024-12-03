@@ -1,24 +1,50 @@
 import {
-  NodeInterface,
   Query,
   QuerySyntax,
   QuerySQL,
+  QueryIntermediate,
+  QueryPreparerFlags,
+  NodeInterface,
+  AttributeNodeInterface,
+  EventNodeInterface,
+  ValueNodeInterface,
+  UnaryExpressionInterface,
+  BinaryExpressionInterface,
+  TernaryExpressionInterface,
+  LogicalExpressionInterface,
 } from "../";
-import { DataSource, Repository } from 'typeorm';
 
 export class QueryPreparer {
+  query: Query;
+  intermediateQuery: QueryIntermediate;
+  finalQuery: QuerySQL;
+  fullSQL: string;
 
-  constructor() {
+  flags: QueryPreparerFlags = QueryPreparerFlags.None;
+
+  setIsCountQuery() {
+    this.flags |= QueryPreparerFlags.IsCountQuery;
   }
 
-  async execute(query: Query) {
-    const preparedQuery = this.prepareQuery(query);
+  prepareQuery(query: Query) {
+    this.query = query;
 
-    return this.executeQuery(preparedQuery);
+    this.reset();
+
+    this.traverseTree(this.query.expression);
+    this.generateFinalQuery();
+    this.generateFullSQL();
   }
 
-  prepareQuery(query: Query): QuerySQL {
-    const sql: QuerySQL = {
+  private reset() {
+    this.intermediateQuery = {
+      customerAttributes: [],
+      eventNames: [],
+      eventAttributes: [],
+      tables: [],
+    };
+
+    this.finalQuery = {
       select: [],
       from: [],
       join: [],
@@ -26,11 +52,55 @@ export class QueryPreparer {
       order: [],
     };
 
-    return sql;
+    this.fullSQL = "";
   }
 
-  private async executeQuery(sql: QuerySQL) {
+  private generateFinalQuery() {
+    this.generateSelect();
+    this.generateFrom();
+    this.generateWhere(); 
+  }
 
+  private generateSelect() {
+    if(this.flags & QueryPreparerFlags.IsCountQuery) {
+      this.finalQuery.select.push("COUNT(*) as count");
+    } else {
+      this.finalQuery.select.push("*");
+    }
+  }
+
+  private generateFrom() {
+    if (this.intermediateQuery.customerAttributes.length > 0) {
+      this.finalQuery.from.push("customer");
+    }
+
+    if (this.intermediateQuery.eventNames.length > 0) {
+      this.finalQuery.from.push("events");
+    }
+  }
+
+  private generateWhere() {
+    this.finalQuery.where.push(this.query.toSQL());
+  }
+
+  private generateFullSQL() {
+    const sqlStr = `
+      SELECT ${this.finalQuery.select.join(",")}
+      FROM ${this.finalQuery.from.join(",")}
+      WHERE ${this.finalQuery.where.join(" AND ")}`;
+
+    this.fullSQL = sqlStr;
+  }
+
+  private processAttributeNode(node: AttributeNodeInterface) {
+    this.intermediateQuery.customerAttributes.push(node.attribute);
+  }
+
+  private processEventNode(node: EventNodeInterface) {
+    this.intermediateQuery.customerAttributes.push(node.event);
+  }
+
+  private processValueNode(node: ValueNodeInterface) {
   }
 
   private traverseTree(node: NodeInterface) {
@@ -39,26 +109,28 @@ export class QueryPreparer {
 
     switch(node.kind) {
       case QuerySyntax.AttributeNode:
-        // this.treeCounter.addAttributeNode(node as AttributeNodeInterface);
-      //   return this.processAttributeNode(node);
-      // case QuerySyntax.EventNode:
-      //   return this.processEventNode(node as EventNodeInterface);
-      // case QuerySyntax.ValueNode:
-      //   return this.processValueNode(node as ValueNodeInterface);
-      // case QuerySyntax.UnaryExpression:
-      //   return this.processUnaryExpression(node as UnaryExpressionInterface)
-      // case QuerySyntax.BinaryExpression:
-      //   return this.processBinaryExpression(node as BinaryExpressionInterface)
-      // case QuerySyntax.TernaryExpression:
-      //   return this.processTernaryExpression(node as TernaryExpressionInterface)
-      // case QuerySyntax.LogicalExpression:
-      //   return this.processLogicalExpression(node as LogicalExpressionInterface)
-      // case QuerySyntax.ExpressionGroup:
-      //   return this.processExpressionGroupNode(node as ExpressionGroupInterface);
-      // case QuerySyntax.AttributeExpression:
-      //   return this.processAttributeExpression(node as ExpressionInterface);
-      // case QuerySyntax.EventExpression:
-      //   return this.processEventExpression(node as ExpressionInterface);
+        this.processAttributeNode(node as AttributeNodeInterface);
+        break;
+      case QuerySyntax.EventNode:
+        return this.processEventNode(node as EventNodeInterface);
+      case QuerySyntax.ValueNode:
+        return this.processValueNode(node as ValueNodeInterface);
+      case QuerySyntax.UnaryExpression:
+        return this.traverseTree( (node as UnaryExpressionInterface).left);
+      case QuerySyntax.BinaryExpression:
+        this.traverseTree( (node as BinaryExpressionInterface).left);
+        this.traverseTree( (node as BinaryExpressionInterface).right);
+        break;
+      case QuerySyntax.TernaryExpression:
+        this.traverseTree( (node as TernaryExpressionInterface).left);
+        this.traverseTree( (node as TernaryExpressionInterface).middle);
+        this.traverseTree( (node as TernaryExpressionInterface).right);
+        break;
+      case QuerySyntax.LogicalExpression:
+        for(let expression of (node as LogicalExpressionInterface).expressions) {
+          this.traverseTree(expression);
+        }
+        break;
       case QuerySyntax.EmailExpression:
       case QuerySyntax.MessageExpression:
       case QuerySyntax.SMSExpression:

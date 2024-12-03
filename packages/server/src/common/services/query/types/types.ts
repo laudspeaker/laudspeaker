@@ -198,7 +198,7 @@ export interface UnaryExpressionInterface extends ExpressionInterface {
   kind: QuerySyntax.UnaryExpression;
   operator: UnaryOperatorKind;
   left: NodeInterface;
-}
+} 
 
 export interface BinaryExpressionInterface extends ExpressionInterface {
   kind: QuerySyntax.BinaryExpression;
@@ -276,6 +276,13 @@ export type ProcessableNodeType =
 
 export type QueryElement = ProcessableNodeType;
 
+export interface QueryIntermediate {
+  customerAttributes: string[];
+  eventNames: string[];
+  eventAttributes: string[];
+  tables: string[];
+}
+
 export interface QuerySQL {
   select: string[];
   from: string[];
@@ -293,3 +300,8 @@ export type QueryFormat =
   | QuerySyntax.Expression
   | QuerySyntax.Postgres
   | QuerySyntax.JSON;
+
+export const enum QueryPreparerFlags {
+  None                      = 0,
+  IsCountQuery              = 1 << 0,  // COUNT(*)
+}

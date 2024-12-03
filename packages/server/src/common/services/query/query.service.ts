@@ -1,4 +1,13 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+// import { Inject, Injectable } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { BaseLaudspeakerService } from '@/common/services/base.laudspeaker.service';
 import {
   Query,
@@ -7,14 +16,20 @@ import {
 } from './';
 
 @Injectable()
-export class QueryService extends BaseLaudspeakerService {
-  constructor() {
-    super();
+export class QueryService {
+  constructor(
+    private dataSource: DataSource,
+  ) {
+    // super();
   }
 
   fromJSON(jsonQuery: Record<string, any>): Query {
     const converter = new QueryConverter(QuerySyntax.JSON, jsonQuery);
 
     return converter.toQuery();
+  }
+
+  async executeQuery(query: Query) {
+    return query.execute(this.dataSource);
   }
 }
