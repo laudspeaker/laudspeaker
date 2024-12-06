@@ -23,13 +23,15 @@ export class QueryService {
     // super();
   }
 
-  fromJSON(jsonQuery: Record<string, any>): Query {
-    const converter = new QueryConverter(QuerySyntax.JSON, jsonQuery);
-
-    return converter.toQuery();
-  }
-
   async executeQuery(query: Query) {
     return query.execute(this.dataSource);
   }
+
+  async getCustomersInQuery(query: Query) {
+  }
+
+
+
+
+
 }

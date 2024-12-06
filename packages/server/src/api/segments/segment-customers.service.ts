@@ -8,6 +8,7 @@ import * as copyFrom from 'pg-copy-streams';
 import { SegmentCustomers } from './entities/segment-customers.entity';
 import { Segment } from './entities/segment.entity';
 import { Customer } from '../customers/entities/customer.entity';
+import { Query } from '@/common/services/query';
 
 const LOCATION_LOCK_TIMEOUT_MS = +process.env.LOCATION_LOCK_TIMEOUT_MS;
 
@@ -82,74 +83,53 @@ export class SegmentCustomersService {
   }
 
   /**
-   * Add a customer to a segment.
+   * Adds customers to an empty segment based on a query
    *
    * @param {Account} account Associated Account
    * @param {Segment} journey Associated Journey
-   * @param {CustomerDocument} customer Associated Customer
+   * @param {Query} query to fetch customers
    * @param {string} session HTTP session token
-   * @param {QueryRunner} [queryRunner]  Postgres Transaction
+   * @param {QueryRunner}  Postgres Transaction
    * @returns
    */
-  async create(
+  async populateEmptySegment(
     segment: Segment,
-    customer: Customer,
+    query: Query,
     session: string,
     account: Account,
-    queryRunner?: QueryRunner
+    queryRunner: QueryRunner
   ) {
     this.log(
       JSON.stringify({
-        info: `Adding customer ${customer.id} to segment ${segment.id}`,
+        info: `Adding customers with query ${query.toSQL()} to segment ${segment.id}`,
       }),
-      this.create.name,
+      this.populateEmptySegment.name,
       session,
       account.email
     );
 
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    if (queryRunner) {
-      // Step 1: Check if customer is already enrolled in Journey; if so, throw error
-      const location = await queryRunner.manager.findOne(SegmentCustomers, {
-        where: {
-          segment: { id: segment.id },
-          workspace: { id: workspace.id },
-          customer: { id: customer.id },
-        },
-      });
+    // query.select(['Date.now()', segment.id, 'id', workspace.id]);
+    // todo: something better than this
+    const queryStr = `
+        INSERT INTO
+        segment_customers ("segmentEntry", segment_id, customer_id, workspace_id)
+          SELECT
+            cast(extract(epoch from '2018-08-20'::date) as bigint),
+            '${segment.id}',
+            id,
+            '${workspace.id}'
+          FROM customer
+          WHERE ${query.toString()};`;
 
-      if (location)
-        throw new Error(
-          `Customer ${customer.id} already a part of segment ${segment.id}`
-        );
+    this.log(`Full Query: ${queryStr}`,
+      this.populateEmptySegment.name,
+      session,
+      account.email
+    );
 
-      // Step 2: Create new journey Location row, add time that user entered the journey
-      await queryRunner.manager.save(SegmentCustomers, {
-        segment: { id: segment.id },
-        workspace,
-        customer: { id: customer.id },
-        segmentEntry: Date.now(),
-      });
-    } else {
-      const location = await this.segmentCustomersRepository.findOne({
-        where: {
-          segment: { id: segment.id },
-          workspace: { id: workspace.id },
-          customer: { id: customer.id },
-        },
-      });
-      if (location)
-        throw new Error(
-          `Customer ${customer.id} already a part of segment ${segment.id}`
-        );
-      await this.segmentCustomersRepository.save({
-        segment: { id: segment.id },
-        workspace,
-        customer: { id: customer.id },
-        segmentEntry: Date.now(),
-      });
-    }
+    const result = await queryRunner.manager.query(queryStr);
   }
 
   async deleteFromSingleSegment(
@@ -276,49 +256,50 @@ export class SegmentCustomersService {
 
   async addBulk(
     segmentID: string,
-    customers: string[],
+    query: Query,
     session: string,
     account: Account,
     client: any
   ): Promise<void> {
-    if (!customers.length) return;
+    // if (!customers.length) return;
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     const segmentEntry = Date.now();
 
-    // Create a readable stream from the array od customer IDs
-    const readableStream = new Readable({
-      read() {
-        customers.forEach((customerId) => {
-          this.push(
-            `${segmentID}\t${customerId}\t${workspace.id}\t${segmentEntry}\n`
-          );
-        });
-        this.push(null);
-      },
-    });
 
-    const stream = client.query(
-      copyFrom.from(
-        `COPY segment_customers ("segmentId", "customerId", "workspaceId", "segmentEntry") FROM STDIN WITH (FORMAT text)`
-      )
-    );
+    // // Create a readable stream from the array od customer IDs
+    // const readableStream = new Readable({
+    //   read() {
+    //     customers.forEach((customerId) => {
+    //       this.push(
+    //         `${segmentID}\t${customerId}\t${workspace.id}\t${segmentEntry}\n`
+    //       );
+    //     });
+    //     this.push(null);
+    //   },
+    // });
 
-    // Error handling
-    stream.on('error', (error) => {
-      this.error(error, this.addBulk.name, session, account.email);
-      throw error;
-    });
-    stream.on('finish', () => {
-      this.debug(
-        `Finished creating segment rows for ${segmentID}`,
-        this.addBulk.name,
-        session,
-        account.email
-      );
-    });
+    // const stream = client.query(
+    //   copyFrom.from(
+    //     `COPY segment_customers ("segmentId", "customerId", "workspaceId", "segmentEntry") FROM STDIN WITH (FORMAT text)`
+    //   )
+    // );
 
-    // Pipe the readable stream to the COPY command
-    readableStream.pipe(stream);
+    // // Error handling
+    // stream.on('error', (error) => {
+    //   this.error(error, this.addBulk.name, session, account.email);
+    //   throw error;
+    // });
+    // stream.on('finish', () => {
+    //   this.debug(
+    //     `Finished creating segment rows for ${segmentID}`,
+    //     this.addBulk.name,
+    //     session,
+    //     account.email
+    //   );
+    // });
+
+    // // Pipe the readable stream to the COPY command
+    // readableStream.pipe(stream);
   }
 
   async removeBulk(

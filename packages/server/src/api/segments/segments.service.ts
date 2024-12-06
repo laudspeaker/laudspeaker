@@ -25,7 +25,7 @@ import * as Sentry from '@sentry/node';
 import { QueueType } from '../../common/services/queue/types/queue-type';
 import { Producer } from '../../common/services/queue/classes/producer';
 import { CustomerKeysService } from '../customers/customer-keys.service';
-import { QueryService } from '../../common/services/query';
+import { Query, QueryService } from '@/common/services/query';
 
 @Injectable()
 export class SegmentsService {
@@ -245,9 +245,11 @@ export class SegmentsService {
 
     // Find the total number of customers in the segment
     //const totalCustomers = await segmentCustomersRepository.count({ where: { segment: segmentId, owner: account } });
-    const totalCustomers = await this.segmentCustomersRepository.count({
-      where: { segment: { id: segmentId } },
-    });
+    // const totalCustomers = await this.segmentCustomersRepository.count({
+    //   where: { segment: { id: segmentId } },
+    // });
+
+    const totalCustomers = await this.countSegmentCustomers(account, segmentId);
 
     while (processedCount < totalCustomers) {
       // Fetch a batch of SegmentCustomers
@@ -378,7 +380,7 @@ export class SegmentsService {
         session
       );
 
-      const query = this.queryService.fromJSON(createSegmentDTO);
+      const query = Query.fromJSON(createSegmentDTO);
 
       this.debug(
         `Query SQL: ${query.toSQL()}`,
@@ -386,8 +388,6 @@ export class SegmentsService {
         session,
         account.id
       );
-
-      // const result = await this.queryService.executeQuery(query);
 
       const customerCount = await query.getCount(this.dataSource);
 

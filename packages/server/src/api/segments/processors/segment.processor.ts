@@ -25,6 +25,7 @@ import { Processor } from '../../../common/services/queue/decorators/processor';
 import { ProcessorBase } from '../../../common/services/queue/classes/processor-base';
 import { QueueType } from '../../../common/services/queue/types/queue-type';
 import { Producer } from '../../../common/services/queue/classes/producer';
+import { Query } from '@/common/services/query';
 
 @Injectable()
 @Processor('segment_update')
@@ -261,23 +262,19 @@ export class SegmentUpdateProcessor extends ProcessorBase {
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Sleep for 1 second before checking again
     }
 
+    const query = Query.fromJSON(job.data.createSegmentDTO);
     const queryRunner = await this.dataSource.createQueryRunner();
-    const client = await queryRunner.connect();
+    await queryRunner.connect();
     await queryRunner.startTransaction();
-    try {
-      const collectionPrefix = this.segmentsService.generateRandomString();
-      const customersInSegment =
-        await this.customersService.getSegmentCustomersFromQuery(
-          job.data.createSegmentDTO.inclusionCriteria.query,
-          job.data.account,
-          job.data.session,
-          true,
-          0,
-          collectionPrefix
-        );
 
-      const CUSTOMERS_PER_BATCH = 50000;
-      let batch = 0;
+    try {
+      await this.segmentCustomersService.populateEmptySegment(
+        job.data.segment,
+        query,
+        job.data.session,
+        job.data.account,
+        queryRunner
+      );
 
       await queryRunner.manager.save(Segment, {
         ...job.data.segment,

@@ -154,37 +154,8 @@ export class JSONFormatter extends QueryFormatterBase {
   }
 
   processBinaryExpression(node: BinaryExpressionInterface) {
-
   }
 
   processLogicalExpression(node: LogicalExpressionInterface) {
-
   }
-
-  // processAttributeExpression(node: QueryElement) {
-
-  // }
-
-  // processEventExpression(node: QueryElement) {
-
-  // }
-
-  processAttributeNode(node: QueryElement) {
-
-  }
-
-  processEventNode(node: QueryElement) {
-
-  }
-
-  processValueNode(node: QueryElement) {
-
-  }
-
-  processExpressionGroupNode(node: QueryElement) {
-
-  }
-
-  
-  
 }

@@ -11,7 +11,6 @@ import {
   LogicalExpressionInterface,
   NodeFactory,
   QueryConverter,
-  QueryPreparer,
   QueryExecuter,
 } from "../";
 
@@ -21,8 +20,16 @@ export class Query implements QueryBase {
   private executer = new QueryExecuter();
   private converter;
 
+  selectParams: string[] = ['*'];
+
   constructor() {
     this.expression = this.nodeFactory.createLogicalExpression();
+  }
+
+  static fromJSON(jsonQuery: Record<string, any>) {
+    const converter = new QueryConverter(QuerySyntax.JSON, jsonQuery);
+
+    return converter.toQuery();
   }
 
   setMatchingToAll() {
@@ -51,6 +58,10 @@ export class Query implements QueryBase {
     return this.converter.toSQL();
   }
 
+  toString(): string {
+    return this.toSQL();
+  }
+
   // query.count(*)
   // query.count(DISTINCT(id))  
   async count(...fields: string[]) {
@@ -71,5 +82,15 @@ export class Query implements QueryBase {
   async execute(dataSource) {
     return this.executer.execute(this, dataSource);
   }
+
+  select(params: string[]) {
+    this.selectParams = params;
+  }
+
+  getWhereStatement() {
+    this.toSQL();
+  }
+
+
 }
 

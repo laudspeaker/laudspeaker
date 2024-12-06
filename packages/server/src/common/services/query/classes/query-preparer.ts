@@ -65,7 +65,7 @@ export class QueryPreparer {
     if(this.flags & QueryPreparerFlags.IsCountQuery) {
       this.finalQuery.select.push("COUNT(*) as count");
     } else {
-      this.finalQuery.select.push("*");
+      this.finalQuery.select = this.query.selectParams;
     }
   }
 

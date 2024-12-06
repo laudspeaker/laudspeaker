@@ -14,13 +14,13 @@ export class QueryConverter {
   private inputFormat: QueryFormat;
   private outputFormat: QueryFormat = QuerySyntax.Query;
   private input: any;
-
+ 
   constructor(inputFormat: QueryFormat, input: any) {
     this.inputFormat = inputFormat;
     this.input = input;
   }
 
-  static From(inputFormat: QueryFormat, input: any): QueryConverter {
+  static from(inputFormat: QueryFormat, input: any): QueryConverter {
     return new QueryConverter(inputFormat, input);
   }
 
@@ -40,6 +40,7 @@ export class QueryConverter {
 
   convert() {
     const inputQuery: Query = this.convertInputToQuery();
+
     const output = this.convertInputQueryToOutput(inputQuery);
 
     return output;
