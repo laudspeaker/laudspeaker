@@ -29,9 +29,15 @@ const MappingTab = ({
   >({});
   const [activeHead, setActiveHead] = useState<string>();
   const [possibleKeys, setPossibleKeys] = useState<Attribute[]>([]);
+  const [possibleKeysLoaded, setPossibleKeysLoaded] = useState<boolean>(false);
   const [possibleAttributeTypes, setPossibleAttributeTypes] = useState<
     AttributeType[]
   >([]);
+  const [newAttributeCreated, setNewAttributeCreated] =
+    useState<boolean>(false);
+  const [lastAttributeCreated, setLastAttributeCreated] = useState<
+    Record<string, any>
+  >({});
 
   const handleSearchUpdate = (head: string) => (value: string) => {
     const newSearch = { ...search };
@@ -52,6 +58,8 @@ const MappingTab = ({
   };
 
   const loadPossibleKeys = async () => {
+    setPossibleKeysLoaded(false);
+
     const { data } = await ApiService.get<any[]>({
       url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Boolean&type=Email&type=Date&type=DateTime`,
     });
@@ -86,6 +94,7 @@ const MappingTab = ({
     }
 
     setPossibleKeys(data);
+    setPossibleKeysLoaded(true);
   };
 
   const loadKeyTypes = async () => {
@@ -94,6 +103,35 @@ const MappingTab = ({
     });
 
     setPossibleAttributeTypes(data);
+  };
+
+  const handleNewAttributeCreated = async () => {
+    let newActiveHeadSettings = {};
+
+    const keySearchResult = possibleKeys.find((key) => {
+      return key.name === lastAttributeCreated.keyName;
+    });
+
+    if (keySearchResult) {
+      newActiveHeadSettings = {
+        asAttribute: {
+          attribute: keySearchResult,
+          skip: false,
+        },
+        is_primary: possibleKeys.length == 1,
+      };
+    }
+    if (!activeHead) return;
+
+    updateSettings({
+      [activeHead]: {
+        ...mappingSettings[activeHead],
+        ...newActiveHeadSettings,
+      },
+    });
+    setActiveHead(undefined);
+    setNewAttributeCreated(false);
+    setLastAttributeCreated({});
   };
 
   const handleSelectChange = (head: string) => (selectKey: string) => {
@@ -195,6 +233,12 @@ const MappingTab = ({
     loadKeyTypes();
   }, []);
 
+  useEffect(() => {
+    if (!newAttributeCreated || !possibleKeysLoaded) return;
+
+    handleNewAttributeCreated();
+  }, [newAttributeCreated, possibleKeysLoaded]);
+
   return (
     <div className="py-10 px-5">
       <div className="text-[#111827] font-inter text-sm">
@@ -203,7 +247,7 @@ const MappingTab = ({
         needed. For any unmatched attributes, manually select the appropriate
         attribute from the dropdown menu or opt to create a new attribute.
       </div>
-      <div className="mt-5 flow-root max-h-[calc(100vh-480px)] overflow-y-auto">
+      <div className="mt-5 flow-root max-h-[calc(100vh)] overflow-y-auto">
         <RadioGroup
           value={
             primaryKey?.asAttribute?.attribute
@@ -463,22 +507,17 @@ const MappingTab = ({
           keyType: AttributeType,
           dateFormat?: string
         ) => {
-          loadPossibleKeys();
+          setNewAttributeCreated(false);
+          setPossibleKeysLoaded(false);
+          setLastAttributeCreated({});
 
-          if (!activeHead) return;
-          updateSettings({
-            [activeHead]: {
-              ...mappingSettings[activeHead],
-              asAttribute: {
-                attribute:
-                  possibleKeys.find((key) => {
-                    return key.name === keyName;
-                  }) || possibleKeys[0],
-                skip: false,
-              },
-            },
+          loadPossibleKeys();
+          setNewAttributeCreated(true);
+          setLastAttributeCreated({
+            keyName,
+            keyType,
+            dateFormat,
           });
-          setActiveHead(undefined);
         }}
       />
     </div>
