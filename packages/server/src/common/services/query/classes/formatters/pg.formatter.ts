@@ -224,6 +224,15 @@ export class PGFormatter extends QueryFormatterBase {
     const value = node.value.toString();
     let result: string = "";
 
+    // | QuerySyntax.StringKeyword
+    // | QuerySyntax.NumberKeyword
+    // | QuerySyntax.BooleanKeyword
+    // | QuerySyntax.EmailKeyword
+    // | QuerySyntax.DateKeyword
+    // | QuerySyntax.DateTimeKeyword
+    // | QuerySyntax.ArrayKeyword
+    // | QuerySyntax.ObjectKeyword;
+
     // todo: sanitize the values for SQL
     switch(node.type) {
       case QuerySyntax.StringKeyword:
@@ -236,6 +245,8 @@ export class PGFormatter extends QueryFormatterBase {
       case QuerySyntax.NumberKeyword:
         result = `${value}`;
         break;
+      case QuerySyntax.BooleanKeyword:
+        result = value.toUpperCase();
       default:
         break;
     }

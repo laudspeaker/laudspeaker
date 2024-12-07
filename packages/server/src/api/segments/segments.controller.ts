@@ -170,7 +170,7 @@ export class SegmentsController {
 
   @Post('/size')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  // @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async size(
     @Req() { user }: Request,
     @Body() countSegmentUsersSizeDTO: CountSegmentUsersSizeDTO
@@ -185,7 +185,7 @@ export class SegmentsController {
       session
     );
 
-    return await this.segmentsService.size(
+    return this.segmentsService.size(
       <Account>user,
       countSegmentUsersSizeDTO,
       session
