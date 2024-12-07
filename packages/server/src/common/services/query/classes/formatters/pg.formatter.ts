@@ -169,9 +169,47 @@ export class PGFormatter extends QueryFormatterBase {
 
   private processAttributeNode(node: AttributeNodeInterface, flags: NodeFlags) {
     let attribute = node.attribute.toString();
+    let castingPrefix, castingSuffix
+    let accessorToken;
 
-    if (node.prefix && node.prefix.length > 0)
-      attribute = `${node.prefix.toString()}->>'${attribute}'`;
+    if (node.prefix && node.prefix.length > 0) {
+      let accessorToken = QuerySyntax.EntityAccessorTextToken;
+      let castingSuffix = undefined;
+
+      switch(node.type) {
+        case QuerySyntax.StringKeyword:
+          break;
+        case QuerySyntax.NumberKeyword:
+          castingSuffix = 'NUMERIC';
+            break;
+        case QuerySyntax.BooleanKeyword:
+          castingSuffix = 'BOOL';
+            break;
+        case QuerySyntax.EmailKeyword:
+            break;
+        case QuerySyntax.DateKeyword:
+          castingPrefix = "to_date";
+            break;
+        case QuerySyntax.DateTimeKeyword:
+          castingPrefix = "to_timestamp";
+            break;
+        case QuerySyntax.ArrayKeyword:
+          accessorToken = QuerySyntax.EntityAccessorJSONBToken;
+            break;
+        case QuerySyntax.ObjectKeyword:
+          accessorToken = QuerySyntax.EntityAccessorJSONBToken;
+            break;
+      }
+
+      attribute = `${node.prefix.toString()}${accessorToken}'${attribute}'`;
+
+      if (castingPrefix) {
+        attribute = `${castingPrefix}(${attribute})`;
+      }
+      if (castingSuffix) {
+        attribute = `(${attribute})::${castingSuffix}`;
+      }
+    }
 
     return attribute;
   }

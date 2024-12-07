@@ -58,8 +58,9 @@ export enum QuerySyntax {
   GreaterThanToken                  = '>',
   GreaterThanEqualsToken            = '>=',
 
-  MinusGreaterThanGreaterThanToken  = '->>',
-  MinusMinusGreaterThanToken        = '-->',
+  EntityAccessorPeriodToken         = '.',
+  EntityAccessorJSONBToken          = '->',
+  EntityAccessorTextToken           = '->>',
 
   HasPerformedKeyword               = 'HasPerformedKeyword',
   HasNotPerformedKeyword            = 'HasNotPerformedKeyword',
@@ -183,17 +184,6 @@ export interface ExpressionInterface extends NodeInterface {
   operator: OperatorKind;
 }
 
-// export interface NodeListInterface extends NodeInterface {
-//   kind: QuerySyntax.NodeList;
-//   nodes: NodeInterface[];
-//   operator: NodeListOperatorKind;
-
-//   add(node: NodeInterface);
-//   setMatchingToAll();
-//   setMatchingToAny();
-//   getLength(): number;
-// }
-
 export interface UnaryExpressionInterface extends ExpressionInterface {
   kind: QuerySyntax.UnaryExpression;
   operator: UnaryOperatorKind;
@@ -223,18 +213,6 @@ export interface LogicalExpressionInterface extends ExpressionInterface {
   setMatchingToAll();
   setMatchingToAny();
 }
-
-// export interface MultiaryExpressionInterface {
-//   kind: QuerySyntax.MultiaryExpression;
-//   expressions: ExpressionInterface[];
-// }
-
-// export interface EventExpressionInterface extends ExpressionInterface {
-//   kind: QuerySyntax.EventExpression;
-//   operator: EventOperatorKind;
-//   event: string;
-//   attributeExpressions?: ExpressionInterface[]
-// }
 
 // Nodes for variables
 export interface AttributeNodeInterface extends NodeInterface {
