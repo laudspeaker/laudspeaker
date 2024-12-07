@@ -32,12 +32,6 @@ export class PGFormatter extends QueryFormatterBase {
       //   return this.processTernaryExpression(node as TernaryExpressionInterface, flags)
       case QuerySyntax.LogicalExpression:
         return this.processLogicalExpression(node as LogicalExpressionInterface, flags)
-      // case QuerySyntax.ExpressionGroup:
-      //   return this.processExpressionGroupNode(node as NodeListInterface, flags);
-      // case QuerySyntax.AttributeExpression:
-      //   return this.processAttributeExpression(node as ExpressionInterface, flags);
-      // case QuerySyntax.EventExpression:
-      //   return this.processEventExpression(node as ExpressionInterface, flags);
       case QuerySyntax.EmailExpression:
       case QuerySyntax.MessageExpression:
       case QuerySyntax.SMSExpression:

@@ -8,6 +8,9 @@ import {
   EventNodeInterface,
   ValueNodeInterface,
   Node,
+  UnaryExpressionInterface,
+  BinaryExpressionInterface,
+  TernaryExpressionInterface,
   LogicalExpressionInterface,
   NodeFactory,
   QueryConverter,
@@ -52,7 +55,58 @@ export class Query implements QueryBase {
     return this.expression.operator;
   }
 
+  // checks if query can be executed and not missing anything
+  isComplete() {
+    const expressions = this.getExpressions();
+
+    if (expressions.length == 0)
+      return false;
+
+    for (let expression of expressions) {
+      if (!this.isCompleteExpression(expression) )
+        return false;
+    }
+
+    return true;
+  }
+
+  // TODO: traverse the full tree
+  private isCompleteExpression(expression: ExpressionInterface) {
+    let exp;
+
+    switch (expression.kind) {
+      case QuerySyntax.UnaryExpression:
+        exp = expression as UnaryExpressionInterface;
+        return exp.lhs && exp.operator;
+      case QuerySyntax.BinaryExpression:
+        exp = expression as BinaryExpressionInterface;
+        return exp.lhs && exp.operator && exp.rhs;
+      case QuerySyntax.TernaryExpression:
+        exp = expression as TernaryExpressionInterface;
+      return exp.lhs && exp.operator && exp.middle && exp.rhs;
+      case QuerySyntax.LogicalExpression:
+        exp = expression as LogicalExpressionInterface;
+        for (let nestedExpression of exp.expressions) {
+          if (!this.isCompleteExpression(nestedExpression))
+            return false;
+        }
+
+        return true;
+      case QuerySyntax.EmailExpression:
+      case QuerySyntax.MessageExpression:
+      case QuerySyntax.SMSExpression:
+      case QuerySyntax.PushExpression:
+        return true;
+    }
+
+    return false;
+  }
+
   toSQL(): string {
+
+    if (!this.isComplete())
+      return "";
+
     this.converter = new QueryConverter(QuerySyntax.Query, this);
 
     return this.converter.toSQL();

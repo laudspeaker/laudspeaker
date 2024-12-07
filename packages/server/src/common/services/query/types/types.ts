@@ -140,14 +140,11 @@ export type ExpressionKind =
   | QuerySyntax.BinaryExpression
   | QuerySyntax.TernaryExpression
   | QuerySyntax.LogicalExpression
-  | QuerySyntax.MultiaryExpression;
-  // | QuerySyntax.AttributeExpression
-  // | QuerySyntax.EventExpression
-  // | QuerySyntax.EmailExpression
-  // | QuerySyntax.MessageExpression
-  // | QuerySyntax.SMSExpression
-  // | QuerySyntax.PushExpression
-  // | QuerySyntax.SegmentExpression;
+  | QuerySyntax.EmailExpression
+  | QuerySyntax.MessageExpression
+  | QuerySyntax.SMSExpression
+  | QuerySyntax.PushExpression
+  | QuerySyntax.SegmentExpression;
 
 export type LogicalExpressionKind = 
   | QuerySyntax.AndKeyword

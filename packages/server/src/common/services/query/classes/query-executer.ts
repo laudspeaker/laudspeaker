@@ -18,6 +18,9 @@ export class QueryExecuter {
     query: Query,
     dataSource: DataSource
   ) {
+    if (!query.isComplete())
+      return [];
+
     const preparer = new QueryPreparer();
 
     return this.executeQuery(query, preparer, dataSource);
@@ -27,6 +30,9 @@ export class QueryExecuter {
     query: Query,
     dataSource: DataSource
   ): Promise<any> {
+    if (!query.isComplete())
+      return undefined;
+
     const preparer = new QueryPreparer();
 
     // should be execution flags
@@ -41,6 +47,10 @@ export class QueryExecuter {
     query: Query,
     dataSource: DataSource
   ): Promise<number> {
+
+    if (!query.isComplete())
+      return 0;
+
     const preparer = new QueryPreparer();
 
     // should be execution flags
