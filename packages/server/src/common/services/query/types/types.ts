@@ -236,6 +236,12 @@ export interface QueryBase {
   toSQL(): string;
 }
 
+export type ExpressionInterfaceTypes = 
+  | UnaryExpressionInterface
+  | BinaryExpressionInterface
+  | TernaryExpressionInterface
+  | LogicalExpressionInterface;
+
 export type QueryConversionAllowedInputType = 
   | Record<string, string>;
 

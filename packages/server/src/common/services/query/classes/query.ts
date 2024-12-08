@@ -1,20 +1,21 @@
 import { 
-  QueryElement,
-  QueryBase,
-  QuerySyntax,
-  NodeInterface,
-  ExpressionInterface,
   AttributeNodeInterface,
-  EventNodeInterface,
-  ValueNodeInterface,
-  Node,
-  UnaryExpressionInterface,
   BinaryExpressionInterface,
-  TernaryExpressionInterface,
+  EventNodeInterface,
+  ExpressionInterface,
+  ExpressionInterfaceTypes,
   LogicalExpressionInterface,
+  Node,
   NodeFactory,
+  NodeInterface,
+  QueryBase,
   QueryConverter,
+  QueryElement,
   QueryExecuter,
+  QuerySyntax,
+  TernaryExpressionInterface,
+  UnaryExpressionInterface,
+  ValueNodeInterface,
 } from "../";
 
 export class Query implements QueryBase {
@@ -63,40 +64,59 @@ export class Query implements QueryBase {
       return false;
 
     for (let expression of expressions) {
-      if (!this.isCompleteExpression(expression) )
+      if (!this.isCompleteExpression(this.getTypedExpression(expression)) )
         return false;
     }
 
     return true;
   }
 
+  private getTypedExpression(expression: ExpressionInterface): ExpressionInterfaceTypes {
+    switch (expression.kind) {
+      case QuerySyntax.UnaryExpression:
+        return expression as UnaryExpressionInterface;
+      case QuerySyntax.BinaryExpression:
+        return expression as BinaryExpressionInterface;
+      case QuerySyntax.TernaryExpression:
+        return expression as TernaryExpressionInterface;
+      case QuerySyntax.LogicalExpression:
+        return expression as LogicalExpressionInterface;
+      default:
+        break;
+        // expression satisfies never;
+    }
+  }
+
   // TODO: traverse the full tree
-  private isCompleteExpression(expression: ExpressionInterface) {
-    let exp;
+  private isCompleteExpression(expression: ExpressionInterfaceTypes) {
+    // let exp: ExpressionInterface;
+    // const exp = this.getTypedExpression;
+
+    // const typedExpression: ExpressionInterfaceTypes = this.getTypedExpression(expression);
 
     switch (expression.kind) {
       case QuerySyntax.UnaryExpression:
-        exp = expression as UnaryExpressionInterface;
-        return exp.lhs && exp.operator;
+        return expression.left && expression.operator;
       case QuerySyntax.BinaryExpression:
-        exp = expression as BinaryExpressionInterface;
-        return exp.lhs && exp.operator && exp.rhs;
+        return expression.left && expression.operator && expression.right;
       case QuerySyntax.TernaryExpression:
-        exp = expression as TernaryExpressionInterface;
-      return exp.lhs && exp.operator && exp.middle && exp.rhs;
+      return expression.left && expression.operator && expression.middle && expression.right;
       case QuerySyntax.LogicalExpression:
-        exp = expression as LogicalExpressionInterface;
-        for (let nestedExpression of exp.expressions) {
-          if (!this.isCompleteExpression(nestedExpression))
+        for (let nestedExpression of expression.expressions) {
+          if (!this.isCompleteExpression(this.getTypedExpression(nestedExpression)))
             return false;
         }
 
         return true;
-      case QuerySyntax.EmailExpression:
-      case QuerySyntax.MessageExpression:
-      case QuerySyntax.SMSExpression:
-      case QuerySyntax.PushExpression:
-        return true;
+      // case QuerySyntax.EmailExpression:
+      // case QuerySyntax.MessageExpression:
+      // case QuerySyntax.SMSExpression:
+      // case QuerySyntax.PushExpression:
+      //   return true;
+      default:
+        return false;
+      //   // TODO: assertUnreachable()
+      //   expression satisfies never;
     }
 
     return false;
