@@ -44,4 +44,7 @@ export class PGEvent {
 
   @Column('uuid')
   workspace_id: string;
+
+  @Column('bigint')
+  customer_id: number;
 }

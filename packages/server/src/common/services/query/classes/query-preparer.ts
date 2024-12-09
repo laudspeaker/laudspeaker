@@ -41,6 +41,7 @@ export class QueryPreparer {
       customerAttributes: [],
       eventNames: [],
       eventAttributes: [],
+      cte: [],
       tables: [],
     };
 
@@ -63,7 +64,7 @@ export class QueryPreparer {
 
   private generateSelect() {
     if(this.flags & QueryPreparerFlags.IsCountQuery) {
-      this.finalQuery.select.push("COUNT(*) as count");
+      this.finalQuery.select.push("COUNT(id) as count");
     } else {
       this.finalQuery.select = this.query.selectParams;
     }
@@ -97,7 +98,7 @@ export class QueryPreparer {
   }
 
   private processEventNode(node: EventNodeInterface) {
-    this.intermediateQuery.customerAttributes.push(node.event);
+    this.intermediateQuery.eventNames.push(node.event);
   }
 
   private processValueNode(node: ValueNodeInterface) {

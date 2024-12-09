@@ -41,8 +41,10 @@ export class EventDto {
   @IsNotEmpty()
   public correlationKey: string;
 
-  @Validate(IsArrayOrString)
-  correlationValue?: string | string[];
+  @Trim()
+  @IsString()
+  @IsOptional()
+  correlationValue?: string;
 
   @Trim()
   @IsString()

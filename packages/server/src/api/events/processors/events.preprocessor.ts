@@ -202,7 +202,8 @@ export class EventsPreProcessor extends ProcessorBase {
         const clickHouseRecord: ClickHouseEvent = await this.eventsService.recordEvent(
           job.data.event,
           job.data.workspace.id,
-          job.data.event.source
+          job.data.event.source,
+          customer,
         );
       }
 

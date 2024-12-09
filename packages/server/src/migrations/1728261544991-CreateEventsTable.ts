@@ -3,6 +3,7 @@ import {
   QueryRunner,
   Table,
   TableIndex,
+  TableForeignKey,
 } from "typeorm"
 
 export class CreateEventsTable1728261544991 implements MigrationInterface {
@@ -63,6 +64,11 @@ export class CreateEventsTable1728261544991 implements MigrationInterface {
             type: "varchar",
           },
           {
+            name: "customer_id",
+            type: "bigint",
+            isNullable: true
+          },
+          {
             name: "workspace_id",
             type: "UUID",
           },
@@ -70,36 +76,39 @@ export class CreateEventsTable1728261544991 implements MigrationInterface {
       })
     );
 
+    await queryRunner.createForeignKey(
+      "events",
+      new TableForeignKey({
+          columnNames: ["customer_id"],
+          referencedColumnNames: ["id"],
+          referencedTableName: "customer",
+          onDelete: "NO ACTION",
+      })
+    );
+
     await queryRunner.createIndices(
       "events",
       [
         new TableIndex({
-          name: "idx_created_at",
-          columnNames: ["created_at"]
+          name: "idx_workspace_id",
+          columnNames: ["workspace_id"]
         }),
         new TableIndex({
           name: "idx_generated_at",
-          columnNames: ["generated_at"]
-        }),
-        new TableIndex({
-          name: "idx_correlation_value",
-          columnNames: ["correlation_value"]
+          columnNames: ["workspace_id", "generated_at"]
         }),
         new TableIndex({
           name: "idx_event",
-          columnNames: ["event"]
+          columnNames: ["workspace_id", "event"]
         }),
         new TableIndex({
-          name: "idx_payload",
-          columnNames: ["payload"]
+          name: "idx_multiple_1",
+          columnNames: ["workspace_id", "customer_id", "event",
+            "generated_at", "payload"]
         }),
         new TableIndex({
-          name: "idx_context",
-          columnNames: ["context"]
-        }),
-        new TableIndex({
-          name: "idx_workspace_id",
-          columnNames: ["workspace_id"]
+          name: "idx_multiple_2",
+          columnNames: ["workspace_id", "customer_id", "event", "payload"]
         }),
       ]);
   }

@@ -984,7 +984,7 @@ export class CustomersService {
         if (
           findType == FindType.PRIMARY_KEY &&
           searchOptions.primaryKey.name &&
-          customers[i][searchOptions.primaryKey.name] ==
+          customers[i].user_attributes?.[searchOptions.primaryKey.name] ==
           searchOptions.primaryKey.value
         ) {
           result.push({
@@ -1031,7 +1031,7 @@ export class CustomersService {
     // our conditions were not inclusive, something's wrong
     if (customers.length > 0 && result.length == 0) {
       this.error(
-        'MongoDB returned multiple customers but could not select one of them',
+        'DB returned multiple customers but could not select one of them',
         this.findCustomersBySearchOptions.name,
         session
       );

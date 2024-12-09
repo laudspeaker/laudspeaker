@@ -222,6 +222,7 @@ export interface AttributeNodeInterface extends NodeInterface {
 export interface EventNodeInterface extends NodeInterface {
   kind: QuerySyntax.EventNode;
   event: string;
+  count: number;
   prefix?: string;
 }
 
@@ -261,6 +262,7 @@ export interface QueryIntermediate {
   customerAttributes: string[];
   eventNames: string[];
   eventAttributes: string[];
+  cte: Record<string, any>[],
   tables: string[];
 }
 

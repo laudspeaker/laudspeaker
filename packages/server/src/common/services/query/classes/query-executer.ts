@@ -11,9 +11,6 @@ import { DataSource, Repository } from 'typeorm';
 export class QueryExecuter {
   constructor() {}
 
-  // async getAll(dataSource) {
-  // }
-
   async execute(
     query: Query,
     dataSource: DataSource

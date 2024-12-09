@@ -54,6 +54,7 @@ import { CustomerKeysService } from '../customers/customer-keys.service';
 import { AttributeTypeName } from '../customers/entities/attribute-type.entity';
 import { ClickHouseClient, ClickHouseEvent, ClickHouseEventSource, ClickHouseTable } from '@/common/services/clickhouse';
 import { NodeFactory, Query, QuerySyntax } from '../../common/services/query';
+
 @Injectable()
 export class EventsService {
   private tagEngine = new Liquid();
@@ -1340,7 +1341,7 @@ export class EventsService {
     event: EventDto,
     workspaceId: string,
     source: ClickHouseEventSource,
-    customer?
+    customer?: Customer
   ): Promise<ClickHouseEvent> {
     const clickHouseRecord: ClickHouseEvent = await this.insertEvent(
       event,
@@ -1359,7 +1360,7 @@ export class EventsService {
     event: EventDto,
     workspaceId: string,
     source: ClickHouseEventSource,
-    customer?
+    customer?: Customer
   ): Promise<ClickHouseEvent> {
     const clickHouseRecord: ClickHouseEvent = this.toClickHouseEvent(
       event,
@@ -1381,7 +1382,7 @@ export class EventsService {
     event: EventDto,
     workspaceId: string,
     source: ClickHouseEventSource,
-    customer?
+    customer?: Customer
   ): ClickHouseEvent {
     // Fields to be set by DB:
     // created_at
@@ -1390,12 +1391,13 @@ export class EventsService {
       uuid: event.uuid,
       generated_at: event.timestamp || new Date(),
       correlation_key: event.correlationKey,
-      correlation_value: customer ? customer._id : event.correlationValue,
+      correlation_value: event.correlationValue,
       event: event.event,
       payload: event.payload,
       context: event.context,
       source: source,
       workspace_id: workspaceId,
+      customer_id: customer?.id,
     };
 
     return clickHouseRecord;

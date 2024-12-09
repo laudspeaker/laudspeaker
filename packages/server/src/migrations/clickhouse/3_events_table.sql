@@ -10,9 +10,10 @@ CREATE TABLE IF NOT EXISTS events
   correlation_value   String          NOT NULL,
   event               String          NOT NULL,
   payload             JSON            NOT NULL,
-  context             JSON          NOT NULL,
+  context             JSON            NOT NULL,
   source              String          NOT NULL,
-  workspace_id        UUID            NOT NULL,         
+  customer_id         String,
+  workspace_id        UUID            NOT NULL,
 )
 ENGINE = MergeTree()
 ORDER BY id;
@@ -26,10 +27,11 @@ CREATE TABLE IF NOT EXISTS events_pg_sync (
   correlation_key         String          NOT NULL,
   correlation_value       String          NOT NULL,
   event                   String          NOT NULL,
-  payload                 String          NOT NULL,
-  context                 String          NOT NULL,
+  payload                 JSON            NOT NULL,
+  context                 JSON            NOT NULL,
   source                  String          NOT NULL,
-  workspace_id            UUID            NOT NULL,         
+  customer_id             String,
+  workspace_id            UUID            NOT NULL,
 ) ENGINE = RabbitMQ SETTINGS
   rabbitmq_host_port = 'rabbitmq:5672',
   rabbitmq_exchange_name = '',

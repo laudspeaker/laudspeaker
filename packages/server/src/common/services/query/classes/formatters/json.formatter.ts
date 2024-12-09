@@ -55,27 +55,30 @@ export class JSONFormatter extends QueryFormatterBase {
 
   toBinaryExpression(statement: any) {
     const operator = this.getOperatorKindFromString(statement.comparisonType);
-    const attributeType = this.getAttributeTypeFromString(statement.valueType);
+    let attributeType;
 
     switch(statement.type) {
       case "Attribute":
+        attributeType = this.getAttributeTypeFromString(statement.valueType);
         return this.nodeFactory.createAttributeExpressionNode(
           statement.key,
           operator,
           attributeType,
-          statement.value
+          statement.value,
         );
       case "Event":
         return this.nodeFactory.createEventExpressionNode(
-          statement.key,
+          statement.eventName,
           operator,
-          statement.value
+          statement.value,
+          statement.payload,
         );
     }
   }
 
   getOperatorKindFromString(operatorStr): OperatorKind {
     switch(operatorStr) {
+      // Attribute
       case "is equal to":
         return QuerySyntax.EqualsToken;
       case 'is not equal to':
@@ -104,6 +107,11 @@ export class JSONFormatter extends QueryFormatterBase {
         return QuerySyntax.GreaterThanToken;
       case 'before':
         return QuerySyntax.LessThanToken;
+      // Events
+      case 'has performed':
+        return QuerySyntax.HasPerformedKeyword;
+      case 'has not performed':
+        return QuerySyntax.HasNotPerformedKeyword;
       default:
         throw new Error("OperatorKind error");
     }

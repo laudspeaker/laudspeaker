@@ -97,14 +97,14 @@ export class NodeFactory {
   createEventExpressionNode(
     event: string,
     operator: OperatorKind,
-    value: any,
+    count: number,
     attributes?: ExpressionInterface[],
     parent?: NodeInterface) {
     // const node = this.createBaseNode<EventExpressionInterface>(QuerySyntax.EventExpression);
     const node = this.createBinaryExpression();
 
     const nodeLHS = this.createEventNode(event);
-    const nodeRHS = this.createValueNode(value);
+    const nodeRHS = this.createValueNode(count);
     node.operator = operator;
     node.left = nodeLHS;
     node.right = nodeRHS;

@@ -16,6 +16,7 @@ export class Customers1724873583654 implements MigrationInterface {
         updated_at                TIMESTAMP           NOT NULL          DEFAULT NOW(),
         other_ids                 text array          NOT NULL          DEFAULT ARRAY[]::text[],
         workspace_id              uuid,
+        customer_id               bigint,
         CONSTRAINT "UQ_19468a0ccfcf3e76cbb7789cb75" UNIQUE ("uuid"),
         CONSTRAINT "PK_a7a13f4cacb744524e44dfdad32" PRIMARY KEY ("id")
       )`
@@ -23,6 +24,7 @@ export class Customers1724873583654 implements MigrationInterface {
     await queryRunner.query(`CREATE INDEX "IDX_19468a0ccfcf3e76cbb7789cb7" ON "customer" ("uuid") `);
     await queryRunner.query(`CREATE INDEX "IDX_542e54d042b1388b615f7434d2" ON "customer" ("created_at") `);
     await queryRunner.query(`CREATE INDEX "IDX_403a1d839933a1df8c5f463ffe" ON "customer" ("updated_at") `);
+    await queryRunner.query(`CREATE INDEX "IDX_243eb351bf166bf6b84715e14f" ON "customer" ("customer_id", "workspace_id") `);
     await queryRunner.query(`ALTER TABLE "customer" ADD CONSTRAINT "FK_1288a14f94b7e560261d24656bd" FOREIGN KEY ("workspace_id") REFERENCES "workspaces"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
 
   }

@@ -88,6 +88,48 @@ export class PGFormatter extends QueryFormatterBase {
     if (needParensRHS)
       rhs = `(${rhs})`;
 
+    const cteName = "event_counts";
+    const variables: any[] = [];
+
+    const workspace_id = "";
+
+    let cteSQL;
+
+    switch (expression.operator) {
+      case QuerySyntax.HasPerformedKeyword:
+        // WITH event_counts AS (
+        //   SELECT customer_id
+        //   FROM events
+        //   WHERE workspace = ? AND event = 'eventA' AND customer_id IS NOT NULL
+        //   GROUP BY customer_id
+        //   HAVING COUNT(id) > 1
+        // )
+        // select id from event_counts
+        // INNER JOIN customer ON customer.id = event_counts.customer_id
+        cteSQL = `SELECT customer_id
+                  FROM events
+                  WHERE workspace = ? AND event = ? AND customer_id IS NOT NULL
+                  GROUP BY customer_id
+                  HAVING COUNT(id) > ?`;
+
+        // TODO: add date conditions
+        variables.push(workspace_id, expression.left, rhs);
+        break;
+      case QuerySyntax.HasNotPerformedKeyword:
+        break;
+      default:
+        break;
+    }
+
+    // allow SQL statements[]
+    // statement[0] = CTE
+    // statement[1] = select *
+    // this.intermediateQuery.cte.push({
+    //   name: "event_counts",
+    //   sql: cteSQL,
+    //   variables: variables
+    // });
+
     const operator = this.processOperator(expression.operator);
 
     result = `${lhs} ${operator} ${rhs}`;
