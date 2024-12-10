@@ -298,7 +298,7 @@ export class CustomersController {
     @Body() updateCustomerDto: Record<string, unknown>
   ) {
     const session = randomUUID();
-    return this.customersService.update(
+    return this.customersService.updateByUUID(
       <Account>user,
       id,
       updateCustomerDto,

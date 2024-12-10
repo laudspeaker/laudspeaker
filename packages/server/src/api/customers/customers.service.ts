@@ -385,7 +385,8 @@ export class CustomersService {
       where: {
         uuid: uuid,
         workspace: { id: workspace.id },
-      }
+      },
+      relations: ['workspace']
     });
     if (!customer) {
       throw new HttpException('Person not found', HttpStatus.NOT_FOUND);
@@ -500,6 +501,37 @@ export class CustomersService {
     };
 
     const replacementRes = await this.customersRepository.update(id,
+      newCustomer
+    );
+
+    return replacementRes;
+  }
+
+  async updateByUUID(
+    account: Account,
+    uuid: string,
+    updateCustomerDto: Record<string, unknown>,
+    session: string
+  ) {
+    const { ...newCustomerData } = updateCustomerDto;
+
+    KEYS_TO_SKIP.forEach((el) => {
+      delete newCustomerData[el];
+    });
+
+    const customer = await this.findOneByUUID(account, uuid, session);
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
+    if (customer.workspace.id != workspace.id) {
+      throw new HttpException("You can't update this customer.", 400);
+    }
+
+    const newCustomer = {
+      ...customer,
+      ...newCustomerData,
+    };
+
+    const replacementRes = await this.customersRepository.update({ uuid },
       newCustomer
     );
 

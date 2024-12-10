@@ -206,21 +206,6 @@ const Personv2 = () => {
     setPossibleAttributeTypes(data);
   };
 
-  const uploadEvents = async () => {
-    setIsLoadingEvents(true);
-    try {
-      const { data: timelineData } =
-        await ApiService.get<CustomerEventsResponse>({
-          url: `/customers/${id}/events?page=${page}&pageSize=${pageSize}`,
-        });
-      setEventsData((prev) => [...prev, ...timelineData.data]);
-      setTimeLine(timelineData);
-    } catch (error) {
-      toast.error("Error loading timeline");
-    }
-    setIsLoadingEvents(false);
-  };
-
   const loadSegmentData = async () => {
     setIsLoadingSegments(true);
     try {
@@ -267,12 +252,6 @@ const Personv2 = () => {
     loadSegmentData();
   }, [currentPage, sortOptions]);
 
-  /*
-  useEffect(() => {
-    uploadEvents();
-  }, [page]);
-  */
-
   const loadData = async () => {
     try {
       await loadPossibleKeys();
@@ -281,7 +260,6 @@ const Personv2 = () => {
       });
 
       setPersonInfo(personData);
-      //uploadEvents();
     } catch (e) {
       console.error(e);
     } finally {
@@ -310,27 +288,38 @@ const Personv2 = () => {
       "iosDeviceTokenSetAt",
       "androidDeviceTokenSetAt",
       "null",
-    ]; // Fields to skip
+    ];
 
-    Object.entries(editingPersonInfo).forEach(([key, value]) => {
-      if (skipValidationFor.includes(key)) {
-        return; // Skip validation for specified keys
+    // Iterate over user attributes directly
+    Object.entries(editingPersonInfo.user_attributes || {}).forEach(
+      ([key, value]) => {
+        if (skipValidationFor.includes(key)) {
+          return; // skip if needed
+        }
+
+        const foundAttribute = attributesToShow.find(
+          (attr) => attr.name === key
+        );
+        if (!foundAttribute) {
+          // If we can't find the attribute, consider skipping or handle as invalid
+          return;
+        }
+
+        const isValid =
+          foundAttribute.attribute_type.name === "Array"
+            ? (value as any[]).every((item) =>
+                validateType(item, foundAttribute?.attribute_subtype?.name)
+              )
+            : validateType(value, foundAttribute?.attribute_type.name);
+
+        if (!isValid) {
+          allValid = false;
+          newValidationErrors[
+            key
+          ] = `Value must be a ${foundAttribute?.attribute_type.name}`;
+        }
       }
-      const foundAttribute = attributesToShow.find((attr) => attr.name === key);
-      const isValid =
-        foundAttribute?.attribute_type.name === "Array"
-          ? (value as any[]).every((item) =>
-              validateType(item, foundAttribute?.attribute_subtype?.name)
-            )
-          : validateType(value, foundAttribute?.attribute_type.name);
-      if (!isValid) {
-        console.error(`${foundAttribute?.name} is invalid`);
-        allValid = false;
-        newValidationErrors[
-          key
-        ] = `Value must be a ${foundAttribute?.attribute_type.name}`;
-      }
-    });
+    );
 
     setValidationErrors(newValidationErrors);
     return allValid;
@@ -338,8 +327,6 @@ const Personv2 = () => {
 
   const handleSave = async () => {
     const allFieldsValid = validateAllFields();
-
-    // If not all fields are valid, show a toast and abort the save operation
     if (!allFieldsValid) {
       toast.error(
         "Cannot save - make sure the data you entered matches the type."
@@ -347,11 +334,11 @@ const Personv2 = () => {
       return;
     }
 
-    const enforcedData = Object.entries(editingPersonInfo).reduce<
-      Record<string, any>
-    >((acc, [key, value]) => {
+    const enforcedUserAttributes = Object.entries(
+      editingPersonInfo.user_attributes || {}
+    ).reduce<Record<string, any>>((acc, [key, value]) => {
       if (key === "createdAt") {
-        acc[key] = value; // Skip enforcing and keep 'createdAt' as is
+        acc[key] = value;
       } else {
         const foundAttribute = attributesToShow.find(
           (attr) => attr.name === key
@@ -368,11 +355,16 @@ const Personv2 = () => {
                 )
               : enforceType(value, foundAttribute.attribute_type);
         } else {
-          acc[key] = value; // Keep as is if no specific type is found
+          acc[key] = value;
         }
       }
       return acc;
     }, {});
+
+    const enforcedData = {
+      ...editingPersonInfo,
+      user_attributes: enforcedUserAttributes,
+    };
 
     setIsSaving(true);
     try {
@@ -381,17 +373,15 @@ const Personv2 = () => {
         options: enforcedData,
       });
       setIsEditing(false);
+      await loadData();
     } catch (e) {
       let message = "Error while saving";
-      //if (e instanceof AxiosError) message = e.response?.data?.message;
-      toast.error(message);
       if (e instanceof AxiosError && e.response) {
-        message = e.response.data.message || message; // Ensure we don't overwrite message with undefined
+        message = e.response.data.message || message;
       }
       toast.error(message);
     } finally {
       setIsSaving(false);
-      await loadData();
     }
   };
 
@@ -553,11 +543,14 @@ const Personv2 = () => {
                                 }) || possibleAttributeTypes[0]
                               }
                               isArray={isArray}
-                              value={personInfoToShow.user_attributes[key]}
+                              value={editingPersonInfo.user_attributes[key]}
                               onChange={(value) => {
                                 setEditingPersonInfo({
                                   ...editingPersonInfo,
-                                  [key]: value,
+                                  user_attributes: {
+                                    ...editingPersonInfo.user_attributes,
+                                    [key]: value,
+                                  },
                                 });
                               }}
                               placeholder="Input value"
@@ -605,9 +598,12 @@ const Personv2 = () => {
                       if (!attr) return;
                       setEditingPersonInfo({
                         ...editingPersonInfo,
-                        [attr.name]: attr.attribute_type.subtype_required
-                          ? []
-                          : "",
+                        user_attributes: {
+                          ...editingPersonInfo.user_attributes,
+                          [attr.name]: attr.attribute_type.subtype_required
+                            ? []
+                            : "",
+                        },
                       });
                     }}
                     options={possibleAttributes
