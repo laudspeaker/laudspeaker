@@ -262,7 +262,13 @@ export class SegmentUpdateProcessor extends ProcessorBase {
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Sleep for 1 second before checking again
     }
 
-    const query = Query.fromJSON(job.data.createSegmentDTO);
+    const workspaceId = job?.data?.account?.teams?.[0]?.organization?.workspaces?.[0]?.id;
+
+    const query = Query.fromJSON(job.data.createSegmentDTO, {
+      externalData: {
+        workspace_id: workspaceId,
+      }
+    });
     const queryRunner = await this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();

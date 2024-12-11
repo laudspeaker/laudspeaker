@@ -1,5 +1,7 @@
 import { 
   Query,
+  QueryContext,
+  QueryConverterInterface,
   QuerySQL,
   QueryResult,
   QueryFormat,
@@ -10,18 +12,32 @@ import {
   PGFormatter,
 } from "../";
 
-export class QueryConverter {
+export class QueryConverter implements QueryConverterInterface {
   private inputFormat: QueryFormat;
   private outputFormat: QueryFormat = QuerySyntax.Query;
   private input: any;
- 
-  constructor(inputFormat: QueryFormat, input: any) {
-    this.inputFormat = inputFormat;
-    this.input = input;
+  private context: QueryContext;
+
+  static from(
+    inputFormat: QueryFormat,
+    input: any,
+    context: QueryContext
+  ): QueryConverter {
+    return new QueryConverter().from(inputFormat, input, context);
   }
 
-  static from(inputFormat: QueryFormat, input: any): QueryConverter {
-    return new QueryConverter(inputFormat, input);
+  from(
+    inputFormat: QueryFormat,
+    input: any,
+    context: QueryContext): QueryConverter {
+    this.inputFormat = inputFormat;
+    // this.input = input;
+    // this.context = context;
+
+    this.setInput(input);
+    this.setContext(context);
+
+    return this;
   }
 
   to(format: QueryFormat) {
@@ -30,12 +46,20 @@ export class QueryConverter {
     return this.convert();
   }
 
+  setContext(context: QueryContext) {
+    this.context = context;
+  }
+
+  setInput(input: any) {
+    this.input = input;
+  }
+
   toQuery(): Query {
     return this.to(QuerySyntax.Query) as Query;
   }
 
-  toSQL() {
-    return this.to(QuerySyntax.Postgres);
+  toSQL(): string {
+    return this.to(QuerySyntax.Postgres) as string;
   }
 
   convert() {
@@ -47,18 +71,25 @@ export class QueryConverter {
   }
 
   private fromJSON(): Query {
-    const formatter = new JSONFormatter(this.input);
+    const formatter = new JSONFormatter(this.input, this.context);
 
     return formatter.toQuery();
   }
 
   private fromExpression(): Query {
-    const formatter = new ExpressionFormatter(this.input);
+    const formatter = new ExpressionFormatter(this.input, this.context);
 
     return formatter.toQuery();
   }
 
   private convertInputToQuery(): Query {
+
+    if (!this.inputFormat)
+      this.inputFormat = QuerySyntax.Query;
+
+    if (!this.inputFormat)
+      throw new Error("Query Conversion Error");
+    
     switch(this.inputFormat) {
       case QuerySyntax.Query:
         return this.input;
@@ -76,7 +107,7 @@ export class QueryConverter {
       case QuerySyntax.Expression:
         return inputQuery.expression;
       case QuerySyntax.Postgres:
-        const formatter = new PGFormatter(inputQuery);
+        const formatter = new PGFormatter(inputQuery, inputQuery.context);
 
         return formatter.process(inputQuery.expression);
     }

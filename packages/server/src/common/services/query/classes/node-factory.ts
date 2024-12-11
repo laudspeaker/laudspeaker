@@ -1,24 +1,24 @@
 import { 
-  QueryElement,
-  QueryBase,
-  QuerySyntax,
-  QueryAttributeType,
-  NodeInterface,
-  ExpressionInterface,
   AttributeNodeInterface,
-  EventNodeInterface,
-  // EventExpressionInterface,
-  ValueNodeInterface,
-  OperatorKind,
-  EventOperatorKind,
-  Node,
-  UnaryExpressionInterface,
   BinaryExpressionInterface,
-  TernaryExpressionInterface,
+  EventNodeInterface,
+  EventOperatorKind,
+  ExpressionInterface,
   LogicalExpressionInterface,
+  Node,
+  NodeFactoryInterface,
+  NodeInterface,
+  OperatorKind,
+  QueryAttributeType,
+  Query,
+  QuerySyntax,
+  TernaryExpressionInterface,
+  UnaryExpressionInterface,
+  ValueNodeInterface,
+  FullQueryInterface,
 } from "../";
 
-export class NodeFactory {
+export class NodeFactory implements NodeFactoryInterface {
   createBaseNode<T extends NodeInterface>(kind: T["kind"]) {
     const node = new Node(kind);
     return node as T;
@@ -133,6 +133,13 @@ export class NodeFactory {
     const node = this.createBaseNode<ValueNodeInterface>(QuerySyntax.ValueNode);
     node.value = value;
     node.type = type;
+
+    return node;
+  }
+
+  createFullQuery(query: Query) {
+    const node = this.createBaseNode<FullQueryInterface>(QuerySyntax.FullQuery);
+    node.query = query;
 
     return node;
   }

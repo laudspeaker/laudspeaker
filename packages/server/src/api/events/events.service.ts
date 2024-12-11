@@ -339,57 +339,6 @@ export class EventsService {
     return Sentry.startSpan(
       { name: 'EventsService.getCustomEvents' },
       async () => {
-        const factory = new NodeFactory();
-        const x = new Query();
-
-        const exp1 = factory.createAttributeExpressionNode(
-          'credit_score',
-          QuerySyntax.GreaterThanToken,
-          QuerySyntax.NumberKeyword,
-          700
-        );
-
-        const exp2 = factory.createAttributeExpressionNode(
-          'age',
-          QuerySyntax.LessThanEqualsToken,
-          QuerySyntax.NumberKeyword,
-          40
-        );
-
-        x.add(exp1);
-        x.add(exp2);
-        x.setMatchingToAny();
-        console.log(`QUERY x: ${x.toSQL()}`);
-          
-        const z = new Query();
-
-        const exp3 = factory.createAttributeExpressionNode(
-          'credit_score',
-          QuerySyntax.GreaterThanToken,
-          QuerySyntax.NumberKeyword,
-          700
-        );
-
-        const exp4 = factory.createAttributeExpressionNode(
-          'age',
-          QuerySyntax.LessThanEqualsToken,
-          QuerySyntax.NumberKeyword,
-          40
-        );
-
-        const exp5 = factory.createEventExpressionNode(
-          'eventA',
-          QuerySyntax.HasPerformedKeyword,
-          10
-        );
-
-        z.add(exp3);
-        z.add(exp4);
-        z.add(exp5);
-
-        z.setMatchingToAll();
-        console.log(`QUERY z: ${z.toSQL()}`);
-
         const result = await this.getCustomEventsCursorSearch(
           account,
           session,

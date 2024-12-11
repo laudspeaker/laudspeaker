@@ -9,6 +9,7 @@ import {
   LogicalExpressionInterface,
   OperatorKind,
   QueryAttributeType,
+  QueryContext,
 } from "../../";
 
 export class ExpressionFormatter extends QueryFormatterBase {
@@ -22,12 +23,16 @@ export class ExpressionFormatter extends QueryFormatterBase {
   queryFromExpression(): Query {
     switch(this.input.kind) {
       case QuerySyntax.LogicalExpression:
-        return this.queryFromLogicalExpression(this.input as LogicalExpressionInterface);
+        return this.queryFromLogicalExpression(
+          this.input as LogicalExpressionInterface,
+          this.context);
     }
   }
 
-  private queryFromLogicalExpression(node: LogicalExpressionInterface): Query {
-    const query = new Query();
+  private queryFromLogicalExpression(
+    node: LogicalExpressionInterface,
+    context: QueryContext): Query {
+    const query = new Query(context);
 
     if (node.operator == QuerySyntax.AndKeyword)
       query.setMatchingToAll();

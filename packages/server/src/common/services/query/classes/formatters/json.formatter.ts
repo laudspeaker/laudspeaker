@@ -9,6 +9,7 @@ import {
   LogicalExpressionInterface,
   OperatorKind,
   QueryAttributeType,
+  QueryContext,
 } from "../../";
 
 export class JSONFormatter extends QueryFormatterBase {
@@ -140,16 +141,17 @@ export class JSONFormatter extends QueryFormatterBase {
     }
   }
 
-  queryFromLogicalExpression(node: LogicalExpressionInterface) {
-    const query = new Query();
+  queryFromLogicalExpression(
+    node: LogicalExpressionInterface,
+    context: QueryContext) {
+    const query = new Query(context);
 
     if (node.operator == QuerySyntax.AndKeyword)
       query.setMatchingToAll();
     else
       query.setMatchingToAny();
 
-    for(let expression of node.expressions)
-      query.add(expression);
+    query.addBulk(node.expressions);
 
     return query;
   }
@@ -157,7 +159,10 @@ export class JSONFormatter extends QueryFormatterBase {
   queryFromExpression(node: ExpressionInterface) {
     switch(node.kind) {
       case QuerySyntax.LogicalExpression:
-        return this.queryFromLogicalExpression(node as LogicalExpressionInterface);
+        return this.queryFromLogicalExpression(
+          node as LogicalExpressionInterface,
+          this.context
+        );
     }
   }
 

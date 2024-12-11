@@ -7,6 +7,10 @@ export * from "./formatters/pg.formatter";
 export * from "./formatters/json.formatter";
 
 export * from "./query";
+
+export * from "./helpers/expression.helper";
+export * from "./helpers/query.helper";
+
 export * from "./query-converter";
 export * from "./query-preparer";
 export * from "./query-result-parser";

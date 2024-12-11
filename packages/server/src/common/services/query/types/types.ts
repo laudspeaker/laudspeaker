@@ -89,6 +89,10 @@ export enum QuerySyntax {
   EventNode                         = 'EventNode',
   ValueNode                         = 'ValueNode',
 
+  // used to signal that there is no need
+  // to prepare a full SQL query
+  FullQuery                         = 'FullQuery',
+
   // Conversion formats
   Query                             = 'Query',
   Expression                        = 'Expression',
@@ -164,16 +168,22 @@ export type QueryAttributeType =
   | QuerySyntax.ArrayKeyword
   | QuerySyntax.ObjectKeyword;
 
-export const enum NodeFlags {
-  None                      = 0,
-  AddPercentToken           = 1 << 0,  // for LIKE and NOT LIKE
-  UsePrefixOnly             = 1 << 1,  // for exists operator on jsonb
-}
+
 
 export interface NodeInterface {
   readonly kind: QuerySyntax;
   readonly parent?: NodeInterface;
   readonly flags: NodeFlags;
+}
+
+export interface NodeFactoryInterface {
+  //
+}
+
+export const enum NodeFlags {
+  None                      = 0,
+  AddPercentToken           = 1 << 0,  // for LIKE and NOT LIKE
+  UsePrefixOnly             = 1 << 1,  // for exists operator on jsonb
 }
 
 export interface ExpressionInterface extends NodeInterface {
@@ -232,11 +242,6 @@ export interface ValueNodeInterface extends NodeInterface {
   type: QueryAttributeType;
 }
 
-export interface QueryBase {
-  expression: LogicalExpressionInterface;
-  toSQL(): string;
-}
-
 export type ExpressionInterfaceTypes = 
   | UnaryExpressionInterface
   | BinaryExpressionInterface
@@ -258,11 +263,46 @@ export type ProcessableNodeType =
 
 export type QueryElement = ProcessableNodeType;
 
-export interface QueryIntermediate {
+export interface QueryInterface {
+  expression: LogicalExpressionInterface;
+  
+  toSQL(): string;
+}
+
+export interface QueryExecuterInterface {
+
+}
+
+export interface QueryConverterInterface {
+
+}
+
+export interface QueryPreparerInterface {
+  query: any;
+  queryData: QueryData;
+  finalQuery: QuerySQL;
+  fullSQL: string;
+
+  flags: QueryPreparerFlags;
+
+  // statements: SQLStatements[] = [];
+}
+
+export interface QueryContext {
+  // workspace_id
+  externalData: {
+    workspace_id: string
+  }
+}
+
+export interface QueryData {
   customerAttributes: string[];
-  eventNames: string[];
-  eventAttributes: string[];
-  cte: Record<string, any>[],
+  eventSearchCriteria: {
+    event: string,
+    count: number;
+  }[];
+  allEventNames: Set<string>;
+  cte: Record<string, any>[];
   tables: string[];
 }
 
@@ -287,4 +327,9 @@ export type QueryFormat =
 export const enum QueryPreparerFlags {
   None                      = 0,
   IsCountQuery              = 1 << 0,  // COUNT(*)
+}
+
+export interface FullQueryInterface extends NodeInterface {
+  kind: QuerySyntax.FullQuery;
+  query: QueryInterface;
 }

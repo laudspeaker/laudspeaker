@@ -380,7 +380,13 @@ export class SegmentsService {
         session
       );
 
-      const query = Query.fromJSON(createSegmentDTO);
+      const workspaceId = account?.teams?.[0]?.organization?.workspaces?.[0]?.id;
+
+      const query = Query.fromJSON(createSegmentDTO, {
+        externalData: {
+          workspace_id: workspaceId,
+        }
+      });
 
       this.debug(
         `Query SQL: ${query.toSQL()}`,

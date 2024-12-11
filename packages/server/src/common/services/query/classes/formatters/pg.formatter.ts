@@ -5,7 +5,6 @@ import {
   AttributeNodeInterface,
   EventNodeInterface,
   ValueNodeInterface,
-  // NodeListInterface,
   QuerySyntax,
   UnaryExpressionInterface,
   BinaryExpressionInterface,
@@ -51,7 +50,6 @@ export class PGFormatter extends QueryFormatterBase {
     let lhs = this.process(leftNode, flags);
 
     const operator = this.processOperator(expression.operator);
-
     switch(expression.operator) {
       case QuerySyntax.ExistKeyword:
         result = `${leftNode.prefix} ${operator} '${leftNode.attribute}'`;
@@ -93,34 +91,19 @@ export class PGFormatter extends QueryFormatterBase {
 
     const workspace_id = "";
 
-    let cteSQL;
+    const cteSQL = 
+      `SELECT customer_id
+        FROM events
+        WHERE workspace_id = ?
+          AND event = ?
+          AND customer_id IS NOT NULL
+        GROUP BY customer_id
+        HAVING COUNT(id) >= ?`;
 
-    switch (expression.operator) {
-      case QuerySyntax.HasPerformedKeyword:
-        // WITH event_counts AS (
-        //   SELECT customer_id
-        //   FROM events
-        //   WHERE workspace = ? AND event = 'eventA' AND customer_id IS NOT NULL
-        //   GROUP BY customer_id
-        //   HAVING COUNT(id) > 1
-        // )
-        // select id from event_counts
-        // INNER JOIN customer ON customer.id = event_counts.customer_id
-        cteSQL = `SELECT customer_id
-                  FROM events
-                  WHERE workspace = ? AND event = ? AND customer_id IS NOT NULL
-                  GROUP BY customer_id
-                  HAVING COUNT(id) > ?`;
+    // TODO: add date conditions
+    variables.push(workspace_id, expression.left, rhs);
 
-        // TODO: add date conditions
-        variables.push(workspace_id, expression.left, rhs);
-        break;
-      case QuerySyntax.HasNotPerformedKeyword:
-        break;
-      default:
-        break;
-    }
-
+    // TODO:
     // allow SQL statements[]
     // statement[0] = CTE
     // statement[1] = select *
@@ -129,6 +112,22 @@ export class PGFormatter extends QueryFormatterBase {
     //   sql: cteSQL,
     //   variables: variables
     // });
+    switch (expression.operator) {
+      case QuerySyntax.HasPerformedKeyword:
+        let sql = 
+          `SELECT customer.id
+            FROM event_counts
+            INNER JOIN customer ON customer.id = event_counts.customer_id;`;
+
+        const fullSQL = `${cteSQL}
+          ${sql}`;
+
+        break;
+      case QuerySyntax.HasNotPerformedKeyword:
+        break;
+      default:
+        break;
+    }
 
     const operator = this.processOperator(expression.operator);
 
@@ -161,7 +160,7 @@ export class PGFormatter extends QueryFormatterBase {
 
     return result;
   }
-
+ 
   processOperator(operator: OperatorKind): string {
     switch(operator) {
       case QuerySyntax.ContainKeyword:
@@ -176,33 +175,6 @@ export class PGFormatter extends QueryFormatterBase {
     }
   }
 
-  // processAttributeExpression(expression: ExpressionInterface) {
-  //   const lhs = this.processNode(expression.left);
-  //   const rhs = this.processNode(expression.right);
-  //   const operatorString = expression.operator.toString();
-
-  //   const result = `${lhs} ${operatorString} ${rhs}`;
-
-  //   return result;
-  // }
-
-  // processEventExpression(expression: ExpressionInterface) {
-  //   const lhs = this.processNode(expression.left);
-  //   const rhs = this.processNode(expression.right);
-  //   const operatorString = expression.operator.toString();
-
-  //   const result = `${lhs} ${operatorString} ${rhs}`;
-
-  //   switch(expression.operator) {
-  //     case QuerySyntax.HasPerformedKeyword:
-  //       // return this.processAttributeNode(node as AttributeNodeInterface);
-  //     case QuerySyntax.HasNotPerformedKeyword:
-  //       // return this.processEventNode(node as EventNodeInterface);
-  //   }
-
-  //   return result;
-  // }
-
   private processAttributeNode(node: AttributeNodeInterface, flags: NodeFlags) {
     let attribute = node.attribute.toString();
     let castingPrefix, castingSuffix
@@ -211,7 +183,7 @@ export class PGFormatter extends QueryFormatterBase {
     if (node.prefix && node.prefix.length > 0) {
       let accessorToken = QuerySyntax.EntityAccessorTextToken;
       let castingSuffix = undefined;
-
+      
       switch(node.type) {
         case QuerySyntax.StringKeyword:
           break;
@@ -289,27 +261,4 @@ export class PGFormatter extends QueryFormatterBase {
 
     return result;
   }
-
-  // private processExpressionGroupNode(node: NodeListInterface) {
-  //   const formatter = new PGFormatter();
-  //   let result = "";
-  //   let elementSQL = "";
-
-  //   const needsParens = node.elements.length > 1;
-  //   const matchType = node.matching == QuerySyntax.MatchingTypeAll ? 'AND' : 'OR';
-
-  //   for(let i = 0; i < node.elements.length; i++) {
-  //     elementSQL = formatter.process(node.elements[i]);
-
-  //     if (needsParens)
-  //       elementSQL = `(${elementSQL})`;
-
-  //     if( i > 0 )
-  //       result += ` ${matchType} `;
-
-  //     result += elementSQL;
-  //   }
-
-  //   return result;
-  // }
 }

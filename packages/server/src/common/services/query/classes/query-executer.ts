@@ -1,6 +1,7 @@
 import { 
   Query,
   QueryPreparer,
+  QueryExecuterInterface,
   QueryResultParser,
   QueryPreparerFlags,
   QuerySQL,
@@ -8,7 +9,7 @@ import {
 } from "../";
 import { DataSource, Repository } from 'typeorm';
 
-export class QueryExecuter {
+export class QueryExecuter implements QueryExecuterInterface {
   constructor() {}
 
   async execute(
@@ -18,9 +19,7 @@ export class QueryExecuter {
     if (!query.isComplete())
       return [];
 
-    const preparer = new QueryPreparer();
-
-    return this.executeQuery(query, preparer, dataSource);
+    return this.executeQuery(query, dataSource);
   }
 
   async getOne(
@@ -30,12 +29,7 @@ export class QueryExecuter {
     if (!query.isComplete())
       return undefined;
 
-    const preparer = new QueryPreparer();
-
-    // should be execution flags
-    // preparer.setIsCountQuery();
-
-    const result = await this.executeQuery(query, preparer, dataSource);
+    const result = await this.executeQuery(query, dataSource);
 
     return result[0];
   }
@@ -48,30 +42,24 @@ export class QueryExecuter {
     if (!query.isComplete())
       return 0;
 
-    const preparer = new QueryPreparer();
+    // const result = await this.executeQuery(query, dataSource);
 
-    // should be execution flags
-    preparer.setIsCountQuery();
+    const result = await this.getOne(query, dataSource);
 
-    const result = await this.executeQuery(query, preparer, dataSource);
-
-    // const result = await this.getOne(query, dataSource);
-
-    const count = parseInt(result[0]?.count ?? "0");
+    const count = parseInt(result?.count ?? "0");
 
     return count;
   }
 
   private async executeQuery(
     query: Query,
-    preparer: QueryPreparer,
     dataSource: DataSource
   ) {
-    preparer.prepareQuery(query);
-
     const resultParser = new QueryResultParser();
 
-    const rawResult = await this.executeQueryRaw(preparer, dataSource);
+    const rawResult = await this.executeQueryRaw(
+      query.fullSQL(),
+      dataSource); 
 
     const result = resultParser.parse(rawResult);
 
@@ -79,15 +67,15 @@ export class QueryExecuter {
   }
 
   private async executeQueryRaw(
-    preparer: QueryPreparer,
+    queryStr: string,
     dataSource: DataSource
   ) {
     const queryRunner = dataSource.createQueryRunner();
     await queryRunner.connect();
 
-    console.log(`FULLSQL: ${preparer.fullSQL}`);
+    console.log(`FULLSQL: ${queryStr}`);
 
-    const result = await queryRunner.manager.query(preparer.fullSQL);
+    const result = await queryRunner.manager.query(queryStr);
 
     await queryRunner.release();
 
