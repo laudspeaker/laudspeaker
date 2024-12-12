@@ -1,14 +1,14 @@
 import React, { FC } from "react";
 import { SidePanelComponentProps } from "../FlowViewerSidePanel";
 import { MultisplitNodeData } from "pages/FlowBuilderv2/Nodes/NodeData";
-import MulisplitSettings from "pages/FlowBuilderv2/SidePanel/settings/MulisplitSettings";
+import MultisplitSettings from "pages/FlowBuilderv2/SidePanel/settings/MultisplitSettings";
 
 const MultisplitViewer: FC<SidePanelComponentProps<MultisplitNodeData>> = ({
   nodeData,
 }) => {
   return (
     <div className="p-5">
-      <MulisplitSettings
+      <MultisplitSettings
         nodeData={nodeData}
         setIsError={() => {}}
         showErrors={false}

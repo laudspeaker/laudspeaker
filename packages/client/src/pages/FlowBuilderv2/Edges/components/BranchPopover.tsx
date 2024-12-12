@@ -14,7 +14,7 @@ import {
   WUAttributeHappenCondition,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import MultisplitCondtionsReview from "pages/FlowBuilderv2/SidePanel/components/MultisplitCondtionsReview";
-import { limitQuery } from "pages/FlowBuilderv2/SidePanel/settings/MulisplitSettings";
+import { limitQuery } from "pages/FlowBuilderv2/SidePanel/settings/MultisplitSettings";
 import React, { FC, Fragment, ReactNode, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Node, useViewport } from "reactflow";

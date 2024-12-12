@@ -1,4 +1,4 @@
-import MulisplitSettings from "./settings/MulisplitSettings";
+import MultisplitSettings from "./settings/MultisplitSettings";
 import { Transition } from "@headlessui/react";
 import React, { FC, ReactNode, useEffect, useState } from "react";
 import Scrollbars from "react-custom-scrollbars-2";
@@ -214,7 +214,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
       <>
         {nodeData.type === NodeType.MULTISPLIT && (
           <div className="p-5">
-            <MulisplitSettings
+            <MultisplitSettings
               setIsError={setIsError}
               showErrors={showErrors}
               nodeData={nodeData}

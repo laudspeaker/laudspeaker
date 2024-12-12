@@ -218,7 +218,22 @@ export function valueTypeToAttributeType(
   const attribute = possibleAttributeTypes.find(
     (attr) => attr.name == valueType.toString()
   );
-
+  if (!attribute)
+    console.warn(
+      `Attribute not found, possible attribute types: ${JSON.stringify(
+        possibleAttributeTypes,
+        null,
+        2
+      )}, valueType: ${valueType}`
+    );
+  else
+    console.log(
+      `Attribute found, possible attribute types: ${JSON.stringify(
+        possibleAttributeTypes,
+        null,
+        2
+      )}, valueType: ${valueType}`
+    );
   return attribute!;
 }
 

@@ -46,7 +46,7 @@ export const limitQuery = (
   return [limitedQuery, count];
 };
 
-const MulisplitSettings: FC<
+const MultisplitSettings: FC<
   SidePanelComponentProps<MultisplitNodeData> & { isViewMode?: boolean }
 > = ({ nodeData, setNodeData, setIsError, showErrors, isViewMode }) => {
   const [editBranchIndex, setEditBranchIndex] = useState<number | undefined>(
@@ -66,7 +66,6 @@ const MulisplitSettings: FC<
     } else {
       newData.branches[editBranchIndex].conditions = branch;
     }
-    console.log("the segment data is", JSON.stringify(newData, null, 2));
 
     setNodeData(newData);
     setEditBranchIndex(undefined);
@@ -162,4 +161,4 @@ const MulisplitSettings: FC<
   );
 };
 
-export default MulisplitSettings;
+export default MultisplitSettings;

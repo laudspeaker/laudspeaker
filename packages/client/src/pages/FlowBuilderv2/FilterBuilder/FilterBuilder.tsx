@@ -371,7 +371,9 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     const { data } = await ApiService.get<any[]>({
       url: `/customers/possible-attribute-types`,
     });
-
+    console.log(
+      `Setting possible attribute types: ${JSON.stringify(data, null, 2)}`
+    );
     setPossibleAttributeTypes(data);
   };
 
