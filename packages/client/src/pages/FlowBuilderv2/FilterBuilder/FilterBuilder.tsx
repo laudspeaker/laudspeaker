@@ -412,12 +412,16 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
   };
 
   useEffect(() => {
-    loadKeyTypes();
+    // loadKeyTypes();
     loadPossibleKeys();
     loadKeyParameters();
     loadSegments();
     loadPossibleJourneys();
   }, []);
+
+  useEffect(() => {
+    loadKeyTypes();
+  }, [changesHappenIndex]);
 
   useDebounce(
     () => {
