@@ -1,135 +1,132 @@
 import { 
-  AttributeNodeInterface,
-  BinaryExpressionInterface,
-  EventNodeInterface,
-  ExpressionInterface,
-  ExpressionInterfaceTypes,
-  LogicalExpressionInterface,
-  Node,
-  NodeFactory,
-  NodeInterface,
-  QueryContext,
-  QueryConverter,
-  QueryElement,
-  QueryExecuter,
-  QueryHelper,
   QueryInterface,
-  QueryPreparer,
+  NodeFactory,
+  LogicalExpressionInterface,
+  QueryContext,
   QuerySyntax,
-  TernaryExpressionInterface,
-  UnaryExpressionInterface,
-  ValueNodeInterface,
+  QueryConverter,
+  QueryFormat,
+  QueryValidator,
+  QueryAdapterSupportedType,
+  LogicalExpressionOperatorKind,
+  ExpressionInterfaceType,
+  QueryFlags,
 } from "../";
 
 export class Query implements QueryInterface {
+  nodeFactory = new NodeFactory();
   expression: LogicalExpressionInterface;
 
-  // context data include workspace_id any other values we might need
+  // context data includes workspace_id and any other values 
+  // that the query needs to execute or return the final SQL
   context: QueryContext;
-  private nodeFactory = new NodeFactory();
-  private preparer = new QueryPreparer();
-  private executer = new QueryExecuter();
-  private converter = new QueryConverter();
 
-  selectParams: string[] = ['*'];
+  // flags modify the behaviour of the queue
+  flags = QueryFlags.None;
 
-  constructor(context: QueryContext) {
+  constructor(context?: QueryContext) {
     this.expression = this.nodeFactory.createLogicalExpression();
 
-    this.context = context;
+    this.context = context ?? {}
   }
 
-  static fromJSON(jsonQuery: Record<string, any>, context: QueryContext) {
-    return new QueryConverter()
-            .from(QuerySyntax.JSON, jsonQuery, context)
-            .toQuery();
+  static fromJSON(jsonQuery: Record<string, any>): Query  {
+    return QueryConverter
+      .from(jsonQuery, QuerySyntax.JSON)
+      .to(QuerySyntax.Query) as Query;
   }
 
-  setMatchingToAll() {
-    this.nodeFactory.updateLogicalExpressionOperatorToAnd(this.expression);
-  }
+  // conversions
+  to(format: QueryFormat): QueryAdapterSupportedType {
+    const converter = new QueryConverter();
 
-  setMatchingToAny() {
-    this.nodeFactory.updateLogicalExpressionOperatorToOr(this.expression);
-  }
-
-  add(expression: ExpressionInterface) {
-    this.nodeFactory.addExpressionToLogicalExpression(this.expression, expression);
-
-    this.triggerUpdate();
-  }
-
-  addBulk(expressions: ExpressionInterface[]) {
-    for(let expression of expressions)
-      this.nodeFactory.addExpressionToLogicalExpression(this.expression, expression);
-
-    this.triggerUpdate();
-  }
-
-  getExpressions(): ExpressionInterface[] {
-    return this.expression.expressions;
-  }
-
-  getOperator() {
-    return this.expression.operator;
-  }
-
-  // checks if query can be executed and not missing anything
-  isComplete(): boolean {
-    return QueryHelper.isComplete(this);
+    return converter.from(this, QuerySyntax.Query).to(format);
   }
 
   toSQL(): string {
-    if (!this.isComplete())
-      return "";
-
-    this.converter.setInput(this);
-    this.converter.setContext(this.context);
-
-    return this.converter.toSQL();
+    return this.to(QuerySyntax.JSON) as string;
   }
 
-  toString(): string {
-    return this.toSQL();
+  // set(setting: QuerySyntax) {}
+  setMatchingToAll() {
+    this.setOperator(QuerySyntax.AndKeyword);
   }
 
-  fullSQL(): string {
-    return this.preparer.fullSQL;
+  setMatchingToAny() {
+    this.setOperator(QuerySyntax.OrKeyword);
   }
 
-  // query.count(*)
-  // query.count(DISTINCT(id))  
-  async count(...fields: string[]) {
+  setContext(context: QueryContext) {
+    this.context = {
+      ...this.context,
+      ...context
+    };
   }
 
-  async getOne(dataSource) {
-    // return this.executer.getOne(this, dataSource);
+  add(expression: ExpressionInterfaceType) {
+    this.nodeFactory.addExpressionToLogicalExpression(this.expression, expression);
   }
 
-  async getAll(dataSource) {
-    // return this.executer.getAll(this, dataSource);
+  addBulk(expressions: ExpressionInterfaceType[]) {
+    expressions.forEach((expression) => this.add(expression));
   }
 
+  getRootExpression(): LogicalExpressionInterface {
+    return this.expression;
+  }
+
+  getTopLevelExpressions(): ExpressionInterfaceType[] {
+    return this.getRootExpression().expressions;
+  }
+
+  getOperator() {
+    return this.getRootExpression().operator;
+  }
+
+  isValid(): boolean {
+    return QueryValidator.validate(this);
+  }
+
+  // Query Execution
   async getCount(dataSource) {
-    this.preparer.setIsCountQuery();
+    // this.preparer.setIsCountQuery();
 
-    return this.executer.getCount(this, dataSource);
+    this.setFlag(QueryFlags.GetCount);
+
+    // return this.executer.getCount(this, dataSource);
   }
 
   async execute(dataSource) {
-    return this.executer.execute(this, dataSource);
+    // return this.executer.execute(this, dataSource);
   }
 
-  select(params: string[]) {
-    this.selectParams = params;
+  private setOperator(operator: LogicalExpressionOperatorKind) {
+    this.nodeFactory.updateExpressionOperator(this.expression, operator);
   }
 
-  getWhereStatement() {
-    this.toSQL();
+  private setFlag(flag: QueryFlags) {
+    this.flags |= flag;
   }
 
-  private triggerUpdate() {
-    this.preparer.prepareQuery(this);
-  }
+  // // query.count(*)
+  // // query.count(DISTINCT(id))  
+  // async count(...fields: string[]) {
+  // }
+
+  // async getOne(dataSource) {
+  //   // return this.executer.getOne(this, dataSource);
+  // }
+
+  // async getAll(dataSource) {
+  //   // return this.executer.getAll(this, dataSource);
+  // }
+
+  // getWhereStatement() {
+  //   this.toSQL();
+  // }
+
+  // private triggerUpdate() {
+  //   this.preparer.prepareQuery(this);
+  // }
 }
 

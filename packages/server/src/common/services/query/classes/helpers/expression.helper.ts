@@ -1,7 +1,7 @@
 import { 
   Query,
   ExpressionInterface,
-  ExpressionInterfaceTypes,
+  ExpressionInterfaceType,
   UnaryExpressionInterface,
   BinaryExpressionInterface,
   TernaryExpressionInterface,
@@ -13,7 +13,7 @@ import {
 export class ExpressionHelper {
   static getTypedExpression(
     expression: ExpressionInterface
-  ): ExpressionInterfaceTypes {
+  ): ExpressionInterfaceType {
     switch (expression.kind) {
       case QuerySyntax.UnaryExpression:
         return expression as UnaryExpressionInterface;
@@ -30,11 +30,11 @@ export class ExpressionHelper {
   }
 
   // TODO: traverse the full tree
-  static isComplete(expression: ExpressionInterfaceTypes) {
+  static isComplete(expression: ExpressionInterfaceType) {
     // let exp: ExpressionInterface;
     // const exp = this.getTypedExpression;
 
-    // const typedExpression: ExpressionInterfaceTypes = this.getTypedExpression(expression);
+    // const typedExpression: ExpressionInterfaceType = this.getTypedExpression(expression);
 
     switch (expression.kind) {
       case QuerySyntax.UnaryExpression:

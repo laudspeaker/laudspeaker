@@ -1,4 +1,4 @@
-import { QueryFormatterBase } from "../";
+import { QueryAdapterBase } from "../";
 import {
   Query,
   QuerySyntax,
@@ -12,17 +12,28 @@ import {
   QueryContext,
 } from "../../";
 
-export class JSONFormatter extends QueryFormatterBase {
+export class JSONAdapter extends QueryAdapterBase {
+  toQuery(input: Record <string, any>): Query {
+    // const logicalExpression = this.processStatement(this.input.inclusionCriteria.query);
+    return this.generateQuery(input)
+    return 
+  }
 
-  toQuery() {
-    const logicalExpression = this.processStatement(this.input.inclusionCriteria.query);
+  toSQL(input: Record <string, any>): string {
+    const query: Query = this.toQuery(input);
 
-    const query = this.queryFromExpression(logicalExpression);
+    return query.toSQL();
+  }
+
+  private generateQuery(input): Query {
+    const logicalExpression: LogicalExpressionInterface = this.processStatement(input.inclusionCriteria.query);
+
+    const query: Query = this.queryFromExpression(logicalExpression);
 
     return query;
   }
 
-  processStatement(statement: any) {
+  private processStatement(statement: any) {
     switch(statement.type) {
       case "all":
       case "any":
@@ -33,15 +44,15 @@ export class JSONFormatter extends QueryFormatterBase {
     }
   }
 
-  toLogicalExpression(statement: any) {
+  private toLogicalExpression(statement: any) {
     const node = this.nodeFactory.createLogicalExpression();
 
     switch(statement.type) {
       case "all":
-        this.nodeFactory.updateLogicalExpressionOperatorToAnd(node);
+        this.nodeFactory.updateExpressionOperator(node, QuerySyntax.AndKeyword);
         break;
       case "any":
-        this.nodeFactory.updateLogicalExpressionOperatorToOr(node);
+        this.nodeFactory.updateExpressionOperator(node, QuerySyntax.OrKeyword);
         break;
     }
 
@@ -54,14 +65,14 @@ export class JSONFormatter extends QueryFormatterBase {
     return node;
   }
 
-  toBinaryExpression(statement: any) {
+  private toBinaryExpression(statement: any) {
     const operator = this.getOperatorKindFromString(statement.comparisonType);
     let attributeType;
 
     switch(statement.type) {
       case "Attribute":
         attributeType = this.getAttributeTypeFromString(statement.valueType);
-        return this.nodeFactory.createAttributeExpressionNode(
+        return this.nodeFactory.createCustomerAttributeExpressionNode(
           statement.key,
           operator,
           attributeType,
@@ -77,7 +88,7 @@ export class JSONFormatter extends QueryFormatterBase {
     }
   }
 
-  getOperatorKindFromString(operatorStr): OperatorKind {
+  private getOperatorKindFromString(operatorStr): OperatorKind {
     switch(operatorStr) {
       // Attribute
       case "is equal to":
@@ -118,7 +129,7 @@ export class JSONFormatter extends QueryFormatterBase {
     }
   }
 
-  getAttributeTypeFromString(typeStr: string): QueryAttributeType {
+  private getAttributeTypeFromString(typeStr: string): QueryAttributeType {
     switch(typeStr) {
       case 'String':
         return QuerySyntax.StringKeyword;
@@ -141,10 +152,8 @@ export class JSONFormatter extends QueryFormatterBase {
     }
   }
 
-  queryFromLogicalExpression(
-    node: LogicalExpressionInterface,
-    context: QueryContext) {
-    const query = new Query(context);
+  private queryFromLogicalExpression(node: LogicalExpressionInterface) {
+    const query = new Query();
 
     if (node.operator == QuerySyntax.AndKeyword)
       query.setMatchingToAll();
@@ -156,19 +165,10 @@ export class JSONFormatter extends QueryFormatterBase {
     return query;
   }
 
-  queryFromExpression(node: ExpressionInterface) {
+  private queryFromExpression(node: ExpressionInterface) {
     switch(node.kind) {
       case QuerySyntax.LogicalExpression:
-        return this.queryFromLogicalExpression(
-          node as LogicalExpressionInterface,
-          this.context
-        );
+        return this.queryFromLogicalExpression(node as LogicalExpressionInterface);
     }
-  }
-
-  processBinaryExpression(node: BinaryExpressionInterface) {
-  }
-
-  processLogicalExpression(node: LogicalExpressionInterface) {
   }
 }

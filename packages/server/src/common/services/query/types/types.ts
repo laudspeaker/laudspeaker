@@ -85,9 +85,12 @@ export enum QuerySyntax {
   PushExpression                    = 'PushExpression',
   SegmentExpression                 = 'SegmentExpression',
 
-  AttributeNode                     = 'AttributeNode',
+  CustomerAttributeNode             = 'CustomerAttributeNode',
   EventNode                         = 'EventNode',
   ValueNode                         = 'ValueNode',
+
+  ResolvedCustomerAttributeNode     = 'ResolvedCustomerAttributeNode',
+  ResolvedEventNode                 = 'ResolvedEventNode',
 
   // used to signal that there is no need
   // to prepare a full SQL query
@@ -96,8 +99,8 @@ export enum QuerySyntax {
   // Conversion formats
   Query                             = 'Query',
   Expression                        = 'Expression',
-  Postgres                          = 'Postgres',
   JSON                              = 'JSON',
+  PostgreSQL                        = 'PostgreSQL',
 }
 
 export type OperatorKind =
@@ -150,7 +153,7 @@ export type ExpressionKind =
   | QuerySyntax.PushExpression
   | QuerySyntax.SegmentExpression;
 
-export type LogicalExpressionKind = 
+export type LogicalExpressionOperatorKind = 
   | QuerySyntax.AndKeyword
   | QuerySyntax.OrKeyword;
 
@@ -168,7 +171,9 @@ export type QueryAttributeType =
   | QuerySyntax.ArrayKeyword
   | QuerySyntax.ObjectKeyword;
 
-
+export type ResolvedKind = 
+ | QuerySyntax.ResolvedCustomerAttributeNode
+ | QuerySyntax.ResolvedEventNode;
 
 export interface NodeInterface {
   readonly kind: QuerySyntax;
@@ -177,7 +182,37 @@ export interface NodeInterface {
 }
 
 export interface NodeFactoryInterface {
-  //
+  createBaseNode<T extends NodeInterface>(kind: T["kind"], parent?: NodeInterface): T;
+  createBaseResolvedNode<T extends ResolvedNodeInterface>(kind: T["kind"], parent: ResolvableNodeType);
+  createUnaryExpression();
+  createBinaryExpression();
+  createTernaryExpression();
+  createLogicalExpression();
+  addExpressionToLogicalExpression(
+    logicalExpression: LogicalExpressionInterface,
+    expression: ExpressionInterfaceType
+  );
+  updateExpressionOperator(
+    expression: ExpressionInterfaceType,
+    operator: OperatorKind
+  );
+  createCustomerAttributeExpressionNode(
+    attribute: string,
+    operator: OperatorKind,
+    type: QueryAttributeType,
+    value: any,
+    parent?: NodeInterface
+  );
+  createEventExpressionNode(
+    event: string,
+    operator: OperatorKind,
+    count: number,
+    attributes?: ExpressionInterface[],
+    parent?: NodeInterface
+  );
+  createCustomerAttributeNode(attribute: string, type: QueryAttributeType);
+  createEventNode(event: string);
+  createValueNode(value: any, type?: QueryAttributeType);
 }
 
 export const enum NodeFlags {
@@ -212,18 +247,13 @@ export interface TernaryExpressionInterface extends ExpressionInterface {
 
 export interface LogicalExpressionInterface extends ExpressionInterface {
   kind: QuerySyntax.LogicalExpression;
-  operator: LogicalExpressionKind;
-  expressions: ExpressionInterface[];
-
-  add(node: ExpressionInterface);
-  getLength(): number;
-  setMatchingToAll();
-  setMatchingToAny();
+  operator: LogicalExpressionOperatorKind;
+  expressions: ExpressionInterfaceType[];
 }
 
 // Nodes for variables
-export interface AttributeNodeInterface extends NodeInterface {
-  kind: QuerySyntax.AttributeNode;
+export interface CustomerAttributeNodeInterface extends NodeInterface {
+  kind: QuerySyntax.CustomerAttributeNode;
   attribute: string;
   prefix?: string;
   type: QueryAttributeType;
@@ -242,7 +272,7 @@ export interface ValueNodeInterface extends NodeInterface {
   type: QueryAttributeType;
 }
 
-export type ExpressionInterfaceTypes = 
+export type ExpressionInterfaceType = 
   | UnaryExpressionInterface
   | BinaryExpressionInterface
   | TernaryExpressionInterface
@@ -252,7 +282,7 @@ export type QueryConversionAllowedInputType =
   | Record<string, string>;
 
 export type SimpleNodeType = 
-  | AttributeNodeInterface
+  | CustomerAttributeNodeInterface
   | EventNodeInterface
   | ValueNodeInterface;
 
@@ -261,12 +291,35 @@ export type ProcessableNodeType =
   | ExpressionInterface
   | SimpleNodeType;
 
+
 export type QueryElement = ProcessableNodeType;
 
 export interface QueryInterface {
+  nodeFactory: NodeFactoryInterface;
   expression: LogicalExpressionInterface;
+  context: QueryContext;
   
+  // Conversions
+  to(format: QueryFormat);
   toSQL(): string;
+
+  // Add
+  add(expression: ExpressionInterfaceType)
+  addBulk(expressions: ExpressionInterfaceType[])
+
+  // overrides select, from
+  // set(setting: QuerySyntax)
+  setMatchingToAll();
+  setMatchingToAny();
+  setContext(context: QueryContext);
+
+  // Validators
+  isValid(): boolean;
+
+  // getters
+  getRootExpression(): LogicalExpressionInterface;
+  getTopLevelExpressions(): LogicalExpressionInterface["expressions"];
+  getOperator(): LogicalExpressionInterface["operator"];
 }
 
 export interface QueryExecuterInterface {
@@ -274,7 +327,9 @@ export interface QueryExecuterInterface {
 }
 
 export interface QueryConverterInterface {
-
+  from(input: any, inputFormat: QueryFormat): QueryConverterInterface;
+  to(format: QueryFormat);
+  canConvert(): boolean;
 }
 
 export interface QueryPreparerInterface {
@@ -288,23 +343,47 @@ export interface QueryPreparerInterface {
   // statements: SQLStatements[] = [];
 }
 
-export interface QueryContext {
-  // workspace_id
-  externalData: {
-    workspace_id: string
-  }
+export interface QueryResolverInterface {
+  nodeFactory: NodeFactoryInterface;
+  resolve(query: QueryInterface);
 }
 
+export interface QueryContext extends Record<string, any> {}
+
 export interface QueryData {
+  query: QueryInterface;
+  context: QueryContext;
+
   customerAttributes: string[];
   eventSearchCriteria: {
     event: string,
     count: number;
+    // dateBegin:
+    // dateEnd:
   }[];
-  allEventNames: Set<string>;
-  cte: Record<string, any>[];
-  tables: string[];
+  distinctEvents: Set<string>;
+  flags: QueryFlags;
+
+  // SQL-related
+  selectValues: string[],
+  tables: string[],
+  condition: string;
+
+
 }
+
+// export interface QueryData {
+//   customerAttributes: string[];
+//   eventSearchCriteria: {
+//     event: string,
+//     count: number;
+//   }[];
+//   allEventNames: Set<string>;
+//   cte: Record<string, any>[];
+//   tables: string[];
+
+//   flags: QueryFlags;
+// }
 
 export interface QuerySQL {
   select: string[];
@@ -321,10 +400,23 @@ export interface QueryResult {
 export type QueryFormat =
   | QuerySyntax.Query
   | QuerySyntax.Expression
-  | QuerySyntax.Postgres
-  | QuerySyntax.JSON;
+  | QuerySyntax.JSON
+  | QuerySyntax.PostgreSQL;
+
+export type QueryAdapterSupportedType = any;
+
+// export type QueryAdapterSupportedType =
+//   | QueryInterface
+//   | ExpressionInterfaceType
+//   | Record<string, any>
+//   | string;
 
 export const enum QueryPreparerFlags {
+  None                      = 0,
+  IsCountQuery              = 1 << 0,  // COUNT(*)
+}
+
+export const enum QueryResolverFlags {
   None                      = 0,
   IsCountQuery              = 1 << 0,  // COUNT(*)
 }
@@ -333,3 +425,89 @@ export interface FullQueryInterface extends NodeInterface {
   kind: QuerySyntax.FullQuery;
   query: QueryInterface;
 }
+
+export const enum QueryFlags {
+  None                      = 0,
+
+  // COUNT()
+  GetCount                  = 1 << 0,
+
+
+  // event CTE is required
+  EventCTE                  = 1 << 1,
+}
+
+export interface QueryResolverResult {
+  customers: {},
+  events: {},
+
+
+}
+
+// export interface CustomerFilterCriteria {
+
+//   userAttributes: string[];
+
+// }
+
+// export interface QueryParsedExpression {
+//   customerCriteria: CustomerFilterCriteria;
+//   events: {
+//     distinctNames: Set<string>,
+//     eventSearchCriteria: {
+//       event: string,
+//       count: number;
+//       // dateBegin:
+//       // dateEnd:
+//     }[];
+//   }
+//   customerFilters: CustomerFilter[],
+//   eventFilters: eventFilter[],
+// }
+
+export enum CustomerAttributeClassification {
+  USER,
+  SYSTEM,
+}
+
+// export enum CustomerAttributeClassificationMap {
+//   [CustomerAttributeClassification.USER] = 'user_attributes',
+//   [CustomerAttributeClassification.SYSTEM] = 'system_attributes',
+// }
+
+export type ResolvableNodeType = ExpressionInterfaceType;
+  // | CustomerAttributeNodeInterface
+  // | EventNodeInterface;
+
+export interface AttributeInterface {
+  name: string,
+  type: QueryAttributeType,
+  classification: CustomerAttributeClassification;
+}
+
+export interface ResolvedNodeInterface extends NodeInterface
+{
+  kind: ResolvedKind;
+  parent: ResolvableNodeType;
+  operator: OperatorKind;
+  // dateFilter: DateFilterInterface;
+}
+
+export interface ResolvedCustomerAttributeNodeInterface extends ResolvedNodeInterface {
+  kind: QuerySyntax.ResolvedCustomerAttributeNode;
+
+  attribute: AttributeInterface;
+  value: any;
+}
+
+export interface ResolvedEventNodeInterface extends ResolvedNodeInterface {
+  kind: QuerySyntax.ResolvedEventNode;
+
+  event: string,
+  count: number; // -1 for NotPerformed
+  attributes?: AttributeInterface[];
+}
+
+export type QueryResolverObjectTypes = 
+  | ResolvedCustomerAttributeNodeInterface
+  | ResolvedEventNodeInterface;

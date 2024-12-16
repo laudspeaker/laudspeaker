@@ -16,7 +16,7 @@ export class QueryExecuter implements QueryExecuterInterface {
     query: Query,
     dataSource: DataSource
   ) {
-    if (!query.isComplete())
+    if (!query.isValid())
       return [];
 
     return this.executeQuery(query, dataSource);
@@ -26,7 +26,7 @@ export class QueryExecuter implements QueryExecuterInterface {
     query: Query,
     dataSource: DataSource
   ): Promise<any> {
-    if (!query.isComplete())
+    if (!query.isValid())
       return undefined;
 
     const result = await this.executeQuery(query, dataSource);
@@ -38,8 +38,7 @@ export class QueryExecuter implements QueryExecuterInterface {
     query: Query,
     dataSource: DataSource
   ): Promise<number> {
-
-    if (!query.isComplete())
+    if (!query.isValid())
       return 0;
 
     // const result = await this.executeQuery(query, dataSource);
@@ -58,7 +57,7 @@ export class QueryExecuter implements QueryExecuterInterface {
     const resultParser = new QueryResultParser();
 
     const rawResult = await this.executeQueryRaw(
-      query.fullSQL(),
+      query.toSQL(),
       dataSource); 
 
     const result = resultParser.parse(rawResult);

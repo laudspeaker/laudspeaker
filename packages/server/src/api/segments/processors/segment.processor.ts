@@ -264,11 +264,11 @@ export class SegmentUpdateProcessor extends ProcessorBase {
 
     const workspaceId = job?.data?.account?.teams?.[0]?.organization?.workspaces?.[0]?.id;
 
-    const query = Query.fromJSON(job.data.createSegmentDTO, {
-      externalData: {
-        workspace_id: workspaceId,
-      }
+    const query = Query.fromJSON(job.data.createSegmentDTO);
+    query.setContext({
+      workspace_id: workspaceId,
     });
+    
     const queryRunner = await this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();

@@ -6,110 +6,97 @@ import {
   QueryResult,
   QueryFormat,
   QuerySyntax,
+  QueryAdapterSupportedType,
   ExpressionInterface,
-  ExpressionFormatter,
-  JSONFormatter,
-  PGFormatter,
+  ExpressionAdapter,
+  QueryAdapterFactory,
+  QueryData,
+  QueryFlags,
 } from "../";
 
 export class QueryConverter implements QueryConverterInterface {
-  private inputFormat: QueryFormat;
-  private outputFormat: QueryFormat = QuerySyntax.Query;
   private input: any;
-  private context: QueryContext;
+  private inputFormat: QueryFormat;
+  private outputFormat: QueryFormat;
 
   static from(
-    inputFormat: QueryFormat,
     input: any,
-    context: QueryContext
+    inputFormat: QueryFormat,
   ): QueryConverter {
-    return new QueryConverter().from(inputFormat, input, context);
+    const converter = new QueryConverter();
+
+    return converter.from(input, inputFormat);
   }
 
-  from(
-    inputFormat: QueryFormat,
-    input: any,
-    context: QueryContext): QueryConverter {
-    this.inputFormat = inputFormat;
-    // this.input = input;
-    // this.context = context;
-
-    this.setInput(input);
-    this.setContext(context);
+  from(input: any, inputFormat: QueryFormat): QueryConverter {
+    this.setInputDetails(input, inputFormat);
 
     return this;
   }
 
-  to(format: QueryFormat) {
-    this.outputFormat = format;
-
-    return this.convert();
+  fromQuery(query: Query): QueryConverter {
+    return this.from(query, QuerySyntax.Query);
   }
 
-  setContext(context: QueryContext) {
-    this.context = context;
-  }
+  to(format: QueryFormat): QueryAdapterSupportedType {
+    this.setOutputDetails(format);
 
-  setInput(input: any) {
-    this.input = input;
+    return this.generateOutput();
   }
 
   toQuery(): Query {
-    return this.to(QuerySyntax.Query) as Query;
+    return this.to(QuerySyntax.Query);
   }
 
-  toSQL(): string {
-    return this.to(QuerySyntax.Postgres) as string;
+  canConvert(): boolean {
+    if (this.input
+      && this.inputFormat
+      && this.outputFormat)
+      return true;
+
+    return false;
   }
 
-  convert() {
-    const inputQuery: Query = this.convertInputToQuery();
-
-    const output = this.convertInputQueryToOutput(inputQuery);
-
-    return output;
+  private setInputDetails(input: any, format: QueryFormat) {
+    this.input = input;
+    this.inputFormat = format
   }
 
-  private fromJSON(): Query {
-    const formatter = new JSONFormatter(this.input, this.context);
-
-    return formatter.toQuery();
+  private setOutputDetails(format: QueryFormat) {
+    this.outputFormat = format;
   }
 
-  private fromExpression(): Query {
-    const formatter = new ExpressionFormatter(this.input, this.context);
-
-    return formatter.toQuery();
-  }
-
-  private convertInputToQuery(): Query {
-
-    if (!this.inputFormat)
-      this.inputFormat = QuerySyntax.Query;
-
-    if (!this.inputFormat)
-      throw new Error("Query Conversion Error");
-    
-    switch(this.inputFormat) {
-      case QuerySyntax.Query:
-        return this.input;
-      case QuerySyntax.Expression:
-        return this.fromExpression();
-      case QuerySyntax.JSON:
-        return this.fromJSON();
+  private generateOutput() {
+    if (!this.canConvert()) {
+      throw new Error("Query is not ready to be converted");
     }
-  }
 
-  private convertInputQueryToOutput(inputQuery: Query) {
+    // convert intput to Query
+    const query: Query = this.convertToQuery(this.input, this.inputFormat);
+
+    // convert query to output
     switch(this.outputFormat) {
       case QuerySyntax.Query:
-        return inputQuery;
+        return query;
       case QuerySyntax.Expression:
-        return inputQuery.expression;
-      case QuerySyntax.Postgres:
-        const formatter = new PGFormatter(inputQuery, inputQuery.context);
+        return query.expression;
+      case QuerySyntax.JSON:
+      case QuerySyntax.PostgreSQL:
+        const adapter = QueryAdapterFactory.getAdapter(this.outputFormat);
 
-        return formatter.process(inputQuery.expression);
+        return adapter.toSQL(query);
+      default:
+        throw new Error(`Invalid output format ${this.outputFormat}`);
     }
+  }
+
+  private convertToQuery(input: QueryAdapterSupportedType, format: QueryFormat): Query {
+
+    if (format == QuerySyntax.Query)
+      return input as Query;
+
+    const adapter = QueryAdapterFactory.getAdapter(format);
+
+    return adapter.toQuery(input);
   }
 }

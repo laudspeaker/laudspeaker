@@ -6,7 +6,7 @@ import {
   QueryPreparerFlags,
   QueryPreparerInterface,
   NodeInterface,
-  AttributeNodeInterface,
+  CustomerAttributeNodeInterface,
   EventNodeInterface,
   ValueNodeInterface,
   UnaryExpressionInterface,
@@ -14,8 +14,9 @@ import {
   TernaryExpressionInterface,
   LogicalExpressionInterface,
   ExpressionHelper,
-  ExpressionInterfaceTypes,
+  ExpressionInterfaceType,
   ExpressionInterface,
+  QueryFlags,
 } from "../";
 
 export class QueryPreparer implements QueryPreparerInterface {
@@ -32,34 +33,54 @@ export class QueryPreparer implements QueryPreparerInterface {
   }
 
   prepareQuery(query: Query) {
-    this.query = query;
-
-    this.reset();
+    this.init(query);
 
     this.traverseTree(this.query.expression);
     this.generateFinalQuery();
     this.generateFullSQL();
   }
 
-  private reset() {
-    this.queryData = {
+  private init(query: Query) {
+    this.query = query;
+
+    this.queryData = this.initQueryData(this.query);
+  }
+
+  private initQueryData(query: Query): QueryData {
+    const data: QueryData = {
+      query: query,
+      context: query.context,
       customerAttributes: [],
       eventSearchCriteria: [],
-      allEventNames: new Set<string>(),
-      cte: [],
+      distinctEvents: new Set<string>,
+      flags: QueryFlags.None,
+      selectValues: [],
       tables: [],
+      condition: '',
     };
 
-    this.finalQuery = {
-      select: [],
-      from: [],
-      join: [],
-      where: [],
-      order: [],
-    };
-
-    this.fullSQL = "";
+    return data;
   }
+
+  // private reset() {
+  //   this.queryData = {
+  //     customerAttributes: [],
+  //     eventSearchCriteria: [],
+  //     distinctEvents: new Set<string>(),
+  //     cte: [],
+  //     tables: [],
+  //   };
+
+  //   this.finalQuery = {
+  //     select: [],
+  //     from: [],
+  //     join: [],
+  //     where: [],
+  //     order: [],
+  //   };
+
+  //   this.fullSQL = "";
+  // }
 
   private generateFinalQuery() {
     this.generateSelect();
@@ -72,7 +93,7 @@ export class QueryPreparer implements QueryPreparerInterface {
     if(this.flags & QueryPreparerFlags.IsCountQuery) {
       this.finalQuery.select.push("COUNT(id) as count");
     } else {
-      this.finalQuery.select = this.query.selectParams;
+      // this.finalQuery.select = this.query.selectParams;
     }
   }
 
@@ -81,7 +102,7 @@ export class QueryPreparer implements QueryPreparerInterface {
       this.finalQuery.from.push("customer");
     }
 
-    if (this.queryData.allEventNames.size > 0) {
+    if (this.queryData.distinctEvents.size > 0) {
       this.finalQuery.from.push("events");
     }
   }
@@ -91,10 +112,10 @@ export class QueryPreparer implements QueryPreparerInterface {
   }
 
   private generateCTE() {
-    if (this.queryData.allEventNames.size == 0)
+    if (this.queryData.distinctEvents.size == 0)
       return;
 
-    const distinctEventNamesCount = this.queryData.allEventNames.size;
+    const distinctEventNamesCount = this.queryData.distinctEvents.size;
     const eventSearchCriteriaCount = this.queryData.eventSearchCriteria.length;
 
     // we need to find out if the CTE will have a HAVING clause or not
@@ -108,19 +129,19 @@ export class QueryPreparer implements QueryPreparerInterface {
 
     for (const searchCriteria of this.queryData.eventSearchCriteria) {
       if (cteIncludesHavingClause) {
-        this.queryData.cte.push({
-          sql: `SELECT customer_id
-                FROM events
-                WHERE workspace_id = ?
-                  AND event = ?
-                  AND customer_id IS NOT NULL
-                GROUP BY customer_id
-                HAVING COUNT(id) >= ?`,
-          name: 'event_counts',
-          variables: [this.query.context?.externalData?.workspace_id,
-            searchCriteria.event,
-            searchCriteria.count],
-        });
+        // this.queryData.cte.push({
+        //   sql: `SELECT customer_id
+        //         FROM events
+        //         WHERE workspace_id = ?
+        //           AND event = ?
+        //           AND customer_id IS NOT NULL
+        //         GROUP BY customer_id
+        //         HAVING COUNT(id) >= ?`,
+        //   name: 'event_counts',
+        //   variables: [this.query.context?.externalData?.workspace_id,
+        //     searchCriteria.event,
+        //     searchCriteria.count],
+        // });
       }
     }
   }
@@ -134,7 +155,7 @@ export class QueryPreparer implements QueryPreparerInterface {
     this.fullSQL = sqlStr;
   }
 
-  private processAttributeNode(node: AttributeNodeInterface) {
+  private processAttributeNode(node: CustomerAttributeNodeInterface) {
     this.queryData.customerAttributes.push(node.attribute);
   }
 
@@ -155,7 +176,7 @@ export class QueryPreparer implements QueryPreparerInterface {
       count: count,
     });
 
-    this.queryData.allEventNames.add(node.event);
+    this.queryData.distinctEvents.add(node.event);
   }
 
   private processValueNode(node: ValueNodeInterface) {
@@ -167,8 +188,8 @@ export class QueryPreparer implements QueryPreparerInterface {
       return undefined;
 
     switch(node.kind) {
-      case QuerySyntax.AttributeNode:
-        this.processAttributeNode(node as AttributeNodeInterface);
+      case QuerySyntax.CustomerAttributeNode:
+        this.processAttributeNode(node as CustomerAttributeNodeInterface);
         break;
       case QuerySyntax.EventNode:
         return this.processEventNode(node as EventNodeInterface, parent);

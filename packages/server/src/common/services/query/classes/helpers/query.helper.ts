@@ -5,7 +5,7 @@ import {
 
 export class QueryHelper {
   static isComplete(query: Query) {
-    const expressions = query.getExpressions();
+    const expressions = query.getTopLevelExpressions();
 
     if (expressions.length == 0)
       return false;

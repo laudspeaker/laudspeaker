@@ -1,24 +1,42 @@
-import { QueryFormatterBase } from "../";
+import { QueryAdapterBase } from "../";
 import {
-  NodeInterface,
-  ExpressionInterface,
-  AttributeNodeInterface,
-  EventNodeInterface,
-  ValueNodeInterface,
-  QuerySyntax,
-  UnaryExpressionInterface,
+  CustomerAttributeNodeInterface,
   BinaryExpressionInterface,
-  TernaryExpressionInterface,
+  EventNodeInterface,
+  ExpressionInterface,
   LogicalExpressionInterface,
-  OperatorKind,
   NodeFlags,
+  NodeInterface,
+  OperatorKind,
+  Query,
+  QuerySyntax,
+  QueryContext,
+  QueryData,
+  TernaryExpressionInterface,
+  UnaryExpressionInterface,
+  ValueNodeInterface,
 } from "../../";
 
-export class PGFormatter extends QueryFormatterBase {
-  process(node: NodeInterface, flags: NodeFlags = NodeFlags.None) {
+export class PostgreSQLAdapter extends QueryAdapterBase {
+
+  toQuery(): Query {
+    throw new Error("Not implmeneted");
+  }
+
+  toSQL(input: Query): string {
+    const queryData = this.initQueryData(input);
+
+    return this.generateSQL(queryData);
+  }
+
+  private generateSQL(queryData: QueryData): string {
+    return this.process(queryData.query.expression);
+  }
+
+  private process(node: NodeInterface, flags: NodeFlags = NodeFlags.None) {
     switch(node.kind) {
-      case QuerySyntax.AttributeNode:
-        return this.processAttributeNode(node as AttributeNodeInterface, flags);
+      case QuerySyntax.CustomerAttributeNode:
+        return this.processAttributeNode(node as CustomerAttributeNodeInterface, flags);
       case QuerySyntax.EventNode:
         return this.processEventNode(node as EventNodeInterface, flags);
       case QuerySyntax.ValueNode:
@@ -39,9 +57,9 @@ export class PGFormatter extends QueryFormatterBase {
     }
   }
 
-  processUnaryExpression(expression: UnaryExpressionInterface, flags: NodeFlags): string {
+  private processUnaryExpression(expression: UnaryExpressionInterface, flags: NodeFlags): string {
     let result = "";
-    const leftNode = expression.left as AttributeNodeInterface;
+    const leftNode = expression.left as CustomerAttributeNodeInterface;
 
     if (expression.operator == QuerySyntax.ExistKeyword ||
       expression.operator == QuerySyntax.DoesNotExistKeyword)
@@ -62,7 +80,7 @@ export class PGFormatter extends QueryFormatterBase {
     return result;
   }
 
-  processBinaryExpression(expression: BinaryExpressionInterface, flags: NodeFlags): string {
+  private processBinaryExpression(expression: BinaryExpressionInterface, flags: NodeFlags): string {
     let result = "";
 
     if (expression.operator == QuerySyntax.ContainKeyword ||
@@ -137,7 +155,7 @@ export class PGFormatter extends QueryFormatterBase {
   }
 
 
-  processLogicalExpression(expression: LogicalExpressionInterface, flags: NodeFlags): string {
+  private processLogicalExpression(expression: LogicalExpressionInterface, flags: NodeFlags): string {
     let result = "";
     let elementSQL = "";
 
@@ -161,7 +179,7 @@ export class PGFormatter extends QueryFormatterBase {
     return result;
   }
  
-  processOperator(operator: OperatorKind): string {
+  private processOperator(operator: OperatorKind): string {
     switch(operator) {
       case QuerySyntax.ContainKeyword:
         return QuerySyntax.LikeKeyword;
@@ -175,7 +193,7 @@ export class PGFormatter extends QueryFormatterBase {
     }
   }
 
-  private processAttributeNode(node: AttributeNodeInterface, flags: NodeFlags) {
+  private processAttributeNode(node: CustomerAttributeNodeInterface, flags: NodeFlags) {
     let attribute = node.attribute.toString();
     let castingPrefix, castingSuffix
     let accessorToken;

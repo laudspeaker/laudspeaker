@@ -1,26 +1,44 @@
 import { 
-  AttributeNodeInterface,
+  CustomerAttributeNodeInterface,
   BinaryExpressionInterface,
   EventNodeInterface,
   EventOperatorKind,
   ExpressionInterface,
+  ExpressionInterfaceType,
+  FullQueryInterface,
   LogicalExpressionInterface,
   Node,
   NodeFactoryInterface,
   NodeInterface,
   OperatorKind,
-  QueryAttributeType,
   Query,
+  QueryAttributeType,
   QuerySyntax,
   TernaryExpressionInterface,
   UnaryExpressionInterface,
   ValueNodeInterface,
-  FullQueryInterface,
+  ResolvedNodeInterface,
+  ResolvedCustomerAttributeNodeInterface,
+  ResolvedEventNodeInterface,
+  AttributeInterface,
+  ResolvableNodeType,
 } from "../";
 
 export class NodeFactory implements NodeFactoryInterface {
-  createBaseNode<T extends NodeInterface>(kind: T["kind"]) {
+  createBaseNode<T extends NodeInterface>(
+    kind: T["kind"],
+    parent?: NodeInterface): T {
     const node = new Node(kind);
+    node.parent = parent;
+
+    return node as T;
+  }
+
+  createBaseResolvedNode<T extends ResolvedNodeInterface>(
+    kind: T["kind"],
+    parent: ResolvableNodeType
+  ): T {
+    const node = this.createBaseNode<T>(kind, parent);
     return node as T;
   }
 
@@ -52,21 +70,17 @@ export class NodeFactory implements NodeFactoryInterface {
 
   addExpressionToLogicalExpression(
     logicalExpression: LogicalExpressionInterface,
-    expression: ExpressionInterface) {
+    expression: ExpressionInterfaceType) {
     logicalExpression.expressions.push(expression);
   }
 
-  updateLogicalExpressionOperatorToAnd(
-    logicalExpression: LogicalExpressionInterface) {
-    logicalExpression.operator = QuerySyntax.AndKeyword;
+  updateExpressionOperator(
+    expression: ExpressionInterfaceType,
+    operator: OperatorKind) {
+      expression.operator = operator;
   }
 
-  updateLogicalExpressionOperatorToOr(
-    logicalExpression: LogicalExpressionInterface) {
-    logicalExpression.operator = QuerySyntax.OrKeyword;
-  }
-
-  createAttributeExpressionNode(
+  createCustomerAttributeExpressionNode(
     attribute: string,
     operator: OperatorKind,
     type: QueryAttributeType,
@@ -85,7 +99,7 @@ export class NodeFactory implements NodeFactoryInterface {
     }
 
     node.operator = operator;
-    node.left = this.createAttributeNode(attribute, type);
+    node.left = this.createCustomerAttributeNode(attribute, type);
     
     if (node.kind == QuerySyntax.BinaryExpression) {
       node.right = this.createValueNode(value, type);
@@ -112,8 +126,8 @@ export class NodeFactory implements NodeFactoryInterface {
     return node;
   }
 
-  createAttributeNode(attribute: string, type: QueryAttributeType) {
-    const node = this.createBaseNode<AttributeNodeInterface>(QuerySyntax.AttributeNode);
+  createCustomerAttributeNode(attribute: string, type: QueryAttributeType) {
+    const node = this.createBaseNode<CustomerAttributeNodeInterface>(QuerySyntax.CustomerAttributeNode);
     node.attribute = attribute;
     node.prefix = "user_attributes";
     node.type = type;
@@ -137,10 +151,38 @@ export class NodeFactory implements NodeFactoryInterface {
     return node;
   }
 
-  createFullQuery(query: Query) {
-    const node = this.createBaseNode<FullQueryInterface>(QuerySyntax.FullQuery);
-    node.query = query;
 
+
+  createResolvedCustomerAttributeNode(
+    attribute: AttributeInterface,
+    operator: OperatorKind,
+    value: any,
+    parent: ResolvableNodeType
+  ) {
+    const node = this.createBaseResolvedNode<ResolvedCustomerAttributeNodeInterface>(
+      QuerySyntax.ResolvedCustomerAttributeNode,
+      parent);
+    node.operator = operator;
+    node.attribute = attribute;
+    node.value = value;
+    
+    return node;
+  }
+
+  createResolvedEventNodeInterface(
+    event: string,
+    operator: OperatorKind,
+    count: number,
+    parent: ResolvableNodeType,
+    attributes?: any
+  ) {
+    const node = this.createBaseResolvedNode<ResolvedEventNodeInterface>(
+      QuerySyntax.ResolvedEventNode,
+      parent);
+    node.operator = operator;
+    node.event = event;
+    node.count = count;
+    
     return node;
   }
 }
