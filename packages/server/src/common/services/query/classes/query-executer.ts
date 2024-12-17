@@ -1,9 +1,9 @@
 import { 
   Query,
-  QueryPreparer,
+  // QueryPreparer,
   QueryExecuterInterface,
   QueryResultParser,
-  QueryPreparerFlags,
+  // QueryPreparerFlags,
   QuerySQL,
   QueryResult,
 } from "../";

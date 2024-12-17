@@ -16,6 +16,5 @@ export * from "./query-validator";
 
 export * from "./query-converter";
 export * from "./query-resolver";
-export * from "./query-preparer";
 export * from "./query-result-parser";
 export * from "./query-executer";

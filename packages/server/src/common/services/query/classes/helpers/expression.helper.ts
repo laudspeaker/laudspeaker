@@ -7,6 +7,7 @@ import {
   TernaryExpressionInterface,
   QuerySyntax,
   LogicalExpressionInterface,
+  NodeInterface,
 } from "../../";
 
 
@@ -62,5 +63,17 @@ export class ExpressionHelper {
     }
 
     return false;
+  }
+
+  static isCustomerAttributeNode(node: NodeInterface) {
+    return node?.kind == QuerySyntax.CustomerAttributeNode;
+  }
+
+  static isEventNode(node: NodeInterface) {
+    return node?.kind == QuerySyntax.EventNode;
+  }
+
+  static isValueNode(node: NodeInterface) {
+    return node?.kind == QuerySyntax.ValueNode;
   }
 }

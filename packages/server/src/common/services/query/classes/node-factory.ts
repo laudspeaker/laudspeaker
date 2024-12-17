@@ -4,6 +4,7 @@ import {
   EventNodeInterface,
   EventOperatorKind,
   ExpressionInterface,
+  ExpressionInterfaces,
   ExpressionInterfaceType,
   FullQueryInterface,
   LogicalExpressionInterface,
@@ -22,45 +23,52 @@ import {
   ResolvedEventNodeInterface,
   AttributeInterface,
   ResolvableNodeType,
+  AggregatedNodeData,
 } from "../";
 
 export class NodeFactory implements NodeFactoryInterface {
   createBaseNode<T extends NodeInterface>(
     kind: T["kind"],
-    parent?: NodeInterface): T {
+    parent?: T) {
     const node = new Node(kind);
-    node.parent = parent;
 
-    return node as T;
+    node.parent = parent ?? undefined;
+    node.resolvedNode = undefined;
+    node.aggregatedData = {
+      distinctEvents: new Set<string>(),
+      distinctAttributes: new Set<string>(),
+    };
+
+    return node;
   }
 
   createBaseResolvedNode<T extends ResolvedNodeInterface>(
     kind: T["kind"],
     parent: ResolvableNodeType
-  ): T {
+  ) {
     const node = this.createBaseNode<T>(kind, parent);
-    return node as T;
+    return node;
   }
 
-  createUnaryExpression() {
+  createUnaryExpression(): UnaryExpressionInterface {
     const node = this.createBaseNode<UnaryExpressionInterface>(QuerySyntax.UnaryExpression);
 
     return node;
   }
 
-  createBinaryExpression() {
+  createBinaryExpression(): BinaryExpressionInterface {
     const node = this.createBaseNode<BinaryExpressionInterface>(QuerySyntax.BinaryExpression);
 
     return node;
   }
 
-  createTernaryExpression() {
+  createTernaryExpression(): TernaryExpressionInterface {
     const node = this.createBaseNode<TernaryExpressionInterface>(QuerySyntax.TernaryExpression);
 
     return node;
   }
 
-  createLogicalExpression() {
+  createLogicalExpression(): LogicalExpressionInterface {
     const node = this.createBaseNode<LogicalExpressionInterface>(QuerySyntax.LogicalExpression);
     node.operator = QuerySyntax.AndKeyword;
     node.expressions = [];
@@ -70,12 +78,12 @@ export class NodeFactory implements NodeFactoryInterface {
 
   addExpressionToLogicalExpression(
     logicalExpression: LogicalExpressionInterface,
-    expression: ExpressionInterfaceType) {
+    expression: ExpressionInterfaces) {
     logicalExpression.expressions.push(expression);
   }
 
   updateExpressionOperator(
-    expression: ExpressionInterfaceType,
+    expression: ExpressionInterface,
     operator: OperatorKind) {
       expression.operator = operator;
   }
@@ -151,14 +159,12 @@ export class NodeFactory implements NodeFactoryInterface {
     return node;
   }
 
-
-
   createResolvedCustomerAttributeNode(
     attribute: AttributeInterface,
     operator: OperatorKind,
     value: any,
     parent: ResolvableNodeType
-  ) {
+  ): ResolvedCustomerAttributeNodeInterface {
     const node = this.createBaseResolvedNode<ResolvedCustomerAttributeNodeInterface>(
       QuerySyntax.ResolvedCustomerAttributeNode,
       parent);
@@ -169,13 +175,13 @@ export class NodeFactory implements NodeFactoryInterface {
     return node;
   }
 
-  createResolvedEventNodeInterface(
+  createResolvedEventNode(
     event: string,
     operator: OperatorKind,
     count: number,
     parent: ResolvableNodeType,
     attributes?: any
-  ) {
+  ): ResolvedEventNodeInterface {
     const node = this.createBaseResolvedNode<ResolvedEventNodeInterface>(
       QuerySyntax.ResolvedEventNode,
       parent);
@@ -184,6 +190,11 @@ export class NodeFactory implements NodeFactoryInterface {
     node.count = count;
     
     return node;
+  }
+
+  updateNodeAggregatedData(node: NodeInterface, data: AggregatedNodeData) {
+    // node.aggregatedData.distinctEvents = node.aggregatedData.distinctEvents.union(data.distinctEvents);
+    // node.aggregatedData.distinctAttributes = node.aggregatedData.distinctAttributes.union(data.distinctAttributes);
   }
 }
 

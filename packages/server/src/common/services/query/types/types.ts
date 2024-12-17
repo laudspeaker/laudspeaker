@@ -179,6 +179,10 @@ export interface NodeInterface {
   readonly kind: QuerySyntax;
   readonly parent?: NodeInterface;
   readonly flags: NodeFlags;
+
+  // resolvedNode?: ResolvableNodeType;
+  resolvedNode?: NodeInterface;
+  aggregatedData?: AggregatedNodeData;
 }
 
 export interface NodeFactoryInterface {
@@ -213,6 +217,21 @@ export interface NodeFactoryInterface {
   createCustomerAttributeNode(attribute: string, type: QueryAttributeType);
   createEventNode(event: string);
   createValueNode(value: any, type?: QueryAttributeType);
+
+  createResolvedCustomerAttributeNode(
+    attribute: AttributeInterface,
+    operator: OperatorKind,
+    value: any,
+    parent: ResolvableNodeType
+  ): ResolvedCustomerAttributeNodeInterface;
+  createResolvedEventNode(
+    event: string,
+    operator: OperatorKind,
+    count: number,
+    parent: ResolvableNodeType,
+    attributes?: any
+  ): ResolvedEventNodeInterface;
+  updateNodeAggregatedData(node: NodeInterface, aggregatedData: AggregatedNodeData);
 }
 
 export const enum NodeFlags {
@@ -278,6 +297,16 @@ export type ExpressionInterfaceType =
   | TernaryExpressionInterface
   | LogicalExpressionInterface;
 
+export type ExpressionInterfaces = 
+  | UnaryExpressionInterface
+  | BinaryExpressionInterface
+  | TernaryExpressionInterface
+  | LogicalExpressionInterface;
+
+// export interface ExpressionKinds = {
+  
+// }
+
 export type QueryConversionAllowedInputType = 
   | Record<string, string>;
 
@@ -338,7 +367,7 @@ export interface QueryPreparerInterface {
   finalQuery: QuerySQL;
   fullSQL: string;
 
-  flags: QueryPreparerFlags;
+  // flags: QueryPreparerFlags;
 
   // statements: SQLStatements[] = [];
 }
@@ -348,29 +377,11 @@ export interface QueryResolverInterface {
   resolve(query: QueryInterface);
 }
 
+
+
 export interface QueryContext extends Record<string, any> {}
 
-export interface QueryData {
-  query: QueryInterface;
-  context: QueryContext;
 
-  customerAttributes: string[];
-  eventSearchCriteria: {
-    event: string,
-    count: number;
-    // dateBegin:
-    // dateEnd:
-  }[];
-  distinctEvents: Set<string>;
-  flags: QueryFlags;
-
-  // SQL-related
-  selectValues: string[],
-  tables: string[],
-  condition: string;
-
-
-}
 
 // export interface QueryData {
 //   customerAttributes: string[];
@@ -411,10 +422,10 @@ export type QueryAdapterSupportedType = any;
 //   | Record<string, any>
 //   | string;
 
-export const enum QueryPreparerFlags {
-  None                      = 0,
-  IsCountQuery              = 1 << 0,  // COUNT(*)
-}
+// export const enum QueryPreparerFlags {
+//   None                      = 0,
+//   IsCountQuery              = 1 << 0,  // COUNT(*)
+// }
 
 export const enum QueryResolverFlags {
   None                      = 0,
@@ -488,7 +499,8 @@ export interface AttributeInterface {
 export interface ResolvedNodeInterface extends NodeInterface
 {
   kind: ResolvedKind;
-  parent: ResolvableNodeType;
+  // parent: ResolvableNodeType;
+  parent: NodeInterface;
   operator: OperatorKind;
   // dateFilter: DateFilterInterface;
 }
@@ -511,3 +523,40 @@ export interface ResolvedEventNodeInterface extends ResolvedNodeInterface {
 export type QueryResolverObjectTypes = 
   | ResolvedCustomerAttributeNodeInterface
   | ResolvedEventNodeInterface;
+
+export interface AggregatedNodeData {
+  distinctEvents: Set<string>;
+  distinctAttributes: Set<string>;
+}
+
+// export interface AggregatedResolvedData {
+//   // attributes: AttributeFilter[],
+//   // events: EventFilter[],
+//   eventFilter: {
+//     distinctEvents: Set<string>;
+//     eventNodes: ResolvedEventNodeInterface[];
+//   }
+//   // filters: QueryFilterInterface[]
+// }
+
+export interface QueryData {
+  query: QueryInterface;
+  context: QueryContext;
+
+  customerAttributes: string[];
+  eventSearchCriteria: {
+    event: string,
+    count: number;
+    // dateBegin:
+    // dateEnd:
+  }[];
+  distinctEvents: Set<string>;
+  flags: QueryFlags;
+
+  // SQL-related
+  selectValues: string[],
+  tables: string[],
+  condition: string;
+
+
+}

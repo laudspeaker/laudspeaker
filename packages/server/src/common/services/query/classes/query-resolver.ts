@@ -21,6 +21,8 @@ import {
   ResolvedNodeInterface,
   ResolvedCustomerAttributeNodeInterface,
   ResolvedEventNodeInterface,
+  CustomerAttributeClassification,
+  AggregatedNodeData,
 } from "../";
 
 // used to traverse the full query to generate supporting data
@@ -94,7 +96,7 @@ export class QueryResolver implements QueryResolverInterface {
   }
 
   private processCustomerAttributeNode(node: CustomerAttributeNodeInterface) {
-    this.queryData.customerAttributes.push(node.attribute);
+    // this.queryData.customerAttributes.push(node.attribute);
   }
 
   private processEventNode(node: EventNodeInterface, parent: NodeInterface | undefined = undefined) {
@@ -104,15 +106,15 @@ export class QueryResolver implements QueryResolverInterface {
       count = this.processNode( (parent as BinaryExpressionInterface).right);
       // count = parent.right?.kind == QuerySyntax.ValueNode ? 
     }
-    this.queryData.eventSearchCriteria.push({
-      event: node.event,
-      count: count,
-    });
+    // this.queryData.eventSearchCriteria.push({
+    //   event: node.event,
+    //   count: count,
+    // });
 
-    this.queryData.distinctEvents.add(node.event);
+    // this.queryData.distinctEvents.add(node.event);
   }
 
-  private processValueNode(node: ValueNodeInterface) {
+  private processValueNode(node: ValueNodeInterface): any {
     return node.value;
   }
 
@@ -121,10 +123,33 @@ export class QueryResolver implements QueryResolverInterface {
   }
 
   private processBinaryExpressionNode(node: BinaryExpressionInterface) {
-    const lhs = this.processNode(node.left);
-    this.processNode(node.right);
+    if (!ExpressionHelper.isValueNode(node.right))
+      throw new Error("Invalid expression");
 
-    // const lhs: QueryParsedExpression
+    let lhs;
+    const valueNode = node.right as ValueNodeInterface;
+
+    if (ExpressionHelper.isCustomerAttributeNode(node.left)) {
+      lhs = node.left as CustomerAttributeNodeInterface;
+      node.resolvedNode = this.nodeFactory.createResolvedCustomerAttributeNode(
+        {
+          name: lhs.attribute,
+          type: lhs.type,
+          classification: CustomerAttributeClassification.USER
+        },
+        node.operator,
+        valueNode.value,
+        node
+      ) as ResolvedCustomerAttributeNodeInterface;
+    } else {
+      lhs = node.left as EventNodeInterface;
+      node.resolvedNode = this.nodeFactory.createResolvedEventNode(
+        lhs.event,
+        node.operator,
+        valueNode.value,
+        node
+      ) as ResolvedEventNodeInterface;
+    }
   }
 
   private processTernaryExpressionNode(node: TernaryExpressionInterface) {
@@ -134,10 +159,12 @@ export class QueryResolver implements QueryResolverInterface {
   }
 
   private processLogicalExpressionNode(node: LogicalExpressionInterface) {
+    let aggregatedData: {};
+
     for(let expression of node.expressions) {
       this.processNode(expression);
+      this.nodeFactory.updateNodeAggregatedData(node, expression.aggregatedData)
     }
   }
-
 }
 
