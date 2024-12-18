@@ -11,7 +11,7 @@ import {
   Query,
   QuerySyntax,
   QueryContext,
-  QueryData,
+  // QueryData,
   TernaryExpressionInterface,
   UnaryExpressionInterface,
   ValueNodeInterface,
@@ -23,14 +23,18 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
     throw new Error("Not implmeneted");
   }
 
-  toSQL(input: Query): string {
-    const queryData = this.initQueryData(input);
+  toSQL(input: Query) {
+    // const queryData = this.initQueryData(input);
 
-    return this.generateSQL(queryData);
+    // return this.generateSQL(queryData);
+
+    return "";
   }
 
-  private generateSQL(queryData: QueryData): string {
-    return this.process(queryData.query.expression);
+  private generateSQL(queryData: any): string {
+    const s = this.process(queryData.query.expression);
+
+    return "";
   }
 
   private process(node: NodeInterface, flags: NodeFlags = NodeFlags.None) {

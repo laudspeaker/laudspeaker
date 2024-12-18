@@ -29,7 +29,7 @@ import {
 export class NodeFactory implements NodeFactoryInterface {
   createBaseNode<T extends NodeInterface>(
     kind: T["kind"],
-    parent?: T) {
+    parent?: any) {
     const node = new Node(kind);
 
     node.parent = parent ?? undefined;
@@ -46,7 +46,8 @@ export class NodeFactory implements NodeFactoryInterface {
     kind: T["kind"],
     parent: ResolvableNodeType
   ) {
-    const node = this.createBaseNode<T>(kind, parent);
+    // const node = this.createBaseNode<T>(kind, parent);
+    const node = new Node(kind, parent);
     return node;
   }
 
