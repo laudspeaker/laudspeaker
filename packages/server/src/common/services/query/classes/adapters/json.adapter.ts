@@ -14,9 +14,7 @@ import {
 
 export class JSONAdapter extends QueryAdapterBase {
   toQuery(input: Record <string, any>): Query {
-    // const logicalExpression = this.processStatement(this.input.inclusionCriteria.query);
-    return this.generateQuery(input)
-    return 
+    return this.generateQuery(input);
   }
 
   toSQL(input: Record <string, any>): string {
@@ -25,7 +23,7 @@ export class JSONAdapter extends QueryAdapterBase {
     return query.toSQL();
   }
 
-  private generateQuery(input): Query {
+  private generateQuery(input: Record <string, any>): Query {
     const logicalExpression: LogicalExpressionInterface = this.processStatement(input.inclusionCriteria.query);
 
     const query: Query = this.queryFromExpression(logicalExpression);

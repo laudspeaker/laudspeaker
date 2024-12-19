@@ -24,17 +24,15 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
   }
 
   toSQL(input: Query) {
-    // const queryData = this.initQueryData(input);
+    const queryData = this.initQueryData(input);
 
-    // return this.generateSQL(queryData);
-
-    return "";
+    return this.generateSQL(queryData);
   }
 
   private generateSQL(queryData: any): string {
-    const s = this.process(queryData.query.expression);
+    const sql = this.process(queryData.query.expression);
 
-    return "";
+    return sql;
   }
 
   private process(node: NodeInterface, flags: NodeFlags = NodeFlags.None) {
@@ -49,8 +47,8 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
         return this.processUnaryExpression(node as UnaryExpressionInterface, flags)
       case QuerySyntax.BinaryExpression:
         return this.processBinaryExpression(node as BinaryExpressionInterface, flags)
-      // case QuerySyntax.TernaryExpression:
-      //   return this.processTernaryExpression(node as TernaryExpressionInterface, flags)
+      case QuerySyntax.TernaryExpression:
+        return this.processTernaryExpression(node as TernaryExpressionInterface, flags)
       case QuerySyntax.LogicalExpression:
         return this.processLogicalExpression(node as LogicalExpressionInterface, flags)
       case QuerySyntax.EmailExpression:
@@ -158,6 +156,9 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
     return result;
   }
 
+  private processTernaryExpression(expression: TernaryExpressionInterface, flags: NodeFlags): string {
+    throw new Error("Not implmeneted");
+  }
 
   private processLogicalExpression(expression: LogicalExpressionInterface, flags: NodeFlags): string {
     let result = "";

@@ -29,7 +29,8 @@ import {
 export class NodeFactory implements NodeFactoryInterface {
   createBaseNode<T extends NodeInterface>(
     kind: T["kind"],
-    parent?: any) {
+    parent?: NodeInterface
+  ): T {
     const node = new Node(kind);
 
     node.parent = parent ?? undefined;
@@ -39,16 +40,15 @@ export class NodeFactory implements NodeFactoryInterface {
       distinctAttributes: new Set<string>(),
     };
 
-    return node;
+    return node as T;
   }
 
   createBaseResolvedNode<T extends ResolvedNodeInterface>(
     kind: T["kind"],
     parent: ResolvableNodeType
-  ) {
-    // const node = this.createBaseNode<T>(kind, parent);
-    const node = new Node(kind, parent);
-    return node;
+  ): T {
+    const node = this.createBaseNode<T>(kind, parent);
+    return node as T;
   }
 
   createUnaryExpression(): UnaryExpressionInterface {
@@ -94,8 +94,8 @@ export class NodeFactory implements NodeFactoryInterface {
     operator: OperatorKind,
     type: QueryAttributeType,
     value: any,
-    parent?: NodeInterface) {
-
+    parent?: NodeInterface
+  ) {
     let node;
     let nodeLHS;
     let nodeRHS;
@@ -122,7 +122,8 @@ export class NodeFactory implements NodeFactoryInterface {
     operator: OperatorKind,
     count: number,
     attributes?: ExpressionInterface[],
-    parent?: NodeInterface) {
+    parent?: NodeInterface
+  ) {
     // const node = this.createBaseNode<EventExpressionInterface>(QuerySyntax.EventExpression);
     const node = this.createBinaryExpression();
 
@@ -194,8 +195,9 @@ export class NodeFactory implements NodeFactoryInterface {
   }
 
   updateNodeAggregatedData(node: NodeInterface, data: AggregatedNodeData) {
-    // node.aggregatedData.distinctEvents = node.aggregatedData.distinctEvents.union(data.distinctEvents);
-    // node.aggregatedData.distinctAttributes = node.aggregatedData.distinctAttributes.union(data.distinctAttributes);
+    // replace with Set.Union in Node v22
+    data.distinctEvents.forEach((value, key, set) => node.aggregatedData.distinctEvents.add(value));
+    data.distinctAttributes.forEach((value, key, set) => node.aggregatedData.distinctAttributes.add(value));
   }
 }
 

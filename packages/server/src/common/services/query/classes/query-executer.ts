@@ -1,6 +1,6 @@
 import { 
   Query,
-  // QueryPreparer,
+  QueryResolver,
   QueryExecuterInterface,
   QueryResultParser,
   // QueryPreparerFlags,
@@ -22,7 +22,7 @@ export class QueryExecuter implements QueryExecuterInterface {
     return this.executeQuery(query, dataSource);
   }
 
-  async getOne(
+  private async getOne(
     query: Query,
     dataSource: DataSource
   ): Promise<any> {
@@ -34,7 +34,7 @@ export class QueryExecuter implements QueryExecuterInterface {
     return result[0];
   }
 
-  async getCount(
+  private async getCount(
     query: Query,
     dataSource: DataSource
   ): Promise<number> {
@@ -54,7 +54,10 @@ export class QueryExecuter implements QueryExecuterInterface {
     query: Query,
     dataSource: DataSource
   ) {
+    const queryResolver = new QueryResolver();
     const resultParser = new QueryResultParser();
+
+    queryResolver.resolve(query);
 
     const rawResult = await this.executeQueryRaw(
       query.toSQL(),

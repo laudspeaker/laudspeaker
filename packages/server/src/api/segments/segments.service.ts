@@ -394,7 +394,7 @@ export class SegmentsService {
         account.id
       );
 
-      const customerCount = await query.getCount(this.dataSource);
+      const customerCount = await query.count(this.dataSource);
 
       return { size: customerCount, total: totalCount };
     });

@@ -11,6 +11,7 @@ import {
   LogicalExpressionOperatorKind,
   ExpressionInterfaceType,
   QueryFlags,
+  QueryExecuter,
 } from "../";
 
 export class Query implements QueryInterface {
@@ -44,7 +45,7 @@ export class Query implements QueryInterface {
   }
 
   toSQL(): string {
-    return this.to(QuerySyntax.JSON) as string;
+    return this.to(QuerySyntax.PostgreSQL) as string;
   }
 
   // set(setting: QuerySyntax) {}
@@ -88,16 +89,28 @@ export class Query implements QueryInterface {
   }
 
   // Query Execution
-  async getCount(dataSource) {
-    // this.preparer.setIsCountQuery();
+  async findOne(dataSource) {
+    this.setFlag(QueryFlags.FindOne);
 
-    this.setFlag(QueryFlags.GetCount);
+    return await this.execute(dataSource);
+  }
 
-    // return this.executer.getCount(this, dataSource);
+  async findAll(dataSource) {
+    this.setFlag(QueryFlags.FindAll);
+
+    return await this.execute(dataSource);
+  }
+
+  async count(dataSource) {
+    this.setFlag(QueryFlags.Count);
+
+    return await this.execute(dataSource);
   }
 
   async execute(dataSource) {
-    // return this.executer.execute(this, dataSource);
+    const executer = new QueryExecuter();
+
+    return executer.execute(this, dataSource);
   }
 
   private setOperator(operator: LogicalExpressionOperatorKind) {

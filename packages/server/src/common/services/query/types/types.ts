@@ -187,11 +187,11 @@ export interface NodeInterface {
 
 export interface NodeFactoryInterface {
   createBaseNode<T extends NodeInterface>(kind: T["kind"], parent?: NodeInterface): T;
-  createBaseResolvedNode<T extends ResolvedNodeInterface>(kind: T["kind"], parent: ResolvableNodeType);
-  createUnaryExpression();
-  createBinaryExpression();
-  createTernaryExpression();
-  createLogicalExpression();
+  createBaseResolvedNode<T extends ResolvedNodeInterface>(kind: T["kind"], parent: ResolvableNodeType): T;
+  createUnaryExpression(): UnaryExpressionInterface;
+  createBinaryExpression(): BinaryExpressionInterface;
+  createTernaryExpression(): TernaryExpressionInterface;
+  createLogicalExpression(): LogicalExpressionInterface;
   addExpressionToLogicalExpression(
     logicalExpression: LogicalExpressionInterface,
     expression: ExpressionInterfaceType
@@ -440,12 +440,13 @@ export interface FullQueryInterface extends NodeInterface {
 export const enum QueryFlags {
   None                      = 0,
 
-  // COUNT()
-  GetCount                  = 1 << 0,
-
+  // query methods
+  FindOne                   = 1 << 0,
+  FindAll                   = 1 << 1,
+  Count                     = 1 << 2,
 
   // event CTE is required
-  EventCTE                  = 1 << 1,
+  EventCTE                  = 1 << 3,
 }
 
 export interface QueryResolverResult {
