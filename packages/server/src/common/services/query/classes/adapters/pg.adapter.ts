@@ -20,7 +20,7 @@ import {
 export class PostgreSQLAdapter extends QueryAdapterBase {
 
   toQuery(): Query {
-    throw new Error("Not implmeneted");
+    throw new Error("Not implemented");
   }
 
   toSQL(input: Query) {
@@ -157,7 +157,7 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
   }
 
   private processTernaryExpression(expression: TernaryExpressionInterface, flags: NodeFlags): string {
-    throw new Error("Not implmeneted");
+    throw new Error("Not implemented");
   }
 
   private processLogicalExpression(expression: LogicalExpressionInterface, flags: NodeFlags): string {

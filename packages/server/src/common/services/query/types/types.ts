@@ -231,7 +231,7 @@ export interface NodeFactoryInterface {
     parent: ResolvableNodeType,
     attributes?: any
   ): ResolvedEventNodeInterface;
-  updateNodeAggregatedData(node: NodeInterface, aggregatedData: AggregatedNodeData);
+  updateNodeAggregatedData(node: NodeInterface, other: NodeInterface);
 }
 
 export const enum NodeFlags {
@@ -352,7 +352,7 @@ export interface QueryInterface {
 }
 
 export interface QueryExecuterInterface {
-
+  execute(query: QueryInterface, dataSource);
 }
 
 export interface QueryConverterInterface {
@@ -528,6 +528,9 @@ export type QueryResolverObjectTypes =
 export interface AggregatedNodeData {
   distinctEvents: Set<string>;
   distinctAttributes: Set<string>;
+
+  eventFilters: Record<string, any>[];
+  customerAttributeFilters: Record<string, any>[];
 }
 
 // export interface AggregatedResolvedData {

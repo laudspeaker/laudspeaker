@@ -101,6 +101,7 @@ export class Query implements QueryInterface {
     return await this.execute(dataSource);
   }
 
+  // TODO: could be confused with statements.count
   async count(dataSource) {
     this.setFlag(QueryFlags.Count);
 

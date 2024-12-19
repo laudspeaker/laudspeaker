@@ -34,11 +34,11 @@ export class NodeFactory implements NodeFactoryInterface {
     const node = new Node(kind);
 
     node.parent = parent ?? undefined;
-    node.resolvedNode = undefined;
-    node.aggregatedData = {
-      distinctEvents: new Set<string>(),
-      distinctAttributes: new Set<string>(),
-    };
+    // node.resolvedNode = undefined;
+    // node.aggregatedData = {
+    //   distinctEvents: new Set<string>(),
+    //   distinctAttributes: new Set<string>(),
+    // };
 
     return node as T;
   }
@@ -194,10 +194,14 @@ export class NodeFactory implements NodeFactoryInterface {
     return node;
   }
 
-  updateNodeAggregatedData(node: NodeInterface, data: AggregatedNodeData) {
+  updateNodeAggregatedData(node: NodeInterface, other: NodeInterface) {
+    const data: AggregatedNodeData = other.aggregatedData;
     // replace with Set.Union in Node v22
     data.distinctEvents.forEach((value, key, set) => node.aggregatedData.distinctEvents.add(value));
     data.distinctAttributes.forEach((value, key, set) => node.aggregatedData.distinctAttributes.add(value));
+
+    node.aggregatedData.customerAttributeFilters = node.aggregatedData.customerAttributeFilters.concat(data.customerAttributeFilters);
+    node.aggregatedData.eventFilters = node.aggregatedData.eventFilters.concat(data.eventFilters);
   }
 }
 

@@ -1,17 +1,18 @@
 import { 
+  ExpressionAdapter,
+  ExpressionInterface,
   Query,
+  QueryAdapterFactory,
+  QueryAdapterSupportedType,
   QueryContext,
   QueryConverterInterface,
-  QuerySQL,
-  QueryResult,
-  QueryFormat,
-  QuerySyntax,
-  QueryAdapterSupportedType,
-  ExpressionInterface,
-  ExpressionAdapter,
-  QueryAdapterFactory,
   QueryData,
   QueryFlags,
+  QueryFormat,
+  QueryResolver,
+  QueryResult,
+  QuerySQL,
+  QuerySyntax,
 } from "../";
 
 export class QueryConverter implements QueryConverterInterface {
@@ -41,7 +42,7 @@ export class QueryConverter implements QueryConverterInterface {
   to(format: QueryFormat): QueryAdapterSupportedType {
     this.setOutputDetails(format);
 
-    return this.generateOutput();
+    return this.start();
   }
 
   toQuery(): Query {
@@ -66,7 +67,7 @@ export class QueryConverter implements QueryConverterInterface {
     this.outputFormat = format;
   }
 
-  private generateOutput() {
+  private start() {
     if (!this.canConvert()) {
       throw new Error("Query is not ready to be converted");
     }
@@ -82,9 +83,7 @@ export class QueryConverter implements QueryConverterInterface {
         return query.expression;
       case QuerySyntax.JSON:
       case QuerySyntax.PostgreSQL:
-        const adapter = QueryAdapterFactory.getAdapter(this.outputFormat);
-
-        return adapter.toSQL(query);
+        return this.sendQueryToAdapter(query);
       default:
         throw new Error(`Invalid output format ${this.outputFormat}`);
     }
@@ -98,5 +97,14 @@ export class QueryConverter implements QueryConverterInterface {
     const adapter = QueryAdapterFactory.getAdapter(format);
 
     return adapter.toQuery(input);
+  }
+
+  private sendQueryToAdapter(query: Query) {
+    const adapter = QueryAdapterFactory.getAdapter(this.outputFormat);
+    const queryResolver = new QueryResolver();
+
+    queryResolver.resolve(query);
+
+    return adapter.toSQL(query);
   }
 }

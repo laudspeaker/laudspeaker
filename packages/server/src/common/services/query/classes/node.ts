@@ -21,6 +21,8 @@ export class Node<T extends QuerySyntax> implements NodeInterface {
     this.aggregatedData = {
       distinctEvents: new Set<string>(),
       distinctAttributes: new Set<string>(),
+      eventFilters: [],
+      customerAttributeFilters: [],
     };
     this.flags = NodeFlags.None;
   }

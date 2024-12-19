@@ -131,16 +131,21 @@ export class QueryResolver implements QueryResolverInterface {
 
     if (ExpressionHelper.isCustomerAttributeNode(node.left)) {
       lhs = node.left as CustomerAttributeNodeInterface;
+      let attrData = {
+        name: lhs.attribute,
+        type: lhs.type,
+        operator: node.operator,
+        classification: CustomerAttributeClassification.USER
+      };
+
       node.resolvedNode = this.nodeFactory.createResolvedCustomerAttributeNode(
-        {
-          name: lhs.attribute,
-          type: lhs.type,
-          classification: CustomerAttributeClassification.USER
-        },
+        attrData,
         node.operator,
         valueNode.value,
         node
       ) as ResolvedCustomerAttributeNodeInterface;
+      node.aggregatedData.distinctAttributes.add(lhs.attribute);
+      node.aggregatedData.customerAttributeFilters.push(attrData);
     } else {
       lhs = node.left as EventNodeInterface;
       node.resolvedNode = this.nodeFactory.createResolvedEventNode(
@@ -149,6 +154,12 @@ export class QueryResolver implements QueryResolverInterface {
         valueNode.value,
         node
       ) as ResolvedEventNodeInterface;
+      node.aggregatedData.distinctEvents.add(lhs.event);
+      node.aggregatedData.eventFilters.push({
+        event: lhs.event,
+        operator: node.operator,
+        value: valueNode.value,
+      });
     }
   }
 
@@ -159,11 +170,9 @@ export class QueryResolver implements QueryResolverInterface {
   }
 
   private processLogicalExpressionNode(node: LogicalExpressionInterface) {
-    let aggregatedData: {};
-
     for(let expression of node.expressions) {
       this.processNode(expression);
-      this.nodeFactory.updateNodeAggregatedData(node, expression.aggregatedData)
+      this.nodeFactory.updateNodeAggregatedData(node, expression)
     }
   }
 }
