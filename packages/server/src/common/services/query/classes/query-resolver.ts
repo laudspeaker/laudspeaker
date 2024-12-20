@@ -69,6 +69,13 @@ export class QueryResolver implements QueryResolverInterface {
     if(!node)
       return;
 
+    node.aggregatedData = {
+      distinctEvents: new Set<string>(),
+      distinctAttributes: new Set<string>(),
+      eventFilters: [],
+      customerAttributeFilters: [],
+    };
+
     switch(node.kind) {
       case QuerySyntax.CustomerAttributeNode:
         return this.processCustomerAttributeNode(node as CustomerAttributeNodeInterface);

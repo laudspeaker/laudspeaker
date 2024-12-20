@@ -8,6 +8,7 @@ import {
   QuerySyntax,
   LogicalExpressionInterface,
   NodeInterface,
+  ExpressionWithLHSInterfaces,
 } from "../../";
 
 
@@ -75,5 +76,13 @@ export class ExpressionHelper {
 
   static isValueNode(node: NodeInterface) {
     return node?.kind == QuerySyntax.ValueNode;
+  }
+
+  static isCustomerAttributeExpression(node: ExpressionWithLHSInterfaces) {
+    return this.isCustomerAttributeNode(node.left);
+  }
+
+  static isEventExpression(node: ExpressionWithLHSInterfaces) {
+    return this.isEventNode(node.left);
   }
 }

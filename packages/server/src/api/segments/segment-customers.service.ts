@@ -116,12 +116,11 @@ export class SegmentCustomersService {
         INSERT INTO
         segment_customers ("segmentEntry", segment_id, customer_id, workspace_id)
           SELECT
-            cast(extract(epoch from '2018-08-20'::date) as bigint),
+            cast(extract(epoch from NOW()::date) as bigint),
             '${segment.id}',
             id,
             '${workspace.id}'
-          FROM customer
-          WHERE ${query.toString()};`;
+          FROM (${query.toSQL()})`;
 
     this.log(`Full Query: ${queryStr}`,
       this.populateEmptySegment.name,

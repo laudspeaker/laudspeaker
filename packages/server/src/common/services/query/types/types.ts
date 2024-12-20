@@ -14,6 +14,8 @@ export enum QuerySyntax {
   TrueKeyword                       = 'TRUE',
   FalseKeyword                      = 'FALSE',
   NullKeyword                       = 'NULL',
+  UnionKeyword                      = 'UNION',
+  IntersectKeyword                  = 'INTERSECT',
 
   ExistKeyword                      = 'EXISTS',
   DoesNotExistKeyword               = 'NOT EXISTS',
@@ -157,10 +159,6 @@ export type LogicalExpressionOperatorKind =
   | QuerySyntax.AndKeyword
   | QuerySyntax.OrKeyword;
 
-export type NodeListOperatorKind = 
-  | QuerySyntax.AndKeyword
-  | QuerySyntax.OrKeyword;
-
 export type QueryAttributeType =
   | QuerySyntax.StringKeyword
   | QuerySyntax.NumberKeyword
@@ -238,6 +236,9 @@ export const enum NodeFlags {
   None                      = 0,
   AddPercentToken           = 1 << 0,  // for LIKE and NOT LIKE
   UsePrefixOnly             = 1 << 1,  // for exists operator on jsonb
+  HasMultipleEventNames     = 1 << 2,  // For PG adapter to pick the right CTE
+  SelectFromCTE             = 1 << 3,  // ?
+  CountQuery                = 1 << 4,  // For queries when we need the row count
 }
 
 export interface ExpressionInterface extends NodeInterface {
@@ -303,9 +304,16 @@ export type ExpressionInterfaces =
   | TernaryExpressionInterface
   | LogicalExpressionInterface;
 
-// export interface ExpressionKinds = {
-  
-// }
+// export type ExpressionWithLHSInterfaces = 
+//   | QuerySyntax.UnaryExpression
+//   | QuerySyntax.BinaryExpression
+//   | QuerySyntax.TernaryExpression;
+
+export type ExpressionWithLHSInterfaces = 
+  | UnaryExpressionInterface
+  | BinaryExpressionInterface
+  | TernaryExpressionInterface;
+
 
 export type QueryConversionAllowedInputType = 
   | Record<string, string>;

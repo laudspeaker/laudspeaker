@@ -15,27 +15,49 @@ import {
   TernaryExpressionInterface,
   UnaryExpressionInterface,
   ValueNodeInterface,
+  QueryFlags,
+  ExpressionHelper,
+  ExpressionWithLHSInterfaces,
 } from "../../";
 
 export class PostgreSQLAdapter extends QueryAdapterBase {
-
   toQuery(): Query {
     throw new Error("Not implemented");
   }
 
   toSQL(input: Query) {
-    const queryData = this.initQueryData(input);
-
-    return this.generateSQL(queryData);
+    return this.generateSQL(input);
   }
 
-  private generateSQL(queryData: any): string {
-    const sql = this.process(queryData.query.expression);
+  private generateSQL(query: Query): string {
+    const queryData = this.initQueryData(query);
+
+    let flags: NodeFlags = NodeFlags.None;
+
+    if (query.flags & QueryFlags.Count) {
+      flags |= NodeFlags.CountQuery;
+    }
+
+    let sql = this.process(
+      queryData.query.expression,
+      queryData.query.context,
+      flags
+    );
+
+    if (query.flags & QueryFlags.Count) {
+      sql = `SELECT COUNT(*)
+        FROM ${sql}
+        `;
+    }
 
     return sql;
   }
 
-  private process(node: NodeInterface, flags: NodeFlags = NodeFlags.None) {
+  private process(
+    node: NodeInterface,
+    context: QueryContext,
+    flags: NodeFlags = NodeFlags.None
+  ) {
     switch(node.kind) {
       case QuerySyntax.CustomerAttributeNode:
         return this.processAttributeNode(node as CustomerAttributeNodeInterface, flags);
@@ -44,13 +66,13 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
       case QuerySyntax.ValueNode:
         return this.processValueNode(node as ValueNodeInterface, flags);
       case QuerySyntax.UnaryExpression:
-        return this.processUnaryExpression(node as UnaryExpressionInterface, flags)
+        return this.processUnaryExpression(node as UnaryExpressionInterface, context, flags);
       case QuerySyntax.BinaryExpression:
-        return this.processBinaryExpression(node as BinaryExpressionInterface, flags)
+        return this.processBinaryExpression(node as BinaryExpressionInterface, context, flags);
       case QuerySyntax.TernaryExpression:
-        return this.processTernaryExpression(node as TernaryExpressionInterface, flags)
+        return this.processTernaryExpression(node as TernaryExpressionInterface, context, flags);
       case QuerySyntax.LogicalExpression:
-        return this.processLogicalExpression(node as LogicalExpressionInterface, flags)
+        return this.processLogicalExpression(node as LogicalExpressionInterface, context, flags);
       case QuerySyntax.EmailExpression:
       case QuerySyntax.MessageExpression:
       case QuerySyntax.SMSExpression:
@@ -59,7 +81,11 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
     }
   }
 
-  private processUnaryExpression(expression: UnaryExpressionInterface, flags: NodeFlags): string {
+  private processUnaryExpression(
+    expression: UnaryExpressionInterface,
+    context: QueryContext,
+    flags: NodeFlags
+  ): string {
     let result = "";
     const leftNode = expression.left as CustomerAttributeNodeInterface;
 
@@ -67,7 +93,7 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
       expression.operator == QuerySyntax.DoesNotExistKeyword)
       flags |= NodeFlags.UsePrefixOnly;
 
-    let lhs = this.process(leftNode, flags);
+    let lhs = this.process(leftNode, context, flags);
 
     const operator = this.processOperator(expression.operator);
     switch(expression.operator) {
@@ -79,49 +105,40 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
         break;
     }
 
+    result = `SELECT id
+      FROM customer
+      WHERE ${result}
+      `;
+
     return result;
   }
 
-  private processBinaryExpression(expression: BinaryExpressionInterface, flags: NodeFlags): string {
+  private processBinaryExpression(
+    expression: BinaryExpressionInterface,
+    context: QueryContext,
+    flags: NodeFlags
+  ): string {
     let result = "";
 
-    if (expression.operator == QuerySyntax.ContainKeyword ||
-      expression.operator == QuerySyntax.DoesNotContainKeyword)
-      flags |= NodeFlags.AddPercentToken;
-
-    let lhs = this.process(expression.left, flags);
-    let rhs = this.process(expression.right, flags);
-
-    let needParensLHS = false;
-    let needParensRHS = false;
-
-    if (expression.operator == QuerySyntax.AndKeyword ||
-          expression.operator == QuerySyntax.OrKeyword) {
-      needParensLHS = true;
-      needParensRHS = true;
+    if (ExpressionHelper.isCustomerAttributeExpression(expression)) {
+      return this.processCustomerAttributeExpression(expression, context, flags);
+    } else if (ExpressionHelper.isEventExpression(expression)) {
+      return this.processEventExpression(expression, context, flags);
+    } else {
+      throw new Error("Invalid expression");
     }
 
-    if (needParensLHS)
-      lhs = `(${lhs})`;
-    if (needParensRHS)
-      rhs = `(${rhs})`;
+    // const cteSQL = 
+    //   `SELECT customer_id
+    //     FROM events
+    //     WHERE workspace_id = ?
+    //       AND event = ?
+    //       AND customer_id IS NOT NULL
+    //     GROUP BY customer_id
+    //     HAVING COUNT(id) >= ?`;
 
-    const cteName = "event_counts";
-    const variables: any[] = [];
-
-    const workspace_id = "";
-
-    const cteSQL = 
-      `SELECT customer_id
-        FROM events
-        WHERE workspace_id = ?
-          AND event = ?
-          AND customer_id IS NOT NULL
-        GROUP BY customer_id
-        HAVING COUNT(id) >= ?`;
-
-    // TODO: add date conditions
-    variables.push(workspace_id, expression.left, rhs);
+    // // TODO: add date conditions
+    // variables.push(workspace_id, expression.left, rhs);
 
     // TODO:
     // allow SQL statements[]
@@ -132,58 +149,213 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
     //   sql: cteSQL,
     //   variables: variables
     // });
-    switch (expression.operator) {
-      case QuerySyntax.HasPerformedKeyword:
-        let sql = 
-          `SELECT customer.id
-            FROM event_counts
-            INNER JOIN customer ON customer.id = event_counts.customer_id;`;
 
-        const fullSQL = `${cteSQL}
-          ${sql}`;
-
-        break;
-      case QuerySyntax.HasNotPerformedKeyword:
-        break;
-      default:
-        break;
-    }
-
-    const operator = this.processOperator(expression.operator);
-
-    result = `${lhs} ${operator} ${rhs}`;
 
     return result;
   }
 
-  private processTernaryExpression(expression: TernaryExpressionInterface, flags: NodeFlags): string {
+  private processTernaryExpression(
+    expression: TernaryExpressionInterface,
+    context: QueryContext,
+    flags: NodeFlags
+  ): string {
     throw new Error("Not implemented");
   }
 
-  private processLogicalExpression(expression: LogicalExpressionInterface, flags: NodeFlags): string {
+  private processLogicalExpression(
+    expression: LogicalExpressionInterface,
+    context: QueryContext,
+    flags: NodeFlags
+  ): string {
     let result = "";
     let elementSQL = "";
+    let cteSQL = null;
+
+    const aggregatedData = expression.aggregatedData;
+
+    // we need to use multi-event CTE
+    if (aggregatedData.distinctEvents.size > 0) {
+      // flags |= NodeFlags.HasMultipleEventNames;
+      // flags |= NodeFlags.SelectFromCTE;
+    }
 
     const expressions = expression.expressions;
 
     const needsParens = expressions.length > 1;
-    const operator = expression.operator.toString();
+    // const operator = expression.operator.toString();
+
+    const operator = expression.operator == QuerySyntax.AndKeyword ?
+                QuerySyntax.IntersectKeyword :
+                QuerySyntax.UnionKeyword;
 
     for(let i = 0; i < expressions.length; i++) {
-      elementSQL = this.process(expressions[i]);
+      elementSQL = this.process(expressions[i], context, flags);
 
       if (needsParens)
         elementSQL = `(${elementSQL})`;
 
       if( i > 0 )
-        result += ` ${operator} `;
+        result += ` ${operator.toString()} `;
 
       result += elementSQL;
+    }
+
+    // const cteDetails = this.getEventCTESQL(expression, context, flags);
+
+    // if (flags & NodeFlags.SelectFromCTE) {
+    //   result = `
+    //     ${cteDetails.sql}
+    //     ${result}`;
+    // }
+
+    return result;
+  }
+
+  private processCustomerAttributeExpression(
+    expression: ExpressionWithLHSInterfaces,
+    context: QueryContext,
+    flags: NodeFlags
+  ): string {
+    if (expression.operator == QuerySyntax.ContainKeyword ||
+      expression.operator == QuerySyntax.DoesNotContainKeyword)
+      flags |= NodeFlags.AddPercentToken;
+
+    let sql = "";
+
+    switch (expression.kind) {
+      case QuerySyntax.UnaryExpression:
+        sql = this.processUnaryExpression(expression, context, flags);
+        break;
+      case QuerySyntax.BinaryExpression:
+        let lhs = this.process(expression.left, context, flags);
+        let rhs = this.process( (expression as BinaryExpressionInterface).right, context, flags);
+
+        let needParensLHS = false;
+        let needParensRHS = false;
+
+        if (expression.operator == QuerySyntax.AndKeyword ||
+              expression.operator == QuerySyntax.OrKeyword) {
+          needParensLHS = true;
+          needParensRHS = true;
+        }
+
+        if (needParensLHS)
+          lhs = `(${lhs})`;
+        if (needParensRHS)
+          rhs = `(${rhs})`;
+
+        const operator = this.processOperator(expression.operator);
+
+        sql = `${lhs} ${operator} ${rhs}`;
+        break;
+      default:
+        throw new Error("Invalid Expression");
+    }
+
+    const result = `
+    SELECT id
+    FROM customer
+    WHERE ${sql}
+    `;
+
+    return result;
+  }
+
+  private processEventExpression(
+    expression: ExpressionWithLHSInterfaces,
+    context: QueryContext,
+    flags: NodeFlags
+  ): string {
+    let result = "";
+    const cteName = "event_counts";
+
+    let lhs, rhs;
+
+    switch (expression.operator) {
+      case QuerySyntax.HasPerformedKeyword:
+        let lhs = this.process(expression.left, context, flags);
+        let rhs = this.process(expression.right, context, flags);
+
+        result = `
+          WITH ${cteName} AS (
+            SELECT customer_id
+            FROM events
+            WHERE
+              workspace_id = '${context.workspace_id}' AND
+              event = '${lhs}' AND
+              customer_id IS NOT NULL
+            GROUP BY customer_id
+            HAVING COUNT(*) >= ${rhs}
+          )
+          select * from event_counts
+          `;
+        break;
+      case QuerySyntax.HasNotPerformedKeyword:
+        break;
+      default:
+        throw new Error("Invalid expression");
     }
 
     return result;
   }
  
+  private getEventCTESQL(
+    expression: LogicalExpressionInterface,
+    context: QueryContext,
+    flags: NodeFlags
+  ) {
+    const distinctEventCount = expression.aggregatedData.distinctEvents.size;
+    const totalEventFiltersCount = expression.aggregatedData.eventFilters.length;
+
+    const cteName = "event_counts";
+
+    let result = null;
+
+    if (distinctEventCount == 0 )
+      return result;
+
+    // same event one count
+    // same event different counts
+    // different events
+    if (distinctEventCount == 1 && totalEventFiltersCount == 1) {
+      const firstEventFilter = expression.aggregatedData.eventFilters[0];
+
+      result = `
+        WITH ${cteName} AS (
+          SELECT customer_id
+          FROM events
+          WHERE
+            workspace_id = '${context.workspace_id}' AND
+            event = '${firstEventFilter.event}' AND
+            customer_id IS NOT NULL
+          GROUP BY customer_id
+          HAVING COUNT(id) >= ${firstEventFilter.value}
+        )`;
+    } else if (distinctEventCount > 1 && totalEventFiltersCount > 1) {
+
+      const events = Array
+        .from(expression.aggregatedData.distinctEvents)
+        .map(event => `'${event}'`)
+        .join(',');
+
+      result = `
+        WITH ${cteName} AS (
+          SELECT customer_id, event, count(id) AS count
+          FROM events
+          WHERE
+            workspace_id = '${context.workspace_id}' AND
+            event IN (${events}) AND
+            customer_id IS NOT NULL
+          GROUP BY customer_id, event
+        )`;
+    }
+
+    return {
+      sql: result,
+      name: cteName,
+    }
+  }
+
   private processOperator(operator: OperatorKind): string {
     switch(operator) {
       case QuerySyntax.ContainKeyword:
@@ -278,7 +450,9 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
         break;
       case QuerySyntax.BooleanKeyword:
         result = value.toUpperCase();
+        break;
       default:
+        result = value;
         break;
     }
 

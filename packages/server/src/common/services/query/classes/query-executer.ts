@@ -5,6 +5,7 @@ import {
   // QueryPreparerFlags,
   QuerySQL,
   QueryResult,
+  QueryFlags,
 } from "../";
 import { DataSource, Repository } from 'typeorm';
 
@@ -32,6 +33,10 @@ export class QueryExecuter implements QueryExecuterInterface {
       dataSource); 
 
     const result = resultParser.parse(rawResult);
+
+    if (query.flags & QueryFlags.Count) {
+      return parseInt(result[0]?.count ?? '0');
+    }
 
     return result;
   }
