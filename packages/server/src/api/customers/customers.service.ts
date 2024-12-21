@@ -556,7 +556,10 @@ export class CustomersService {
       if (!customer) {
         throw new Error(`Customer with ID ${customerId} not found`);
       }
-      if (typeof customer[fieldName] === 'object' && customer[fieldName] !== null) {
+      if (Array.isArray(customer[fieldName])) {
+        (customer[fieldName] as any) = [ ...customer[fieldName], ...newValue ];
+      }
+      else if (typeof customer[fieldName] === 'object' && customer[fieldName] !== null) {
         (customer[fieldName] as any) = { ...customer[fieldName], ...newValue };
       } else {
         (customer as any)[fieldName] = newValue;
@@ -574,7 +577,10 @@ export class CustomersService {
       if (!customer) {
         throw new Error(`Customer with ID ${customerId} not found`);
       }
-      if (typeof customer[fieldName] === 'object' && customer[fieldName] !== null) {
+      if (Array.isArray(customer[fieldName])) {
+        (customer[fieldName] as any) = [ ...customer[fieldName], ...newValue ];
+      }
+      else if (typeof customer[fieldName] === 'object' && customer[fieldName] !== null) {
         (customer[fieldName] as any) = { ...customer[fieldName], ...newValue };
       } else {
         (customer as any)[fieldName] = newValue;
