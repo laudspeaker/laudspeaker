@@ -44,9 +44,9 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
       flags
     );
 
-    if (query.flags & QueryFlags.Count) {
+    if (sql && query.flags & QueryFlags.Count) {
       sql = `SELECT COUNT(*)
-        FROM ${sql}
+        FROM (${sql})
         `;
     }
 
