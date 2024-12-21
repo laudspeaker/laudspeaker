@@ -977,14 +977,19 @@ export class EventsService {
 
     // Step 1: Check if the customer's _id is not equal to the given correlation value
     if (customer.id.toString() !== correlationValue) {
+      const newValue = (typeof correlationValue) === 'string'
+            ? [correlationValue, ...customer.other_ids]
+            : [...correlationValue, ...customer.other_ids];
       // Step 2: Update the customer's other_ids array with the correlation value if it doesn't already have it
       updateResult = await this.customersService.updateCustomer(account, customer.id, 'other_ids',
-        (typeof correlationValue) === 'string' ? [correlationValue, ...customer.other_ids] : [...correlationValue, ...customer.other_ids],
+        newValue,
         session);
     }
 
+    const customerCorrelationValue = Array.isArray(correlationValue) ? correlationValue[0] : correlationValue;
+
     // Additional Step: Retrieve the potential duplicate customer to compare deviceTokenSetAt for both device types
-    const duplicateCustomer = await this.customersService.findOneByUUID(account, correlationValue[0], session);
+    const duplicateCustomer = await this.customersService.findOneByUUID(account, customerCorrelationValue, session);
 
     // Determine which deviceTokenSetAt fields to compare
     const deviceTypes = ['ios', 'android'];
@@ -1021,7 +1026,7 @@ export class EventsService {
       await this.customersService.deleteByUUID(account, correlationValue);
     }
     else {
-      for (const id in correlationValue) {
+      for (const id of correlationValue) {
         await this.customersService.deleteByUUID(account, id);
       }
     }
