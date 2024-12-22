@@ -1185,10 +1185,10 @@ export class EventsService {
     });
 
     await this.customersService.updateCustomer(auth.account, customer.id, 'other_ids',
-      {
+      [
         ...otherIdsUpdates,
         ...customer.other_ids
-      },
+      ],
       session);
 
     await this.customersService.updateCustomer(auth.account, customer.id, 'user_attributes',

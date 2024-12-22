@@ -423,6 +423,18 @@ const Personv2 = () => {
     personInfoToShow?.system_attributes || {}
   );
 
+  if (
+    Array.isArray(personInfoToShow?.other_ids) &&
+    personInfoToShow?.other_ids.length > 0 &&
+    !system_attributes.includes("other_ids")
+  ) {
+    system_attributes.push("other_ids");
+
+    personInfoToShow.system_attributes ||= {};
+
+    personInfoToShow.system_attributes.other_ids = personInfoToShow?.other_ids;
+  }
+
   if (isLoading) return <Progress />;
 
   return (

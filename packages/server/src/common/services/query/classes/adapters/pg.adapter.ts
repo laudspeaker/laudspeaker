@@ -287,7 +287,7 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
             GROUP BY customer_id
             HAVING COUNT(*) >= ${rhs}
           )
-          select * from event_counts
+          select customer_id AS id FROM event_counts
           `;
         break;
       case QuerySyntax.HasNotPerformedKeyword:

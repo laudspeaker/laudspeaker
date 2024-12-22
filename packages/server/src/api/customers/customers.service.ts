@@ -11,7 +11,7 @@ import { Customer } from './entities/customer.entity';
 import mockData from '../../fixtures/mockData';
 import { Account } from '../accounts/entities/accounts.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, In, QueryRunner, Repository, Brackets } from 'typeorm';
+import { DataSource, EntityManager, In, QueryRunner, Repository, Brackets, ArrayContains } from 'typeorm';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { attributeConditions } from '../../fixtures/attributeConditions';
 import { isEmail } from 'class-validator';
@@ -377,15 +377,17 @@ export class CustomersService {
     return customer;
   }
 
-
   async findOneByUUID(account: Account, uuid: string, session: string) {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const customer = await this.customersRepository.findOne({
-      where: {
-        uuid: uuid,
+      where: [{
         workspace: { id: workspace.id },
-      },
+        uuid: uuid,
+      }, {
+        workspace: { id: workspace.id },
+        other_ids: ArrayContains([uuid]),
+      }],
       relations: ['workspace']
     });
     if (!customer) {
@@ -5139,13 +5141,11 @@ export class CustomersService {
 
   async deleteByUUID(account: Account, uuid: string) {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-    const customer = await this.customersRepository.findOne({
-      where: {
-        workspace: { id: workspace.id },
-        uuid
-      }
+
+    await this.customersRepository.delete({
+      workspace: { id: workspace.id },
+      uuid
     });
-    await this.customersRepository.delete({ id: customer.id });
   }
 
   async get(workspaceID: string, session: string, skip?: number, limit?: number, queryRunner?: QueryRunner) {
