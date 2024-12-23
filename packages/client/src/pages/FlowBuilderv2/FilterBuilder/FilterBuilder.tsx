@@ -26,6 +26,7 @@ import {
   StatementValueType,
   valueTypeToComparisonTypesMap,
   valueTypeToAttributeType,
+  attributeTypeToStatementValueTypeMap,
 } from "reducers/flow-builder.reducer";
 import {
   addSegmentQueryError as addSegmentSettingQueryError,
@@ -302,8 +303,9 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
 
   const [possibleKeys, setPossibleKeys] = useState<
     {
-      key: string;
+      name: string;
       type: StatementValueType;
+      attribute_type?: AttributeType;
       isArray?: boolean;
     }[]
   >([]);
@@ -356,7 +358,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
 
     const { data } = await ApiService.get<
       {
-        key: string;
+        name: string;
         type: StatementValueType;
         isArray: boolean;
       }[]
@@ -931,6 +933,29 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     return data;
   };
 
+  const findAttributeTypeByName = (query: string) => {
+    if (!query || query === "") return undefined;
+
+    const attribute = possibleKeys.find((attr) => attr.name === query);
+
+    return attribute;
+  };
+
+  const findStatementValueType = (
+    query: string,
+    defaultType: StatementValueType = StatementValueType.STRING
+  ): StatementValueType => {
+    const attribute = findAttributeTypeByName(query);
+    const attributeType = attribute?.attribute_type;
+    const attributeTypeName = attributeType?.name;
+
+    if (!attribute || !attributeType || !attributeTypeName) return defaultType;
+
+    const result = attributeTypeToStatementValueTypeMap[attributeTypeName];
+
+    return result;
+  };
+
   return (
     <div className="flex w-full flex-col gap-[10px] pr-[10px]">
       <div className="flex relative w-full gap-[10px] items-center">
@@ -1055,17 +1080,18 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                         value={statement.key}
                         includedItems={{
                           type: "getter",
-                          items: possibleKeys.map((item) => item.key),
+                          items: possibleKeys.map((item) => item.name),
                         }}
                         retrieveLabel={(item) => item}
                         onQueryChange={(q) => {
-                          const attribute = possibleKeys.find(
-                            (attr) => attr.key === q
-                          );
+                          // const attribute = possibleKeys.find(
+                          //   (attr) => attr.name === q
+                          // );
+                          // let valueType = attribute?.isArray
+                          //   ? StatementValueType.ARRAY
+                          //   : attribute?.type || undefined;
 
-                          const valueType = attribute?.isArray
-                            ? StatementValueType.ARRAY
-                            : attribute?.type || undefined;
+                          const valueType = findStatementValueType(q);
 
                           handleChangeStatement(i, {
                             ...statement,
@@ -1078,13 +1104,14 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           setKeysQuery(q);
                         }}
                         onSelect={(value) => {
-                          const attribute = possibleKeys.find(
-                            (attr) => attr.key === value
-                          );
+                          // const attribute = possibleKeys.find(
+                          //   (attr) => attr.name === value
+                          // );
 
-                          const valueType = attribute?.isArray
-                            ? StatementValueType.ARRAY
-                            : attribute?.type || undefined;
+                          // const valueType = attribute?.isArray
+                          //   ? StatementValueType.ARRAY
+                          //   : attribute?.type || undefined;
+                          const valueType = findStatementValueType(value);
 
                           handleChangeStatement(i, {
                             ...statement,
@@ -1623,7 +1650,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                                             includedItems={{
                                               type: "getter",
                                               items: possibleKeys.map(
-                                                (item) => item.key
+                                                (item) => item.name
                                               ),
                                             }}
                                             retrieveLabel={(item) => item}

@@ -237,6 +237,20 @@ export function valueTypeToAttributeType(
   return attribute!;
 }
 
+export const attributeTypeToStatementValueTypeMap: Record<
+  string,
+  StatementValueType
+> = {
+  String: StatementValueType.STRING,
+  Number: StatementValueType.NUMBER,
+  Boolean: StatementValueType.BOOLEAN,
+  Email: StatementValueType.EMAIL,
+  Date: StatementValueType.DATE,
+  DateTime: StatementValueType.DATE_TIME,
+  Array: StatementValueType.ARRAY,
+  Object: StatementValueType.OBJECT,
+};
+
 export const valueTypeToComparisonTypesMap: Record<
   StatementValueType,
   ComparisonType[]
