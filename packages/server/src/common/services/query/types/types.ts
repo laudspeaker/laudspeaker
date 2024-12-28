@@ -105,6 +105,34 @@ export enum QuerySyntax {
   PostgreSQL                        = 'PostgreSQL',
 }
 
+export const enum NodeFlags {
+  None                      = 0,
+  AddPercentToken           = 1 << 0,  // for LIKE and NOT LIKE
+  UsePrefixOnly             = 1 << 1,  // for exists operator on jsonb
+  HasMultipleEventNames     = 1 << 2,  // For PG adapter to pick the right CTE
+  SelectFromCTE             = 1 << 3,  // ?
+  CountQuery                = 1 << 4,  // For queries when we need the row count
+}
+
+export const enum QueryFlags {
+  None                      = 0,
+
+  // common
+  InsertQuery               = 1 << 1,
+  FindQuery                 = 1 << 2,
+
+  // query methods
+  FindOne                   = 1 << 10,
+  FindAll                   = 1 << 11,
+  Count                     = 1 << 13,
+
+  // event CTE is required
+  EventCTE                  = 1 << 20,
+
+  // INSERT
+  InsertJourneyLocations    = 1 << 30,
+}
+
 export type OperatorKind =
   | QuerySyntax.AndKeyword
   | QuerySyntax.OrKeyword
@@ -232,14 +260,7 @@ export interface NodeFactoryInterface {
   updateNodeAggregatedData(node: NodeInterface, other: NodeInterface);
 }
 
-export const enum NodeFlags {
-  None                      = 0,
-  AddPercentToken           = 1 << 0,  // for LIKE and NOT LIKE
-  UsePrefixOnly             = 1 << 1,  // for exists operator on jsonb
-  HasMultipleEventNames     = 1 << 2,  // For PG adapter to pick the right CTE
-  SelectFromCTE             = 1 << 3,  // ?
-  CountQuery                = 1 << 4,  // For queries when we need the row count
-}
+
 
 export interface ExpressionInterface extends NodeInterface {
   kind: ExpressionKind;
@@ -445,45 +466,12 @@ export interface FullQueryInterface extends NodeInterface {
   query: QueryInterface;
 }
 
-export const enum QueryFlags {
-  None                      = 0,
 
-  // query methods
-  FindOne                   = 1 << 0,
-  FindAll                   = 1 << 1,
-  Count                     = 1 << 2,
-
-  // event CTE is required
-  EventCTE                  = 1 << 3,
-}
 
 export interface QueryResolverResult {
   customers: {},
   events: {},
-
-
 }
-
-// export interface CustomerFilterCriteria {
-
-//   userAttributes: string[];
-
-// }
-
-// export interface QueryParsedExpression {
-//   customerCriteria: CustomerFilterCriteria;
-//   events: {
-//     distinctNames: Set<string>,
-//     eventSearchCriteria: {
-//       event: string,
-//       count: number;
-//       // dateBegin:
-//       // dateEnd:
-//     }[];
-//   }
-//   customerFilters: CustomerFilter[],
-//   eventFilters: eventFilter[],
-// }
 
 export enum CustomerAttributeClassification {
   USER,

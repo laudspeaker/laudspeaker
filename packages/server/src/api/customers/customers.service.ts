@@ -61,6 +61,7 @@ import { AttributeTypeName } from './entities/attribute-type.entity';
 import { CustomerKeysService } from './customer-keys.service';
 import { CustomerKey } from './entities/customer-keys.entity';
 import { CacheConstants } from '@/common/services/cache.constants';
+import { Query } from '@/common/services/query';
 
 export type Correlation = {
   cust: Customer;
@@ -728,6 +729,11 @@ export class CustomersService {
     return;
   }
 
+  async findAllInWorkspace(workspaceId: string, session: string) {
+    return this.customersRepository.find({
+      where: { workspace: { id: workspaceId } }
+    });
+  }
   /**
    * Finds all customers that match conditions.
    *
@@ -750,7 +756,7 @@ export class CustomersService {
     skip?: number,
     limit?: number,
     collectionName?: string
-  ): Promise<Customer[]> {
+  ): Promise<Customer[] | any[]> {
     let query: any;
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
     let customers: any[];
@@ -762,15 +768,14 @@ export class CustomersService {
       !criteria.query.statements ||
       !criteria.query.statements.length
     ) {
-      query = {
-        workspaceId: workspace.id,
-      };
-      if (limit) query.limit(limit);
-      if (skip) query.skip(skip);
-      customers = await query.exec();
+      return this.findAllInWorkspace(workspace.id, session);
     } else {
+      // enfore workspace_id
+      const query: Query = Query.fromJSON(criteria);
+      const customers = query.execute(this.dataSource);
+
+      return customers;
     }
-    return customers;
   }
 
   /**
@@ -5155,5 +5160,9 @@ export class CustomersService {
       .skip(skip)
       .take(limit) // `take` is the equivalent of `limit`
       .getMany();
+  }
+
+  async getCustomersByIds(account: Account, customerIds: BigInt[]) {
+    return this.customersRepository.find({ where: { id: In(customerIds) } })
   }
 }

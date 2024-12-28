@@ -1243,22 +1243,22 @@ export class CronService {
                 accountWithConnections,
                 delayedJourneys[journeysIndex],
                 delayedJourneys[journeysIndex].inclusionCriteria,
-                delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
-                  ?.enabled &&
-                  count >
-                  parseInt(
-                    delayedJourneys[journeysIndex]?.journeySettings
-                      ?.maxEntries?.maxEntries
-                  )
-                  ? parseInt(
-                    delayedJourneys[journeysIndex]?.journeySettings
-                      ?.maxEntries?.maxEntries
-                  )
-                  : count,
-                queryRunner,
-                client,
+                // delayedJourneys[journeysIndex]?.journeySettings?.maxEntries
+                //   ?.enabled &&
+                //   count >
+                //   parseInt(
+                //     delayedJourneys[journeysIndex]?.journeySettings
+                //       ?.maxEntries?.maxEntries
+                //   )
+                //   ? parseInt(
+                //     delayedJourneys[journeysIndex]?.journeySettings
+                //       ?.maxEntries?.maxEntries
+                //   )
+                //   : count,
+                // queryRunner,
+                // client,
                 session,
-                collectionName
+                // collectionName
               );
               // drop the collections after adding customer segments
               await this.deleteCollectionIfNeeded(collectionName);

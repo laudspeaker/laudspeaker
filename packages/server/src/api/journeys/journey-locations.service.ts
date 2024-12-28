@@ -19,6 +19,7 @@ import { randomUUID } from 'crypto';
 import { Readable } from 'node:stream';
 import * as copyFrom from 'pg-copy-streams';
 import { Customer } from '../customers/entities/customer.entity';
+import { Query } from '@/common/services/query';
 
 const LOCATION_LOCK_TIMEOUT_MS = +process.env.LOCATION_LOCK_TIMEOUT_MS;
 
@@ -193,78 +194,85 @@ export class JourneyLocationsService {
    *
    * @param {Account} account Associated Account
    * @param {Journey} journey Associated Journey
+   * @param {Query} query to fetch customers
    * @param {Step} step Step customer is located in
-   * @param {CustomerDocument} customer Associated Customer
    * @param {string} session HTTP session token
    * @param {QueryRunner} [queryRunner]  Postgres Transaction
    * @returns
    */
   async createAndLockBulk(
+    account: Account,
     journeyId: string,
-    customers: string[],
+    queryJSON: any,
     step: Step,
     session: string,
-    account: Account,
-    queryRunner: QueryRunner,
-    client: any
   ): Promise<void> {
-    if (!customers.length) return;
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const moveStarted = Date.now(),
       stepEntry = Date.now(),
       stepEntryAt = new Date(Date.now()),
       journeyEntry = Date.now(),
       journeyEntryAt = new Date(Date.now());
 
+    const query: Query = Query.fromJSON(queryJSON);
+    query.setContext({
+      "journey_id": journeyId ,
+      "step_id": step.id,
+      "workspace_id": workspace.id,
+    });
+
+    return query.createJourneyLocationsFromQuery(this.dataSource);
+
     // Create a readable stream from your customers array
-    const readableStream = new Readable({
-      read() {
-        customers.forEach((customerId) => {
-          this.push(
-            `${journeyId}\t${customerId}\t${step.id}\t${workspace.id
-            }\t${moveStarted}\t${stepEntry}\t${journeyEntry}\t${stepEntryAt.toISOString()}\t${journeyEntryAt.toISOString()}\n`
-          );
-        });
-        this.push(null); // No more data
-      },
-    });
+    // const readableStream = new Readable({
+    //   read() {
+    //     customers.forEach((customerId) => {
+    //       this.push(
+    //         `${journeyId}\t${customerId}\t${step.id}\t${workspace.id
+    //         }\t${moveStarted}\t${stepEntry}\t${journeyEntry}\t${stepEntryAt.toISOString()}\t${journeyEntryAt.toISOString()}\n`
+    //       );
+    //     });
+    //     this.push(null); // No more data
+    //   },
+    // });
 
-    const stream = client.query(
-      copyFrom.from(
-        `COPY journey_location ("journeyId", "customer", "stepId", "workspaceId", "moveStarted", "stepEntry", "journeyEntry", "stepEntryAt", "journeyEntryAt") FROM STDIN WITH (FORMAT text)`
-      )
-    );
+    // const stream = client.query(
+    //   copyFrom.from(
+    //     `COPY journey_location ("journeyId", "customer", "stepId", "workspaceId", "moveStarted", "stepEntry", "journeyEntry", "stepEntryAt", "journeyEntryAt") FROM STDIN WITH (FORMAT text)`
+    //   )
+    // );
 
-    const self = this;
+    // const self = this;
 
-    const promise = new Promise<void>(function (resolve, reject) {
-      const successHandler = () => {
-        self.debug(
-          `Finished creating journey location rows for ${journeyId}`,
-          self.createAndLockBulk.name,
-          session,
-          account.email
-        );
-        resolve();
-      };
+    // const promise = new Promise<void>(function (resolve, reject) {
+    //   const successHandler = () => {
+    //     self.debug(
+    //       `Finished creating journey location rows for ${journeyId}`,
+    //       self.createAndLockBulk.name,
+    //       session,
+    //       account.email
+    //     );
+    //     resolve();
+    //   };
 
-      const errorHandler = (error) => {
-        console.log("errorHandler");
-        self.error(error, self.createAndLockBulk.name, session, account.email);
-        reject(error);
-      };
+    //   const errorHandler = (error) => {
+    //     console.log("errorHandler");
+    //     self.error(error, self.createAndLockBulk.name, session, account.email);
+    //     reject(error);
+    //   };
 
-      // Error handling
-      readableStream.on('error', errorHandler);
-      stream.on('error', errorHandler);
+    //   // Error handling
+    //   readableStream.on('error', errorHandler);
+    //   stream.on('error', errorHandler);
 
-      stream.on('finish', successHandler);
+    //   stream.on('finish', successHandler);
 
-      // Pipe the readable stream to the COPY command
-      readableStream.pipe(stream);
-    });
+    //   // Pipe the readable stream to the COPY command
+    //   readableStream.pipe(stream);
+    // });
 
-    return promise;
+    // return promise;
   }
 
   /**
@@ -402,10 +410,10 @@ export class JourneyLocationsService {
       return await queryRunner.manager
         .createQueryBuilder(JourneyLocation, 'journeyLocation')
         .leftJoinAndSelect('journeyLocation.step', 'step')
-        .where('journeyLocation.journeyId = :journeyId', {
+        .where('journeyLocation.journey_id = :journeyId', {
           journeyId: journey.id,
         })
-        .andWhere('journeyLocation.customer IN (:...customerIds)', {
+        .andWhere('journeyLocation.customer_id IN (:...customerIds)', {
           customerIds: customers,
         })
         .getMany();
@@ -413,10 +421,10 @@ export class JourneyLocationsService {
       return await this.journeyLocationsRepository
         .createQueryBuilder('journeyLocation')
         .leftJoinAndSelect('journeyLocation.step', 'step')
-        .where('journeyLocation.journeyId = :journeyId', {
+        .where('journeyLocation.journey_id = :journeyId', {
           journeyId: journey.id,
         })
-        .andWhere('journeyLocation.customer IN (:...customerIds)', {
+        .andWhere('journeyLocation.customer_id IN (:...customerIds)', {
           customerIds: customers,
         })
         .getMany();
@@ -931,5 +939,33 @@ export class JourneyLocationsService {
     }
 
     return ret;
+  }
+
+  async getCustomerIds(
+    workspaceId: string,
+    journeyId: string,
+    limit?: number,
+    offset?: number
+  ) {
+    const result = [];
+
+    let query = this.journeyLocationsRepository
+      .createQueryBuilder('journeyLocation')
+      .where({
+        workspace: { id: workspaceId },
+        journey: journeyId,
+      })
+      .select("customer_id")
+      .orderBy("customer_id");
+
+    if (limit) query = query.limit(limit);
+    if (offset) query = query.offset(offset);
+
+    const strIds = await query.getRawMany();
+
+    for(const id of strIds)
+      result.push(id.customer_id);
+
+    return result;
   }
 }

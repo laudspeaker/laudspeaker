@@ -116,28 +116,25 @@ export class EnrollmentProcessor extends ProcessorBase {
   ): Promise<any> {
     let err: any;
     let triggerStartTasks: {
-      collectionName: string;
       jobData: any;
     };
-    let collectionName: string;
-    let count: number;
 
-    try {
-      ({ collectionName, count } = await this.customersService.getAudienceSize(
-        job.data.account,
-        job.data.journey.inclusionCriteria,
-        job.data.session,
-      ));
-    } catch (error) {
-      this.error(
-        error,
-        this.process.name,
-        job.data.session,
-        job.data.account.email
-      );
+    // try {
+    //   ({ collectionName, count } = await this.customersService.getAudienceSize(
+    //     job.data.account,
+    //     job.data.journey.inclusionCriteria,
+    //     job.data.session,
+    //   ));
+    // } catch (error) {
+    //   this.error(
+    //     error,
+    //     this.process.name,
+    //     job.data.session,
+    //     job.data.account.email
+    //   );
 
-      throw error;
-    }
+    //   throw error;
+    // }
     const queryRunner = await this.dataSource.createQueryRunner();
     const client = await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -146,16 +143,9 @@ export class EnrollmentProcessor extends ProcessorBase {
         job.data.account,
         job.data.journey,
         job.data.journey.inclusionCriteria,
-        job.data.journey?.journeySettings?.maxEntries?.enabled &&
-          count >
-            parseInt(job.data.journey?.journeySettings?.maxEntries?.maxEntries)
-          ? parseInt(job.data.journey?.journeySettings?.maxEntries?.maxEntries)
-          : count,
-        queryRunner,
-        client,
         job.data.session,
-        collectionName
       );
+
       await queryRunner.manager.save(Journey, {
         ...job.data.journey,
         isEnrolling: false,

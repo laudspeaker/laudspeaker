@@ -48,6 +48,23 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
       sql = `SELECT COUNT(*)
         FROM (${sql})
         `;
+    } else if (sql && query.flags & QueryFlags.InsertJourneyLocations) {
+      sql = `
+        INSERT INTO journey_location
+              ("journey_id", "customer_id", "step_id", "workspace_id","moveStarted",
+                "stepEntry", "journeyEntry", "stepEntryAt", "journeyEntryAt")
+          SELECT
+            '${query.getContextValue('journey_id')}' AS "journey_id",
+            id as "customer_id",
+            '${query.getContextValue('step_id')}' AS "step_id",
+            '${query.getContextValue('workspace_id')}' AS "workspace_id",
+            cast(extract(epoch from NOW()::date) as bigint) AS "moveStarted",
+            cast(extract(epoch from NOW()::date) as bigint) AS "stepEntry",
+            cast(extract(epoch from NOW()::date) as bigint) AS "journeyEntry",
+            NOW() AS "stepEntryAt",
+            NOW() AS "journeyEntryAt"
+          FROM (${sql})
+        `;
     }
 
     return sql;
@@ -182,7 +199,6 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
     const expressions = expression.expressions;
 
     const needsParens = expressions.length > 1;
-    // const operator = expression.operator.toString();
 
     const operator = expression.operator == QuerySyntax.AndKeyword ?
                 QuerySyntax.IntersectKeyword :
@@ -199,14 +215,6 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
 
       result += elementSQL;
     }
-
-    // const cteDetails = this.getEventCTESQL(expression, context, flags);
-
-    // if (flags & NodeFlags.SelectFromCTE) {
-    //   result = `
-    //     ${cteDetails.sql}
-    //     ${result}`;
-    // }
 
     return result;
   }

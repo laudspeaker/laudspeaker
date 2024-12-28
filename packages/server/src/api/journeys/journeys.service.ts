@@ -741,8 +741,7 @@ export class JourneysService {
     const startStep = await this.stepsService.getStartStep(
       account,
       journey,
-      session,
-      queryRunner
+      session
     );
 
     // Construct a new journey object with an empty visualLayout, inclusionCriteria
@@ -793,14 +792,15 @@ export class JourneysService {
         step: startStep,
         location: locations.find((location: JourneyLocation) => {
           return (
-            location.customer.id.toString() === (customer.id ?? customer.id.toString()) &&
+            location.customer.toString() === (customer.id ?? customer.id.toString()) &&
             location.journey === journey.id
           );
         }),
         session: session,
-        customer, //customer.id ?? customer._id.toString(),
+        customer,
         stepDepth: 1,
       };
+
       jobsData.push(jobData);
     }
     return jobsData;

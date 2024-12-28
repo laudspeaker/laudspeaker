@@ -28,15 +28,11 @@ export class QueryExecuter implements QueryExecuterInterface {
   ) {
     const resultParser = new QueryResultParser();
 
-    const rawResult = await this.executeQueryRaw(
-      query.toSQL(),
-      dataSource); 
+    const querySQL = query.toSQL();
+
+    const rawResult = await this.executeQueryRaw(querySQL, dataSource); 
 
     const result = resultParser.parse(rawResult);
-
-    if (query.flags & QueryFlags.Count) {
-      return parseInt(result[0]?.count ?? '0');
-    }
 
     return result;
   }
@@ -48,7 +44,7 @@ export class QueryExecuter implements QueryExecuterInterface {
     const queryRunner = dataSource.createQueryRunner();
     await queryRunner.connect();
 
-    console.log(`FULLSQL: ${queryStr}`);
+    console.log(`Executing SQL: ${queryStr}`);
 
     const result = await queryRunner.manager.query(queryStr);
 
@@ -57,4 +53,3 @@ export class QueryExecuter implements QueryExecuterInterface {
     return result;
   }
 }
-

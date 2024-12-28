@@ -90,7 +90,6 @@ export class QueryConverter implements QueryConverterInterface {
   }
 
   private convertToQuery(input: QueryAdapterSupportedType, format: QueryFormat): Query {
-
     if (format == QuerySyntax.Query)
       return input as Query;
 

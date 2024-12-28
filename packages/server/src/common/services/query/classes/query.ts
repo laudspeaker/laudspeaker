@@ -72,6 +72,7 @@ export class Query implements QueryInterface {
     expressions.forEach((expression) => this.add(expression));
   }
 
+
   getRootExpression(): LogicalExpressionInterface {
     return this.expression;
   }
@@ -84,29 +85,48 @@ export class Query implements QueryInterface {
     return this.getRootExpression().operator;
   }
 
+  getContextValue(str: string) {
+    return this.context[str];
+  }
+
   isValid(): boolean {
     return QueryValidator.validate(this);
   }
 
   // Query Execution
   async findOne(dataSource) {
-    this.setFlag(QueryFlags.FindOne);
+    this.setFindFlags([
+      QueryFlags.FindOne,
+    ]);
 
     return await this.execute(dataSource);
   }
 
   async findAll(dataSource) {
-    this.setFlag(QueryFlags.FindAll);
+    this.setFindFlags([
+      QueryFlags.FindAll,
+    ]);
 
     return await this.execute(dataSource);
   }
 
-  // TODO: could be confused with statements.count
+  // TODO: could be confused with statements.count or getRowCount()
   async count(dataSource) {
-    this.setFlag(QueryFlags.Count);
+    this.setFindFlags([QueryFlags.Count]);
 
     return await this.execute(dataSource);
   }
+
+
+  // methods to insert the query into a specific table
+  async createJourneyLocationsFromQuery(dataSource) {
+    this.setInsertFlags([
+      QueryFlags.InsertJourneyLocations,
+    ]);
+
+    await this.execute(dataSource);
+  }
+
 
   async execute(dataSource) {
     const executer = new QueryExecuter();
@@ -114,33 +134,38 @@ export class Query implements QueryInterface {
     return executer.execute(this, dataSource);
   }
 
+
   private setOperator(operator: LogicalExpressionOperatorKind) {
     this.nodeFactory.updateExpressionOperator(this.expression, operator);
   }
 
-  private setFlag(flag: QueryFlags) {
-    this.flags |= flag;
+  private setInsertFlags(flags: QueryFlags[]) {
+    // common insert flags
+    const insertFlags: QueryFlags[] = [
+      QueryFlags.InsertQuery
+    ];
+
+    this.setFlags([
+      ...insertFlags,
+      ...flags,
+    ]);
   }
 
-  // // query.count(*)
-  // // query.count(DISTINCT(id))  
-  // async count(...fields: string[]) {
-  // }
+  private setFindFlags(flags: QueryFlags[]) {
+    // common find & query flags
+    const findFlags: QueryFlags[] = [
+      QueryFlags.FindQuery,
+    ];
 
-  // async getOne(dataSource) {
-  //   // return this.executer.getOne(this, dataSource);
-  // }
+    this.setFlags([
+      ...findFlags,
+      ...flags,
+    ]);
+  }
 
-  // async getAll(dataSource) {
-  //   // return this.executer.getAll(this, dataSource);
-  // }
-
-  // getWhereStatement() {
-  //   this.toSQL();
-  // }
-
-  // private triggerUpdate() {
-  //   this.preparer.prepareQuery(this);
-  // }
+  private setFlags(flags: QueryFlags[]) {
+    for (const flag of flags)
+      this.flags |= flag;
+  }
 }
 

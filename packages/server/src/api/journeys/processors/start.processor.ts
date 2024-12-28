@@ -147,21 +147,22 @@ export class StartProcessor extends ProcessorBase {
       await queryRunner.connect();
       await queryRunner.startTransaction();
       try {
-        // Retrieve customers
-        const customers = await this.customersService.find(
-          job.data.owner,
-          job.data.query,
-          job.data.session,
-          job.data.skip,
+        const workspaceId = job.data.owner.teams?.[0]?.organization?.workspaces?.[0].id;
+
+        const customerIds = await this.journeyLocationsService.getCustomerIds(
+          workspaceId,
+          job.data.journey.id,
           job.data.limit,
-          job.data.collectionName
+          job.data.skip);
+
+        const customers = await this.customersService.getCustomersByIds(
+          job.data.owner,
+          customerIds,
         );
         // Retreive locations from Postgres
         const locations = await this.journeyLocationsService.findForWriteBulk(
           job.data.journey,
-          customers.map((document) => {
-            return document.id.toString();
-          }),
+          customerIds,
           queryRunner
         );
         const jobsData = await this.journeysService.enrollCustomersInJourney(

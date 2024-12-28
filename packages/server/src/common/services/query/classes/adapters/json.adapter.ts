@@ -24,21 +24,21 @@ export class JSONAdapter extends QueryAdapterBase {
   }
 
   private generateQuery(input: Record <string, any>): Query {
-    const logicalExpression: LogicalExpressionInterface = this.processStatement(input.inclusionCriteria.query);
-
-    const query: Query = this.queryFromExpression(logicalExpression);
+    const query: Query = this.getQueryFromInput(input);
 
     return query;
   }
 
   private processStatement(statement: any) {
-    switch(statement.type) {
+    switch(statement?.type) {
       case "all":
       case "any":
         return this.toLogicalExpression(statement);
       case "Attribute":
       case "Event":
         return this.toBinaryExpression(statement);
+      default:
+        return "";
     }
   }
 
@@ -168,5 +168,18 @@ export class JSONAdapter extends QueryAdapterBase {
       case QuerySyntax.LogicalExpression:
         return this.queryFromLogicalExpression(node as LogicalExpressionInterface);
     }
+  }
+
+  private getQueryFromInput(input: Record <string, any>): Query {
+    const inputJSON = input?.inclusionCriteria?.query ?? input?.query;
+
+    if (!inputJSON)
+      return new Query();
+    
+    const logicalExpression: LogicalExpressionInterface = this.processStatement(inputJSON);
+
+    const query: Query = this.queryFromExpression(logicalExpression);
+
+    return query;
   }
 }

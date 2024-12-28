@@ -213,6 +213,12 @@ const DynamicInput: FC<DynamicInputProps> = ({
     [StatementValueType.OBJECT]: "",
   };
 
+  const getType = (typeObj: any): StatementValueType => {
+    if (!typeObj) return StatementValueType.STRING;
+
+    return typeObj.name as StatementValueType;
+  };
+
   const valueTypeToComponentMap: Record<StatementValueType, ReactNode> = {
     [StatementValueType.BOOLEAN]: (
       <BooleanComponent
@@ -284,11 +290,10 @@ const DynamicInput: FC<DynamicInputProps> = ({
       return;
     }
 
-    onChange(defaultValuesMap[type.name as StatementValueType]);
+    onChange(defaultValuesMap[getType(type)]);
   }, [type]);
 
-  const dynamicComponent =
-    valueTypeToComponentMap[type.name as StatementValueType];
+  const dynamicComponent = valueTypeToComponentMap[getType(type)];
 
   return (
     <>
