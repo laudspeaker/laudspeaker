@@ -690,7 +690,7 @@ export class SegmentsService {
 
     const foundRecord = await queryRunner.manager.findOneBy(SegmentCustomers, {
       segment: segmentId,
-      customer: { id: parseInt(customerId) },
+      customer: { id: customerId },
     });
 
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
@@ -738,7 +738,7 @@ export class SegmentsService {
 
     const foundRecord = await this.segmentCustomersRepository.findOneBy({
       segment: { id: segment.id },
-      customer: { id: parseInt(customerId) },
+      customer: { id: customerId },
     });
 
     if (foundRecord)
@@ -848,7 +848,7 @@ export class SegmentsService {
 
     await this.segmentCustomersRepository.delete({
       segment: { id: segment.id },
-      customer: { id: parseInt(customerId) },
+      customer: { id: customerId },
     });
   }
 
@@ -962,14 +962,14 @@ export class SegmentsService {
     if (!queryRunner) {
       record = await this.segmentCustomersRepository.findOneBy({
         segment: id, //{ id, owner: { id: account.id } },
-        customer: { id: parseInt(customerId) },
+        customer: { id: customerId },
       });
     } else {
       try {
         record = await queryRunner.manager.findOne(SegmentCustomers, {
           where: {
             segment: id, // {id},//{ id, owner: { id: account.id } },
-            customer: { id: parseInt(customerId) },
+            customer: { id: customerId },
           },
         });
       } catch (e) {

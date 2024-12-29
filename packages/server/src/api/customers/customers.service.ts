@@ -367,7 +367,7 @@ export class CustomersService {
 
     const customer = await this.customersRepository.findOne({
       where: {
-        id: parseInt(id),
+        id,
         workspace: { id: workspace.id },
       }
     });
@@ -543,7 +543,7 @@ export class CustomersService {
 
   async updateCustomer(
     account: Account,
-    customerId: number,
+    customerId: string,
     fieldName: keyof Customer,
     newValue: any,
     session: string,
@@ -688,14 +688,14 @@ export class CustomersService {
     if (queryRunner) {
       res = await queryRunner.manager.find(Customer, {
         where: {
-          id: Number(id),
+          id,
           workspace: { id: account?.teams?.[0]?.organization?.workspaces?.[0].id }
         }
       })
     } else {
       res = await this.customersRepository.find({
         where: {
-          id: Number(id),
+          id,
           workspace: { id: account?.teams?.[0]?.organization?.workspaces?.[0].id }
         }
       })
@@ -709,13 +709,13 @@ export class CustomersService {
     if (queryRunner) {
       res = await queryRunner.manager.find(Customer, {
         where: {
-          id: Number(id),
+          id,
         }
       })
     } else {
       res = await this.customersRepository.find({
         where: {
-          id: Number(id),
+          id,
         }
       })
     }
@@ -1569,7 +1569,7 @@ export class CustomersService {
 
   public async deleteEverywhere(id: string) {
     await this.dataSource.transaction(async (transactionManager) => {
-      await transactionManager.delete(SegmentCustomers, { customerId: id });
+      await transactionManager.delete(SegmentCustomers, { customer_id: id });
       await transactionManager.query(
         'UPDATE audience SET customers = array_remove(audience."customers", $1) WHERE $2 = ANY(audience."customers")',
         [id, id]
@@ -1682,7 +1682,7 @@ export class CustomersService {
 
     const customer = await this.customersRepository.findOneBy(
       {
-        id: parseInt(custId),
+        id: custId,
         workspace: { id: workspace.id },
       });
 

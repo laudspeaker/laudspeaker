@@ -13,7 +13,7 @@ import {
 @Entity({ name: 'customer' })
 export class Customer {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
-  id: number;
+  id: string;
 
   @Column({ type: 'uuid', default: () => 'uuid_generate_v7()', unique: true, nullable: false })
   @Index()

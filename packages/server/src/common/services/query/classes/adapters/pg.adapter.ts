@@ -95,7 +95,26 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
       case QuerySyntax.SMSExpression:
       case QuerySyntax.PushExpression:
         return;
+      default:
+        return;
+        // return this.processEmptyExpression(context, flags);
     }
+  }
+
+  private processEmptyExpression(
+    context: QueryContext,
+    flags: NodeFlags
+  ): string {
+    return `SELECT id FROM customer`;
+    // let result = "";
+
+    // // must return id as it could be nested
+    // if (flags & NodeFlags.CountQuery)
+    //   result = `SELECT COUNT(id) AS count FROM customer`;
+    // else
+    //   result = `SELECT id FROM customer`
+
+    // return result;
   }
 
   private processUnaryExpression(
@@ -186,17 +205,11 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
   ): string {
     let result = "";
     let elementSQL = "";
-    let cteSQL = null;
-
-    const aggregatedData = expression.aggregatedData;
-
-    // we need to use multi-event CTE
-    if (aggregatedData.distinctEvents.size > 0) {
-      // flags |= NodeFlags.HasMultipleEventNames;
-      // flags |= NodeFlags.SelectFromCTE;
-    }
 
     const expressions = expression.expressions;
+
+    if (expressions.length == 0)
+      return this.processEmptyExpression(context, flags);
 
     const needsParens = expressions.length > 1;
 

@@ -166,20 +166,20 @@ export class SegmentUpdateProcessor extends ProcessorBase {
     await queryRunner.startTransaction();
 
     try {
-      const collectionPrefix = this.segmentsService.generateRandomString();
-      const customersInSegment =
-        await this.customersService.getSegmentCustomersFromQuery(
-          job.data.segment.inclusionCriteria.query,
-          job.data.account,
-          job.data.session,
-          true,
-          0,
-          collectionPrefix
-        );
+      const workspaceId = job?.data?.account?.teams?.[0]?.organization?.workspaces?.[0]?.id;
 
-      if (!customersInSegment) return; // The segment definition doesnt have any customers in it...
-      const CUSTOMERS_PER_BATCH = 50000;
-      let batch = 0;
+      const query = Query.fromJSON(job.data.segment.inclusionCriteria);
+      query.setContext({
+        workspace_id: workspaceId,
+      });
+
+      await this.segmentCustomersService.populateEmptySegment(
+        job.data.segment,
+        query,
+        job.data.session,
+        job.data.account,
+        queryRunner
+      );
 
       let last = false;
       queryRunner.manager.query('SELECT pg_advisory_lock(12345)');
@@ -192,8 +192,7 @@ export class SegmentUpdateProcessor extends ProcessorBase {
         if (journey.completedSystemSegments === journey.totalSystemSegments)
           last = true;
       }
-      await queryRunner.manager.query('SELECT pg_advisory_unlock(12345)');
-      await queryRunner.commitTransaction();
+
       if (last)
         await Producer.add(QueueType.ENROLLMENT, {
           account: job.data.account,

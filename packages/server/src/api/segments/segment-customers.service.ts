@@ -446,16 +446,11 @@ export class SegmentCustomersService {
    * the hood.
    */
   async isCustomerInSegment(
-    account: Account,
-    segment: string,
-    customer: string,
+    workspaceId: string,
+    segmentId: string,
+    customerId: string,
     session: string,
-    queryRunner?: QueryRunner
   ): Promise<boolean> {
-    const workspaceId = account.teams?.[0]?.organization?.workspaces?.[0].id;
-    const segmentId = segment.toString();
-    const customerId = customer.toString();
-
     const found: boolean = await this.segmentCustomersRepository.exist({
       where: {
         workspace_id: workspaceId,

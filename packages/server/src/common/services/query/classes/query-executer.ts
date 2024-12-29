@@ -32,7 +32,7 @@ export class QueryExecuter implements QueryExecuterInterface {
 
     const rawResult = await this.executeQueryRaw(querySQL, dataSource); 
 
-    const result = resultParser.parse(rawResult);
+    const result = resultParser.parse(rawResult, query);
 
     return result;
   }

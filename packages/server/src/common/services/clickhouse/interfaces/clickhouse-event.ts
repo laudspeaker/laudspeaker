@@ -12,5 +12,5 @@ export interface ClickHouseEvent {
   context?: string;
   source: ClickHouseEventSource;
   workspace_id: string;
-  customer_id?: number;
+  customer_id?: string;
 }

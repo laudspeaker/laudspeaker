@@ -133,7 +133,7 @@ export class MultisplitStepProcessor extends ProcessorBase {
         ) {
           if (
             await this.segmentCustomersService.isCustomerInSegment(
-              job.data.owner,
+              job.data.owner.teams?.[0]?.organization?.workspaces?.[0].id,
               job.data.step.metadata.branches[branchIndex].systemSegment,
               job.data.customer.id.toString(),
               job.data.session

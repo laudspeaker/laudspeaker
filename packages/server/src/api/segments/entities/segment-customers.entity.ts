@@ -3,7 +3,7 @@ import {
   Column,
   Entity,
   JoinColumn,
-  OneToOne,
+  ManyToOne,
   PrimaryColumn,
 } from 'typeorm';
 import { Segment } from './segment.entity';
@@ -13,16 +13,16 @@ import { Customer } from '../../customers/entities/customer.entity';
 @Entity()
 export class SegmentCustomers extends BaseEntity {
   @PrimaryColumn({ name: 'segment_id' })
-  @OneToOne(() => Segment, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Segment, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'segment_id' })
   segment: Segment
 
   @PrimaryColumn({ name: 'customer_id' })
-  @OneToOne(() => Customer, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Customer, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'customer_id' })
   customer: Customer
 
-  @OneToOne(() => Workspaces, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Workspaces, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'workspace_id' })
   workspace: Workspaces;
 

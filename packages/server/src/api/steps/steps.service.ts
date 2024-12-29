@@ -143,7 +143,7 @@ export class StepsService {
   async triggerStart(
     account: Account,
     journey: Journey,
-    query: any,
+    queryJSON: any,
     session: string,
   ): Promise<{ jobData: any }> {
     return Sentry.startSpan({ name: 'StepsService.triggerStart' }, async () => {
@@ -157,6 +157,15 @@ export class StepsService {
       if (!startStep)
         throw new Error('Could not find start step.');
 
+      const query: Query = Query.fromJSON(queryJSON);
+      query.setContext({
+        "journey_id": journey.id,
+        "step_id": startStep.id,
+        "workspace_id": workspace.id,
+      });
+
+      const nCustomers = await query.count(this.dataSource);
+
       // -      while (batch * CUSTOMERS_PER_BATCH <= audienceSize) {
       // -        const customers = await this.customersService.find(
       // -          account,
@@ -169,7 +178,7 @@ export class StepsService {
       await this.journeyLocationsService.createAndLockBulk(
         account,
         journey.id,
-        query,
+        queryJSON,
         startStep,
         session,
       );
@@ -182,7 +191,7 @@ export class StepsService {
           session: session,
           query,
           skip: 0,
-          limit: 10000,
+          limit: nCustomers,
         },
       };
     });
