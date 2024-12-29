@@ -17,7 +17,6 @@ export class SegmentCustomersService {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
-    private dataSource: DataSource,
     @InjectRepository(SegmentCustomers)
     public segmentCustomersRepository: Repository<SegmentCustomers>,
     @InjectRepository(Account)
@@ -453,43 +452,18 @@ export class SegmentCustomersService {
     session: string,
     queryRunner?: QueryRunner
   ): Promise<boolean> {
-
-    // let repository: Repository<SegmentCustomers>;
-    // if (queryRunner) repository = queryRunner.manager.getRepository(SegmentCustomers);
-    // else repository = this.segmentCustomersRepository;
-
-    // const query: FindManyOptions<SegmentCustomers> = {
-    //   where: {
-    //     workspace: { id: account.teams?.[0]?.organization?.workspaces?.[0].id },
-    //     segment: { id: segment },
-    //     customer: { id: customer },
-    //   },
-    // };
-    // const found: SegmentCustomers = await repository.findOne(query);
-
     const workspaceId = account.teams?.[0]?.organization?.workspaces?.[0].id;
     const segmentId = segment.toString();
     const customerId = customer.toString();
 
-    // const found = await this.segmentCustomersRepository.findOne({
-    //   where: {
-    //     workspace: { id: workspaceId },
-    //     segment: { id: segmentId },
-    //     customer: { id: parseInt(customerId) },
-    //   },
-    // });
-
-    queryRunner = await this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-
-    const found = await queryRunner.manager.findOne(SegmentCustomers, {
+    const found: boolean = await this.segmentCustomersRepository.exist({
       where: {
-        segment: { id: segmentId },
-        workspace: { id: workspaceId },
-        customer: { id: parseInt(customerId) },
-      },
+        workspace_id: workspaceId,
+        segment_id: segmentId,
+        customer_id: customerId,
+      }
     });
 
-    return found ? true : false;
+    return found;
   }
 }
