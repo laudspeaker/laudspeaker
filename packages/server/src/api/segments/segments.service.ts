@@ -116,16 +116,12 @@ export class SegmentsService {
     if (queryRunner) {
       segment = await queryRunner.manager.findOneBy(Segment, {
         id,
-        workspace: {
-          id: workspace.id,
-        },
+        workspace_id: workspace.id,
       });
     } else {
       segment = await this.segmentRepository.findOneBy({
         id,
-        workspace: {
-          id: workspace.id,
-        },
+        workspace_id: workspace.id,
       });
     }
 
@@ -180,7 +176,7 @@ export class SegmentsService {
 
     return await queryRunner.manager.find(Segment, {
       where: {
-        workspace: { id: workspace.id },
+        workspace_id: workspace.id,
         ...(type ? { type: type } : {}),
       },
     });
@@ -198,12 +194,12 @@ export class SegmentsService {
 
     const segment = await this.segmentRepository.findOneBy({
       id,
-      workspace: { id: workspace.id },
+      workspace_id: workspace.id,
     });
     if (!segment) throw new NotFoundException('Segment not found');
 
     return this.segmentCustomersRepository.countBy({
-      segment: id,
+      segment_id: id,
     });
   }
 
@@ -244,7 +240,7 @@ export class SegmentsService {
     //let batchSize = 500; // Or any suitable batch size
 
     // Find the total number of customers in the segment
-    //const totalCustomers = await segmentCustomersRepository.count({ where: { segment: segmentId, owner: account } });
+    //const totalCustomers = await segmentCustomersRepository.count({ where: { segment_id: segmentId, owner: account } });
     // const totalCustomers = await this.segmentCustomersRepository.count({
     //   where: { segment: { id: segmentId } },
     // });
@@ -331,7 +327,7 @@ export class SegmentsService {
     try {
       const segment = await queryRunner.manager.save(Segment, {
         ...createSegmentDTO,
-        workspace: { id: workspace.id },
+        workspace_id: workspace.id,
         isUpdating: true,
       });
       if (segment.type === SegmentType.AUTOMATIC) {
@@ -416,8 +412,8 @@ export class SegmentsService {
     }
 
     await this.segmentRepository.update(
-      { id, workspace: { id: workspace.id } },
-      { ...updateSegmentDTO, workspace: { id: workspace.id }, isUpdating: true }
+      { id, workspace_id: workspace.id },
+      { ...updateSegmentDTO, workspace_id: workspace.id, isUpdating: true }
     );
 
     await Producer.add(QueueType.SEGMENT_UPDATE, {
@@ -434,7 +430,7 @@ export class SegmentsService {
 
     await this.segmentRepository.delete({
       id,
-      workspace: { id: workspace.id },
+      workspace_id: workspace.id,
     });
   }
 
@@ -451,14 +447,14 @@ export class SegmentsService {
     const totalPages = Math.ceil(
       (await this.segmentCustomersRepository.count({
         where: {
-          segment: id,
+          segment_id: id,
         },
       })) / take || 1
     );
 
     const records = await this.segmentCustomersRepository.find({
       where: {
-        segment: id,
+        segment_id: id,
       },
       take: take < 100 ? take : 100,
       skip,
@@ -688,19 +684,22 @@ export class SegmentsService {
     );
     */
 
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     const foundRecord = await queryRunner.manager.findOneBy(SegmentCustomers, {
-      segment: segmentId,
-      customer: { id: customerId },
+      segment_id: segmentId,
+      customer_id: customerId,
+      workspace_id: workspace.id,
     });
 
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    
 
     if (foundRecord)
       throw new ConflictException('Customer already in this segment');
     await queryRunner.manager.save(SegmentCustomers, {
-      segment: segmentId,
-      customerId,
-      workspace,
+      segment_id: segmentId,
+      customer_id: customerId,
+      workspace_id: workspace.id,
     });
   }
 
@@ -710,7 +709,7 @@ export class SegmentsService {
     queryRunner: QueryRunner
   ) {
     await queryRunner.manager.delete(SegmentCustomers, {
-      segment: segmentId, //{ id: segmentId },
+      segment_id: segmentId, //{ id: segmentId },
       customerId,
     });
   }
@@ -737,15 +736,15 @@ export class SegmentsService {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const foundRecord = await this.segmentCustomersRepository.findOneBy({
-      segment: { id: segment.id },
-      customer: { id: customerId },
+      segment_id: segment.id,
+      customer_id: customerId,
     });
 
     if (foundRecord)
       throw new ConflictException('Customer already in this segment');
 
     await this.segmentCustomersRepository.save({
-      segment: { id: segment.id },
+      segment_id: segment.id,
       customerId,
       workspace,
     });
@@ -787,7 +786,8 @@ export class SegmentsService {
 
     // Delete existing customers in the segment
     await queryRunner.manager.getRepository(SegmentCustomers).delete({
-      segment: { id: segmentId }, // Assuming segment is identified by segmentId
+      segment_id: segmentId,
+      workspace_id: workspace.id,
     });
 
 
@@ -809,9 +809,9 @@ export class SegmentsService {
 
     return this.segmentCustomersRepository.save(
       customerIds.map((customerId) => ({
-        segment: { id: segment.id },
-        customerId,
-        workspace,
+        segment_id: segment.id,
+        customer_id: customerId,
+        workspace_id: workspace.id,
       }))
     );
   }
@@ -821,8 +821,11 @@ export class SegmentsService {
     if (!segment) {
       throw new HttpException('No segment found.', HttpStatus.NOT_FOUND);
     }
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     await this.segmentCustomersRepository.delete({
-      segment: { id: segment.id },
+      segment_id: segment.id,
+      workspace_id: workspace.id
     });
   }
 
@@ -832,9 +835,12 @@ export class SegmentsService {
     customerIds: string[],
     session: string
   ) {
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     await this.segmentCustomersRepository.delete({
-      segment: { id },
-      customer: In(customerIds),
+      segment_id: id,
+      customer_id: In(customerIds),
+      workspace_id: workspace.id
     });
   }
 
@@ -846,9 +852,12 @@ export class SegmentsService {
   ) {
     const segment = await this.findOne(account, id, session);
 
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     await this.segmentCustomersRepository.delete({
-      segment: { id: segment.id },
-      customer: { id: customerId },
+      segment_id: segment.id,
+      customer_id: customerId,
+      workspace_id: workspace.id
     });
   }
 
@@ -896,7 +905,7 @@ export class SegmentsService {
       type,
       inclusionCriteria,
       resources,
-      workspace: { id: workspace.id },
+      workspace_id: workspace.id,
     });
   }
 
@@ -930,9 +939,7 @@ export class SegmentsService {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const segments = await this.segmentRepository.findBy({
-      workspace: {
-        id: workspace.id,
-      },
+      workspace_id: workspace.id,
       type: SegmentType.AUTOMATIC,
     });
 
@@ -959,17 +966,21 @@ export class SegmentsService {
     queryRunner?: QueryRunner
   ) {
     let record: SegmentCustomers;
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+
     if (!queryRunner) {
       record = await this.segmentCustomersRepository.findOneBy({
-        segment: id, //{ id, owner: { id: account.id } },
-        customer: { id: customerId },
+        segment_id: id,
+        customer_id: customerId,
+        workspace_id: workspace.id
       });
     } else {
       try {
         record = await queryRunner.manager.findOne(SegmentCustomers, {
           where: {
-            segment: id, // {id},//{ id, owner: { id: account.id } },
-            customer: { id: customerId },
+            segment_id: id, // {id},//{ id, owner: { id: account.id } },
+            customer_id: customerId,
+            workspace_id: workspace.id
           },
         });
       } catch (e) {

@@ -65,4 +65,7 @@ export class Segment extends BaseEntity {
     },
   })
   public resources: any;
+
+  @Column('uuid', { name: 'workspace_id', nullable: false })
+  workspace_id: string;
 }
