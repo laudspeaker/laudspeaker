@@ -5163,4 +5163,13 @@ export class CustomersService {
   async getCustomersByIds(account: Account, customerIds: BigInt[]) {
     return this.customersRepository.find({ where: { id: In(customerIds) } })
   }
+
+  async getCustomerByUUID(uuid: string, workspaceId: string): Promise<Customer> {
+    return this.customersRepository.findOne({
+      where: {
+        uuid: uuid,
+        workspace_id: workspaceId
+      }
+    });
+  }
 }

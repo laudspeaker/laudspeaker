@@ -41,4 +41,7 @@ export class Customer {
 
   @Column({ type: 'text', array: true, default: () => 'ARRAY[]::text[]' })
   other_ids: string[];
+
+  @Column('uuid', { name: 'workspace_id', nullable: false })
+  workspace_id: string;
 }

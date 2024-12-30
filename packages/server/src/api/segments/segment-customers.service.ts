@@ -1,6 +1,12 @@
-import { Logger, Inject, Injectable } from '@nestjs/common';
+import { Logger, Inject, Injectable, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, FindManyOptions, QueryRunner, Repository } from 'typeorm';
+import {
+  DataSource,
+  FindManyOptions,
+  QueryRunner,
+  Repository,
+  In
+} from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Readable } from 'node:stream';
@@ -9,6 +15,7 @@ import { SegmentCustomers } from './entities/segment-customers.entity';
 import { Segment } from './entities/segment.entity';
 import { Customer } from '../customers/entities/customer.entity';
 import { Query } from '@/common/services/query';
+import { CustomersService } from '../customers/customers.service';
 
 const LOCATION_LOCK_TIMEOUT_MS = +process.env.LOCATION_LOCK_TIMEOUT_MS;
 
@@ -17,10 +24,14 @@ export class SegmentCustomersService {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
+    @InjectRepository(Segment)
+    public segmentRepository: Repository<Segment>,
     @InjectRepository(SegmentCustomers)
     public segmentCustomersRepository: Repository<SegmentCustomers>,
     @InjectRepository(Account)
-    public accountRepository: Repository<Account>
+    public accountRepository: Repository<Account>,
+    @Inject(forwardRef(()=>CustomersService))
+    private customersService: CustomersService
   ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -382,7 +393,7 @@ export class SegmentCustomersService {
 
   async getSegmentsForCustomer(
     account: Account,
-    customer: string | Customer,
+    customerUUID: string,
     take = 100,
     skip = 0,
     search = '',
@@ -391,26 +402,39 @@ export class SegmentCustomersService {
   ) {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    const totalPages = Math.ceil(
-      (await this.segmentCustomersRepository
-        .createQueryBuilder('segmentCustomers')
-        .innerJoinAndSelect('segmentCustomers.customer', 'customer')
-        .where('segmentCustomers.workspace_id = :workspaceId', { workspaceId: workspace.id })
-        .andWhere('customer.uuid = :uuid', typeof customer === 'string' ? { uuid: customer } : { uuid: customer.uuid })
-        .getCount()) / take || 1
-    );
+    const customer = await this.customersService.getCustomerByUUID(customerUUID, workspace.id);
 
-    const records = await this.segmentCustomersRepository
-    .createQueryBuilder('segmentCustomers')
-    .innerJoinAndSelect('segmentCustomers.customer', 'customer')
-    .innerJoinAndSelect('segmentCustomers.segment', 'segment')
-    .where('segmentCustomers.workspace_id = :workspaceId', { workspaceId: workspace.id })
-    .andWhere('customer.uuid = :uuid', typeof customer === 'string' ? { uuid: customer } : { uuid: customer.uuid })
-    .take(take < 100 ? take : 100)
-    .skip(skip)
-    .getMany();  
+    // need to find all segments the customer is in
+    const totalPages = await this.segmentCustomersRepository.count({
+      where: {
+        customer_id: customer.id,
+        workspace_id: workspace.id
+      }
+    });
 
-    const segments = records.map((record) => record.segment);
+    const result = await this.segmentCustomersRepository.find({
+      select: {
+        segment_id: true
+      },
+      where: {
+        customer_id: customer.id,
+        workspace_id: workspace.id
+      },
+      take: take < 100 ? take : 100,
+      skip: skip,
+      order: {
+        segment_id: "ASC"
+      }
+    });
+
+    const segmentIds = result.map(x => x.segment_id)
+
+    const segments = await this.segmentRepository.find({
+      where: {
+        id: In(segmentIds)
+      }
+    });
+
     return { data: segments, totalPages };
   }
 
