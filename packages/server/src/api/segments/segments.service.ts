@@ -141,18 +141,14 @@ export class SegmentsService {
     const totalPages = Math.ceil(
       (await this.segmentRepository.count({
         where: {
-          workspace: {
-            id: workspace.id,
-          },
+          workspace_id: workspace.id,
         },
       })) / take || 1
     );
     const segments = await this.segmentRepository.find({
       where: {
         name: Like(`%${search}%`),
-        workspace: {
-          id: workspace.id,
-        },
+        workspace_id: workspace.id,
         type: Not(SegmentType.SYSTEM),
       },
       take: take < 100 ? take : 100,
@@ -306,9 +302,7 @@ export class SegmentsService {
     const organizationPlan = organization.plan;
 
     const segmentsCount = await this.segmentRepository.countBy({
-      workspace: {
-        id: In(organization.workspaces.map((workspace) => workspace.id)),
-      },
+      workspace_id: In(organization.workspaces.map((workspace) => workspace.id)),
     });
 
     if (organizationPlan.segmentLimit != -1) {

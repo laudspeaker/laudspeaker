@@ -1317,9 +1317,7 @@ export class CustomersService {
 
     if (resourceId === 'memberof') {
       const segments = await this.segmentsService.segmentRepository.findBy({
-        workspace: {
-          id: workspace.id,
-        },
+        workspace_id: workspace.id,
       });
       return {
         id: resourceId,

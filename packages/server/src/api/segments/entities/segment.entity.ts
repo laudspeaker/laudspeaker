@@ -20,7 +20,7 @@ export class Segment extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   public id: string;
 
-  @JoinColumn()
+  @JoinColumn({name: "workspace_id"})
   @ManyToOne(() => Workspaces, (workspace) => workspace.id, {
     onDelete: 'CASCADE',
   })
