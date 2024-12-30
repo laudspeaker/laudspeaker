@@ -110,7 +110,7 @@ export class ExitStepProcessor extends ProcessorBase {
     return Sentry.startSpan({ name: 'ExitStepProcessor.process' }, async () => {
       await this.journeyLocationsService.unlock(
         job.data.location,
-        job.data.step
+        job.data.step.id
       );
     });
   }

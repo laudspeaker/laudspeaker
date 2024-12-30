@@ -218,7 +218,7 @@ export class WaitUntilStepProcessor extends ProcessorBase {
                 // customer has stopped moving so we can release lock
                 await this.journeyLocationsService.unlock(
                   job.data.location,
-                  nextStep
+                  nextStep.id
                 );
               }
             } else {
@@ -226,7 +226,7 @@ export class WaitUntilStepProcessor extends ProcessorBase {
               // customer has stopped moving so we can release lock
               await this.journeyLocationsService.unlock(
                 job.data.location,
-                job.data.step
+                job.data.step.id
               );
             }
           } else {
@@ -234,7 +234,7 @@ export class WaitUntilStepProcessor extends ProcessorBase {
             // customer has stopped moving so we can release lock
             await this.journeyLocationsService.unlock(
               job.data.location,
-              job.data.step
+              job.data.step.id
             );
           }
         } else if (
@@ -275,7 +275,7 @@ export class WaitUntilStepProcessor extends ProcessorBase {
               // customer has stopped moving so we can release lock
               await this.journeyLocationsService.unlock(
                 job.data.location,
-                nextStep
+                nextStep.id
               );
             }
           } else {
@@ -283,13 +283,13 @@ export class WaitUntilStepProcessor extends ProcessorBase {
             // customer has stopped moving so we can release lock
             await this.journeyLocationsService.unlock(
               job.data.location,
-              job.data.step
+              job.data.step.id
             );
           }
         } else {
           await this.journeyLocationsService.unlock(
             job.data.location,
-            job.data.step
+            job.data.step.id
           );
         }
         if (nextStep && nextJob)

@@ -657,7 +657,7 @@ export class MessageStepProcessor extends ProcessorBase {
         } else if (messageSendType === 'LIMIT_HOLD') {
           await this.journeyLocationsService.unlock(
             job.data.location,
-            job.data.step
+            job.data.step.id
           );
           return;
         } else if (
@@ -673,7 +673,7 @@ export class MessageStepProcessor extends ProcessorBase {
           );
           await this.journeyLocationsService.unlock(
             job.data.location,
-            job.data.step
+            job.data.step.id
           );
           return;
         }
@@ -712,7 +712,7 @@ export class MessageStepProcessor extends ProcessorBase {
             // customer has stopped moving so we can release lock
             await this.journeyLocationsService.unlock(
               job.data.location,
-              nextStep
+              nextStep.id
             );
           }
         } else {
@@ -720,7 +720,7 @@ export class MessageStepProcessor extends ProcessorBase {
           // customer has stopped moving so we can release lock
           await this.journeyLocationsService.unlock(
             job.data.location,
-            job.data.step
+            job.data.step.id
           );
         }
         if (nextStep && nextJob)

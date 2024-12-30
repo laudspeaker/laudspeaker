@@ -46,7 +46,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       migrations: ['dist/**/migrations/*.{ts,js}'],
       migrationsTableName: 'typeorm_migrations',
       logger: 'advanced-console',
-      logging: ['warn', 'error'],
+      logging: ['warn', 'error', 'query'],
       subscribers: [],
       synchronize: process.env.SYNCHRONIZE == 'true', // never use TRUE in production!
       autoLoadEntities: true,

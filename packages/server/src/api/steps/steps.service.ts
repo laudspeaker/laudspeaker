@@ -179,7 +179,7 @@ export class StepsService {
         account,
         journey.id,
         queryJSON,
-        startStep,
+        startStep.id,
         session,
       );
 

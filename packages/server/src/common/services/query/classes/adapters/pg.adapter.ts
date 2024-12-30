@@ -105,7 +105,10 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
     context: QueryContext,
     flags: NodeFlags
   ): string {
-    return `SELECT id FROM customer`;
+    return `
+      SELECT id
+      FROM customer
+      WHERE workspace_id = '${context.workspace_id}'`;
     // let result = "";
 
     // // must return id as it could be nested
@@ -143,7 +146,9 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
 
     result = `SELECT id
       FROM customer
-      WHERE ${result}
+      WHERE
+        (${result}) AND
+        workspace_id = '${context.workspace_id}'
       `;
 
     return result;
@@ -276,7 +281,9 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
     const result = `
     SELECT id
     FROM customer
-    WHERE ${sql}
+    WHERE
+      (${sql}) AND
+      workspace_id = '${context.workspace_id}'
     `;
 
     return result;
@@ -320,63 +327,6 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
     return result;
   }
  
-  private getEventCTESQL(
-    expression: LogicalExpressionInterface,
-    context: QueryContext,
-    flags: NodeFlags
-  ) {
-    const distinctEventCount = expression.aggregatedData.distinctEvents.size;
-    const totalEventFiltersCount = expression.aggregatedData.eventFilters.length;
-
-    const cteName = "event_counts";
-
-    let result = null;
-
-    if (distinctEventCount == 0 )
-      return result;
-
-    // same event one count
-    // same event different counts
-    // different events
-    if (distinctEventCount == 1 && totalEventFiltersCount == 1) {
-      const firstEventFilter = expression.aggregatedData.eventFilters[0];
-
-      result = `
-        WITH ${cteName} AS (
-          SELECT customer_id
-          FROM events
-          WHERE
-            workspace_id = '${context.workspace_id}' AND
-            event = '${firstEventFilter.event}' AND
-            customer_id IS NOT NULL
-          GROUP BY customer_id
-          HAVING COUNT(id) >= ${firstEventFilter.value}
-        )`;
-    } else if (distinctEventCount > 1 && totalEventFiltersCount > 1) {
-
-      const events = Array
-        .from(expression.aggregatedData.distinctEvents)
-        .map(event => `'${event}'`)
-        .join(',');
-
-      result = `
-        WITH ${cteName} AS (
-          SELECT customer_id, event, count(id) AS count
-          FROM events
-          WHERE
-            workspace_id = '${context.workspace_id}' AND
-            event IN (${events}) AND
-            customer_id IS NOT NULL
-          GROUP BY customer_id, event
-        )`;
-    }
-
-    return {
-      sql: result,
-      name: cteName,
-    }
-  }
-
   private processOperator(operator: OperatorKind): string {
     switch(operator) {
       case QuerySyntax.ContainKeyword:

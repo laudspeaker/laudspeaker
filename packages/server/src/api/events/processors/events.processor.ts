@@ -190,10 +190,9 @@ export class EventsProcessor extends ProcessorBase {
     const stepsToQueue: Step[] = [];
 
     const location = await this.journeyLocationsService.findForWrite(
-      job.data.journey,
-      job.data.customer,
-      job.data.session,
-      job.data.account
+      job.data.journey.id,
+      job.data.customer.id,
+      job.data.account.teams?.[0]?.organization?.workspaces?.[0].id
     );
 
     if (!location) {
@@ -499,7 +498,7 @@ export class EventsProcessor extends ProcessorBase {
     if (stepsToQueue.length) {
       let stepToQueue: Step;
       for (let i = 0; i < stepsToQueue.length; i++) {
-        if (String(location.step.id) === stepsToQueue[i].id) {
+        if (String(location.step_id) === stepsToQueue[i].id) {
           stepToQueue = stepsToQueue[i];
           break;
         }
@@ -516,7 +515,7 @@ export class EventsProcessor extends ProcessorBase {
           event: job.data.event.event,
         }, stepToQueue.type);
       } else {
-        await this.journeyLocationsService.unlock(location, location.step);
+        await this.journeyLocationsService.unlock(location, location.step_id);
         this.warn(
           `${JSON.stringify({
             warning: 'Customer not in step',
@@ -539,7 +538,7 @@ export class EventsProcessor extends ProcessorBase {
         return;
       }
     } else {
-      await this.journeyLocationsService.unlock(location, location.step);
+      await this.journeyLocationsService.unlock(location, location.step_id);
       this.warn(
         `${JSON.stringify({ warning: 'No step matches event' })}`,
         this.process.name,
@@ -703,7 +702,7 @@ export class EventsProcessor extends ProcessorBase {
     if (stepsToQueue.length) {
       let stepToQueue;
       for (let i = 0; i < stepsToQueue.length; i++) {
-        if (String(location.step) === stepsToQueue[i].id) {
+        if (String(location.step_id) === stepsToQueue[i].id) {
           stepToQueue = stepsToQueue[i];
           break;
         }
@@ -718,7 +717,7 @@ export class EventsProcessor extends ProcessorBase {
           journeyID: journey.id,
         });
       } else {
-        await this.journeyLocationsService.unlock(location, location.step);
+        await this.journeyLocationsService.unlock(location, location.step_id);
         this.warn(
           `${JSON.stringify({
             warning: 'Customer not in step',
@@ -732,7 +731,7 @@ export class EventsProcessor extends ProcessorBase {
         return;
       }
     } else {
-      await this.journeyLocationsService.unlock(location, location.step);
+      await this.journeyLocationsService.unlock(location, location.step_id);
       this.warn(
         `${JSON.stringify({ warning: 'No step matches event' })}`,
         this.process.name,
@@ -750,10 +749,9 @@ export class EventsProcessor extends ProcessorBase {
     const stepsToQueue: Step[] = [];
 
     const location = await this.journeyLocationsService.findForWrite(
-      job.data.journey,
-      job.data.customer,
-      job.data.session,
-      job.data.account
+      job.data.journey.id,
+      job.data.customer.id,
+      job.data.account.teams?.[0]?.organization?.workspaces?.[0].id
     );
 
     if (!location) {
@@ -851,7 +849,7 @@ export class EventsProcessor extends ProcessorBase {
     if (stepsToQueue.length) {
       let stepToQueue: Step;
       for (let i = 0; i < stepsToQueue.length; i++) {
-        if (String(location.step.id) === stepsToQueue[i].id) {
+        if (String(location.step_id) === stepsToQueue[i].id) {
           stepToQueue = stepsToQueue[i];
           break;
         }
@@ -868,11 +866,11 @@ export class EventsProcessor extends ProcessorBase {
           event: job.data.message.event,
         }, stepToQueue.type);
       } else {
-        await this.journeyLocationsService.unlock(location, location.step);
+        await this.journeyLocationsService.unlock(location, location.step_id);
         return;
       }
     } else {
-      await this.journeyLocationsService.unlock(location, location.step);
+      await this.journeyLocationsService.unlock(location, location.step_id);
       return;
     }
     return;

@@ -169,7 +169,7 @@ export class ExperimentStepProcessor extends ProcessorBase {
           // customer has stopped moving so we can release lock
           await this.journeyLocationsService.unlock(
             job.data.location,
-            job.data.step
+            job.data.step.id
           );
         }
         if (nextStep && nextJob)

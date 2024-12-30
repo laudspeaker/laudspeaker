@@ -31,6 +31,9 @@ export class SegmentCustomers extends BaseEntity {
   @Column({ type: 'bigint', nullable: true, default: 0 })
   segmentEntry: number;
 
+  // use these fields in queries to improve perf.
+  // prevents joining related tables while querying current
+  // table
   @Column('uuid', { name: 'segment_id', nullable: false })
   segment_id: string;
 

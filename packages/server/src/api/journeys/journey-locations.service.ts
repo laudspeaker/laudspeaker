@@ -117,7 +117,7 @@ export class JourneyLocationsService {
   async createAndLock(
     journey: Journey,
     customer: Customer,
-    step: Step,
+    step_id: string,
     session: string,
     account: Account,
     queryRunner?: QueryRunner
@@ -137,43 +137,43 @@ export class JourneyLocationsService {
       // Step 1: Check if customer is already enrolled in Journey; if so, throw error
       const location = await queryRunner.manager.findOne(JourneyLocation, {
         where: {
-          journey: journey.id,
-          workspace: { id: workspace.id },
-          customer: { id: customer.id },
+          journey_id: journey.id,
+          workspace_id: workspace.id,
+          customer_id: customer.id,
         },
       });
 
       if (location)
         throw new Error(
-          `Customer ${customer.id} already enrolled in journey ${journey.id}; located in step ${location.step.id}`
+          `Customer ${customer.id} already enrolled in journey ${journey.id}; located in step ${location.step_id}`
         );
 
       // Step 2: Create new journey Location row, add time that user entered the journey
       await queryRunner.manager.save(JourneyLocation, {
-        journey: journey.id,
-        workspace,
-        customer: { id: customer.id },
-        step: step,
+        journey_id: journey.id,
+        workspace_id: workspace.id,
+        customer_id: customer.id,
+        step_id: step_id,
         stepEntry: Date.now(),
         moveStarted: Date.now(),
       });
     } else {
       const location = await this.journeyLocationsRepository.findOne({
         where: {
-          journey: journey.id,
-          workspace: { id: workspace.id },
-          customer: { id: customer.id },
+          journey_id: journey.id,
+          workspace_id: workspace.id,
+          customer_id: customer.id,
         },
       });
       if (location)
         throw new Error(
-          `Customer ${customer.id} already enrolled in journey ${journey.id}; located in step ${location.step.id}`
+          `Customer ${customer.id} already enrolled in journey ${journey.id}; located in step ${location.step_id}`
         );
       await this.journeyLocationsRepository.save({
-        journey: journey.id,
-        workspace,
-        customer: { id: customer.id },
-        step: step,
+        journey_id: journey.id,
+        workspace_id: workspace.id,
+        customer_id: customer.id,
+        step_id: step_id,
         stepEntry: Date.now(),
         moveStarted: Date.now(),
       });
@@ -204,7 +204,7 @@ export class JourneyLocationsService {
     account: Account,
     journeyId: string,
     queryJSON: any,
-    step: Step,
+    step_id: string,
     session: string,
   ): Promise<void> {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
@@ -218,7 +218,7 @@ export class JourneyLocationsService {
     const query: Query = Query.fromJSON(queryJSON);
     query.setContext({
       "journey_id": journeyId ,
-      "step_id": step.id,
+      "step_id": step_id,
       "workspace_id": workspace.id,
     });
 
@@ -229,7 +229,7 @@ export class JourneyLocationsService {
     //   read() {
     //     customers.forEach((customerId) => {
     //       this.push(
-    //         `${journeyId}\t${customerId}\t${step.id}\t${workspace.id
+    //         `${journeyId}\t${customerId}\t${step_id}\t${workspace.id
     //         }\t${moveStarted}\t${stepEntry}\t${journeyEntry}\t${stepEntryAt.toISOString()}\t${journeyEntryAt.toISOString()}\n`
     //       );
     //     });
@@ -295,11 +295,9 @@ export class JourneyLocationsService {
     queryRunner?: QueryRunner
   ) {
     const location = await this.findForWrite(
-      journey,
-      customer,
-      session,
-      account,
-      queryRunner
+      journey.id,
+      customer.id,
+      account.teams?.[0]?.organization?.workspaces?.[0].id
     );
     if (!location)
       throw new Error(
@@ -317,53 +315,24 @@ export class JourneyLocationsService {
    * This can be particularly useful when detailed information about the step within the journey is needed
    * alongside the journey location data.
    *
-   * @param {Journey} journey - The Journey entity for which to find the JourneyLocation.
-   * @param {CustomerDocument} customer - The CustomerDocument entity representing the customer for whom to find the JourneyLocation.
-   * @param {QueryRunner} [queryRunner] - An optional QueryRunner instance for transaction management. If provided,
-   * the query will be executed within a managed transaction. Otherwise, the default repository is used to execute the query.
+   * @param {string} journey_id - The Journey UUID.
+   * @param {string} customer_id - customer bigserial id
+   * @param {string} workspace_id - Workspace UUID
    * @returns {Promise<JourneyLocation>} A promise that resolves to a JourneyLocation entity matching the specified journey
    * and customer, with the Step relation loaded. If no matching entity is found, the promise resolves to null.
-   *
-   * @example
-   * // Without a QueryRunner
-   * const journeyLocation = await findForWrite(journey, customerDocument);
-   * // The returned journeyLocation will have the Step relation loaded.
-   *
-   * @example
-   * // With a QueryRunner, within a transaction
-   * const queryRunner = connection.createQueryRunner();
-   * await queryRunner.connect();
-   * try {
-   *   const journeyLocation = await findForWrite(journey, customerDocument, queryRunner);
-   *   // The returned journeyLocation will have the Step relation loaded.
-   * } finally {
-   *   await queryRunner.release();
-   * }
    */
   async findForWrite(
-    journey: Journey,
-    customer: Customer,
-    session: string,
-    account?: Account,
-    queryRunner?: QueryRunner
+    journey_id: string,
+    customer_id: string,
+    workspace_id: string,
   ): Promise<JourneyLocation> {
-    if (queryRunner) {
-      return await queryRunner.manager.findOne(JourneyLocation, {
-        where: {
-          journey: journey.id,
-          customer: { id: customer.id },
-        },
-        relations: ['step'],
-      });
-    } else {
-      return await this.journeyLocationsRepository.findOne({
-        where: {
-          journey: journey.id,
-          customer: { id: customer.id },
-        },
-        relations: ['step'],
-      });
-    }
+    return this.journeyLocationsRepository.findOne({
+      where: {
+        journey_id,
+        customer_id,
+        workspace_id
+      }
+    });
   }
 
   /**
@@ -490,9 +459,9 @@ export class JourneyLocationsService {
       await queryRunner.manager.update(
         JourneyLocation,
         {
-          journey: location.journey,
-          workspace: workspace ? { id: workspace.id } : undefined,
-          customer: location.customer,
+          journey_id: location.journey_id,
+          workspace_id: location.workspace_id,
+          customer_id: location.customer_id,
         },
         {
           step: to,
@@ -502,9 +471,9 @@ export class JourneyLocationsService {
     } else {
       await this.journeyLocationsRepository.update(
         {
-          journey: location.journey,
-          workspace: workspace ? { id: workspace.id } : undefined,
-          customer: { id: location.customer.id },
+          journey_id: location.journey_id,
+          workspace_id: location.workspace_id,
+          customer_id: location.customer_id,
         },
         {
           step: to,
@@ -544,18 +513,18 @@ export class JourneyLocationsService {
     if (queryRunner) {
       return await queryRunner.manager.findOne(JourneyLocation, {
         where: {
-          journey: journey.id,
-          workspace: workspace ? { id: workspace.id } : undefined,
-          customer: { id: customer.id },
+          journey_id: journey.id,
+          workspace_id: workspace.id,
+          customer_id: customer.id,
         },
         relations: ['workspace', 'journey', 'step'],
       });
     } else {
       return await this.journeyLocationsRepository.findOne({
         where: {
-          journey: journey.id,
-          workspace: workspace ? { id: workspace.id } : undefined,
-          customer: { id: customer.id },
+          journey_id: journey.id,
+          workspace_id: workspace.id,
+          customer_id: customer.id,
         },
         relations: ['workspace', 'journey', 'step'],
       });
@@ -649,7 +618,7 @@ export class JourneyLocationsService {
     if (queryRunner) {
       return await queryRunner.manager.find(JourneyLocation, {
         where: {
-          journey: journey.id,
+          journey_id: journey.id,
           step: [
             {
               type: StepType.TIME_DELAY,
@@ -668,7 +637,7 @@ export class JourneyLocationsService {
     } else {
       return await this.journeyLocationsRepository.find({
         where: {
-          journey: journey.id,
+          journey_id: journey.id,
           step: {
             type:
               StepType.TIME_DELAY ||
@@ -694,7 +663,7 @@ export class JourneyLocationsService {
    */
   async unlock(
     location: JourneyLocation,
-    step: Step,
+    step_id: string,
     queryRunner?: QueryRunner,
     account?: Account
   ) {
@@ -707,11 +676,11 @@ export class JourneyLocationsService {
       account?.email
     );
     const updateFields = {
-      journey: location.journey,
-      customer: location.customer,
+      journey_id: location.journey_id,
+      customer_id: location.customer_id,
       moveStarted: null,
       stepEntry: Date.now(),
-      step: { id: step.id },
+      step_id: step_id,
       messageSent: location.messageSent,
     };
     let err, res;
@@ -723,13 +692,13 @@ export class JourneyLocationsService {
       try {
         res = await queryRunner.manager.update(
           JourneyLocation,
-          { journey: location.journey, customer: location.customer },
+          { journey_id: location.journey_id, customer_id: location.customer_id },
           {
-            journey: location.journey,
-            customer: location.customer,
+            journey_id: location.journey_id,
+            customer_id: location.customer_id,
             moveStarted: null,
             stepEntry: Date.now(),
-            step: { id: step.id },
+            step_id: step_id,
             messageSent: location.messageSent,
           }
         );
@@ -744,13 +713,13 @@ export class JourneyLocationsService {
     } else {
       res = await queryRunner.manager.update(
         JourneyLocation,
-        { journey: location.journey, customer: location.customer },
+        { journey_id: location.journey_id, customer_id: location.customer_id },
         {
-          journey: location.journey,
-          customer: location.customer,
+          journey_id: location.journey_id,
+          customer_id: location.customer_id,
           moveStarted: null,
           stepEntry: Date.now(),
-          step: { id: step.id },
+          step_id: step_id,
           messageSent: location.messageSent,
         }
       );
@@ -774,12 +743,11 @@ export class JourneyLocationsService {
     queryRunner?: QueryRunner
   ) {
     const location = await this.findForWrite(
-      journey,
-      customer,
-      session,
-      account,
-      queryRunner
+      journey.id,
+      customer.id,
+      account.teams?.[0]?.organization?.workspaces?.[0].id
     );
+
     if (!location)
       throw new Error(
         `Customer ${location.customer} is not in journey ${location.journey}`
@@ -826,9 +794,9 @@ export class JourneyLocationsService {
       await queryRunner.manager.update(
         JourneyLocation,
         {
-          journey: location.journey,
-          workspace: workspace ? { id: workspace.id } : undefined,
-          customer: location.customer,
+          journey_id: location.journey_id,
+          workspace_id: location.workspace_id,
+          customer_id: location.customer_id,
         },
         {
           moveStarted: Date.now(),
@@ -837,9 +805,9 @@ export class JourneyLocationsService {
     } else {
       await this.journeyLocationsRepository.update(
         {
-          journey: location.journey,
-          workspace: workspace ? { id: workspace.id } : undefined,
-          customer: { id: location.customer.id },
+          journey_id: location.journey_id,
+          workspace_id: location.workspace_id,
+          customer_id: location.customer_id,
         },
         {
           moveStarted: Date.now(),
@@ -850,8 +818,8 @@ export class JourneyLocationsService {
 
   async setMessageSent(location: JourneyLocation, queryRunner?: QueryRunner) {
     const findCriteria: FindOptionsWhere<JourneyLocation> = {
-      journey: location.journey,
-      customer: { id: location.customer.id },
+      journey_id: location.journey_id,
+      customer_id: location.customer_id,
     };
     const updateData: Partial<JourneyLocation> = {
       messageSent: true,
@@ -883,7 +851,7 @@ export class JourneyLocationsService {
     const queryCriteria: FindManyOptions<JourneyLocation> = {
       where: {
         workspace: { id: account.teams?.[0]?.organization?.workspaces?.[0].id },
-        journey: journey.id,
+        journey_id: journey.id,
       },
     };
     let count: number;
@@ -912,7 +880,7 @@ export class JourneyLocationsService {
     const queryCriteria: FindManyOptions<JourneyLocation> = {
       where: {
         workspace: { id: account.teams[0].organization.workspaces[0].id },
-        journey: journey.id,
+        journey_id: journey.id,
         messageSent: true,
       },
     };
@@ -929,7 +897,7 @@ export class JourneyLocationsService {
     const ret = {};
     const resultSet = await this.journeyLocationsRepository
       .createQueryBuilder('journeyLocation')
-      .where({ journey: In(journeyIds) })
+      .where({ journey_id: In(journeyIds) })
       .groupBy("journeyLocation.journey_id")
       .select("journeyLocation.journey_id, COUNT(*) as count")
       .getRawMany();
@@ -952,8 +920,8 @@ export class JourneyLocationsService {
     let query = this.journeyLocationsRepository
       .createQueryBuilder('journeyLocation')
       .where({
-        workspace: { id: workspaceId },
-        journey: journeyId,
+        workspace_id: workspaceId,
+        journey_id: journeyId,
       })
       .select("customer_id")
       .orderBy("customer_id");

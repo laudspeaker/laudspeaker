@@ -71,4 +71,19 @@ export class JourneyLocation {
     nullable: true,
   })
   messageSent?: boolean | null;
+
+  // use these fields in queries to improve perf.
+  // prevents joining related tables while querying current
+  // table
+  @Column('uuid', { name: 'journey_id', nullable: false })
+  journey_id: string;
+
+  @Column('uuid', { name: 'step_id', nullable: false })
+  step_id: string;
+
+  @Column('bigint', { name: 'customer_id', nullable: false })
+  customer_id: string;
+
+  @Column('uuid', { name: 'workspace_id', nullable: false })
+  workspace_id: string;
 }
