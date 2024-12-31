@@ -944,14 +944,18 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
   const findStatementValueType = (
     query: string,
     defaultType: StatementValueType = StatementValueType.STRING
-  ): StatementValueType => {
+  ): { attribute: any; valueType: StatementValueType } => {
     const attribute = findAttributeTypeByName(query);
     const attributeType = attribute?.attribute_type;
     const attributeTypeName = attributeType?.name;
+    const result = {
+      attribute: attribute,
+      valueType: defaultType,
+    };
 
-    if (!attribute || !attributeType || !attributeTypeName) return defaultType;
+    if (!attribute || !attributeType || !attributeTypeName) return result;
 
-    const result = attributeTypeToStatementValueTypeMap[attributeTypeName];
+    result.valueType = attributeTypeToStatementValueTypeMap[attributeTypeName];
 
     return result;
   };
@@ -1091,12 +1095,14 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           //   ? StatementValueType.ARRAY
                           //   : attribute?.type || undefined;
 
-                          const valueType = findStatementValueType(q);
+                          const { attribute, valueType } =
+                            findStatementValueType(q);
 
                           handleChangeStatement(i, {
                             ...statement,
                             key: q,
                             valueType,
+                            attribute,
                             comparisonType: valueType
                               ? valueTypeToComparisonTypesMap[valueType][0]
                               : ComparisonType.EQUALS,
@@ -1104,19 +1110,14 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                           setKeysQuery(q);
                         }}
                         onSelect={(value) => {
-                          // const attribute = possibleKeys.find(
-                          //   (attr) => attr.name === value
-                          // );
-
-                          // const valueType = attribute?.isArray
-                          //   ? StatementValueType.ARRAY
-                          //   : attribute?.type || undefined;
-                          const valueType = findStatementValueType(value);
+                          const { attribute, valueType } =
+                            findStatementValueType(value);
 
                           handleChangeStatement(i, {
                             ...statement,
                             key: value,
                             valueType,
+                            attribute,
                             comparisonType: valueType
                               ? valueTypeToComparisonTypesMap[valueType][0]
                               : ComparisonType.EQUALS,
@@ -1150,7 +1151,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
                       >
                         {Object.values(StatementValueType)
                           .filter((valueType) =>
-                            statement.valueType
+                            statement.valueType && statement.attribute
                               ? statement.valueType === valueType
                               : true
                           )

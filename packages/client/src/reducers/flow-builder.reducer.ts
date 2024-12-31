@@ -32,7 +32,7 @@ import {
 import { MessageType, ProviderType } from "types/Workflow";
 import getClosestNextAndPrevious from "utils/getClosestNextAndPrevious";
 import { v4 as uuid } from "uuid";
-import { AttributeType } from "pages/PeopleSettings/PeopleSettings";
+import { Attribute, AttributeType } from "pages/PeopleSettings/PeopleSettings";
 
 export enum SegmentsSettingsType {
   ALL_CUSTOMERS = "allCustomers",
@@ -324,6 +324,7 @@ export interface AttributeQueryStatement {
   type: QueryStatementType.ATTRIBUTE;
   key: string;
   valueType?: StatementValueType;
+  attribute?: Attribute;
   comparisonType: ComparisonType;
   subComparisonType: ObjectKeyComparisonType;
   subComparisonValue: string;
