@@ -4388,7 +4388,7 @@ export class CustomersService {
     }
 
     // Add the condition for the mobile SDK
-    whereClauses.push(`(correlation_key = 'uuid' AND correlation_value = '${customer.uuid}')`);
+    // whereClauses.push(`(correlation_key = 'uuid' AND correlation_value = '${customer.uuid}')`);
 
     if (time) {
       switch (time.comparisonType) {
@@ -4428,7 +4428,7 @@ export class CustomersService {
     const query = `SELECT count(*) as count FROM events WHERE ${whereClause};`;
     const result = await this.clickhouseClient.query({ query });
 
-    const count = (await result.json<{ count: number }>()).data[0].count;
+    const count = +(await result.json<{ count: number }>()).data[0].count;
 
     if (comparisonType === 'has performed') {
       return count >= value;

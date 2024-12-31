@@ -686,15 +686,22 @@ export class SegmentsService {
       workspace_id: workspace.id,
     });
 
-    
-
     if (foundRecord)
       throw new ConflictException('Customer already in this segment');
-    await queryRunner.manager.save(SegmentCustomers, {
-      segment_id: segmentId,
-      customer_id: customerId,
-      workspace_id: workspace.id,
-    });
+
+    await this.segmentCustomersRepository
+        .createQueryBuilder()
+        .insert()
+        // explicitly use the column names otherwise
+        // typeorm duplicates these columns and produces
+        // column specified more than once error
+        .into(SegmentCustomers, ["customer_id", "segment_id", "workspace_id"])
+        .values([{
+          segment_id: segmentId,
+          customer_id: customerId,
+          workspace_id: workspace.id,
+        }])
+        .execute();
   }
 
   public async removeCustomerFromSegment(
