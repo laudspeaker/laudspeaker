@@ -292,7 +292,7 @@ export class ImportProcessor extends ProcessorBase {
       .map((el) => {
         const cust = new Customer();
         cust.created_at = new Date();
-        cust.workspace = workspace;
+        cust.workspace_id = workspace.id;
         cust.user_attributes = {
           [pkKey]: el.pkKeyValue,
           ...el.create,
@@ -311,13 +311,12 @@ export class ImportProcessor extends ProcessorBase {
 
     if (importOption === ImportOptions.NEW) {
       try {
-        const insertedResults = null;
-        await this.customersRepository.save(toCreate)
+        await this.customersRepository.save(toCreate);
 
         if (segmentId)
-          addToSegment.push(
-            ...insertedResults.map((doc) => doc.id.toString())
-          );
+          for(const customer of toCreate)
+            addToSegment.push(customer.id);
+
       } catch (error) {
         this.error(
           error,
@@ -334,7 +333,7 @@ export class ImportProcessor extends ProcessorBase {
           return data.find((el2) => el2.pkKeyValue === el);
         })
         .map((el) => ({
-          workspaceId: workspace.id,
+          workspace_id: workspace.id,
           [pkKey]: el.pkKeyValue,
           ...el.update,
         }));
@@ -351,20 +350,12 @@ export class ImportProcessor extends ProcessorBase {
       }));
 
       try {
-        const insertedResults = null;
-        // TODO
-        // await this.CustomerModel.insertMany(toCreate, {
-        //   ordered: false,
-        // });
+        await this.customersRepository.save(toCreate);
 
         if (segmentId)
-          addToSegment.push(
-            ...insertedResults.map((doc) => doc._id.toString())
-          );
+          for(const customer of toCreate)
+            addToSegment.push(customer.id);
 
-        // await this.CustomerModel.bulkWrite(bulk, {
-        //   ordered: false,
-        // });
       } catch (error) {
         this.error(
           error,
@@ -381,7 +372,7 @@ export class ImportProcessor extends ProcessorBase {
           return data.find((el2) => el2.pkKeyValue === el);
         })
         .map((el) => ({
-          workspaceId: workspace.id,
+          workspace_id: workspace.id,
           [pkKey]: el.pkKeyValue,
           ...el.update,
         }));
@@ -415,7 +406,9 @@ export class ImportProcessor extends ProcessorBase {
       (importOption === ImportOptions.NEW_AND_EXISTING ||
         importOption === ImportOptions.EXISTING)
     )
-      addToSegment.push(...foundExisting.map((doc) => doc.id.toString()));
+      if (segmentId)
+        for(const customer of foundExisting)
+          addToSegment.push(customer.id);
 
     if (segmentId && addToSegment.length !== 0) {
       const segment = await this.segmentRepository.findOne({
@@ -434,13 +427,21 @@ export class ImportProcessor extends ProcessorBase {
         return;
       }
 
-      await this.segmentCustomersRepository.insert(
-        addToSegment.map((el) => ({
-          customerId: el,
-          segment: segment,
-          workspace: workspace,
-        }))
-      );
+      const customersToBeAdded = addToSegment.map((el) => ({
+        customer_id: el,
+        segment_id: segment.id,
+        workspace_id: workspace.id,
+      }));
+
+      await this.segmentCustomersRepository
+          .createQueryBuilder()
+          .insert()
+          // explicitly use the column names otherwise
+          // typeorm duplicates these columns and produces
+          // column specified more than once error
+          .into(SegmentCustomers, ["customer_id", "segment_id", "workspace_id"])
+          .values(customersToBeAdded)
+          .execute();
     }
   }
 }
