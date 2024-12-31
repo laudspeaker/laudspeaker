@@ -472,8 +472,7 @@ export class SegmentCustomersService {
   async isCustomerInSegment(
     workspaceId: string,
     segmentId: string,
-    customerId: string,
-    session: string,
+    customerId: string
   ): Promise<boolean> {
     const found: boolean = await this.segmentCustomersRepository.exist({
       where: {

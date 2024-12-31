@@ -34,7 +34,7 @@ export class ClickHouseClient implements OnModuleDestroy {
   private readonly insertAsyncSettings: ClickHouseSettings = {
     ...this.commonSettings,
     async_insert: 1,
-    wait_for_async_insert: 0,
+    wait_for_async_insert: 1,
     async_insert_max_data_size:
       process.env.CLICKHOUSE_MESSAGE_STATUS_ASYNC_MAX_SIZE
       ?? '1000000',

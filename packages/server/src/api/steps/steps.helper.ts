@@ -10,6 +10,7 @@ import {
 } from '../steps/types/step.interface';
 import { Customer} from '../customers/entities/customer.entity'
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { SegmentCustomersService } from '../segments/segment-customers.service';
 
 @Injectable()
 export class StepsHelper {
@@ -17,7 +18,9 @@ export class StepsHelper {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
     @Inject(forwardRef(() => SegmentsService))
-    private segmentsService: SegmentsService
+    private segmentsService: SegmentsService,
+    @Inject(SegmentCustomersService)
+    private segmentCustomersService: SegmentCustomersService
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -109,8 +112,8 @@ export class StepsHelper {
       case 'memberof':
         if (!segmentData?.account) return false;
 
-        return this.segmentsService.isCustomerMemberOf(
-          segmentData.account,
+        return this.segmentCustomersService.isCustomerInSegment(
+          segmentData.account?.teams?.[0]?.organization?.workspaces?.[0]?.id,
           checkVal,
           custAttr
         );

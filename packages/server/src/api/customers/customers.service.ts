@@ -62,6 +62,7 @@ import { CustomerKeysService } from './customer-keys.service';
 import { CustomerKey } from './entities/customer-keys.entity';
 import { CacheConstants } from '../../common/services/cache.constants';
 import { Query } from '../../common/services/query';
+import { SegmentCustomersService } from '../segments/segment-customers.service';
 
 export type Correlation = {
   cust: Customer;
@@ -167,6 +168,8 @@ export class CustomersService {
     @Inject(CacheService) private cacheService: CacheService,
     @Inject(ClickHouseClient)
     private clickhouseClient: ClickHouseClient,
+    @Inject(SegmentCustomersService)
+    private segmentCustomersService: SegmentCustomersService
   ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -645,8 +648,8 @@ export class CustomersService {
         }
 
         if (checkInSegment)
-          info.isInsideSegment = await this.segmentsService.isCustomerMemberOf(
-            account,
+          info.isInsideSegment = await this.segmentCustomersService.isCustomerInSegment(
+            workspace.id,
             checkInSegment,
             person.id.toString()
           );

@@ -26,6 +26,7 @@ import { QueueType } from '../../common/services/queue/types/queue-type';
 import { Producer } from '../../common/services/queue/classes/producer';
 import { CustomerKeysService } from '../customers/customer-keys.service';
 import { Query, QueryService } from '../../common/services/query';
+import { SegmentCustomersService } from './segment-customers.service';
 
 @Injectable()
 export class SegmentsService {
@@ -44,6 +45,8 @@ export class SegmentsService {
     private customerKeysService: CustomerKeysService,
     private readonly stepsHelper: StepsHelper,
     private readonly queryService: QueryService,
+    @Inject(SegmentCustomersService)
+    private segmentCustomersService: SegmentCustomersService
   ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -521,12 +524,12 @@ export class SegmentsService {
           undefined,
           customerId
         );
-        const isMemberOf = await this.isCustomerMemberOf(
-          account,
+        const isMemberOf = await this.segmentCustomersService.isCustomerInSegment(
+          workspace.id,
           segment.id,
-          customerId,
-          queryRunner
+          customerId
         );
+
         if (doInclude && !isMemberOf) {
           // If should include but not a member of, then add
           await this.addCustomerToSegment(
@@ -601,6 +604,7 @@ export class SegmentsService {
     const addedToSegments: Segment[] = [];
     const removedFromSegments: Segment[] = [];
     const segments = await this.getSegments(account, undefined, queryRunner);
+    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     for (const segment of segments) {
       // We skip manual segments and empty inclusion criteria
@@ -630,12 +634,12 @@ export class SegmentsService {
         undefined,
         customerId
       );
-      const isMemberOf = await this.isCustomerMemberOf(
-        account,
+      const isMemberOf = await this.segmentCustomersService.isCustomerInSegment(
+        workspace.id,
         segment.id,
         customerId,
-        queryRunner
       );
+
       if (doInclude && !isMemberOf) {
         // If should include but not a member of, then add
         await this.addCustomerToSegment(
@@ -677,7 +681,6 @@ export class SegmentsService {
       queryRunner
     );
     */
-
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
     const foundRecord = await queryRunner.manager.findOneBy(SegmentCustomers, {
@@ -958,38 +961,5 @@ export class SegmentsService {
         this.logger.error(e);
       }
     }
-  }
-
-  public async isCustomerMemberOf(
-    account: Account,
-    id: any,
-    customerId: string,
-    queryRunner?: QueryRunner
-  ) {
-    let record: SegmentCustomers;
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-
-    if (!queryRunner) {
-      record = await this.segmentCustomersRepository.findOneBy({
-        segment_id: id,
-        customer_id: customerId,
-        workspace_id: workspace.id
-      });
-    } else {
-      try {
-        record = await queryRunner.manager.findOne(SegmentCustomers, {
-          where: {
-            segment_id: id, // {id},//{ id, owner: { id: account.id } },
-            customer_id: customerId,
-            workspace_id: workspace.id
-          },
-        });
-      } catch (e) {
-        this.error(e, this.isCustomerMemberOf.name, 'dafd');
-        throw e;
-      }
-    }
-
-    return !!record;
   }
 }

@@ -392,7 +392,7 @@ export class MessageStepProcessor extends ProcessorBase {
                 name: TemplateType.EMAIL,
                 accountID: job.data.owner.id,
                 cc: template.cc,
-                customerID: job.data.customer.id,
+                customerID: job.data.customer.uuid,
                 domain: sendingDomain,
                 email: sendingEmail,
                 stepID: job.data.step.id,
@@ -443,7 +443,7 @@ export class MessageStepProcessor extends ProcessorBase {
                       name: 'android',
                       accountID: job.data.owner.id,
                       stepID: job.data.step.id,
-                      customerID: job.data.customer.id,
+                      customerID: job.data.customer.uuid,
                       firebaseCredentials:
                         workspace?.pushPlatforms?.Android?.credentials,
                       // pushChannel?.pushPlatforms?.Android?.credentials,
@@ -468,7 +468,7 @@ export class MessageStepProcessor extends ProcessorBase {
                       name: 'ios',
                       accountID: job.data.owner.id,
                       stepID: job.data.step.id,
-                      customerID: job.data.customer.id,
+                      customerID: job.data.customer.uuid,
                       firebaseCredentials:
                         workspace?.pushPlatforms?.iOS?.credentials,
                       // pushChannel?.pushPlatforms?.iOS?.credentials,
@@ -494,7 +494,7 @@ export class MessageStepProcessor extends ProcessorBase {
                       name: 'ios',
                       accountID: job.data.owner.id,
                       stepID: job.data.step.id,
-                      customerID: job.data.customer.id,
+                      customerID: job.data.customer.uuid,
                       firebaseCredentials:
                         workspace?.pushPlatforms?.iOS?.credentials,
                       // pushChannel?.pushPlatforms?.iOS?.credentials,
@@ -520,7 +520,7 @@ export class MessageStepProcessor extends ProcessorBase {
                       name: 'android',
                       accountID: job.data.owner.id,
                       stepID: job.data.step.id,
-                      customerID: job.data.customer.id,
+                      customerID: job.data.customer.uuid,
                       firebaseCredentials:
                         workspace?.pushPlatforms?.Android?.credentials,
                       // pushChannel?.pushPlatforms?.Android?.credentials,
@@ -549,7 +549,7 @@ export class MessageStepProcessor extends ProcessorBase {
                   name: TemplateType.SMS,
                   accountID: job.data.owner.id,
                   stepID: job.data.step.id,
-                  customerID: job.data.customer.id,
+                  customerID: job.data.customer.uuid,
                   templateID: template.id,
                   from: workspace.smsFrom,
                   sid: workspace.smsAccountSid,
@@ -573,7 +573,7 @@ export class MessageStepProcessor extends ProcessorBase {
                   template,
                   filteredTags,
                   stepId: job.data.step.id,
-                  customerId: job.data.customer.id,
+                  customerId: job.data.customer.uuid,
                   accountId: job.data.owner.id,
                   stepDepth: job.data.stepDepth,
                 };
@@ -600,7 +600,7 @@ export class MessageStepProcessor extends ProcessorBase {
               {
                 stepId: job.data.step.id,
                 createdAt: new Date(),
-                customerId: job.data.customer.id.toString(),
+                customerId: job.data.customer.uuid.toString(),
                 event: 'aborted',
                 eventProvider: ClickHouseEventProvider.TRACKER,
                 messageId: job.data.step.metadata.humanReadableName,
@@ -636,7 +636,7 @@ export class MessageStepProcessor extends ProcessorBase {
               {
                 stepId: job.data.step.id,
                 createdAt: new Date(),
-                customerId: job.data.customer.id.toString(),
+                customerId: job.data.customer.uuid.toString(),
                 event: 'sent',
                 eventProvider: ClickHouseEventProvider.TRACKER,
                 messageId: job.data.step.metadata.humanReadableName,
