@@ -192,7 +192,7 @@ export class SegmentUpdateProcessor extends ProcessorBase {
         if (journey.completedSystemSegments === journey.totalSystemSegments)
           last = true;
       }
-
+      await queryRunner.manager.query('SELECT pg_advisory_unlock(12345)');
       if (last)
         await Producer.add(QueueType.ENROLLMENT, {
           account: job.data.account,
