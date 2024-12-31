@@ -28,7 +28,7 @@ import { QueueType } from '../../../common/services/queue/types/queue-type';
 import { Producer } from '../../../common/services/queue/classes/producer';
 import { StepsHelper } from '../../../api/steps/steps.helper';
 import { Customer } from '../../../api/customers/entities/customer.entity';
-import { CacheConstants } from '@/common/services/cache.constants';
+import { CacheConstants } from '../../../common/services/cache.constants';
 
 export enum EventType {
   EVENT = 'event',

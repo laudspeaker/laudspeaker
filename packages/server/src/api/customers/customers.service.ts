@@ -60,8 +60,8 @@ import { StepsHelper } from '../steps/steps.helper';
 import { AttributeTypeName } from './entities/attribute-type.entity';
 import { CustomerKeysService } from './customer-keys.service';
 import { CustomerKey } from './entities/customer-keys.entity';
-import { CacheConstants } from '@/common/services/cache.constants';
-import { Query } from '@/common/services/query';
+import { CacheConstants } from '../../common/services/cache.constants';
+import { Query } from '../../common/services/query';
 
 export type Correlation = {
   cust: Customer;

@@ -52,7 +52,7 @@ import { ClickHouseMessage } from '../../common/services/clickhouse/interfaces/c
 import { Customer } from '../customers/entities/customer.entity';
 import { CustomerKeysService } from '../customers/customer-keys.service';
 import { AttributeTypeName } from '../customers/entities/attribute-type.entity';
-import { ClickHouseClient, ClickHouseEvent, ClickHouseEventSource, ClickHouseTable } from '@/common/services/clickhouse';
+import { ClickHouseClient, ClickHouseEvent, ClickHouseEventSource, ClickHouseTable } from '../../common/services/clickhouse';
 import { NodeFactory, Query, QuerySyntax } from '../../common/services/query';
 
 @Injectable()

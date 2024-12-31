@@ -19,8 +19,8 @@ import {
   ClickHouseClient
 } from '../../common/services/clickhouse';
 import { CacheService } from '../../common/services/cache.service';
-import { CacheConstants } from '@/common/services/cache.constants';
-import { Query } from '@/common/services/query';
+import { CacheConstants } from '../../common/services/cache.constants';
+import { Query } from '../../common/services/query';
 
 @Injectable()
 export class StepsService {

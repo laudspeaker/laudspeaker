@@ -19,7 +19,7 @@ import { randomUUID } from 'crypto';
 import { Readable } from 'node:stream';
 import * as copyFrom from 'pg-copy-streams';
 import { Customer } from '../customers/entities/customer.entity';
-import { Query } from '@/common/services/query';
+import { Query } from '../../common/services/query';
 
 const LOCATION_LOCK_TIMEOUT_MS = +process.env.LOCATION_LOCK_TIMEOUT_MS;
 

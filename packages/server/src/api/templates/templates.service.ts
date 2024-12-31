@@ -40,7 +40,7 @@ import { Producer } from '../../common/services/queue/classes/producer';
 import { Customer } from '../customers/entities/customer.entity';
 import { CustomersService } from '../customers/customers.service';
 import { WebsocketGateway } from '../../websockets/websocket.gateway';
-import { CacheConstants } from '@/common/services/cache.constants';
+import { CacheConstants } from '../../common/services/cache.constants';
 
 @Injectable()
 export class TemplatesService {

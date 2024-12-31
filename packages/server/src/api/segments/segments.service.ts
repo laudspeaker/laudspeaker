@@ -25,7 +25,7 @@ import * as Sentry from '@sentry/node';
 import { QueueType } from '../../common/services/queue/types/queue-type';
 import { Producer } from '../../common/services/queue/classes/producer';
 import { CustomerKeysService } from '../customers/customer-keys.service';
-import { Query, QueryService } from '@/common/services/query';
+import { Query, QueryService } from '../../common/services/query';
 
 @Injectable()
 export class SegmentsService {

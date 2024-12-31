@@ -6,8 +6,8 @@ import { Account } from '../../accounts/entities/accounts.entity';
 import { Workspaces } from '../../workspaces/entities/workspaces.entity';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { CacheService } from '@/common/services/cache.service';
-import { CacheConstants } from '@/common/services/cache.constants';
+import { CacheService } from '../../common/services/cache.service';
+import { CacheConstants } from '../../common/services/cache.constants';
 
 @Injectable()
 export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {

@@ -14,7 +14,7 @@ import * as copyFrom from 'pg-copy-streams';
 import { SegmentCustomers } from './entities/segment-customers.entity';
 import { Segment } from './entities/segment.entity';
 import { Customer } from '../customers/entities/customer.entity';
-import { Query } from '@/common/services/query';
+import { Query } from '../../common/services/query';
 import { CustomersService } from '../customers/customers.service';
 
 const LOCATION_LOCK_TIMEOUT_MS = +process.env.LOCATION_LOCK_TIMEOUT_MS;

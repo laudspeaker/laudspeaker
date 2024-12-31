@@ -38,7 +38,7 @@ import { QueueType } from '../../../common/services/queue/types/queue-type';
 import { Producer } from '../../../common/services/queue/classes/producer';
 import { ClickHouseEventProvider } from '../../../common/services/clickhouse/types/clickhouse-event-provider';
 import { Customer } from '../../customers/entities/customer.entity';
-import { CacheConstants } from '@/common/services/cache.constants';
+import { CacheConstants } from '../../../common/services/cache.constants';
 
 @Injectable()
 @Processor(

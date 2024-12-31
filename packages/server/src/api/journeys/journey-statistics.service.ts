@@ -29,10 +29,10 @@ import {
 import { Journey } from './entities/journey.entity';
 import { StepsService } from '../steps/steps.service';
 import { JourneyLocationsService } from './journey-locations.service';
-import { BaseLaudspeakerService } from '@/common/services/base.laudspeaker.service';
+import { BaseLaudspeakerService } from '../../common/services/base.laudspeaker.service';
 import {
   JourneySettingsConversionTrackingTimeLimitUnit
-} from '@/api/journeys/types/additional-journey-settings.interface';
+} from './types/additional-journey-settings.interface';
 
 @Injectable()
 export class JourneyStatisticsService extends BaseLaudspeakerService {

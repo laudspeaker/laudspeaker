@@ -85,7 +85,7 @@ import { Producer } from '../../common/services/queue/classes/producer';
 import { Segment, SegmentType } from '../segments/entities/segment.entity';
 import { Customer } from '../customers/entities/customer.entity';
 import { CustomerKeysService } from '../customers/customer-keys.service';
-import { CacheConstants } from '@/common/services/cache.constants';
+import { CacheConstants } from '../../common/services/cache.constants';
 import { JourneyStatisticsService } from './journey-statistics.service';
 
 export enum JourneyStatus {

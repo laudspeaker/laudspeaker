@@ -15,7 +15,7 @@ import { Step } from '../steps/entities/step.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { OrganizationPlan } from '../organizations/entities/organization-plan.entity';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
-import { CacheService } from '@/common/services/cache.service';
+import { CacheService } from '../../common/services/cache.service';
 
 function getProvidersList() {
   let providerList: Array<any> = [WebhooksService, CacheService];

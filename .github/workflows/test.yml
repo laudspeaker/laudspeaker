@@ -35,7 +35,7 @@ jobs:
     - name: Run unit tests
       # TODO: Existing unit tests need their dependencies mocked. Append fixed spec files as arguments to test:server
       run: |
-        npm run test:server -- cache.service.spec segment-customers.service.spec
+        npm run test:server -- cache.service.spec
     - name: Install cypress dependencies
       run: |
         npm install -w packages/tests

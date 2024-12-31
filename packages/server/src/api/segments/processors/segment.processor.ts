@@ -25,7 +25,7 @@ import { Processor } from '../../../common/services/queue/decorators/processor';
 import { ProcessorBase } from '../../../common/services/queue/classes/processor-base';
 import { QueueType } from '../../../common/services/queue/types/queue-type';
 import { Producer } from '../../../common/services/queue/classes/producer';
-import { Query } from '@/common/services/query';
+import { Query } from '../../../common/services/query';
 
 @Injectable()
 @Processor('segment_update')

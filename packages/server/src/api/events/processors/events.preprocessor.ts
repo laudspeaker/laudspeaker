@@ -23,8 +23,8 @@ import {
   ClickHouseTable,
   ClickHouseEvent,
   ClickHouseClient
-} from '@/common/services/clickhouse';
-import { CacheConstants } from '@/common/services/cache.constants';
+} from '../../..//common/services/clickhouse';
+import { CacheConstants } from '../../../common/services/cache.constants';
 
 export enum ProviderType {
   LAUDSPEAKER = 'laudspeaker',

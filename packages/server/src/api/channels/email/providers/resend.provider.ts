@@ -1,7 +1,7 @@
 import { EmailProvider } from '../interfaces/email.provider';
 import { EmailCallbackData, EmailCredentials, EmailProviderData, EmailSendingData, EmailSetupData } from '../interfaces/email.data';
 import { ClickHouseMessage } from '../../../../common/services/clickhouse/interfaces/clickhouse-message';
-import { ClickHouseEventProvider } from '@/common/services/clickhouse';
+import { ClickHouseEventProvider } from '../../../../common/services/clickhouse';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { BaseLiquidEngineProvider } from '../../interfaces/base.provider';
 import { CallbackData, Credentials, ProviderData, SendingData, SetupData } from '../../interfaces/data.interface';

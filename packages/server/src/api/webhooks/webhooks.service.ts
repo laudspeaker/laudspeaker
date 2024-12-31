@@ -35,9 +35,9 @@ import {
   ClickHouseMessage,
   ClickHouseClient
 } from '../../common/services/clickhouse';
-import { CacheService } from '@/common/services/cache.service';
+import { CacheService } from '../../common/services/cache.service';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
-import { CacheConstants } from '@/common/services/cache.constants';
+import { CacheConstants } from '../../common/services/cache.constants';
 
 @Injectable()
 export class WebhooksService {
