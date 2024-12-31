@@ -1020,7 +1020,7 @@ export class CustomersService {
         if (
           findType == FindType.PRIMARY_KEY &&
           searchOptions.primaryKey.name &&
-          customers[i].user_attributes?.[searchOptions.primaryKey.name] ==
+          customers[i].getUserAttribute(searchOptions.primaryKey.name) ==
           searchOptions.primaryKey.value
         ) {
           result.push({
@@ -1032,7 +1032,7 @@ export class CustomersService {
           for (const attributeName in searchOptions.messageChannels) {
             let objectFieldValue = searchOptions.messageChannels[attributeName];
 
-            if (objectFieldValue == customers[i][attributeName]) {
+            if (objectFieldValue == customers[i].getUserAttribute(attributeName)) {
               result.push({
                 customer: customers[i],
                 findType,
