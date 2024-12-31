@@ -667,7 +667,7 @@ export class EventsService {
       session
     );
 
-    return customer._id;
+    return customer.id;
   }
 
   async sendTestPushByCustomer(account: Account, body: CustomerPushTest) {
@@ -689,7 +689,10 @@ export class EventsService {
       body.customerId
     );
 
-    if (!customer.androidDeviceToken && !customer.iosDeviceToken) {
+    const androidDeviceToken = customer?.getUserAttribute('androidDeviceToken');
+    const iosDeviceToken = customer?.getUserAttribute('iosDeviceToken');
+
+    if (!androidDeviceToken && !iosDeviceToken) {
       throw new HttpException(
         "Selected customer don't have androidDeviceToken nor iosDeviceToken.",
         HttpStatus.NOT_ACCEPTABLE
@@ -712,7 +715,7 @@ export class EventsService {
 
           if (
             platform === PushPlatforms.ANDROID &&
-            !customer.androidDeviceToken
+            !androidDeviceToken
           ) {
             this.logger.warn(
               `Customer ${body.customerId} don't have androidDeviceToken property to test push notification. Skipping.`
@@ -720,7 +723,7 @@ export class EventsService {
             return;
           }
 
-          if (platform === PushPlatforms.IOS && !customer.iosDeviceToken) {
+          if (platform === PushPlatforms.IOS && !iosDeviceToken) {
             this.logger.warn(
               `Customer ${body.customerId} don't have iosDeviceToken property to test push notification. Skipping.`
             );
@@ -749,8 +752,8 @@ export class EventsService {
             }
           }
 
-          const { _id, workspaceId, workflows, ...tags } = customer.toObject();
-          const filteredTags = cleanTagsForSending(tags);
+          // const { _id, workspaceId, workflows, ...tags } = customer.toObject();
+          const filteredTags = null; //cleanTagsForSending(tags);
 
           const messaging = admin.messaging(firebaseApp);
 
@@ -758,8 +761,8 @@ export class EventsService {
             await messaging.send({
               token:
                 platform === PushPlatforms.ANDROID
-                  ? customer.androidDeviceToken
-                  : customer.iosDeviceToken,
+                  ? androidDeviceToken
+                  : iosDeviceToken,
               notification: {
                 title: await this.tagEngine.parseAndRender(
                   settings.title,
@@ -963,7 +966,7 @@ export class EventsService {
       customer
     );
 
-    return customer._id;
+    return customer.id;
   }
 
   async deduplication(
@@ -1166,7 +1169,7 @@ export class EventsService {
         if (
           isValid &&
           !customer.other_ids.includes(event.payload[key]) &&
-          customer._id !== anonId
+          customer.id !== anonId
         ) {
           otherIdsUpdates.push(anonId);
         } else {

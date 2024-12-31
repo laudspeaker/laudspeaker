@@ -44,4 +44,8 @@ export class Customer {
 
   @Column('uuid', { name: 'workspace_id', nullable: false })
   workspace_id: string;
+
+  public getUserAttribute(attribute: string) {
+    return this.user_attributes?.[attribute];
+  }
 }

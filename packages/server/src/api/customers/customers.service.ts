@@ -683,26 +683,14 @@ export class CustomersService {
     }
   }
 
-  async findByCustomerId(account: Account, id: string, queryRunner?: QueryRunner) {
-    let res;
-    if (queryRunner) {
-      res = await queryRunner.manager.find(Customer, {
-        where: {
-          id,
-          workspace: { id: account?.teams?.[0]?.organization?.workspaces?.[0].id }
-        }
-      })
-    } else {
-      res = await this.customersRepository.find({
-        where: {
-          id,
-          workspace: { id: account?.teams?.[0]?.organization?.workspaces?.[0].id }
-        }
-      })
-    }
-    return res.length ? res[0] : null;
+  async findByCustomerId(account: Account, id: string): Promise<Customer> {
+    return this.customersRepository.findOne({
+      where: {
+        id,
+        workspace_id: account?.teams?.[0]?.organization?.workspaces?.[0].id
+      }
+    });
   }
-
 
   async findByCustomerIdUnauthenticated(id: string, queryRunner?: QueryRunner) {
     let res;
@@ -1614,7 +1602,7 @@ export class CustomersService {
         totalPages,
         data: await Promise.all(
           customerIds.map(async (id) => ({
-            ...(await this.findByCustomerId(account, id))?.toObject(),
+            ...(await this.findByCustomerId(account, id)),
             id,
           }))
         ),
@@ -2900,7 +2888,7 @@ export class CustomersService {
         } = statement;
 
         const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-        const workspaceIdCondition = `workspaceId = '${workspace.id}'`;
+        const workspaceIdCondition = `workspace_id = '${workspace.id}'`;
         //to do change clickhouse?
         //const workspaceIdCondition = `userId = '${workspace.id}'`;
         //console.log('statement is', statement);
@@ -4240,7 +4228,7 @@ export class CustomersService {
       time,
     } = statement;
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
-    const workspaceIdCondition = `workspaceId = '${workspace.id}'`;
+    const workspaceIdCondition = `workspace_id = '${workspace.id}'`;
     //to do change clickhouse?
     //const workspaceIdCondition = `userId = '${workspace.id}'`;
     let sqlQuery = `SELECT COUNT(*) FROM ${ClickHouseTable.MESSAGE_STATUS} WHERE `;
@@ -4381,13 +4369,13 @@ export class CustomersService {
 
     let whereClauses = [
       `event = '${eventName}'`,
-      `workspaceId = '${workspace.id}'`
+      `workspace_id = '${workspace.id}'`
     ];
 
     const currentPK = await this.customerKeysService.getPrimaryKey(workspace.id, session);
 
     if (currentPK && customer[currentPK.name]) {
-      whereClauses.push(`(correlationKey = '${currentPK}' AND correlationValue = '${customer[currentPK.name]}')`);
+      whereClauses.push(`(correlation_key = '${currentPK}' AND correlation_value = '${customer[currentPK.name]}')`);
     } else {
       // Handle case where currentPK is null
       //uncomment when primary key thing is working correctly
@@ -4400,7 +4388,7 @@ export class CustomersService {
     }
 
     // Add the condition for the mobile SDK
-    whereClauses.push(`(correlationKey = 'uuid' AND correlationValue = '${customer.uuid}')`);
+    whereClauses.push(`(correlation_key = 'uuid' AND correlation_value = '${customer.uuid}')`);
 
     if (time) {
       switch (time.comparisonType) {
@@ -5104,7 +5092,7 @@ export class CustomersService {
         .createQueryBuilder(Customer, "customer")
         .select([`"${key}" AS key`, "COUNT(*) AS count"])
         .addSelect("array_agg(customer) AS docs")
-        .where("customer.workspaceId = :workspaceId", { workspaceId })
+        .where("customer.workspace_id = :workspaceId", { workspaceId })
         .andWhere("customer.isAnonymous = false")
         .groupBy(`customer.${key}`)
         .having("COUNT(*) > 1")
@@ -5154,7 +5142,7 @@ export class CustomersService {
   async get(workspaceID: string, session: string, skip?: number, limit?: number, queryRunner?: QueryRunner) {
     return await this.customersRepository
       .createQueryBuilder("customer")
-      .where("customer.workspaceId = :workspaceId", { workspaceId: workspaceID })
+      .where("customer.workspace_id = :workspaceId", { workspaceId: workspaceID })
       .skip(skip)
       .take(limit) // `take` is the equivalent of `limit`
       .getMany();

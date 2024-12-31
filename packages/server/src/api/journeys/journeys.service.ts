@@ -650,7 +650,6 @@ export class JourneysService {
     const customer = await this.customersService.findByCustomerId(
       account,
       customerId,
-      queryRunner
     );
     for (const journey of journeys) {
       // get segments for journey
