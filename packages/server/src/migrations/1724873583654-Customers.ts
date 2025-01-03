@@ -4,7 +4,6 @@ export class Customers1724873583654 implements MigrationInterface {
   name = 'Customers1724873583654'
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`CREATE EXTENSION pg_uuidv7;`);
     await queryRunner.query(
       `CREATE TABLE customer
       (

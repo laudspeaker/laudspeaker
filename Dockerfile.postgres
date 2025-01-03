@@ -1,17 +1,3 @@
-# FROM postgres:16.3
-
-# RUN apk add --no-cache curl bash \
-#     && mkdir -p /tmp/pg_uuidv7 \
-#     && cd /tmp/pg_uuidv7 \
-#     && curl -LO "https://github.com/fboulnois/pg_uuidv7/releases/download/v1.5.0/{pg_uuidv7.tar.gz,SHA256SUMS}" \
-#     && tar xf pg_uuidv7.tar.gz \
-#     && sha256sum -c SHA256SUMS \
-#     && PG_MAJOR=$(pg_config --version | sed 's/^.* \([0-9]\{1,\}\).*$/\1/') \
-#     && cp "$PG_MAJOR/pg_uuidv7.so" "$(pg_config --pkglibdir)" \
-#     && cp pg_uuidv7--1.5.sql pg_uuidv7.control "$(pg_config --sharedir)/extension" \
-#     && rm -rf /tmp/pg_uuidv7
-
-
 FROM postgres:16.3
 
 RUN apt-get update && apt-get -y install git build-essential postgresql-server-dev-16
@@ -19,4 +5,4 @@ RUN postgres --version
 RUN git clone https://github.com/fboulnois/pg_uuidv7
 RUN cd pg_uuidv7 && make && make install && ls -la
 
-# COPY ./init.sql /docker-entrypoint-initdb.d/init.sql
+COPY ./local-env/pg_uuid7.sql /docker-entrypoint-initdb.d/
