@@ -239,7 +239,7 @@ const FlowBuilderv2 = () => {
             flowBuilderState.templateInlineCreation && "hidden"
           } relative w-full h-full`}
         >
-          <FlowBuilderHeader />
+          <FlowBuilderHeader handleSaveLayout={handleSaveLayout} />
           <div className="relative flex w-full h-full max-h-[calc(100%-60px)]">
             {flowBuilderState.stepperIndex === 0 && <FlowBuilderDrawer />}
 
