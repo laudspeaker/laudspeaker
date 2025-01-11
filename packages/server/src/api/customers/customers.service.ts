@@ -61,7 +61,7 @@ import { AttributeTypeName } from './entities/attribute-type.entity';
 import { CustomerKeysService } from './customer-keys.service';
 import { CustomerKey } from './entities/customer-keys.entity';
 import { CacheConstants } from '../../common/services/cache.constants';
-import { Query } from '../../common/services/query';
+import { Query, QuerySyntax } from '../../common/services/query';
 import { SegmentCustomersService } from '../segments/segment-customers.service';
 
 export type Correlation = {
@@ -320,48 +320,91 @@ export class CustomersService {
   ): Promise<{ data: Customer[]; totalPages: number }> {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    const totalCustomers = await this.customersRepository.count({
-      where: {
-        workspace: { id: workspace.id },
-      },
+    const query = new Query();
+
+    query.setContext({
+      workspace_id: workspace.id
     });
 
+    const totalCustomers = await query.count(this.dataSource);
     const totalPages = Math.ceil(totalCustomers / take) || 1;
 
     const fieldType = await this.getFieldType(key, workspace.id, session);
 
-    let queryCondition = { workspace: { id: workspace.id } };
     switch (fieldType) {
       case 'String':
-        queryCondition[key] = new RegExp(`.*${search}.*`, 'i');
+        query.add(
+          query.nodeFactory.createCustomerAttributeExpressionNode(
+            key,
+            QuerySyntax.ContainKeyword,
+            QuerySyntax.StringKeyword,
+            search,
+          )
+        );
+
         break;
       case 'Email':
-        queryCondition[key] = new RegExp(`.*${search}.*`, 'i');
+        // queryCondition[key] = new RegExp(`.*${search}.*`, 'i');
+
+        query.add(
+          query.nodeFactory.createCustomerAttributeExpressionNode(
+            key,
+            QuerySyntax.IContainKeyword,
+            QuerySyntax.EmailKeyword,
+            search,
+          )
+        );
         break;
       case 'Number':
         // Convert search to a number and search for equality (you can extend this to range queries)
         const searchNumber = Number(search);
         if (!isNaN(searchNumber)) {
-          queryCondition[key] = searchNumber;
+          // queryCondition[key] = searchNumber;
+
+          query.add(
+            query.nodeFactory.createCustomerAttributeExpressionNode(
+              key,
+              QuerySyntax.IContainKeyword,
+              QuerySyntax.NumberKeyword,
+              searchNumber,
+            )
+          );
         }
         break;
       case 'Boolean':
         // Convert search to a boolean
-        queryCondition[key] = search === 'true';
+        // queryCondition[key] = search === 'true';
+
+        query.add(
+          query.nodeFactory.createCustomerAttributeExpressionNode(
+            key,
+            QuerySyntax.IContainKeyword,
+            QuerySyntax.BooleanKeyword,
+            search === 'true',
+          )
+        );
         break;
       // Handle other types as needed
       default:
         break;
     }
 
+    // TODO: db should be called once
+    const customerIds = await query
+          .limit(take)
+          .offset(skip)
+          // .order('created_at', createdAtSortType)
+          .ids(this.dataSource);
+
     const customers = await this.customersRepository.find({
-      where: queryCondition,
-      skip,
-      take: Math.min(take, 100),
+      where: {
+        id: In(customerIds)
+      },
       order: {
         created_at: createdAtSortType,
       },
     });
+
     return { data: customers, totalPages };
   }
 
@@ -643,8 +686,8 @@ export class CustomersService {
         */
         info.dataSource = 'people';
 
-        if (pk && person[pk.name]) {
-          info[pk.name] = person[pk.name];
+        if (pk) {
+          info[pk.name] = person.getUserAttribute(pk.name);
         }
 
         if (checkInSegment)

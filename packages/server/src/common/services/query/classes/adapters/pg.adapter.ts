@@ -65,6 +65,10 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
             NOW() AS "journeyEntryAt"
           FROM (${sql})
         `;
+    } else if(sql) {
+      sql += `ORDER BY ${query._order ?? 'id'} ${query._orderDirection ?? 'ASC'}\n`;
+      if (query._limit) sql += `LIMIT ${query._limit}\n;`
+      if (query._offset) sql += `OFFSET ${query._offset}\n;`
     }
 
     return sql;
@@ -106,7 +110,7 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
     flags: NodeFlags
   ): string {
     return `
-      SELECT id
+      SELECT *
       FROM customer
       WHERE workspace_id = '${context.workspace_id}'`;
     // let result = "";

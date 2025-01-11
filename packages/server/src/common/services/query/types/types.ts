@@ -20,7 +20,10 @@ export enum QuerySyntax {
   ExistKeyword                      = 'EXISTS',
   DoesNotExistKeyword               = 'NOT EXISTS',
   ContainKeyword                    = 'Contain',
+  IContainKeyword                   = 'IContain',
   DoesNotContainKeyword             = 'Not Contain',
+  IDoesNotContainKeyword            = 'INot Contain',
+  // TODO: use ContainKeyword with a modifier ::CaseInsensitive
    
   IsKeyword                         = 'IS',
   InKeyword                         = 'IN',
@@ -105,7 +108,7 @@ export enum QuerySyntax {
   PostgreSQL                        = 'PostgreSQL',
 }
 
-export const enum NodeFlags {
+export enum NodeFlags {
   None                      = 0,
   AddPercentToken           = 1 << 0,  // for LIKE and NOT LIKE
   UsePrefixOnly             = 1 << 1,  // for exists operator on jsonb
@@ -114,7 +117,7 @@ export const enum NodeFlags {
   CountQuery                = 1 << 4,  // For queries when we need the row count
 }
 
-export const enum QueryFlags {
+export enum QueryFlags {
   None                      = 0,
 
   // common
@@ -125,6 +128,7 @@ export const enum QueryFlags {
   FindOne                   = 1 << 10,
   FindAll                   = 1 << 11,
   Count                     = 1 << 13,
+  GetIDs                    = 1 << 14,
 
   // event CTE is required
   EventCTE                  = 1 << 20,
@@ -141,6 +145,8 @@ export type OperatorKind =
   | QuerySyntax.DoesNotExistKeyword
   | QuerySyntax.ContainKeyword
   | QuerySyntax.DoesNotContainKeyword
+  | QuerySyntax.IContainKeyword
+  | QuerySyntax.IDoesNotContainKeyword
   | QuerySyntax.IsKeyword
   | QuerySyntax.InKeyword
   | QuerySyntax.LikeKeyword
@@ -356,7 +362,7 @@ export interface QueryInterface {
   nodeFactory: NodeFactoryInterface;
   expression: LogicalExpressionInterface;
   context: QueryContext;
-  
+
   // Conversions
   to(format: QueryFormat);
   toSQL(): string;
@@ -378,6 +384,17 @@ export interface QueryInterface {
   getRootExpression(): LogicalExpressionInterface;
   getTopLevelExpressions(): LogicalExpressionInterface["expressions"];
   getOperator(): LogicalExpressionInterface["operator"];
+
+  // queries
+  findOne(dataSource);
+  findAll(dataSource);
+  count(dataSource);
+  execute(dataSource);
+  ids(dataSource);
+
+  limit(limit: number): QueryInterface;
+  offset(offset: number): QueryInterface;
+  order(order: string, direction?: string): QueryInterface;
 }
 
 export interface QueryExecuterInterface {
@@ -451,12 +468,12 @@ export type QueryAdapterSupportedType = any;
 //   | Record<string, any>
 //   | string;
 
-// export const enum QueryPreparerFlags {
+// export enum QueryPreparerFlags {
 //   None                      = 0,
 //   IsCountQuery              = 1 << 0,  // COUNT(*)
 // }
 
-export const enum QueryResolverFlags {
+export enum QueryResolverFlags {
   None                      = 0,
   IsCountQuery              = 1 << 0,  // COUNT(*)
 }
@@ -559,4 +576,9 @@ export interface QueryData {
   condition: string;
 
 
+}
+
+export enum QueryOrderDirection {
+  ASC = 'ASC',
+  DESC = 'DESC',
 }
