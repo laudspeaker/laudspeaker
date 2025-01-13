@@ -4,11 +4,8 @@ import { toast } from "react-toastify";
 import { JourneyType, setIsStarting } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import { useAppDispatch, useAppSelector } from "store/hooks";
-import Button, {
-  ButtonType,
-} from "../../../components/Elements/Buttonv2/Button";
-import FlowBuilderModal from "../Elements/FlowBuilderModal";
 import posthog from "posthog-js";
+import ConfirmationModal from "components/Elements/ConfirmationModal";
 
 interface FlowBuilderStartModalProps {
   isOpen: boolean;
@@ -95,37 +92,23 @@ const FlowBuilderStartModal: FC<FlowBuilderStartModalProps> = ({
     dispatch(setIsStarting(false));
   };
 
-  return (
-    <FlowBuilderModal isOpen={isOpen} onClose={onClose}>
-      <div className="font-roboto">
-        <div className="flex gap-4">
-          <div className="flex flex-col gap-2">
-            <div className="font-medium text-base">
-              Are you sure to start the journey?
-            </div>
-            <div className="font-normal text-[14px] leading-[22px]">
-              Once you start, eligible customers can be messaged.
-            </div>
-          </div>
-        </div>
-        <div className="flex justify-end items-center mt-[24px] gap-2">
-          <Button type={ButtonType.SECONDARY} onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            type={ButtonType.PRIMARY}
-            onClick={() => {
-              handleStartJourney();
-              onClose();
-            }}
-            id="journey-start-verify-button"
-          >
-            Start
-          </Button>
-        </div>
-      </div>
-    </FlowBuilderModal>
-  );
+  const ModalProps = {
+    title: "Are you sure to publish the journey?",
+    description:
+      "Once you publish, the journey will be active and eligible customers can be messaged",
+    onClose: onClose,
+    isOpen,
+    closeButtonText: "Cancel",
+    confirmButtonText: "Publish",
+    closeButtonAction: onClose,
+    confirmButtonAction: () => {
+      handleStartJourney();
+      onClose();
+    },
+    confirmButtonId: "journey-start-verify-button",
+  };
+
+  return <ConfirmationModal {...ModalProps} />;
 };
 
 export default FlowBuilderStartModal;
