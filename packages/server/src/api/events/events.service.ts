@@ -976,6 +976,11 @@ export class EventsService {
     account: Account
   ) {
 
+    // event might not have a correlation value
+    // need to filter identify call
+    if (!correlationValue)
+        return;
+
     let updateResult;
 
     // Step 1: Check if the customer's _id is not equal to the given correlation value
@@ -1137,7 +1142,7 @@ export class EventsService {
       }
     }
 
-    if (customer.uuid !== event.correlationValue) {
+    if (event.correlationValue && (customer.uuid !== event.correlationValue)) {
       await this.deduplication(
         customer,
         event.correlationValue,

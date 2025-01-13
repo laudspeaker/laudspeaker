@@ -1,7 +1,7 @@
 import "@4tw/cypress-drag-drop";
 export const setupOrganization = (name: string, timezone: string) => {
   cy.visit("/");
-  cy.wait(10000);
+  cy.wait(1000);
   // Check the URL and conditionally wait
   cy.url().then((url) => {
     if (/\/payment-gate|\/verification/.test(url)) {
