@@ -544,7 +544,7 @@ export class JourneyLocationsService {
       stream = await queryRunner.manager
         .createQueryBuilder(JourneyLocation, 'journeyLocation')
         .leftJoinAndSelect('journeyLocation.step', 'step') // Correct join statement
-        .where('journeyLocation.journeyId = :journeyId', {
+        .where('journeyLocation.journey_id = :journeyId', {
           journeyId: journey.id,
         })
         .andWhere('journeyLocation.moveStarted IS NULL')
@@ -565,7 +565,7 @@ export class JourneyLocationsService {
       stream = await this.journeyLocationsRepository
         .createQueryBuilder('journeyLocation')
         .leftJoinAndSelect('journeyLocation.step', 'step') // Correct join statement
-        .where('journeyLocation.journeyId = :journeyId', {
+        .where('journeyLocation.journey_id = :journeyId', {
           journeyId: journey.id,
         })
         .andWhere('journeyLocation.moveStarted IS NULL')
@@ -903,7 +903,7 @@ export class JourneyLocationsService {
       .getRawMany();
 
     for (const row of resultSet) {
-      ret[row.journeyId] = +row.count;
+      ret[row.journey_id] = +row.count;
     }
 
     return ret;
