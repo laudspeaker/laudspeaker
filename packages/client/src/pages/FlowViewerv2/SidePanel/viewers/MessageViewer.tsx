@@ -18,6 +18,7 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
   const [pickedStat, setPickedStat] = useState<keyof Stats | undefined>(
     fixtures.statsToShow?.[0].key
   );
+  const [customersCount, setCustomersCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [statCustomers, setStatCustomers] = useState<
@@ -31,9 +32,10 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
     if (!pickedStat || !nodeData.stepId) return;
 
     const {
-      data: { data, totalPages: pagesCount },
+      data: { data, totalCustomers, totalPages: pagesCount },
     } = await ApiService.get<{
       data: { id: string; email?: string }[];
+      totalCustomers: number;
       totalPages: number;
     }>({
       url: `/customers/stats-from-step?event=${pickedStat}&stepId=${
@@ -42,6 +44,7 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
     });
 
     setStatCustomers(data || []);
+    setCustomersCount(totalCustomers || 0);
     setTotalPages(pagesCount || 1);
   };
 
@@ -109,7 +112,7 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
               <div className="font-semibold w-full">Email</div>
             </div>
             <div className="py-[10px]">
-              {statCustomers?.map((customer, i) => (
+              {/*statCustomers?.map((customer, i) => (
                 <div
                   key={i}
                   className="py-[11px] flex justify-between gap-[30px] font-inter font-normal text-[14px] leading-[22px] border-b-[1px] border-[#E5E7EB]"
@@ -124,8 +127,8 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
                     {customer.email}
                   </div>
                 </div>
-              ))}
-              {!statCustomers.length && (
+              ))*/}
+              {customersCount == 0 && (
                 <p className="py-3 block border-b mb-5 font-inter text-gray-600">
                   0 emails sent
                 </p>

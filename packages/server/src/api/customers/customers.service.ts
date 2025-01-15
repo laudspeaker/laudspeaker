@@ -1626,32 +1626,39 @@ export class CustomersService {
 
     if (eventsMap[event] && stepId) {
       const customersCountResponse = await this.clickhouseClient.query({
-        query: `SELECT COUNT(DISTINCT(customerId)) FROM ${ClickHouseTable.MESSAGE_STATUS} WHERE stepId = {stepId:UUID} AND event = {event:String}`,
+        query: `SELECT COUNT(DISTINCT(customerId)) AS count FROM ${ClickHouseTable.MESSAGE_STATUS} WHERE stepId = {stepId:UUID} AND event = {event:String}`,
         query_params: { stepId, event: eventsMap[event] },
       });
       const customersCountResponseData = (
-        await customersCountResponse.json<{ 'count()': string }>()
+        await customersCountResponse.json<{ 'count': string }>()
       )?.data;
-      const customersCount = +customersCountResponseData?.[0]?.['count()'] || 1;
+      const totalCustomers = +customersCountResponseData?.[0]?.['count'];
 
-      const totalPages = Math.ceil(customersCount / take);
+      const totalPages = 1;
 
-      const response = await this.clickhouseClient.query({
-        query: `SELECT DISTINCT(customerId) FROM ${ClickHouseTable.MESSAGE_STATUS} WHERE stepId = {stepId:UUID} AND event = {event:String} ORDER BY createdAt LIMIT {take:Int32} OFFSET {skip:Int32}`,
-        query_params: { stepId, event: eventsMap[event], take, skip },
-      });
-      const data = (await response.json<{ customerId: string }>())
-        ?.data;
-      const customerIds = data?.map((item) => item.customerId) || [];
+      // const totalPages = Math.ceil(totalCustomers / take);
+
+      // const response = await this.clickhouseClient.query({
+      //   query: `SELECT DISTINCT(customerId) FROM ${ClickHouseTable.MESSAGE_STATUS} WHERE stepId = {stepId:UUID} AND event = {event:String} ORDER BY createdAt LIMIT {take:Int32} OFFSET {skip:Int32}`,
+      //   query_params: { stepId, event: eventsMap[event], take, skip },
+      // });
+      // const data = (await response.json<{ customerId: string }>())
+      //   ?.data;
+      // const customerIds = data?.map((item) => item.customerId) || [];
+
+      // TODO: fix
+      // const customers = await Promise.all(
+      //     customerIds.map(async (id) => ({
+      //       ...(await this.findByCustomerId(account, id)),
+      //       id,
+      //     }))
+      //   );
+      const customers = [];
 
       return {
+        data: customers,
+        totalCustomers,
         totalPages,
-        data: await Promise.all(
-          customerIds.map(async (id) => ({
-            ...(await this.findByCustomerId(account, id)),
-            id,
-          }))
-        ),
       };
     }
   }
