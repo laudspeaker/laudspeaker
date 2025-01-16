@@ -63,7 +63,7 @@ export class Customers1724873583654 implements MigrationInterface {
           columnNames: ["workspace_id"],
           referencedColumnNames: ["id"],
           referencedTableName: "workspaces",
-          onDelete: "RESTRICT",
+          onDelete: "CASCADE",
       })
     );
 
