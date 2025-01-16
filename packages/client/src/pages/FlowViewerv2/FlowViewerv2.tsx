@@ -328,7 +328,7 @@ const FlowViewerv2 = () => {
         />
       ),
     [FlowViewerTab.ACTIVITY_HISTORY]: <ActivityHistoryViewer id={id} />,
-    [FlowViewerTab.VERSION_DRAFT]: <VersionDraftViewer id={id} />,
+    [FlowViewerTab.VERSION_DRAFT]: <VersionDraftViewer />,
   };
 
   useEffect(() => {

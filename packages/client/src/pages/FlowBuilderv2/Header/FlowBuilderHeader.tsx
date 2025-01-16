@@ -29,6 +29,7 @@ import useVersions from "hooks/useVersions";
 import { format } from "date-fns";
 import { TickIcon } from "../Icons";
 import { useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 // TODO: update validation for new types
 const isValidNodes = (nodes: Node<NodeData | EdgeData>[]): boolean => {
@@ -74,6 +75,7 @@ const FlowBuilderHeader: FC<FlowBuilderHeaderInterface> = ({
   const dispatch = useAppDispatch();
   const versions = useVersions();
   const location = useLocation();
+  const { id } = useParams();
   const isFromVersions = location.state?.isFromVersions;
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [isErrorNextModalOpen, setIsErrorNextModalOpen] = useState(false);
@@ -93,17 +95,15 @@ const FlowBuilderHeader: FC<FlowBuilderHeaderInterface> = ({
     isStarting,
   } = useAppSelector((state) => state.flowBuilder);
 
-  const currentVersion = versions.find(
-    (version) => `${version.uuid}` === flowId
-  );
-
   const [selectedVersion, setSelectedVersion] = useState<string>("");
 
   useEffect(() => {
+    const currentVersion = versions.find((version) => `${version.uuid}` === id);
+
     if (currentVersion && !selectedVersion.length) {
       setSelectedVersion(currentVersion?.name);
     }
-  }, [currentVersion]);
+  }, [id]);
 
   const handleNextStep = () => {
     if (
@@ -209,10 +209,7 @@ const FlowBuilderHeader: FC<FlowBuilderHeaderInterface> = ({
           isOpen={isStartModalOpen}
           onClose={() => setIsStartModalOpen(false)}
         />
-      </div>
-      {devModeState.status === ConnectionStatus.Disabled && !isFromVersions && (
-        <FlowBuilderStepper />
-      )}
+      </div>{" "}
       {isFromVersions && (
         <div className="justify-center">
           <Select
@@ -220,20 +217,27 @@ const FlowBuilderHeader: FC<FlowBuilderHeaderInterface> = ({
             options={versionsOptions}
             value={selectedVersion}
             onChange={(value) => {
-              const newVersionId = versions.find(
+              const newVersion = versions.find(
                 (version) => version.name === value
-              )?.uuid;
+              );
+              const newVersionId = newVersion?.uuid;
               setSelectedVersion(value);
-              if (newVersionId)
+
+              if (newVersion?.name === "Draft") {
                 navigate(`/flow/${newVersionId}`, {
                   state: { isFromVersions: true },
                 });
+              } else if (newVersionId) {
+                navigate(`/flow/${newVersionId}/review-version`);
+              }
             }}
             renderCustomOption={renderCustomOption}
           />
         </div>
       )}
-
+      {devModeState.status === ConnectionStatus.Disabled && (
+        <FlowBuilderStepper />
+      )}
       {!isViewMode &&
         (devModeState.status === ConnectionStatus.ShowPreview ||
           devModeState.status === ConnectionStatus.Connecting ||

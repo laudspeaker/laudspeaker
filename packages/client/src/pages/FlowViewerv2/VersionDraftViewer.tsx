@@ -5,6 +5,7 @@ import sortDescChevronsImage from "./svg/sort-desc-chevrons.svg";
 import sortNoneChevronsImage from "./svg/sort-none-chevrons.svg";
 import { format } from "date-fns";
 import useVersions from "hooks/useVersions";
+import { useNavigate } from "react-router-dom";
 
 enum SortProperty {
   STATUS = "status",
@@ -21,17 +22,27 @@ interface SortOptions {
   sortType: SortType;
 }
 
-interface VersionDraftViewerInterface {
-  id: any;
-}
-
-const VersionDraftViewer: FC<VersionDraftViewerInterface> = ({ id }) => {
+const VersionDraftViewer = () => {
+  const navigate = useNavigate();
   const [sortOptions, setSortOptions] = useState<SortOptions>({
     sortBy: SortProperty.LAST_UPDATE,
     sortType: SortType.DESC,
   });
 
-  const mockVersions = useVersions();
+  const versions = useVersions();
+
+  const handleGoToVersion = (id: string) => {
+    const newVersion = versions.find((version) => version.uuid === id);
+    const newVersionId = newVersion?.uuid;
+
+    if (newVersion?.name === "Draft") {
+      navigate(`/flow/${newVersionId}`, {
+        state: { isFromVersions: true },
+      });
+    } else if (newVersionId) {
+      navigate(`/flow/${newVersionId}/review-version`);
+    }
+  };
 
   return (
     <>
@@ -85,10 +96,22 @@ const VersionDraftViewer: FC<VersionDraftViewerInterface> = ({ id }) => {
               </div>,
               <div className="px-5 py-[10px] select-none"></div>,
             ]}
-            rowsData={mockVersions}
-            rows={mockVersions.map((row) => [
-              <div className="text-[#6366F1]">{row.name}</div>,
-              <div>{format(new Date(row.created_at), "MM/dd/yyyy HH:mm")}</div>,
+            rowsData={versions}
+            rows={versions.map((row) => [
+              <button
+                className="w-full text-left"
+                onClick={() => handleGoToVersion(row.uuid)}
+              >
+                <div className="text-[#6366F1]">{row.name}</div>,
+              </button>,
+              <button
+                className="w-full"
+                onClick={() => handleGoToVersion(row.uuid)}
+              >
+                <div>
+                  {format(new Date(row.created_at), "MM/dd/yyyy HH:mm")}
+                </div>
+              </button>,
             ])}
           />
         </div>
