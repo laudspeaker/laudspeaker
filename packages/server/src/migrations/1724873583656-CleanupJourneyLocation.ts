@@ -18,7 +18,7 @@ export class CleanupJourneyLocation1724873583656 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "journey_location" ADD "step_id" uuid`);
         await queryRunner.query(`ALTER TABLE "journey_location" ADD "workspace_id" uuid`);
         await queryRunner.query(`ALTER TABLE "journey_location" ADD CONSTRAINT "FK_6dd84d27b4e203a66b7aff45d9f" FOREIGN KEY ("journey_id") REFERENCES "journey"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "journey_location" ADD CONSTRAINT "FK_190c49d199d8c0cade64abc54bb" FOREIGN KEY ("customer_id") REFERENCES "customer"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "journey_location" ADD CONSTRAINT "FK_190c49d199d8c0cade64abc54bb" FOREIGN KEY ("customer_id") REFERENCES "customers"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "journey_location" ADD CONSTRAINT "FK_96fb114557669644999b3a58da3" FOREIGN KEY ("step_id") REFERENCES "step"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "journey_location" ADD CONSTRAINT "FK_65945df8ff379d8cb7b74d0d896" FOREIGN KEY ("workspace_id") REFERENCES "workspaces"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
     }

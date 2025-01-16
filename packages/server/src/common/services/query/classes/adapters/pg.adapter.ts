@@ -17,6 +17,7 @@ import {
   QueryFlags,
   ExpressionHelper,
   ExpressionWithLHSInterfaces,
+  PostgresTable,
 } from "../../";
 
 export class PostgreSQLAdapter extends QueryAdapterBase {
@@ -49,7 +50,7 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
         `;
     } else if (sql && query.flags & QueryFlags.InsertJourneyLocations) {
       sql = `
-        INSERT INTO journey_location
+        INSERT INTO ${PostgresTable.JOURNEY_LOCATION}
               ("journey_id", "customer_id", "step_id", "workspace_id","moveStarted",
                 "stepEntry", "journeyEntry", "stepEntryAt", "journeyEntryAt")
           SELECT
@@ -110,15 +111,15 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
   ): string {
     return `
       SELECT *
-      FROM customer
+      FROM ${PostgresTable.CUSTOMERS}
       WHERE workspace_id = '${context.workspace_id}'`;
     // let result = "";
 
     // // must return id as it could be nested
     // if (flags & NodeFlags.CountQuery)
-    //   result = `SELECT COUNT(id) AS count FROM customer`;
+    //   result = `SELECT COUNT(id) AS count FROM ${PostgresTable.CUSTOMERS}`;
     // else
-    //   result = `SELECT id FROM customer`
+    //   result = `SELECT id FROM ${PostgresTable.CUSTOMERS}`
 
     // return result;
   }
@@ -148,7 +149,7 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
     }
 
     result = `SELECT id
-      FROM customer
+      FROM ${PostgresTable.CUSTOMERS}
       WHERE
         (${result}) AND
         workspace_id = '${context.workspace_id}'
@@ -174,7 +175,7 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
 
     // const cteSQL = 
     //   `SELECT customer_id
-    //     FROM events
+    //     FROM ${PostgresTable.EVENTS}
     //     WHERE workspace_id = ?
     //       AND event = ?
     //       AND customer_id IS NOT NULL
@@ -283,7 +284,7 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
 
     const result = `
     SELECT id
-    FROM customer
+    FROM ${PostgresTable.CUSTOMERS}
     WHERE
       (${sql}) AND
       workspace_id = '${context.workspace_id}'
@@ -310,7 +311,7 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
         result = `
           WITH ${cteName} AS (
             SELECT customer_id
-            FROM events
+            FROM ${PostgresTable.EVENTS}
             WHERE
               workspace_id = '${context.workspace_id}' AND
               event = '${lhs}' AND
@@ -318,7 +319,7 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
             GROUP BY customer_id
             HAVING COUNT(*) >= ${rhs}
           )
-          select customer_id AS id FROM event_counts
+          select customer_id AS id FROM ${cteName}
           `;
         break;
       case QuerySyntax.HasNotPerformedKeyword:
