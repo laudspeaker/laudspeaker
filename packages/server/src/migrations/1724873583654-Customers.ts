@@ -60,10 +60,10 @@ export class Customers1724873583654 implements MigrationInterface {
     await queryRunner.createForeignKey(
       "customers",
       new TableForeignKey({
-          columnNames: ["workspace_id"],
-          referencedColumnNames: ["id"],
-          referencedTableName: "workspaces",
-          onDelete: "CASCADE",
+        columnNames: ["workspace_id"],
+        referencedColumnNames: ["id"],
+        referencedTableName: "workspaces",
+        onDelete: "CASCADE",
       })
     );
 

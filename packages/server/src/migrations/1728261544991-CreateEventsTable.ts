@@ -76,15 +76,15 @@ export class CreateEventsTable1728261544991 implements MigrationInterface {
       })
     );
 
-    await queryRunner.createForeignKey(
-      "events",
-      new TableForeignKey({
-          columnNames: ["customer_id"],
-          referencedColumnNames: ["id"],
-          referencedTableName: "customers",
-          onDelete: "NO ACTION",
-      })
-    );
+    // await queryRunner.createForeignKey(
+    //   "events",
+    //   new TableForeignKey({
+    //       columnNames: ["customer_id"],
+    //       referencedColumnNames: ["id"],
+    //       referencedTableName: "customers",
+    //       onDelete: "NO ACTION",
+    //   })
+    // );
 
     await queryRunner.createIndices(
       "events",
