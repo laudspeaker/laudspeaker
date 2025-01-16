@@ -79,6 +79,10 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
     context: QueryContext,
     flags: NodeFlags = NodeFlags.None
   ) {
+
+    if (!context.workspace_id)
+      throw new Error(`workspace_id is not set, query aborted`);
+    
     switch(node.kind) {
       case QuerySyntax.CustomerAttributeNode:
         return this.processAttributeNode(node as CustomerAttributeNodeInterface, flags);
