@@ -48,13 +48,13 @@ export class ClickHouseClient implements OnModuleDestroy {
     this.client = createClient(options);
   }
 
-  query<Format extends DataFormat = 'JSON'>(
+  async query<Format extends DataFormat = 'JSON'>(
     params: QueryParamsWithFormat<Format>,
   ): Promise<QueryResult<Format>> {
     return this.client.query(params) as Promise<ResultSet<Format>>
   }
 
-  insert(
+  async insert(
     params: InsertParams
   ): Promise<InsertResult> {
     const options = params.clickhouse_settings ?? {};
@@ -70,7 +70,7 @@ export class ClickHouseClient implements OnModuleDestroy {
     return this.client.insert(params);
   }
 
-  insertAsync(
+  async insertAsync(
     params: InsertParams
   ): Promise<InsertResult> {
     const insertParams: InsertParams = {

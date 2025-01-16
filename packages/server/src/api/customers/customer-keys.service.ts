@@ -159,14 +159,16 @@ export class CustomerKeysService {
         where: {
           workspace: { id: workspaceId },
           name: keyName,
-        }
+        },
+        relations: ['attribute_type', 'attribute_parameter'],
       });
     } else {
       return await this.customerKeysRepository.findOne({
         where: {
           workspace: { id: workspaceId },
           name: keyName,
-        }
+        },
+        relations: ['attribute_type', 'attribute_parameter'],
       });
     }
   }

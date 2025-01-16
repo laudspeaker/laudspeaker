@@ -12,6 +12,7 @@ import {
   ExpressionInterfaceType,
   QueryFlags,
   QueryExecuter,
+  QueryOrderDirection,
 } from "../";
 
 export class Query implements QueryInterface {
@@ -24,6 +25,14 @@ export class Query implements QueryInterface {
 
   // flags modify the behaviour of the queue
   flags = QueryFlags.None;
+
+  _select = [];
+  _from = [];
+  _ctes = [];
+  _order = null;
+  _orderDirection = QueryOrderDirection.ASC;
+  _limit = null;
+  _offset = null;
 
   constructor(context?: QueryContext) {
     this.expression = this.nodeFactory.createLogicalExpression();
@@ -110,13 +119,20 @@ export class Query implements QueryInterface {
     return await this.execute(dataSource);
   }
 
-  // TODO: could be confused with statements.count or getRowCount()
+  // return an array of ids
+  async ids(dataSource) {
+    this.setFindFlags([
+      QueryFlags.GetIDs,
+    ]);
+
+    return await this.execute(dataSource);
+  }
+
   async count(dataSource) {
     this.setFindFlags([QueryFlags.Count]);
 
     return await this.execute(dataSource);
   }
-
 
   // methods to insert the query into a specific table
   async createJourneyLocationsFromQuery(dataSource) {
@@ -127,13 +143,30 @@ export class Query implements QueryInterface {
     await this.execute(dataSource);
   }
 
-
   async execute(dataSource) {
     const executer = new QueryExecuter();
 
     return executer.execute(this, dataSource);
   }
 
+  limit(limit: number): QueryInterface {
+    this._limit = limit;
+
+    return this;
+  }
+
+  offset(offset: number): QueryInterface {
+    this._offset = offset;
+
+    return this;
+  }
+
+  order(order: string, direction: string): QueryInterface {
+    this._order = order;
+    this._orderDirection = direction == 'DESC' ? QueryOrderDirection.DESC : QueryOrderDirection.ASC;
+
+    return this;
+  }
 
   private setOperator(operator: LogicalExpressionOperatorKind) {
     this.nodeFactory.updateExpressionOperator(this.expression, operator);
@@ -152,6 +185,8 @@ export class Query implements QueryInterface {
   }
 
   private setFindFlags(flags: QueryFlags[]) {
+    this.resetFindFlags();
+
     // common find & query flags
     const findFlags: QueryFlags[] = [
       QueryFlags.FindQuery,
@@ -163,9 +198,23 @@ export class Query implements QueryInterface {
     ]);
   }
 
+  private resetFindFlags() {
+    this.resetFlags([
+      QueryFlags.FindQuery,
+      QueryFlags.FindOne,
+      QueryFlags.FindAll,
+      QueryFlags.Count,
+    ]);
+  }
+
   private setFlags(flags: QueryFlags[]) {
     for (const flag of flags)
       this.flags |= flag;
+  }
+
+  private resetFlags(flags: QueryFlags[]) {
+    for (const flag of flags)
+      this.flags &= ~flag;
   }
 }
 

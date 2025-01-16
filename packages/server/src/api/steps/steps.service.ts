@@ -189,7 +189,7 @@ export class StepsService {
           step: startStep[0],
           journey,
           session: session,
-          query,
+          queryJSON,
           skip: 0,
           limit: nCustomers,
         },
