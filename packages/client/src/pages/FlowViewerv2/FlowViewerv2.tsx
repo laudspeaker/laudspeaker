@@ -42,6 +42,7 @@ import JourneyEntrySettingsViewer from "./JourneyEntrySettingsViewer";
 import JourneySettingsViewer from "./JourneySettingsViewer";
 import ActivityHistoryViewer from "./ActivityHistoryViewer";
 import FlowBuilderOverview from "./FlowViewerOverview";
+import VersionDraftViewer from "./VersionDraftViewer";
 
 export enum FlowViewerTab {
   OVERVIEW = "Overview",
@@ -49,6 +50,7 @@ export enum FlowViewerTab {
   ENTRY = "Entry",
   SETTINGS = "Settings",
   ACTIVITY_HISTORY = "Activity history",
+  VERSION_DRAFT = "Version & draft",
 }
 
 const nodesToLoadCustomerCount: NodeType[] = [
@@ -326,6 +328,7 @@ const FlowViewerv2 = () => {
         />
       ),
     [FlowViewerTab.ACTIVITY_HISTORY]: <ActivityHistoryViewer id={id} />,
+    [FlowViewerTab.VERSION_DRAFT]: <VersionDraftViewer id={id} />,
   };
 
   useEffect(() => {

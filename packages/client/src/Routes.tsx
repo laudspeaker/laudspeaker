@@ -60,6 +60,7 @@ import SegmentViewer from "pages/SegmentViewer";
 import DataTransferTable from "pages/DataTransferTable";
 import DataTransfer from "pages/DataTransfer";
 import SubscriptionPayment from "pages/SubscriptionPayment/SubscriptionPayment";
+import VersionViewer from "pages/FlowViewerv2/VersionViewer";
 
 interface IProtected {
   children: ReactElement;
@@ -441,6 +442,24 @@ const RouteComponent: React.FC = () => {
                   ]}
                 >
                   <FlowViewerv2 />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/flow/:id/review-version"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout
+                  expandable
+                  crumbs={[
+                    { text: "Journey builder", link: "/flow" },
+                    { text: "Review version" },
+                  ]}
+                >
+                  <VersionViewer />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>

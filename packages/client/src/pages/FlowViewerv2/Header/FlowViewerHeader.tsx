@@ -8,6 +8,10 @@ import ApiService from "services/api.service";
 import { useAppSelector } from "store/hooks";
 import { FlowViewerTab } from "../FlowViewerv2";
 import FlowViewerStopModal from "../Modals/FlowViewerStopModal";
+import { useNavigate } from "react-router-dom";
+import FlowBuilderEditDraftModal from "pages/FlowBuilderv2/Modals/FlowBuilderEditDraft";
+import NameJourneyModal from "pages/JourneyTablev2/Modals/NameJourneyModal";
+import useVersions from "hooks/useVersions";
 
 interface FlowViewerHeaderProps {
   tabs: Record<FlowViewerTab, React.ReactNode>;
@@ -23,8 +27,13 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
   const { flowName, flowId, flowStatus } = useAppSelector(
     (state) => state.flowBuilder
   );
+  const versions = useVersions();
+  const currentVersion = versions[0]?.uuid;
+  const navigate = useNavigate();
 
   const [isStopModalOpen, setIsStopModalOpen] = useState(false);
+  const [isEditDraftModalOpen, setIsEditDraftModalOpen] = useState(false);
+  const [isNameJourneyModalOpen, setIsNameJourneyModalOpen] = useState(false);
 
   const handleResume = async () => {
     await ApiService.patch({ url: "/journeys/resume/" + flowId });
@@ -36,6 +45,21 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
     await ApiService.patch({ url: "/journeys/pause/" + flowId });
 
     window.location.reload();
+  };
+
+  const handleEdit = () => {
+    setIsEditDraftModalOpen(true);
+  };
+
+  const handleContinueEditingClick = () => {
+    navigate(`/flow/${currentVersion}`, {
+      state: { isFromVersions: true },
+    });
+  };
+
+  const handleCreateNewDraft = () => {
+    setIsEditDraftModalOpen(false);
+    setIsNameJourneyModalOpen(true);
   };
 
   return (
@@ -51,27 +75,35 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
             {flowStatus}
           </div>
         </div>
-        {flowStatus !== JourneyStatus.STOPPED &&
-          flowStatus !== JourneyStatus.DELETED && (
-            <div className="flex items-center gap-[10px] font-roboto">
-              {flowStatus === JourneyStatus.PAUSED ? (
-                <Button type={ButtonType.PRIMARY} onClick={handleResume}>
-                  Resume
+        <div className="flex items-center gap-[10px] font-roboto">
+          <Button
+            type={ButtonType.SECONDARY_GREY}
+            onClick={handleEdit}
+            className="font-roboto"
+          >
+            Edit
+          </Button>
+          {flowStatus !== JourneyStatus.STOPPED &&
+            flowStatus !== JourneyStatus.DELETED && (
+              <>
+                {flowStatus === JourneyStatus.PAUSED ? (
+                  <Button type={ButtonType.PRIMARY} onClick={handleResume}>
+                    Resume
+                  </Button>
+                ) : (
+                  <Button type={ButtonType.SECONDARY} onClick={handlePause}>
+                    Pause
+                  </Button>
+                )}
+                <Button
+                  type={ButtonType.DANGEROUS}
+                  onClick={() => setIsStopModalOpen(true)}
+                >
+                  Stop
                 </Button>
-              ) : (
-                <Button type={ButtonType.SECONDARY} onClick={handlePause}>
-                  Pause
-                </Button>
-              )}
-
-              <Button
-                type={ButtonType.DANGEROUS}
-                onClick={() => setIsStopModalOpen(true)}
-              >
-                Stop
-              </Button>
-            </div>
-          )}
+              </>
+            )}
+        </div>
       </div>
       <div className="px-5 flex gap-[32px] font-roboto font-normal text-[14px] leading-[22px]">
         {(Object.keys(tabs) as FlowViewerTab[]).map((tabKey, i) => (
@@ -91,6 +123,16 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
       <FlowViewerStopModal
         isOpen={isStopModalOpen}
         onClose={() => setIsStopModalOpen(false)}
+      />
+      <FlowBuilderEditDraftModal
+        isOpen={isEditDraftModalOpen}
+        onClose={() => setIsEditDraftModalOpen(false)}
+        onConfirm={handleContinueEditingClick}
+        onCancel={handleCreateNewDraft}
+      />
+      <NameJourneyModal
+        isOpen={isNameJourneyModalOpen}
+        onClose={() => setIsNameJourneyModalOpen(false)}
       />
     </div>
   );
