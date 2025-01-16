@@ -11,7 +11,6 @@ import {
   Query,
   QuerySyntax,
   QueryContext,
-  // QueryData,
   TernaryExpressionInterface,
   UnaryExpressionInterface,
   ValueNodeInterface,
@@ -67,7 +66,7 @@ export class PostgreSQLAdapter extends QueryAdapterBase {
         `;
     } else if(sql) {
       sql += `ORDER BY ${query._order ?? 'id'} ${query._orderDirection ?? 'ASC'}\n`;
-      if (query._limit) sql += `LIMIT ${query._limit}\n;`
+      if (query._limit) sql += `LIMIT ${query._limit}\n`
       if (query._offset) sql += `OFFSET ${query._offset}\n;`
     }
 
