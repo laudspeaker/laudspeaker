@@ -1,4 +1,4 @@
-import React, { useState, FC, useEffect } from "react";
+import React, { useState, FC } from "react";
 import {
   ConnectionStatus,
   handleDevModeState,
@@ -24,13 +24,9 @@ import posthog from "posthog-js";
 import { useNavigate } from "react-router-dom";
 import { FlowBuilderDevModeModal } from "../Modals/FlowBuilderDevModeModal";
 import { useDevSocketConnection } from "../useDevSocketConnection";
-import Select from "components/Elements/Selectv2";
-import useVersions from "hooks/useVersions";
-import { format } from "date-fns";
-import { TickIcon } from "../Icons";
 import { useLocation } from "react-router-dom";
-import { useParams } from "react-router-dom";
 import PublishVersionModal from "../Modals/PublishVersionModal";
+import VersionsSelect from "components/VersionsSelect";
 
 // TODO: update validation for new types
 const isValidNodes = (nodes: Node<NodeData | EdgeData>[]): boolean => {
@@ -74,9 +70,7 @@ const FlowBuilderHeader: FC<FlowBuilderHeaderInterface> = ({
   handleSaveLayout,
 }) => {
   const dispatch = useAppDispatch();
-  const versions = useVersions();
   const location = useLocation();
-  const { id } = useParams();
   const isFromVersions = location.state?.isFromVersions;
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [isErrorNextModalOpen, setIsErrorNextModalOpen] = useState(false);
@@ -95,16 +89,6 @@ const FlowBuilderHeader: FC<FlowBuilderHeaderInterface> = ({
     segmentQueryErrors,
     isStarting,
   } = useAppSelector((state) => state.flowBuilder);
-
-  const [selectedVersion, setSelectedVersion] = useState<string>("");
-
-  useEffect(() => {
-    const currentVersion = versions.find((version) => `${version.uuid}` === id);
-
-    if (currentVersion && !selectedVersion.length) {
-      setSelectedVersion(currentVersion?.name);
-    }
-  }, [id]);
 
   const handleNextStep = () => {
     if (
@@ -136,35 +120,6 @@ const FlowBuilderHeader: FC<FlowBuilderHeaderInterface> = ({
 
   const handlePreviousStep = () => {
     dispatch(setStepperIndex((stepperIndex - 1) as 1 | 2 | 3));
-  };
-
-  const versionsOptions = versions.map((version) => {
-    return {
-      key: version.name,
-      title: version.name,
-      additionalData: format(new Date(version.created_at), "dd MMM, hh:mm a"),
-    };
-  });
-
-  const renderCustomOption = (
-    props: any,
-    additionalData: string | undefined
-  ) => {
-    const title = props["data-option"];
-    return (
-      <div
-        {...props}
-        className="flex flex-row items-center px-[20px] py-[10px] min-w-[200px] justify-between"
-      >
-        <div>
-          {title}
-          {!!additionalData && (
-            <div className="text-[12px] text-[#4B5563]">{additionalData}</div>
-          )}
-        </div>
-        {selectedVersion === title && <TickIcon />}
-      </div>
-    );
   };
 
   return (
@@ -218,31 +173,7 @@ const FlowBuilderHeader: FC<FlowBuilderHeaderInterface> = ({
           />
         )}
       </div>
-      {isFromVersions && (
-        <div className="justify-center">
-          <Select
-            className="border-transparent"
-            options={versionsOptions}
-            value={selectedVersion}
-            onChange={(value) => {
-              const newVersion = versions.find(
-                (version) => version.name === value
-              );
-              const newVersionId = newVersion?.uuid;
-              setSelectedVersion(value);
-
-              if (newVersion?.name === "Draft") {
-                navigate(`/flow/${newVersionId}`, {
-                  state: { isFromVersions: true },
-                });
-              } else if (newVersionId) {
-                navigate(`/flow/${newVersionId}/review-version`);
-              }
-            }}
-            renderCustomOption={renderCustomOption}
-          />
-        </div>
-      )}
+      {isFromVersions && <VersionsSelect />}
       {devModeState.status === ConnectionStatus.Disabled && (
         <FlowBuilderStepper />
       )}

@@ -22,12 +22,10 @@ import { Edge, Node } from "reactflow";
 import ApiService from "services/api.service";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import useVersions from "hooks/useVersions";
-import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { TickIcon } from "pages/FlowBuilderv2/Icons";
-import Select from "components/Elements/Selectv2";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import RestoreVersionModal from "pages/FlowBuilderv2/Modals/RestoreVersionModal";
+import VersionsSelect from "components/VersionsSelect";
 
 const nodesToLoadCustomerCount: NodeType[] = [
   NodeType.WAIT_UNTIL,
@@ -45,9 +43,7 @@ const VersionViewer = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const { flowId, flowName, isStarting } = useAppSelector(
-    (state) => state.flowBuilder
-  );
+  const { flowName, isStarting } = useAppSelector((state) => state.flowBuilder);
 
   useEffect(() => {
     const currentVersion = versions.find((version) => `${version.uuid}` === id);
@@ -178,35 +174,6 @@ const VersionViewer = () => {
     navigate("/flow");
   };
 
-  const versionsOptions = versions.map((version) => {
-    return {
-      key: version.name,
-      title: version.name,
-      additionalData: format(new Date(version.created_at), "dd MMM, hh:mm a"),
-    };
-  });
-
-  const renderCustomOption = (
-    props: any,
-    additionalData: string | undefined
-  ) => {
-    const title = props["data-option"];
-    return (
-      <div
-        {...props}
-        className="flex flex-row items-center px-[20px] py-[10px] min-w-[200px] justify-between"
-      >
-        <div>
-          {title}
-          {!!additionalData && (
-            <div className="text-[12px] text-[#4B5563]">{additionalData}</div>
-          )}
-        </div>
-        {selectedVersion === title && <TickIcon />}
-      </div>
-    );
-  };
-
   useEffect(() => {
     loadJourney();
   }, [id]);
@@ -241,29 +208,7 @@ const VersionViewer = () => {
           />
         </div>
 
-        <div className="justify-center">
-          <Select
-            className="border-transparent"
-            options={versionsOptions}
-            value={selectedVersion}
-            onChange={(value) => {
-              const newVersion = versions.find(
-                (version) => version.name === value
-              );
-              const newVersionId = newVersion?.uuid;
-              setSelectedVersion(value);
-
-              if (newVersion?.name === "Draft") {
-                navigate(`/flow/${newVersionId}`, {
-                  state: { isFromVersions: true },
-                });
-              } else if (newVersionId) {
-                navigate(`/flow/${newVersionId}/review-version`);
-              }
-            }}
-            renderCustomOption={renderCustomOption}
-          />
-        </div>
+        <VersionsSelect />
 
         <div className="flex">
           <Button
