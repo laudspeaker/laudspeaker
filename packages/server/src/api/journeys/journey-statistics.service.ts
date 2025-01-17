@@ -346,7 +346,7 @@ export class JourneyStatisticsService extends BaseLaudspeakerService {
       await this.journeyLocationsService.journeyLocationsRepository
         .createQueryBuilder('location')
         .where({
-          journey: this.journey.id,
+          journey_id: this.journey.id,
           journeyEntryAt: Between(
             this.startTime.toISOString(),
             this.endTime.toISOString()
@@ -384,9 +384,9 @@ export class JourneyStatisticsService extends BaseLaudspeakerService {
       await this.journeyLocationsService.journeyLocationsRepository
         .createQueryBuilder('location')
         .where({
-          journey: this.journey.id,
+          journey_id: this.journey.id,
           stepEntryAt: Between(this.startTime.toISOString(), this.endTime.toISOString()),
-          step: In(terminalStepIds),
+          step_id: In(terminalStepIds),
         })
         .select([
           `date_trunc('${dbFrequency}', "journeyEntryAt") as "date"`,

@@ -15,7 +15,7 @@ export class CleanupSegmentCustomers1724873583657 implements MigrationInterface 
         await queryRunner.query(`ALTER TABLE "segment_customers" ADD CONSTRAINT "PK_1bd8e575c091b5244e4092d137b" PRIMARY KEY ("segment_id", "customer_id")`);
         await queryRunner.query(`ALTER TABLE "segment_customers" ADD "workspace_id" uuid`);
         await queryRunner.query(`ALTER TABLE "segment_customers" ADD CONSTRAINT "FK_eb1025f60108b402b6cb1d72b99" FOREIGN KEY ("segment_id") REFERENCES "segment"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "segment_customers" ADD CONSTRAINT "FK_68afa6461cf4fb7a19b48e86d30" FOREIGN KEY ("customer_id") REFERENCES "customer"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "segment_customers" ADD CONSTRAINT "FK_68afa6461cf4fb7a19b48e86d30" FOREIGN KEY ("customer_id") REFERENCES "customers"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "segment_customers" ADD CONSTRAINT "FK_c1142fceb3c0262c9fa75fb9290" FOREIGN KEY ("workspace_id") REFERENCES "workspaces"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
     }
 

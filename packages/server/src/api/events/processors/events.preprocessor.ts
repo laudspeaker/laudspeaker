@@ -269,7 +269,7 @@ export class EventsPreProcessor extends ProcessorBase {
         findType,
       }: { customer: Customer; findType: FindType } =
         await this.eventsService.findOrCreateCustomer(
-          job.data.workspace.id,
+          job.data.workspace,
           job.data.session,
           null,
           null,

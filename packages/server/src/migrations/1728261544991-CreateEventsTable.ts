@@ -81,7 +81,7 @@ export class CreateEventsTable1728261544991 implements MigrationInterface {
     //   new TableForeignKey({
     //       columnNames: ["customer_id"],
     //       referencedColumnNames: ["id"],
-    //       referencedTableName: "customer",
+    //       referencedTableName: "customers",
     //       onDelete: "NO ACTION",
     //   })
     // );

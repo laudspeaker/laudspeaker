@@ -10,7 +10,7 @@ import {
   Index,
 } from 'typeorm';
 
-@Entity({ name: 'customer' })
+@Entity({ name: 'customers' })
 export class Customer {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id: string;
