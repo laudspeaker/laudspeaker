@@ -24,7 +24,7 @@ const useVersions = () => {
     }
   };
 
-  //Enable when endpoint works
+  // // Enable when endpoint works
   // useEffect(() => {
   //   loadData();
   // }, []);

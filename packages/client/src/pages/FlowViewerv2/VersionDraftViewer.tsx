@@ -1,5 +1,5 @@
 import Table from "components/Tablev2";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import sortAscChevronsImage from "./svg/sort-asc-chevrons.svg";
 import sortDescChevronsImage from "./svg/sort-desc-chevrons.svg";
 import sortNoneChevronsImage from "./svg/sort-none-chevrons.svg";
@@ -24,12 +24,29 @@ interface SortOptions {
 
 const VersionDraftViewer = () => {
   const navigate = useNavigate();
-  const [sortOptions, setSortOptions] = useState<SortOptions>({
-    sortBy: SortProperty.LAST_UPDATE,
-    sortType: SortType.DESC,
-  });
+  const [sortType, setSortType] = useState<SortType>(SortType.DESC);
 
   const versions = useVersions();
+  const [sortedVersions, setSortedVersions] = useState(versions);
+
+  const sortVersions = () => {
+    const sortedVersionsByTime = [...versions].sort((a, b) => {
+      if (sortType === SortType.ASC) {
+        return (
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+      } else {
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      }
+    });
+    setSortedVersions(sortedVersionsByTime);
+  };
+
+  useEffect(() => {
+    sortVersions();
+  }, [versions, sortType]);
 
   const handleGoToVersion = (id: string) => {
     const newVersion = versions.find((version) => version.uuid === id);
@@ -57,62 +74,35 @@ const VersionDraftViewer = () => {
               <div
                 className="px-5 py-[10px] select-none flex gap-[2px] w-full items-center cursor-pointer"
                 onClick={() => {
-                  if (sortOptions.sortBy !== SortProperty.LAST_UPDATE) {
-                    setSortOptions({
-                      sortBy: SortProperty.LAST_UPDATE,
-                      sortType: SortType.DESC,
-                    });
-
+                  if (sortType === SortType.ASC) {
+                    setSortType(SortType.DESC);
                     return;
                   }
-
-                  if (sortOptions.sortType === SortType.ASC) {
-                    setSortOptions({
-                      sortBy: SortProperty.LAST_UPDATE,
-                      sortType: SortType.DESC,
-                    });
-
-                    return;
-                  }
-
-                  setSortOptions({
-                    sortBy: SortProperty.LAST_UPDATE,
-                    sortType: SortType.ASC,
-                  });
+                  setSortType(SortType.ASC);
                 }}
               >
                 <div>Created</div>
                 <div>
                   <img
                     src={
-                      sortOptions.sortBy === SortProperty.LAST_UPDATE
-                        ? sortOptions.sortType === SortType.ASC
-                          ? sortAscChevronsImage
-                          : sortDescChevronsImage
-                        : sortNoneChevronsImage
+                      sortType === SortType.ASC
+                        ? sortAscChevronsImage
+                        : sortDescChevronsImage
                     }
                   />
                 </div>
               </div>,
               <div className="px-5 py-[10px] select-none"></div>,
             ]}
-            rowsData={versions}
-            rows={versions.map((row) => [
-              <button
-                className="w-full text-left"
-                onClick={() => handleGoToVersion(row.uuid)}
-              >
-                <div className="text-[#6366F1]">{row.name}</div>,
-              </button>,
-              <button
-                className="w-full"
-                onClick={() => handleGoToVersion(row.uuid)}
-              >
-                <div>
-                  {format(new Date(row.created_at), "MM/dd/yyyy HH:mm")}
-                </div>
-              </button>,
+            rowsData={sortedVersions}
+            rows={sortedVersions.map((row) => [
+              <div className="text-[#6366F1]">{row.name}</div>,
+              <div className="w-full">
+                {format(new Date(row.created_at), "MM/dd/yyyy HH:mm")}
+              </div>,
             ])}
+            rowClassName="text-left align-middle w-full"
+            onRowClick={(i) => handleGoToVersion(sortedVersions[i]?.uuid)}
           />
         </div>
       </div>

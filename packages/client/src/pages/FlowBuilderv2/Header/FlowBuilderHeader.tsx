@@ -30,6 +30,7 @@ import { format } from "date-fns";
 import { TickIcon } from "../Icons";
 import { useLocation } from "react-router-dom";
 import { useParams } from "react-router-dom";
+import PublishVersionModal from "../Modals/PublishVersionModal";
 
 // TODO: update validation for new types
 const isValidNodes = (nodes: Node<NodeData | EdgeData>[]): boolean => {
@@ -205,11 +206,18 @@ const FlowBuilderHeader: FC<FlowBuilderHeaderInterface> = ({
           isOpen={isErrorNextModalOpen}
           onClose={() => setIsErrorNextModalOpen(false)}
         />
-        <FlowBuilderStartModal
-          isOpen={isStartModalOpen}
-          onClose={() => setIsStartModalOpen(false)}
-        />
-      </div>{" "}
+        {!isFromVersions ? (
+          <FlowBuilderStartModal
+            isOpen={isStartModalOpen}
+            onClose={() => setIsStartModalOpen(false)}
+          />
+        ) : (
+          <PublishVersionModal
+            isOpen={isStartModalOpen}
+            onClose={() => setIsStartModalOpen(false)}
+          />
+        )}
+      </div>
       {isFromVersions && (
         <div className="justify-center">
           <Select

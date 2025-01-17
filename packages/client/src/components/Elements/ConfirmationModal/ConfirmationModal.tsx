@@ -15,6 +15,7 @@ interface ConfirmationModalProps {
   confirmButtonId?: string;
   Icon?: () => JSX.Element;
   children?: ReactNode;
+  headerClassName?: string;
 }
 
 const ConfirmationModal: FC<ConfirmationModalProps> = ({
@@ -30,12 +31,13 @@ const ConfirmationModal: FC<ConfirmationModalProps> = ({
   confirmButtonId = "",
   Icon = () => <></>,
   children,
+  headerClassName,
 }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="font-roboto">
         {(title || description || renderDescription || !!Icon) && (
-          <div className="flex gap-4">
+          <div className={`flex gap-4 ${headerClassName}`}>
             {/* Icon is displayed only if it's added in props */}
             <div>
               <Icon />

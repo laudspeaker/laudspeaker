@@ -12,6 +12,7 @@ interface TableProps<T> {
   selectedRow?: number;
   onRowClick?: (i: number) => void;
   trHeadingClassName?: string;
+  rowClassName?: string;
 }
 
 const Table = <T,>({
@@ -25,6 +26,7 @@ const Table = <T,>({
   selectedRow,
   trHeadingClassName = "",
   onRowClick,
+  rowClassName = "",
 }: TableProps<T>) => {
   return (
     <table className={`rounded ${className ? className : ""}`}>
@@ -56,7 +58,9 @@ const Table = <T,>({
               key={i}
               className={`border-b-[1px] border-[#E5E7EB] hover:bg-[#F3F4F6] ${
                 onRowClick ? "cursor-pointer" : ""
-              } ${i === selectedRow ? "!bg-[#6366F1] !text-white" : ""}`}
+              } ${
+                i === selectedRow ? "!bg-[#6366F1] !text-white" : ""
+              } ${rowClassName}`}
               onClick={() => onRowClick?.(i)}
             >
               {row.map((el, j) => (

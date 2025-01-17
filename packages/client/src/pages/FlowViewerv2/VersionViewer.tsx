@@ -27,6 +27,7 @@ import { useNavigate } from "react-router-dom";
 import { TickIcon } from "pages/FlowBuilderv2/Icons";
 import Select from "components/Elements/Selectv2";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
+import RestoreVersionModal from "pages/FlowBuilderv2/Modals/RestoreVersionModal";
 
 const nodesToLoadCustomerCount: NodeType[] = [
   NodeType.WAIT_UNTIL,
@@ -223,10 +224,21 @@ const VersionViewer = () => {
             {flowName}
           </div>
 
-          {/* <FlowBuilderStartModal
-            isOpen={isStartModalOpen}
-            onClose={() => setIsStartModalOpen(false)}
-          /> */}
+          <RestoreVersionModal
+            isOpen={isRestoreModalOpen}
+            onClose={() => setIsRestoreModalOpen(false)}
+            versionName={selectedVersion}
+            onConfirm={() => {
+              const draftVersionId = versions.find(
+                (version) => version.name === "Draft"
+              )?.uuid;
+              if (draftVersionId) {
+                navigate(`/flow/${draftVersionId}`, {
+                  state: { isFromVersions: true },
+                });
+              }
+            }}
+          />
         </div>
 
         <div className="justify-center">
