@@ -43,6 +43,7 @@ import JourneySettingsViewer from "./JourneySettingsViewer";
 import ActivityHistoryViewer from "./ActivityHistoryViewer";
 import FlowBuilderOverview from "./FlowViewerOverview";
 import VersionDraftViewer from "./VersionDraftViewer";
+import useLoadJourney from "pages/FlowBuilderv2/hooks/useLoadJourney";
 
 export enum FlowViewerTab {
   OVERVIEW = "Overview",
@@ -53,23 +54,15 @@ export enum FlowViewerTab {
   VERSION_DRAFT = "Version & draft",
 }
 
-const nodesToLoadCustomerCount: NodeType[] = [
-  NodeType.WAIT_UNTIL,
-  NodeType.TIME_DELAY,
-  NodeType.TIME_WINDOW,
-];
-
 const FlowViewerv2 = () => {
   const { id } = useParams();
   const { state: locationState } = useLocation();
-  const [isLoading, setIsLoading] = useState(true);
   const [currentTab, setCurrentTab] = useState(FlowViewerTab.OVERVIEW);
   const [onConfirmNextTab, setOnConfirmNextTab] = useState<FlowViewerTab>();
 
   const dispatch = useAppDispatch();
 
   const {
-    journeyType,
     segments: segmentsSettings,
     journeyEntrySettings,
     journeySettings,
@@ -112,127 +105,17 @@ const FlowViewerv2 = () => {
     }
   }, [nodes]);
 
-  const loadJourney = async () => {
-    setIsLoading(true);
-    try {
-      const { data } = await ApiService.get<{
-        name: string;
-        nodes: Node<NodeData>[];
-        edges: Edge<EdgeData>[];
-        segments: SegmentsSettings;
-        isDynamic: boolean;
-        isActive?: boolean;
-        isPaused?: boolean;
-        isStopped?: boolean;
-        isDeleted?: boolean;
-        isEnrolling?: boolean;
-        journeyEntrySettings: JourneyEntrySettings;
-        journeySettings: JourneySettings;
-      }>({
-        url: "/journeys/" + id,
-      });
-
-      dispatch(setFlowName(data.name));
-      if (
-        data.nodes.length !== 0 &&
-        data.nodes.some((node) => node.type === NodeType.START)
-      ) {
-        const stepIdsToLoadCustomerCount: string[] = [];
-
-        const updatedNodesWithStats = await Promise.all(
-          data.nodes.map(async (node) => {
-            if (
-              nodesToLoadCustomerCount.includes(node.type as NodeType) &&
-              node.data.stepId
-            ) {
-              stepIdsToLoadCustomerCount.push(node.data.stepId);
-            }
-
-            if (
-              !node.data.stepId ||
-              (node.type !== NodeType.MESSAGE &&
-                node.type !== NodeType.TRACKER &&
-                node.type !== NodeType.PUSH)
-            )
-              return { ...node };
-
-            try {
-              const { data: stats } = await ApiService.get<Stats>({
-                url: "/steps/stats/" + node.data.stepId,
-              });
-
-              return { ...node, data: { ...node.data, stats } };
-            } catch (e) {
-              return { ...node };
-            }
-          })
-        );
-
-        try {
-          const { data: bulkCustomersCount } = await ApiService.post<number[]>({
-            url: "/customers/count/bulk",
-            options: {
-              stepIds: stepIdsToLoadCustomerCount,
-            },
-          });
-
-          for (let i = 0; i < stepIdsToLoadCustomerCount.length; i++) {
-            const node = updatedNodesWithStats.find(
-              (n) => n.data.stepId === stepIdsToLoadCustomerCount[i]
-            );
-            if (!node) continue;
-
-            node.data.customersCount = bulkCustomersCount[i];
-          }
-        } catch (e) {
-          console.error("Failed to load customer count", e);
-        }
-
-        dispatch(
-          loadVisualLayout({
-            nodes: updatedNodesWithStats,
-            edges: data.edges,
-          })
-        );
-      }
-
-      const firstMessageNode = data.nodes.find(
-        (node) => node.type === NodeType.MESSAGE
-      );
-
-      if (firstMessageNode) {
-        dispatch(selectNode(firstMessageNode.id));
-      }
-
-      dispatch(setSegmentsSettings(data.segments));
-      setInitialSegmentSettings(data.segments);
-      dispatch(
-        setJourneyType(
-          data.isDynamic ? JourneyType.DYNAMIC : JourneyType.STATIC
-        )
-      );
-      dispatch(setJourneyEntrySettings(data.journeyEntrySettings));
-      setInitialJourneyEntrySettings(data.journeyEntrySettings);
-      dispatch(setJourneySettings(data.journeySettings));
-      setInitialJourneySettings(data.journeySettings);
-      dispatch(setFlowId(id));
-
-      let status: JourneyStatus = JourneyStatus.DRAFT;
-
-      if (data.isActive) {
-        if (data.isEnrolling) status = JourneyStatus.ENROLLING;
-        else status = JourneyStatus.ACTIVE;
-      }
-      if (data.isPaused) status = JourneyStatus.PAUSED;
-      if (data.isStopped) status = JourneyStatus.STOPPED;
-      if (data.isDeleted) status = JourneyStatus.DELETED;
-
-      dispatch(setFlowStatus(status));
-    } finally {
-      setIsLoading(false);
-      dispatch(setIsViewMode(true));
+  useEffect(() => {
+    if (locationState?.isFromVersions) {
+      setCurrentTab(FlowViewerTab.VERSION_DRAFT);
     }
-  };
+  }, [locationState]);
+
+  const { loadJourney, isLoading } = useLoadJourney({
+    setInitialSegmentSettings,
+    setInitialJourneyEntrySettings,
+    setInitialJourneySettings,
+  });
 
   const onSave = async (changeSegmentOption?: ChangeSegmentOption) => {
     if (

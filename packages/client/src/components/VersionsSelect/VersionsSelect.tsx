@@ -33,7 +33,7 @@ const VersionsSelect = () => {
     additionalData: string | undefined
   ) => {
     const title = props["data-option"];
-    console.log(props, "props");
+
     return (
       <div
         {...props}

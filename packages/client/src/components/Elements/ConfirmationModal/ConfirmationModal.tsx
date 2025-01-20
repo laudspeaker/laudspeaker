@@ -1,7 +1,6 @@
 import React, { FC, ReactNode } from "react";
 import Modal from "../Modalv2";
 import Button, { ButtonType } from "../Buttonv2";
-
 interface ConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -16,6 +15,8 @@ interface ConfirmationModalProps {
   Icon?: () => JSX.Element;
   children?: ReactNode;
   headerClassName?: string;
+  modalClassName?: string;
+  titleClassName?: string;
 }
 
 const ConfirmationModal: FC<ConfirmationModalProps> = ({
@@ -32,9 +33,11 @@ const ConfirmationModal: FC<ConfirmationModalProps> = ({
   Icon = () => <></>,
   children,
   headerClassName,
+  modalClassName,
+  titleClassName,
 }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} className={`${modalClassName}`}>
       <div className="font-roboto">
         {(title || description || renderDescription || !!Icon) && (
           <div className={`flex gap-4 ${headerClassName}`}>
@@ -43,7 +46,9 @@ const ConfirmationModal: FC<ConfirmationModalProps> = ({
               <Icon />
             </div>
             <div className="flex flex-col gap-2">
-              <div className="font-medium text-base">{title}</div>
+              <div className={`font-medium text-base ${titleClassName}`}>
+                {title}
+              </div>
               {(!!description || !!renderDescription) && (
                 <div className="font-normal text-[14px] leading-[22px]">
                   {description || renderDescription?.()}

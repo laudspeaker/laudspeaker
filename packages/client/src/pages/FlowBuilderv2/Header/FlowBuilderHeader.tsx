@@ -115,7 +115,15 @@ const FlowBuilderHeader: FC<FlowBuilderHeaderInterface> = ({
 
   const handleExit = () => {
     handleSaveLayout();
-    navigate("/flow");
+    if (isFromVersions) {
+      navigate(`/flow/${flowId}/view`, {
+        state: {
+          isFromVersions: true,
+        },
+      });
+    } else {
+      navigate("/flow");
+    }
   };
 
   const handlePreviousStep = () => {

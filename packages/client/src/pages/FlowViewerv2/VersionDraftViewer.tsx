@@ -2,24 +2,13 @@ import Table from "components/Tablev2";
 import { FC, useEffect, useState } from "react";
 import sortAscChevronsImage from "./svg/sort-asc-chevrons.svg";
 import sortDescChevronsImage from "./svg/sort-desc-chevrons.svg";
-import sortNoneChevronsImage from "./svg/sort-none-chevrons.svg";
 import { format } from "date-fns";
 import useVersions from "hooks/useVersions";
 import { useNavigate } from "react-router-dom";
 
-enum SortProperty {
-  STATUS = "status",
-  LAST_UPDATE = "latestSave",
-}
-
 enum SortType {
   ASC = "asc",
   DESC = "desc",
-}
-
-interface SortOptions {
-  sortBy: SortProperty;
-  sortType: SortType;
 }
 
 const VersionDraftViewer = () => {
@@ -57,7 +46,9 @@ const VersionDraftViewer = () => {
         state: { isFromVersions: true },
       });
     } else if (newVersionId) {
-      navigate(`/flow/${newVersionId}/review-version`);
+      navigate(`/flow/${newVersionId}/review-version`, {
+        state: { isFromVersions: true },
+      });
     }
   };
 

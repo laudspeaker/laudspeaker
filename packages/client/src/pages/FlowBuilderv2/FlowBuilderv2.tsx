@@ -40,6 +40,7 @@ import FlowBuilderSettings from "./FlowBuilderSettings";
 import { capitalize } from "lodash";
 import PushBuilder from "pages/PushBuilder/PushBuilder";
 import { MessageType } from "types/Workflow";
+import Progress from "components/Progress";
 
 const FlowBuilderv2 = () => {
   const { id } = useParams();
@@ -230,6 +231,8 @@ const FlowBuilderv2 = () => {
 
     return templates?.[flowBuilderState.templateInlineCreation.type] || <></>;
   };
+
+  if (isLoading) return <Progress />;
 
   return (
     <SocketProvider>

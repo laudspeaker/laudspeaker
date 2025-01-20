@@ -1,49 +1,29 @@
 import React, { useState, useEffect } from "react";
-import FlowEditor, { NodeType } from "pages/FlowBuilderv2/FlowEditor";
-import {
-  JourneyEntrySettings,
-  JourneySettings,
-  JourneyType,
-  loadVisualLayout,
-  SegmentsSettings,
-  selectNode,
-  setFlowId,
-  setFlowName,
-  setFlowStatus,
-  setIsViewMode,
-  setJourneyType,
-} from "reducers/flow-builder.reducer";
+import FlowEditor from "pages/FlowBuilderv2/FlowEditor";
 import { useParams } from "react-router-dom";
 import Progress from "components/Progress";
-import { EdgeData } from "pages/FlowBuilderv2/Edges/EdgeData";
-import { NodeData, Stats } from "pages/FlowBuilderv2/Nodes/NodeData";
-import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
-import { Edge, Node } from "reactflow";
-import ApiService from "services/api.service";
-import { useAppDispatch, useAppSelector } from "store/hooks";
+import { useAppSelector } from "store/hooks";
 import useVersions from "hooks/useVersions";
 import { useNavigate } from "react-router-dom";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import RestoreVersionModal from "pages/FlowBuilderv2/Modals/RestoreVersionModal";
 import VersionsSelect from "components/VersionsSelect";
-
-const nodesToLoadCustomerCount: NodeType[] = [
-  NodeType.WAIT_UNTIL,
-  NodeType.TIME_DELAY,
-  NodeType.TIME_WINDOW,
-];
+import { useLocation } from "react-router-dom";
+import useLoadJourney, {
+  LoadJourneyMode,
+} from "pages/FlowBuilderv2/hooks/useLoadJourney";
 
 const VersionViewer = () => {
-  const [isLoading, setIsLoading] = useState(false);
+  const { id } = useParams();
+  const versions = useVersions();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { flowName, isStarting } = useAppSelector((state) => state.flowBuilder);
+
   const [selectedVersion, setSelectedVersion] = useState<string>("");
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
 
-  const { id } = useParams();
-  const versions = useVersions();
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-
-  const { flowName, isStarting } = useAppSelector((state) => state.flowBuilder);
+  const isFromVersions = location.state?.isFromVersions;
 
   useEffect(() => {
     const currentVersion = versions.find((version) => `${version.uuid}` === id);
@@ -53,125 +33,20 @@ const VersionViewer = () => {
     }
   }, [id]);
 
-  const loadJourney = async () => {
-    setIsLoading(true);
-    try {
-      const { data } = await ApiService.get<{
-        name: string;
-        nodes: Node<NodeData>[];
-        edges: Edge<EdgeData>[];
-        segments: SegmentsSettings;
-        isDynamic: boolean;
-        isActive?: boolean;
-        isPaused?: boolean;
-        isStopped?: boolean;
-        isDeleted?: boolean;
-        isEnrolling?: boolean;
-        journeyEntrySettings: JourneyEntrySettings;
-        journeySettings: JourneySettings;
-      }>({
-        url: "/journeys/" + id,
-      });
-
-      dispatch(setFlowName(data.name));
-      if (
-        data.nodes.length !== 0 &&
-        data.nodes.some((node) => node.type === NodeType.START)
-      ) {
-        const stepIdsToLoadCustomerCount: string[] = [];
-
-        const updatedNodesWithStats = await Promise.all(
-          data.nodes.map(async (node) => {
-            if (
-              nodesToLoadCustomerCount.includes(node.type as NodeType) &&
-              node.data.stepId
-            ) {
-              stepIdsToLoadCustomerCount.push(node.data.stepId);
-            }
-
-            if (
-              !node.data.stepId ||
-              (node.type !== NodeType.MESSAGE &&
-                node.type !== NodeType.TRACKER &&
-                node.type !== NodeType.PUSH)
-            )
-              return { ...node };
-
-            try {
-              const { data: stats } = await ApiService.get<Stats>({
-                url: "/steps/stats/" + node.data.stepId,
-              });
-
-              return { ...node, data: { ...node.data, stats } };
-            } catch (e) {
-              return { ...node };
-            }
-          })
-        );
-
-        try {
-          const { data: bulkCustomersCount } = await ApiService.post<number[]>({
-            url: "/customers/count/bulk",
-            options: {
-              stepIds: stepIdsToLoadCustomerCount,
-            },
-          });
-
-          for (let i = 0; i < stepIdsToLoadCustomerCount.length; i++) {
-            const node = updatedNodesWithStats.find(
-              (n) => n.data.stepId === stepIdsToLoadCustomerCount[i]
-            );
-            if (!node) continue;
-
-            node.data.customersCount = bulkCustomersCount[i];
-          }
-        } catch (e) {
-          console.error("Failed to load customer count", e);
-        }
-
-        dispatch(
-          loadVisualLayout({
-            nodes: updatedNodesWithStats,
-            edges: data.edges,
-          })
-        );
-      }
-
-      const firstMessageNode = data.nodes.find(
-        (node) => node.type === NodeType.MESSAGE
-      );
-
-      if (firstMessageNode) {
-        dispatch(selectNode(firstMessageNode.id));
-      }
-
-      dispatch(
-        setJourneyType(
-          data.isDynamic ? JourneyType.DYNAMIC : JourneyType.STATIC
-        )
-      );
-
-      dispatch(setFlowId(id));
-
-      let status: JourneyStatus = JourneyStatus.DRAFT;
-
-      if (data.isActive) {
-        if (data.isEnrolling) status = JourneyStatus.ENROLLING;
-        else status = JourneyStatus.ACTIVE;
-      }
-      if (data.isPaused) status = JourneyStatus.PAUSED;
-      if (data.isStopped) status = JourneyStatus.STOPPED;
-      if (data.isDeleted) status = JourneyStatus.DELETED;
-
-      dispatch(setFlowStatus(status));
-    } finally {
-      setIsLoading(false);
-      dispatch(setIsViewMode(true));
-    }
-  };
+  const { loadJourney, isLoading } = useLoadJourney({
+    mode: LoadJourneyMode.VIEW_VERSION,
+  });
 
   const handleExit = () => {
-    navigate("/flow");
+    if (isFromVersions) {
+      navigate(`/flow/${id}/view`, {
+        state: {
+          isFromVersions: true,
+        },
+      });
+    } else {
+      navigate("/flow");
+    }
   };
 
   useEffect(() => {

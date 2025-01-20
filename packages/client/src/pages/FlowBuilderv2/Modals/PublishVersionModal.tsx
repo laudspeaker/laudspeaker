@@ -1,12 +1,7 @@
 import React, { FC, useState } from "react";
 import ConfirmationModal from "components/Elements/ConfirmationModal";
 import Select from "components/Elements/Selectv2";
-import posthog from "posthog-js";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import { setIsStarting, JourneyType } from "reducers/flow-builder.reducer";
-import ApiService from "services/api.service";
-import { useAppSelector, useAppDispatch } from "store/hooks";
+import useStartJourney from "../hooks/handleStartJourney";
 
 interface PublishVersionModalProps {
   isOpen: boolean;
@@ -59,93 +54,20 @@ const PublishVersionModal: FC<PublishVersionModalProps> = ({
 }) => {
   const [inProgressValue, setInProgressValue] = useState("");
   const [finishedValue, setFinishedValue] = useState("");
-  const {
-    flowId,
-    nodes,
-    edges,
-    flowName,
-    segments,
-    journeyType,
-    journeyEntrySettings,
-    journeySettings,
-    isStarting,
-  } = useAppSelector((state) => state.flowBuilder);
-  const dispatch = useAppDispatch();
 
-  const navigate = useNavigate();
-
-  const handleStartJourney = async () => {
-    if (isStarting) {
-      toast.error("Journey is already starting");
-      return;
-    }
-
-    dispatch(setIsStarting(true));
-    toast.info(
-      "Please remain on page until journey has started this can take a few minutes"
-    );
-
-    try {
-      await ApiService.patch({
-        url: "/journeys/visual-layout",
-        options: {
-          id: flowId,
-          nodes,
-          edges,
-        },
-      });
-    } catch (e) {
-      console.error(e);
-      toast.error("Error: failed to save layout");
-      dispatch(setIsStarting(false));
-      return;
-    }
-
-    try {
-      await ApiService.patch({
-        url: "/journeys",
-        options: {
-          id: flowId,
-          name: flowName,
-          inclusionCriteria: segments,
-          isDynamic: journeyType === JourneyType.DYNAMIC,
-          journeyEntrySettings,
-          journeySettings,
-        },
-      });
-    } catch (e) {
-      console.error(e);
-      toast.error("Error: failed to save journey properties");
-      dispatch(setIsStarting(false));
-      return;
-    }
-
-    try {
-      await ApiService.patch({ url: "/journeys/start/" + flowId });
-
-      toast.success("Journey has been started");
-      posthog.capture("journey_started_success");
-
-      navigate(`/flow/${flowId}/view`);
-    } catch (e) {
-      toast.error("Failed to start journey");
-      posthog.capture("journey_started_fail");
-    }
-
-    dispatch(setIsStarting(false));
-  };
+  const handleStartJourney = useStartJourney();
 
   const TransitionOptions = () => {
     const type = "copy";
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 font-inter">
         <hr className="border-t border-[#E5E7EB] my-2" />
-        <div className="font-medium text-base">
+        <div className="font-inter font-semibold">
           Transition users to the new version
         </div>
         <div className="font-normal text-[14px]">
-          <div className="flex items-center gap-2 w-full">
-            <label className="font-medium text-sm flex-1">
+          <div className="flex items-center gap-3 w-full">
+            <label className="font-inter text-sm color-[#111827] min-w-[120px]">
               {options[type].inProgress.title}
             </label>
             <Select
@@ -153,11 +75,13 @@ const PublishVersionModal: FC<PublishVersionModalProps> = ({
               options={options[type].inProgress.options}
               onChange={setInProgressValue}
               placeholder={options[type].inProgress.placeholder}
-              className="flex-1"
+              className="flex-1 w-full"
+              placeholderClassName="font-inter text-[14px] text-[#6B7280]"
+              buttonClassName="w-full"
             />
           </div>
-          <div className="flex items-center gap-2 w-full">
-            <label className="font-medium text-sm mt-4 flex-1">
+          <div className="flex items-center gap-3 w-full mt-2">
+            <label className="font-inter text-sm color-[#111827] min-w-[120px]">
               {options[type]?.finished?.title}
             </label>
             <Select
@@ -165,7 +89,9 @@ const PublishVersionModal: FC<PublishVersionModalProps> = ({
               placeholder={options[type].finished.placeholder}
               value={finishedValue}
               onChange={setFinishedValue}
-              className="flex-1"
+              className="flex-1 w-full"
+              placeholderClassName="font-inter text-[14px] text-[#6B7280]"
+              buttonClassName="w-full"
             />
           </div>
         </div>
@@ -186,7 +112,9 @@ const PublishVersionModal: FC<PublishVersionModalProps> = ({
       handleStartJourney();
       onClose();
     },
-    headerClassName: "gap-0",
+    headerClassName: "!gap-0",
+    modalClassName: "min-w-[500px]",
+    titleClassName: "!text-[20px] font-inter font-semibold",
   };
 
   return (

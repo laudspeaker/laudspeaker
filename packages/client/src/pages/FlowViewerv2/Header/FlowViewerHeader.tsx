@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import FlowBuilderEditDraftModal from "pages/FlowBuilderv2/Modals/FlowBuilderEditDraft";
 import NameJourneyModal from "pages/JourneyTablev2/Modals/NameJourneyModal";
 import useVersions from "hooks/useVersions";
+import VersionsSelect from "components/VersionsSelect";
 
 interface FlowViewerHeaderProps {
   tabs: Record<FlowViewerTab, React.ReactNode>;
@@ -75,6 +76,11 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
             {flowStatus}
           </div>
         </div>
+        {!!(currentTab === FlowViewerTab.JOURNEY) && (
+          <div className="font-semibold text-[20px] leading-[28px]">
+            <VersionsSelect />
+          </div>
+        )}
         <div className="flex items-center gap-[10px] font-roboto">
           <Button
             type={ButtonType.SECONDARY_GREY}
