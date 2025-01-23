@@ -9,7 +9,7 @@ import {
   TimeWindowIcon,
   WaitUntilIcon,
   JumpToIcon,
-  CustomModalIcon,
+  InAppMessageIcon,
   UserAttributeIcon,
   ExperimentIcon,
 } from "pages/FlowBuilderv2/Icons";
@@ -21,7 +21,7 @@ export enum DrawerAction {
   SLACK = "slack",
   PUSH = "push",
   WEBHOOK = "webhook",
-  CUSTOM_MODAL = "customModal",
+  IN_APP_MESSAGE = "inAppMessage",
   TRACKER = "tracker",
   JUMP_TO = "jumpTo",
   EXIT = "exit",
@@ -63,11 +63,11 @@ const flowBuilderDrawerFixtures: FlowBuilderDrawerFixture[] = [
         icon: WebhookIcon(),
         text: "Webhook",
       },
-      // {
-      //   id: DrawerAction.CUSTOM_MODAL,
-      //   icon: CustomModalIcon(),
-      //   text: "Custom Modal",
-      // },
+      {
+        id: DrawerAction.IN_APP_MESSAGE,
+        icon: InAppMessageIcon(),
+        text: "In App Message",
+      },
       //{
       //  id: DrawerAction.TRACKER,
       //  icon: CustomModalIcon(),

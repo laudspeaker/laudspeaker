@@ -91,7 +91,7 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
           <div className="flex flex-col gap-[5px] w-full">
             <div>Sending name</div>
             <Input
-              id="mailgun-sending-email"
+              id="mailgun-sending-name"
               wrapperClassName="!w-full"
               className="w-full"
               value={option.sendingName || ""}
@@ -99,7 +99,7 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
                 formData.sendingOptions[i].sendingName = value;
                 setFormData({ ...formData });
               }}
-              placeholder="Sending email"
+              placeholder="Sending name"
             />
           </div>
 
@@ -128,6 +128,71 @@ const MailgunSettings: FC<SendingServiceSettingsProps> = ({
         }
       >
         Add sending option
+      </Button>
+
+      {formData.replyToOptions && formData.replyToOptions.length !== 0 && (
+        <div className="h-[1px] w-full bg-black" />
+      )}
+
+      {formData.replyToOptions?.map((option, i) => (
+        <div className="flex items-center gap-2.5" key={`replyto-${i}`}>
+          <div className="flex flex-col gap-[5px] w-full">
+            <div>Reply-to email</div>
+            <Input
+              id="sendgrid-replyto-email"
+              wrapperClassName="!w-full"
+              className="w-full"
+              value={option.replyToEmail ?? ""}
+              onChange={(value) => {
+                if (formData.replyToOptions)
+                  formData.replyToOptions[i].replyToEmail = value;
+                setFormData({ ...formData });
+              }}
+              placeholder="Reply-to email"
+            />
+          </div>
+
+          <div className="flex flex-col gap-[5px] w-full">
+            <div>Reply-to name</div>
+            <Input
+              id="sendgrid-replyto-name"
+              wrapperClassName="!w-full"
+              className="w-full"
+              value={option.replyToName || ""}
+              onChange={(value) => {
+                if (formData.replyToOptions)
+                  formData.replyToOptions[i].replyToName = value;
+                setFormData({ ...formData });
+              }}
+              placeholder="Reply-to name"
+            />
+          </div>
+
+          <div
+            className="cursor-pointer"
+            onClick={() => {
+              formData.replyToOptions?.splice(i, 1);
+              setFormData({ ...formData });
+            }}
+          >
+            <TrashIcon />
+          </div>
+        </div>
+      ))}
+
+      <Button
+        type={ButtonType.SECONDARY}
+        onClick={() =>
+          setFormData({
+            ...formData,
+            replyToOptions: [
+              ...(formData.replyToOptions || []),
+              { replyToEmail: "", replyToName: "" },
+            ],
+          })
+        }
+      >
+        Add reply-to option
       </Button>
     </>
   );

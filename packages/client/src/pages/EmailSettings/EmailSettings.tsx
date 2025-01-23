@@ -28,6 +28,10 @@ interface EmailSettingsFormData {
     sendingEmail: string;
     sendingName?: string;
   }[];
+  replyToOptions: {
+    replyToEmail?: string;
+    replyToName?: string;
+  }[];
   signingSecret: string;
 }
 
@@ -56,6 +60,7 @@ const EmailSettings = () => {
     sendingDomain: "",
     sendingOptions: [],
     signingSecret: "",
+    replyToOptions: [],
   });
   const [isNameEditing, setIsNameEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
