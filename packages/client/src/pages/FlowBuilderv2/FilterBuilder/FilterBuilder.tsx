@@ -559,7 +559,7 @@ const FilterBuilder: FC<FilterBuilderProps> = ({
     () => {
       loadPossibleKeys(keysQuery);
     },
-    100,
+    500,
     [keysQuery]
   );
 
