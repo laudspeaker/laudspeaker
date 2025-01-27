@@ -5,6 +5,7 @@ import sortDescChevronsImage from "./svg/sort-desc-chevrons.svg";
 import { format } from "date-fns";
 import useVersions from "hooks/useVersions";
 import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 enum SortType {
   ASC = "asc",
@@ -17,6 +18,7 @@ const VersionDraftViewer = () => {
 
   const versions = useVersions();
   const [sortedVersions, setSortedVersions] = useState(versions);
+  const { id: journeyId } = useParams();
 
   const sortVersions = () => {
     const sortedVersionsByTime = [...versions].sort((a, b) => {
@@ -50,6 +52,19 @@ const VersionDraftViewer = () => {
         state: { isFromVersions: true },
       });
     }
+
+    // const newVersion = versions.find((version) => version.uuid === id);
+    // const newVersionId = newVersion?.uuid;
+
+    //   if (newVersion?.name === "Draft") {
+    //     navigate(`/flow/${journeyId}/${newVersionId}`, {
+    //       state: { isFromVersions: true },
+    //     });
+    //   } else if (newVersionId) {
+    //     navigate(`/flow/${journeyId}/${newVersionId}/review-version`, {
+    //       state: { isFromVersions: true },
+    //     });
+    //   }
   };
 
   return (
