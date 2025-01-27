@@ -93,7 +93,7 @@ const Select = <T, U = any>({
                     value ? "text-ellipsis" : "text-muted"
                   } max-w-full overflow-hidden  whitespace-nowrap`}
                 >
-                  {options.find((option) => option.key === value)?.title ||
+                  {options?.find((option) => option.key === value)?.title ||
                     placeholder}
                 </div>
                 <div>
@@ -189,7 +189,7 @@ const Select = <T, U = any>({
                     </defs>
                   </svg>
                 </div>
-              ) : options.length === 0 ? (
+              ) : options?.length === 0 ? (
                 <div className="px-[12px] py-[5px] select-none text-[#4B5563] font-inter text-[14px] leading-[22px]">
                   {noDataPlaceholder}
                 </div>
@@ -199,7 +199,7 @@ const Select = <T, U = any>({
                   ref={scrollableRef}
                   onScroll={handleScroll}
                 >
-                  {options.map((option, i) => {
+                  {options?.map((option, i) => {
                     const props = {
                       className: `${
                         option.groupLabel

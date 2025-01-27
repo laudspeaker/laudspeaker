@@ -60,6 +60,7 @@ import SegmentViewer from "pages/SegmentViewer";
 import DataTransferTable from "pages/DataTransferTable";
 import DataTransfer from "pages/DataTransfer";
 import SubscriptionPayment from "pages/SubscriptionPayment/SubscriptionPayment";
+import EmailBuilderV2 from "pages/EmailBuilderV2/EmailBuilderV2";
 
 interface IProtected {
   children: ReactElement;
@@ -570,18 +571,6 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/email-builder"
-          element={
-            <Protected>
-              <VerificationProtected>
-                <DrawerLayout>
-                  <EmailBuilder />
-                </DrawerLayout>
-              </VerificationProtected>
-            </Protected>
-          }
-        />
-        <Route
           path="/slack-builder"
           element={
             <Protected>
@@ -610,8 +599,13 @@ const RouteComponent: React.FC = () => {
           element={
             <Protected>
               <VerificationProtected>
-                <DrawerLayout>
-                  <EmailBuilder />
+                <DrawerLayout
+                  crumbs={[
+                    { text: "Message Template", link: "/templates" },
+                    { text: "Create an email" },
+                  ]}
+                >
+                  <EmailBuilderV2 />
                 </DrawerLayout>
               </VerificationProtected>
             </Protected>
