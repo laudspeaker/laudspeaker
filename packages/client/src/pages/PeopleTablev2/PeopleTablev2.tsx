@@ -129,13 +129,12 @@ const PeopleTablev2 = () => {
   const loadPossibleKeys = async (q: string) => {
     const { data } = await ApiService.get<
       {
-        key: string;
+        name: string;
       }[]
     >({
       url: `/customers/possible-attributes?key=${q}`,
     });
-
-    setPossibleKeys(data.map((item) => item.key));
+    setPossibleKeys(data.map((item) => item.name));
   };
 
   useDebounce(
