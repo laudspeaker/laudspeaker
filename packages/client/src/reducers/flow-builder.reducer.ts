@@ -16,6 +16,7 @@ import {
   MessageNodeData,
   MultisplitBranch,
   NodeData,
+  TimeType,
   TimeWindowTypes,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
@@ -1323,6 +1324,42 @@ const flowBuilderSlice = createSlice({
                   id: edge.id,
                   type: BranchType.MULTISPLIT,
                   isOthers: true,
+                },
+              },
+            };
+          } else {
+            return edge;
+          }
+        });
+      }
+
+      if (NodeType.WAIT_UNTIL === nodeToChange.type) {
+        // filter all nodes that are wait until or will become wait until and empty
+        const branchNodes = state.nodes.filter(
+          (node) =>
+            node.type === NodeType.EMPTY || node.type === NodeType.WAIT_UNTIL
+        );
+
+        // find the first edge that is not a wait until branch and should become wait until branch
+        const edgeToChange = state.edges.find((edge) => {
+          const correspondingNode = branchNodes.find((node) => {
+            return edge.source === node.id && edge.type !== EdgeType.BRANCH;
+          });
+          return correspondingNode;
+        });
+
+        state.edges = state.edges.map((edge) => {
+          if (edge.id === edgeToChange?.id) {
+            return {
+              ...edge,
+              type: EdgeType.BRANCH,
+              data: {
+                type: EdgeType.BRANCH,
+                branch: {
+                  id: edge.id,
+                  type: BranchType.MAX_TIME,
+                  timeType: TimeType.TIME_DELAY,
+                  delay: { days: 0, hours: 0, minutes: 0 },
                 },
               },
             };

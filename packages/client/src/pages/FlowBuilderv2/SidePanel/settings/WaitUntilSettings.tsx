@@ -11,7 +11,7 @@ import {
   WUAttributeCondition,
   WUAttributeHappenCondition,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
-import React, { FC } from "react";
+import React, { FC, useEffect } from "react";
 import { ProviderType } from "types/Workflow";
 import EventBranchEditor from "../components/EventBranchEditor";
 import { SidePanelComponentProps } from "../FlowBuilderSidePanel";
@@ -33,9 +33,32 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
   nodeData,
   setNodeData,
 }) => {
-  const { isOnboarding } = useAppSelector((state) => state.flowBuilder);
+  const { isOnboarding, edges } = useAppSelector((state) => state.flowBuilder);
 
   const { branches } = nodeData;
+
+  const branchEdges = edges.filter((edge) => edge.type === "branch");
+  const currentBranchEdge = branchEdges?.[branchEdges.length - 1]; // Get the last branch edge added
+
+  const defaultOtherBranchObject: WaitUntilBranch = {
+    id: currentBranchEdge?.id || uuid(),
+    type: BranchType.MAX_TIME,
+    timeType: TimeType.TIME_DELAY,
+    delay: { days: 0, hours: 0, minutes: 0 },
+  };
+
+  useEffect(() => {
+    if (!nodeData || branches.length) {
+      return;
+    }
+
+    const defaultData = {
+      ...nodeData,
+      branches: [...branches, defaultOtherBranchObject],
+    };
+
+    setNodeData(defaultData);
+  }, [nodeData]);
 
   const handleAddEventBranch = () => {
     const newBranch: Branch = {
@@ -276,6 +299,11 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
   const onChangeBranch = (i: number) => (branch: WaitUntilBranch) =>
     handleChangeBranch(i, branch);
 
+  useEffect(() => {
+    if (branches.length) return;
+    handleAddMaxTimeBranch();
+  }, []);
+
   return (
     <div className="p-5">
       {branches.map((branch, i) => (
@@ -362,7 +390,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
             // },
           ]}
         />
-        <Button
+        {/* <Button
           type={ButtonType.SECONDARY}
           onClick={handleAddMaxTimeBranch}
           disabled={
@@ -372,7 +400,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
           id="set-max-time"
         >
           Set max. time
-        </Button>
+        </Button> */}
       </div>
     </div>
   );
