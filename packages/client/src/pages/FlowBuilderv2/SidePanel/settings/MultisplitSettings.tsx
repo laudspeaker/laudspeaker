@@ -1,6 +1,7 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import {
   BranchType,
+  MultisplitBranch,
   MultisplitNodeData,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, Suspense, useEffect, useState } from "react";
@@ -11,6 +12,7 @@ import {
 } from "reducers/flow-builder.reducer";
 import { v4 as uuid } from "uuid";
 import MultisplitCondtionsReview from "../components/MultisplitCondtionsReview";
+import { useAppSelector } from "store/hooks";
 const FlowBuilderMultisplitModal = React.lazy(
   () => import("../../Modals/FlowBuilderMultisplitModal")
 );
@@ -52,6 +54,18 @@ const MultisplitSettings: FC<
   const [editBranchIndex, setEditBranchIndex] = useState<number | undefined>(
     undefined
   );
+  const flowBuilderState = useAppSelector((state) => state.flowBuilder);
+
+  const branchEdges = flowBuilderState.edges.filter(
+    (edge) => edge.type === "branch"
+  );
+  const currentBranchEdge = branchEdges?.[branchEdges.length - 1]; // Get the last branch edge added
+
+  const defaultOtherBranchObject: MultisplitBranch = {
+    id: currentBranchEdge?.id || uuid(),
+    type: BranchType.MULTISPLIT,
+    isOthers: true,
+  };
 
   const handleSave = (branch: ConditionalSegmentsSettings) => {
     if (editBranchIndex === undefined) return;
@@ -77,6 +91,19 @@ const MultisplitSettings: FC<
 
     setNodeData(newData);
   };
+
+  useEffect(() => {
+    if (!nodeData || nodeData.branches.find((branch) => branch.isOthers)) {
+      return;
+    }
+
+    const defaultData = {
+      ...nodeData,
+      branches: [...nodeData?.branches, defaultOtherBranchObject],
+    };
+
+    setNodeData(defaultData);
+  }, [nodeData]);
 
   return (
     <>
@@ -128,6 +155,20 @@ const MultisplitSettings: FC<
               </React.Fragment>
             );
           })}
+        {!!(
+          nodeData.branches.length === 1 &&
+          nodeData.branches.find((branch) => branch.isOthers)
+        ) && (
+          <>
+            <div className="relative w-full text-[#111827] text-[14px] font-inter font-semibold mb-[5px]">
+              Branch - All others
+            </div>
+            <div className="relative w-full text-[#4B5563] text-[12px] font-inter mb-[10px]">
+              This branch is created by default. Please add conditions to other
+              branches to avoid all customers falling into this branch.
+            </div>
+          </>
+        )}
       </div>
       {!isViewMode && (
         <div className="py-5 relative">

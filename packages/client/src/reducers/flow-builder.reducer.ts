@@ -957,8 +957,6 @@ const flowBuilderSlice = createSlice({
                 )[0];
                 nodeToChange.data.branches.push(element);
               }
-            } else {
-              nodeToChange.data.branches = [];
             }
           }
         }
@@ -988,13 +986,16 @@ const flowBuilderSlice = createSlice({
 
           if (!existedChildrenEdge) {
             const newEmptyNodeUUID = uuid();
-            state.nodes.push({
+            const newNode = {
               id: newEmptyNodeUUID,
               type: NodeType.EMPTY,
               data: {},
               position: { x: 0, y: 0 },
-            });
-            state.edges.push({
+            };
+
+            state.nodes.push(newNode);
+
+            const newEdge = {
               id: `b${branch.id}`,
               type: EdgeType.BRANCH,
               data: {
@@ -1003,7 +1004,10 @@ const flowBuilderSlice = createSlice({
               },
               source: nodeToChange.id,
               target: newEmptyNodeUUID,
-            });
+            };
+
+            state.edges.push(newEdge);
+
             continue;
           }
 
@@ -1292,6 +1296,40 @@ const flowBuilderSlice = createSlice({
           break;
         default:
           break;
+      }
+      if (NodeType.MULTISPLIT === nodeToChange.type) {
+        // filter all nodes that are multisplit or will become multisplit and empty
+        const branchNodes = state.nodes.filter(
+          (node) =>
+            node.type === NodeType.EMPTY || node.type === NodeType.MULTISPLIT
+        );
+
+        // find the first edge that is not a multisplit branch and should become multisplit branch
+        const edgeToChange = state.edges.find((edge) => {
+          const correspondingNode = branchNodes.find((node) => {
+            return edge.source === node.id && edge.type !== EdgeType.BRANCH;
+          });
+          return correspondingNode;
+        });
+
+        state.edges = state.edges.map((edge) => {
+          if (edge.id === edgeToChange?.id) {
+            return {
+              ...edge,
+              type: EdgeType.BRANCH,
+              data: {
+                type: EdgeType.BRANCH,
+                branch: {
+                  id: edge.id,
+                  type: BranchType.MULTISPLIT,
+                  isOthers: true,
+                },
+              },
+            };
+          } else {
+            return edge;
+          }
+        });
       }
 
       if (
