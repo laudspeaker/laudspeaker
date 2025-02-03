@@ -1367,6 +1367,38 @@ const flowBuilderSlice = createSlice({
             return edge;
           }
         });
+
+        //add a default branch to the node
+        state.nodes = state.nodes.map((node) => {
+          if (node.id === nodeToChange?.id) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                type: NodeType.WAIT_UNTIL,
+                branches: [
+                  {
+                    id:
+                      state.edges.find(
+                        (edge) =>
+                          edge.id.includes(nodeToChange.id) &&
+                          edge.type === EdgeType.BRANCH
+                      )?.id || uuid(),
+                    type: BranchType.MAX_TIME,
+                    timeType: TimeType.TIME_DELAY,
+                    delay: {
+                      days: 0,
+                      hours: 0,
+                      minutes: 0,
+                    },
+                  },
+                ],
+              },
+            };
+          } else {
+            return node;
+          }
+        });
       }
 
       if (
