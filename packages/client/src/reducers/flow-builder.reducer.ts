@@ -717,6 +717,47 @@ const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
   state.nodes = getLayoutedNodes(state.nodes, state.edges);
 };
 
+const handleAttachNodesToBranch = (state: FlowBuilderState, nodeId: string) => {
+  // add existing following nodes to the first branch of the nodeId.
+  // used to attach a node to an experiment branch when it's inserted between nodes.
+
+  const node = state.nodes.find((n) => n.id === nodeId);
+
+  if (!node) return;
+
+  const nodeIndex = state.nodes.indexOf(node);
+
+  const branchSource =
+    "branches" in node.data ? node.data.branches?.[0]?.id : undefined; // get the id of the first branch of the node
+
+  const targetNode = state.nodes[nodeIndex + 1]; //get the node that needs to be attached to the branch
+
+  // const targetEdge = state.edges.find((edge) =>
+  //   edge?.id?.includes(targetNode.id)
+  // );
+
+  //attach existing edge to the node that goes to the branch by using its own id as a source
+  state.edges = state.edges.map((edge) => {
+    // if (targetEdge?.id.includes(edge.id)) {
+    //   console.log("first");
+    //   return { ...edge, source: targetNode.id };
+    // }
+    //change experiment branch target to the existing node that goes to the branch
+    if (branchSource && edge.id?.includes(branchSource) && targetNode.id) {
+      return { ...edge, target: targetNode.id };
+    }
+
+    return edge;
+  });
+
+  // state.edges = state.edges.map((edge) => {
+  //   if (branchSource && edge.id?.includes(branchSource) && targetNode.id) {
+  //     return { ...edge, target: targetNode.id };
+  //   }
+  //   return edge;
+  // });
+};
+
 const handleRemoveNode = (state: FlowBuilderState, nodeId: string) => {
   const node = state.nodes.find((n) => n.id === nodeId);
   if (!node || node.type === NodeType.START) return;
@@ -965,13 +1006,14 @@ const flowBuilderSlice = createSlice({
         // prune disconnected branches
         for (const edge of existedBranchEdges) {
           if (
-            !edge.data ||
-            edge.type !== EdgeType.BRANCH ||
-            edge.data.type !== EdgeType.BRANCH ||
-            !(nodeToChange.data.branches as Branch[]).find(
-              (branch) =>
-                branch.id === (edge as Edge<BranchEdgeData>).data?.branch.id
-            )
+            (!edge.data ||
+              edge.type !== EdgeType.BRANCH ||
+              edge.data.type !== EdgeType.BRANCH ||
+              !(nodeToChange.data.branches as Branch[]).find(
+                (branch) =>
+                  branch.id === (edge as Edge<BranchEdgeData>).data?.branch.id
+              )) &&
+            nodeToChange.type !== NodeType.EXPERIMENT
           ) {
             handlePruneNodeTree(state, edge.target);
           }
@@ -1013,6 +1055,10 @@ const flowBuilderSlice = createSlice({
           }
 
           existedChildrenEdge.data = { type: EdgeType.BRANCH, branch };
+        }
+
+        if (NodeType.EXPERIMENT === nodeToChange.type) {
+          handleAttachNodesToBranch(state, nodeToChange.id);
         }
 
         if (
