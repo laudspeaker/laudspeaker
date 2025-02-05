@@ -732,16 +732,7 @@ const handleAttachNodesToBranch = (state: FlowBuilderState, nodeId: string) => {
 
   const targetNode = state.nodes[nodeIndex + 1]; //get the node that needs to be attached to the branch
 
-  // const targetEdge = state.edges.find((edge) =>
-  //   edge?.id?.includes(targetNode.id)
-  // );
-
-  //attach existing edge to the node that goes to the branch by using its own id as a source
   state.edges = state.edges.map((edge) => {
-    // if (targetEdge?.id.includes(edge.id)) {
-    //   console.log("first");
-    //   return { ...edge, source: targetNode.id };
-    // }
     //change experiment branch target to the existing node that goes to the branch
     if (branchSource && edge.id?.includes(branchSource) && targetNode.id) {
       return { ...edge, target: targetNode.id };
@@ -749,13 +740,6 @@ const handleAttachNodesToBranch = (state: FlowBuilderState, nodeId: string) => {
 
     return edge;
   });
-
-  // state.edges = state.edges.map((edge) => {
-  //   if (branchSource && edge.id?.includes(branchSource) && targetNode.id) {
-  //     return { ...edge, target: targetNode.id };
-  //   }
-  //   return edge;
-  // });
 };
 
 const handleRemoveNode = (state: FlowBuilderState, nodeId: string) => {
