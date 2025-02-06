@@ -63,7 +63,7 @@ const enrollmentTypes = [
         Only enroll <b>future</b> matching users
       </>
     ),
-    desc: "Only users that do currently exist in the Laudspeaker database, and are created after the journey begins",
+    desc: "Only users that don't currently exist in the Laudspeaker database, and are created after the journey begins",
   },
 ];
 
