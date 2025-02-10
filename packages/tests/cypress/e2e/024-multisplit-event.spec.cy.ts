@@ -109,11 +109,11 @@ describe("multisplit event", () => {
             drag("#waitUntil", ".empty-node", { fireDragOver: false });
             cy.get(".text-muted").click();
             cy.get('[data-option="event"]').click();
-            cy.get("input").clear().type("eventA");
+            cy.get('[data-testid="event"]').clear().type("eventA");
             cy.contains("Save").click();
             cy.get("#save-node-data").click();
             cy.wait(1000);
-            drag("#multisplit", ".empty-node");
+            drag("#multisplit", ".empty-node:first");
             cy.contains("Add branch").click();
             cy.contains("Add condition").click();
             cy.contains("Attribute").click();
@@ -267,11 +267,11 @@ describe("multisplit event", () => {
             drag("#waitUntil", ".empty-node", { fireDragOver: false });
             cy.get(".text-muted").click();
             cy.get('[data-option="event"]').click();
-            cy.get("input").clear().type("eventA");
+            cy.get('[data-testid="event"]').clear().type("eventA");
             cy.contains("Save").click();
             cy.get("#save-node-data").click();
             cy.wait(1000);
-            drag("#multisplit", ".empty-node", { fireDragOver: false });
+            drag("#multisplit", ".empty-node:first", { fireDragOver: false });
             cy.contains("Add branch").click();
             cy.contains("Add condition").click();
             cy.contains("Attribute").click();
@@ -301,7 +301,7 @@ describe("multisplit event", () => {
             cy.contains("Journey has been started").should("exist");
 
             cy.wait(5000);
-            
+
             cy.request({
               method: "POST",
               url: `${Cypress.env("TESTS_API_BASE_URL")}/events`,
