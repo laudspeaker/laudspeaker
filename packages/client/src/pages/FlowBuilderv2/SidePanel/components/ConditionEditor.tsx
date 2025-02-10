@@ -297,6 +297,7 @@ const ConditionEditor: FC<ConditionEditorProps> = ({
                   setCondition({ ...condition, name: value });
                 }}
                 placeholder="Event name"
+                inputDataTestId="event"
               />
             )}
         </div>
