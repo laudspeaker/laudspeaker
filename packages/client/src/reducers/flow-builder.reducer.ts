@@ -12,6 +12,7 @@ import { getLayoutedNodes } from "pages/FlowBuilderv2/layout.helper";
 import {
   Branch,
   BranchType,
+  EventType,
   LogicRelation,
   MessageNodeData,
   MultisplitBranch,
@@ -1387,9 +1388,16 @@ const flowBuilderSlice = createSlice({
                 type: EdgeType.BRANCH,
                 branch: {
                   id: edge.id,
-                  type: BranchType.MAX_TIME,
-                  timeType: TimeType.TIME_DELAY,
-                  delay: { days: 0, hours: 0, minutes: 0 },
+                  type: BranchType.EVENT,
+                  conditions: [
+                    {
+                      type: EventType.ANALYTICS,
+                      name: "",
+                      providerType: ProviderType.CUSTOM,
+                      relationToNext: LogicRelation.OR,
+                      statements: [],
+                    },
+                  ],
                 },
               },
             };
@@ -1414,13 +1422,16 @@ const flowBuilderSlice = createSlice({
                           edge.id.includes(nodeToChange.id) &&
                           edge.type === EdgeType.BRANCH
                       )?.id || uuid(),
-                    type: BranchType.MAX_TIME,
-                    timeType: TimeType.TIME_DELAY,
-                    delay: {
-                      days: 0,
-                      hours: 0,
-                      minutes: 0,
-                    },
+                    type: BranchType.EVENT,
+                    conditions: [
+                      {
+                        type: EventType.ANALYTICS,
+                        name: "",
+                        providerType: ProviderType.CUSTOM,
+                        relationToNext: LogicRelation.OR,
+                        statements: [],
+                      },
+                    ],
                   },
                 ],
               },

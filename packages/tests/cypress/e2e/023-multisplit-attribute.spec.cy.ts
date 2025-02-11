@@ -121,8 +121,6 @@ describe("multisplit attribute", () => {
             cy.wait(1000);
             drag("#waitUntil", ".empty-node", { fireDragOver: false });
             cy.wait(500);
-            cy.get(".text-muted").click();
-            cy.get('[data-option="event"]').click();
             cy.get('input[data-testid="event"]').clear().type("eventA");
             cy.contains("Save").click();
             cy.get("#save-node-data").click();
@@ -282,9 +280,7 @@ describe("multisplit attribute", () => {
             cy.wait(1000);
             drag("#waitUntil", ".empty-node", { fireDragOver: false });
             cy.wait(500);
-            cy.get(".text-muted").click();
-            cy.get('[data-option="event"]').click();
-            cy.get('[data-testid="event"]').clear().type("eventA");
+            cy.get('input[data-testid="event"]').clear().type("eventA");
             cy.contains("Save").click();
             cy.get("#save-node-data").click();
 

@@ -72,11 +72,16 @@ const MultisplitSettings: FC<
 
     const newData = { ...nodeData };
     if (editBranchIndex === -1) {
-      newData.branches.push({
+      const newBranch: MultisplitBranch = {
         id: uuid(),
         type: BranchType.MULTISPLIT,
         conditions: branch,
-      });
+      };
+      if (!nodeData.branches.find((b) => b.isOthers)) {
+        newData.branches.unshift(newBranch);
+      } else {
+        newData.branches.push(newBranch);
+      }
     } else {
       newData.branches[editBranchIndex].conditions = branch;
     }

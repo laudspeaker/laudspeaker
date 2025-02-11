@@ -107,9 +107,7 @@ describe("multisplit event", () => {
             cy.get("#create-journey-modal-button").click();
             cy.wait(1000);
             drag("#waitUntil", ".empty-node", { fireDragOver: false });
-            cy.get(".text-muted").click();
-            cy.get('[data-option="event"]').click();
-            cy.get('[data-testid="event"]').clear().type("eventA");
+            cy.get('input[data-testid="event"]').clear().type("eventA");
             cy.contains("Save").click();
             cy.get("#save-node-data").click();
             cy.wait(1000);
@@ -265,9 +263,7 @@ describe("multisplit event", () => {
             cy.get("#create-journey-modal-button").click();
             cy.wait(1000);
             drag("#waitUntil", ".empty-node", { fireDragOver: false });
-            cy.get(".text-muted").click();
-            cy.get('[data-option="event"]').click();
-            cy.get('[data-testid="event"]').clear().type("eventA");
+            cy.get('input[data-testid="event"]').clear().type("eventA");
             cy.contains("Save").click();
             cy.get("#save-node-data").click();
             cy.wait(1000);
