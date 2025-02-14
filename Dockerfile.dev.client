@@ -8,10 +8,10 @@ ENV REACT_APP_POSTHOG_KEY RxdBl8vjdTwic7xTzoKTdbmeSC1PCzV6sw-x-FKSB-k
 ENV PATH /app/node_modules/.bin:$PATH
 COPY ./packages/client/package.json /app/
 COPY ./package-lock.json /app/
-RUN npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps && npm cache clean --force
 COPY . /app
 RUN npm run format:client
-RUN npm run build:client
+RUN npm run build:client --max-old-space-size=10240
 
 # stage 2 - build the final image and copy the react build files
 FROM nginx:1.17.8-alpine

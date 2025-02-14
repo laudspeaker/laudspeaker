@@ -10,6 +10,7 @@ import Account, { WorkspaceEmailConnection } from "types/Account";
 import MailgunSettings from "./components/MailgunSettings";
 import SendgridSettings from "./components/SendgridSettings";
 import ResendSettings from "./components/ResendSettings";
+import SMTPSettings from "./components/SMTPSettings";
 import { useParams } from "react-router-dom";
 import Input from "components/Elements/Inputv2";
 import { setUserSchemaSetupped } from "reducers/onboarding.reducer";
@@ -18,6 +19,7 @@ export enum EmailSendingService {
   MAILGUN = "mailgun",
   SENDGRID = "sendgrid",
   RESEND = "resend",
+  SMTP = "smtp",
 }
 
 interface EmailSettingsFormData {
@@ -31,9 +33,26 @@ interface EmailSettingsFormData {
   signingSecret: string;
 }
 
+interface SMTPSettingsFormData {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  encryption: string | "none" | "ssl" | "tls";
+  fromEmail: string;
+  fromName: string;
+  authMethod: "auto" | "plain" | "login";
+  ignoreCertErrors: boolean;
+}
+
 export interface SendingServiceSettingsProps {
   formData: EmailSettingsFormData;
   setFormData: (value: EmailSettingsFormData) => void;
+}
+
+export interface SMTPServiceSettingsProps {
+  smtpSettingsFormData: SMTPSettingsFormData;
+  setSMTPSettingsFormData: (Value: SMTPSettingsFormData) => void;
 }
 
 const EmailSettings = () => {
@@ -57,6 +76,18 @@ const EmailSettings = () => {
     sendingOptions: [],
     signingSecret: "",
   });
+  const [smtpSettingsFormData, setSMTPSettingsFormData] =
+    useState<SMTPSettingsFormData>({
+      host: "",
+      port: 587,
+      username: "",
+      password: "",
+      encryption: "tls",
+      fromEmail: "",
+      fromName: "",
+      authMethod: "auto",
+      ignoreCertErrors: false,
+    });
   const [isNameEditing, setIsNameEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -71,6 +102,12 @@ const EmailSettings = () => {
     ),
     [EmailSendingService.RESEND]: (
       <ResendSettings formData={formData} setFormData={setFormData} />
+    ),
+    [EmailSendingService.SMTP]: (
+      <SMTPSettings
+        smtpSettingsFormData={smtpSettingsFormData}
+        setSMTPSettingsFormData={setSMTPSettingsFormData}
+      />
     ),
   };
 
@@ -97,6 +134,12 @@ const EmailSettings = () => {
     setIsSaving(true);
     try {
       const objToSend: Record<string, unknown> = {};
+      if (sendingService === EmailSendingService.SMTP) {
+        // SMTP settings WIP
+        console.log(smtpSettingsFormData);
+        toast.info("SMTP Service is WIP");
+        return;
+      }
       for (const key of Object.keys(formData)) {
         if (formData[key as keyof typeof formData])
           objToSend[key] = formData[key as keyof typeof formData];
@@ -125,6 +168,17 @@ const EmailSettings = () => {
     }
   };
 
+  const isSmtpFulfilled = () => {
+    if (sendingService !== EmailSendingService.SMTP) return false;
+    return Boolean(
+      smtpSettingsFormData.host &&
+        smtpSettingsFormData.port &&
+        smtpSettingsFormData.username &&
+        smtpSettingsFormData.password &&
+        smtpSettingsFormData.fromEmail
+    );
+  };
+
   const isError = Boolean(error);
   const isFulfilled = Boolean(
     sendingService === EmailSendingService.MAILGUN
@@ -133,7 +187,7 @@ const EmailSettings = () => {
       ? formData.apiKey
       : sendingService === EmailSendingService.RESEND
       ? formData.apiKey && formData.signingSecret && formData.sendingDomain
-      : false
+      : isSmtpFulfilled()
   );
 
   return (
@@ -191,6 +245,7 @@ const EmailSettings = () => {
                 { key: EmailSendingService.MAILGUN, title: "Mailgun" },
                 { key: EmailSendingService.SENDGRID, title: "Sendgrid" },
                 { key: EmailSendingService.RESEND, title: "Resend" },
+                { key: EmailSendingService.SMTP, title: "SMTP" },
               ]}
               value={sendingService}
               onChange={(value) => setSendingService(value)}
