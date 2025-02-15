@@ -3,7 +3,7 @@
 FROM node:16 as build
 WORKDIR /app
 COPY ./packages/server/package.json /app
-RUN npm install --legacy-peer-deps
+RUN npm install
 COPY . /app
 RUN npm run build:server
 
@@ -45,18 +45,8 @@ ENV CLICKHOUSE_HOST=http://project_clickhouse_1:8123
 ENV CLICKHOUSE_USER=default
 ENV CLICKHOUSE_PASSWORD=
 WORKDIR /app
-
-# Copy root package.json and lock file
-COPY ./package.json ./package-lock.json* /app/
-
-# Copy server and any other workspace package.json files
-COPY ./packages/server/package.json /app/packages/server/
-
-# Install dependencies including workspaces
-RUN npm install --legacy-peer-deps --only=production --workspaces
-
-# Copy built dist from build stage
-COPY --from=build /app/packages/server/dist /app/packages/server/dist
-
+COPY ./packages/server/package.json /app
+RUN npm install --only=production
+COPY --from=build /app/packages/server/dist /app/dist
 EXPOSE 3001
-CMD ["node", "packages/server/dist/src/main.js"]
+CMD ["node", "dist/src/main.js"]
