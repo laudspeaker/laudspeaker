@@ -9,7 +9,7 @@ import FlowBuilderReview from "./FlowBuilderReview";
 import { useParams } from "react-router-dom";
 import ApiService from "services/api.service";
 import { MessageNodeData, NodeData } from "./Nodes/NodeData";
-import { Edge, Node } from "reactflow";
+import { Edge, Node, ReactFlowProvider } from "reactflow";
 import { EdgeData } from "./Edges/EdgeData";
 import {
   clearSegmentPanelErrors,
@@ -244,7 +244,9 @@ const FlowBuilderv2 = () => {
             {flowBuilderState.stepperIndex === 0 && <FlowBuilderDrawer />}
 
             {flowBuilderState.stepperIndex === 0 ? (
-              <FlowEditor />
+              <ReactFlowProvider>
+                <FlowEditor />
+              </ReactFlowProvider>
             ) : flowBuilderState.stepperIndex === 1 ? (
               <FlowBuilderSegmentEditor journeyStatus={journeyStatus} />
             ) : flowBuilderState.stepperIndex === 2 ? (

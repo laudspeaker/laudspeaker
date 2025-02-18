@@ -1743,6 +1743,106 @@ const flowBuilderSlice = createSlice({
         new Set(state.journeySettings.conversionTracking.events)
       );
     },
+    moveNodeToNewPosition(state, action: PayloadAction<{ nodeId: string }>) {
+      // handleClearInsertNodes(state);
+
+      const { nodeId } = action.payload;
+
+      // const insertNode = state.nodes.find((node) => {
+      //   node.type === "insertNode";
+      // });
+
+      // if (!insertNode) return;
+      console.log(nodeId, "nodeId");
+      // const nodeToMoveIndex = state.nodes.findIndex(
+      //   (node) => nodeId === node?.id
+      // );
+
+      const isInsertNode = !!state.nodes.find(
+        (node) => node.type === "insertNode"
+      );
+
+      const nodesToMove = state.nodes.filter((node) => node.id === nodeId);
+      console.log(nodesToMove, "nodesToMove");
+      if (nodesToMove.length > 1) return;
+
+      const nodeToMove = nodesToMove[0];
+
+      console.log(nodeToMove, "nodeToMove");
+      console.log(isInsertNode, "isInsertNode");
+
+      if (!nodeToMove && !isInsertNode) return;
+
+      state.nodes = state.nodes.filter((node) => node.id !== nodeId);
+
+      const insertNodeIndex = state.nodes.findIndex(
+        (node) => node.type === "insertNode"
+      );
+
+      const nodeToMoveIndex = state.nodes.findIndex(
+        (node) => nodeId === node?.id
+      );
+
+      console.log(nodeToMoveIndex, "nodeToMoveIndex");
+
+      state.nodes.splice(insertNodeIndex, 0, nodeToMove);
+
+      // handleClearInsertNodes(state);
+
+      state.edges = state.edges.map((edge) => {
+        if (edge.source === nodeId) {
+          const nodeToMovePreviousNode = state.nodes[nodeToMoveIndex - 1];
+          if (nodeToMovePreviousNode) {
+            return { ...edge, source: nodeToMovePreviousNode.id };
+          }
+        }
+
+        if (edge.target === nodeId) {
+          const nodeToMoveNextNode = state.nodes[nodeToMoveIndex + 1];
+          if (nodeToMoveNextNode) {
+            return { ...edge, target: nodeToMoveNextNode.id };
+          }
+        }
+        return edge;
+      });
+      //find edge with nodeId source
+      //change source to nodeToMove previous element
+
+      //find edge with nodeId target
+      //change target to nodeToMove next element
+
+      // const edgeBetween = state.edges.find(
+      //   (edge) => edge.source === source && edge.target === target
+      // );
+      // if (!edgeBetween) return;
+
+      // const newNodeUUID = uuid();
+
+      // state.nodes.push({
+      //   id: newNodeUUID,
+      //   type: NodeType.INSERT_NODE,
+      //   data: {},
+      //   position: { x: 0, y: 0 },
+      // });
+
+      // state.edges.splice(state.edges.indexOf(edgeBetween), 1);
+      // state.edges.push(
+      //   {
+      //     id: `e${source}-${newNodeUUID}`,
+      //     type: EdgeType.PRIMARY,
+      //     source,
+      //     target: newNodeUUID,
+      //   },
+      //   {
+      //     id: `e${newNodeUUID}-${target}`,
+      //     type: EdgeType.PRIMARY,
+      //     source: newNodeUUID,
+      //     target,
+      //   }
+      // );
+      // handleClearInsertNodes(state);
+      // state.nodes = getLayoutedNodes(state.nodes, state.edges);
+    },
   },
 });
 
@@ -1800,6 +1900,7 @@ export const {
   setJourneyFrequencyCappingRules,
   setIsStarting,
   setJourneySettingsConversionTracking,
+  moveNodeToNewPosition,
 } = flowBuilderSlice.actions;
 
 export { defaultDevMode };
