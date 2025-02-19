@@ -327,7 +327,10 @@ export class JourneysController {
       name: "Draft",
       created_at: new Date(),
       updated_at: new Date(),
-      visual_layout: journey.visualLayout
+      visual_layout: {
+        nodes: journey.nodes,
+        edges: journey.edges,
+      }
     };
 
     return data;
@@ -361,7 +364,10 @@ export class JourneysController {
       name: "Draft",
       created_at: new Date(),
       updated_at: new Date(),
-      visual_layout: journey.visualLayout
+      visual_layout: {
+        nodes: journey.nodes,
+        edges: journey.edges,
+      }
     };
 
     return data;
