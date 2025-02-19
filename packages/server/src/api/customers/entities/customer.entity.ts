@@ -48,4 +48,10 @@ export class Customer {
   public getUserAttribute(attribute: string) {
     return this.user_attributes?.[attribute];
   }
+
+  @Column({ type: 'text', array: true, default: () => 'ARRAY[]::text[]' })
+  unsubscribed_from: string[];
+
+  @Column({ type: 'bool', nullable: true, default: false })
+  unsubscribe_all: boolean;
 }

@@ -220,8 +220,11 @@ export interface MessageNodeData<T extends MessageType = MessageType>
       pushBuilder?: MessageTemplatePushbuilderData;
     };
   };
+  oneClickUnsubscribeEnabled: boolean;
   connectionId?: string;
   sendingOptionId?: string;
+  replyToOptionId?: string;
+  oneClickUnsubscribeOptionId?: string;
 }
 
 export interface WaitUntilNodeData extends CommonNodeData {

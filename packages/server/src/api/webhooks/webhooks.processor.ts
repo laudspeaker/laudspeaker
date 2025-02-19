@@ -143,14 +143,14 @@ export class WebhooksProcessor extends ProcessorBase {
   }
 
   async process(job: Job<{ template: Template; [key: string]: any }>) {
-    const { template, filteredTags } = job.data;
+    const { template, filteredTags, strictLiquidChecking } = job.data;
 
     const { method, retries, fallBackAction, mimeType } = template.webhookData;
 
     let { body, headers, url } = template.webhookData;
 
     url = await this.tagEngine.parseAndRender(url, filteredTags || {}, {
-      strictVariables: true,
+      strictVariables: strictLiquidChecking,
     });
     url = await this.templatesService.parseTemplateTags(url);
 
@@ -166,7 +166,7 @@ export class WebhooksProcessor extends ProcessorBase {
     } else {
       body = await this.templatesService.parseTemplateTags(body);
       body = await this.tagEngine.parseAndRender(body, filteredTags || {}, {
-        strictVariables: true,
+        strictVariables: strictLiquidChecking,
       });
     }
 
@@ -175,12 +175,12 @@ export class WebhooksProcessor extends ProcessorBase {
         Object.entries(headers).map(async ([key, value]) => [
           await this.templatesService.parseTemplateTags(
             await this.tagEngine.parseAndRender(key, filteredTags || {}, {
-              strictVariables: true,
+              strictVariables: strictLiquidChecking,
             })
           ),
           await this.templatesService.parseTemplateTags(
             await this.tagEngine.parseAndRender(value, filteredTags || {}, {
-              strictVariables: true,
+              strictVariables: strictLiquidChecking,
             })
           ),
         ])

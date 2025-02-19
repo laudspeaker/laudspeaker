@@ -15,7 +15,7 @@ import { MailgunCredentials, MailgunProviderData, MailgunSendingData, MailgunSet
 import { CallbackData, Credentials, ProviderData, SendingData, SetupData } from '../../interfaces/data.interface';
 
 @Injectable()
-export class MailgunProvider extends BaseLiquidEngineProvider implements EmailProvider {
+export class MailgunProvider  implements EmailProvider { //extends BaseLiquidEngineProvider
   private static readonly MAILGUN_API_USERNAME = `api`;
   private static readonly MAILGUN_API_BASE_URL = `https://api.mailgun.net/v3`;
   private static readonly MAILGUN_HOOKS_TO_INSTALL = [
@@ -30,7 +30,7 @@ export class MailgunProvider extends BaseLiquidEngineProvider implements EmailPr
   private static readonly MAILGUN_DOMAINS_TO_FETCH = [`state`, `active`];
 
   constructor() {
-    super();
+    // super();
   }
 
   private isMailgunCredentials(credentials: EmailCredentials): credentials is MailgunCredentials {
@@ -95,8 +95,8 @@ export class MailgunProvider extends BaseLiquidEngineProvider implements EmailPr
 
     if (this.isMailgunCredentials(credentials) && this.isMailgunSendingData(data)) {
       try {
-        textWithInsertedTags = await this.parseLiquid(data.body, data.tags);
-        subjectWithInsertedTags = await this.parseLiquid(data.subject, data.tags);
+        textWithInsertedTags = ""// await this.parseLiquid(data.body, data.tags);
+        subjectWithInsertedTags = ""//await this.parseLiquid(data.subject, data.tags);
       } catch (err) {
         return [{
           ...record,
@@ -176,16 +176,16 @@ export class MailgunProvider extends BaseLiquidEngineProvider implements EmailPr
 
         results.forEach((result, index) => {
           if (result.status === 'fulfilled' && result.value.status === 200) {
-            this.log(
-              `Webhook ${MailgunProvider.MAILGUN_HOOKS_TO_INSTALL[index]} updated successfully`,
-              this.setup.name,
-              ''
-            );
+            // this.log(
+            //   `Webhook ${MailgunProvider.MAILGUN_HOOKS_TO_INSTALL[index]} updated successfully`,
+            //   this.setup.name,
+            //   ''
+            // );
           } else {
-            this.log(
-              `Failed to update webhook ${MailgunProvider.MAILGUN_HOOKS_TO_INSTALL[index]
-              }: ${JSON.stringify(result)}`, this.setup.name, ''
-            );
+            // this.log(
+            //   `Failed to update webhook ${MailgunProvider.MAILGUN_HOOKS_TO_INSTALL[index]
+            //   }: ${JSON.stringify(result)}`, this.setup.name, ''
+            // );
           }
         });
       };

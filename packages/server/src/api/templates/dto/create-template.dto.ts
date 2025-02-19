@@ -69,7 +69,7 @@ export class CreateTemplateDto {
 
   @IsObject()
   @IsOptional()
-  public modalState?: Record<string, unknown>;
+  public inAppState?: Record<string, unknown>;
 
   @IsOptional()
   @IsArray()

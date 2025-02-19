@@ -8,4 +8,5 @@ export enum CacheConstants {
   STEPS = 'Steps:V1',
   WORKSPACES = 'Workspaces:V1',
   API_KEY = 'ApiKey:V1',
+  NOTIFICATION_PREFERENCES = 'NotificationPreferences:V1',
 }

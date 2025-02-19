@@ -24,6 +24,9 @@ export class SendgridSendingOption {
   @Column()
   sendingEmail: string;
 
+  @Column({ nullable: true })
+  sendingName: string;
+
   @Column()
   sendgridConnectionId: string;
 }

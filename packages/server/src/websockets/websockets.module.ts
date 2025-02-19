@@ -5,7 +5,6 @@ import { forwardRef, Module } from '@nestjs/common';
 import { WebsocketGateway } from './websocket.gateway';
 import { WebhooksModule } from '../api/webhooks/webhooks.module';
 import { JourneysModule } from '../api/journeys/journeys.module';
-import { DevModeModule } from '../api/dev-mode/dev-mode.module';
 
 @Module({
   imports: [
@@ -14,7 +13,6 @@ import { DevModeModule } from '../api/dev-mode/dev-mode.module';
     forwardRef(() => JourneysModule),
     forwardRef(() => EventsModule),
     forwardRef(() => WebhooksModule),
-    forwardRef(() => DevModeModule),
   ],
   providers: [WebsocketGateway],
   exports: [WebsocketGateway],

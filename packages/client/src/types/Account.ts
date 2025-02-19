@@ -115,5 +115,6 @@ export default interface Account {
     twilioConnections: WorkspaceTwilioConnection[];
     pushConnections: WorkspacePushConnection[];
     pushPlatforms: Record<string, any>;
+    id?: string;
   };
 }

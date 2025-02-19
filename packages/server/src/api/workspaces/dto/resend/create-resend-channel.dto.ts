@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
 import { CreateResendSendingOption } from './create-resend-sending-option.dto';
+import { CreateResendReplyToOption } from './create-resend-reply-to-option.dto';
 
 export class CreateResendChannelDto {
   @IsNotEmpty()
@@ -24,4 +25,10 @@ export class CreateResendChannelDto {
   @ValidateNested()
   @Type(() => CreateResendSendingOption)
   sendingOptions: CreateResendSendingOption[];
+
+  @IsNotEmpty()
+  @IsArray()
+  @ValidateNested()
+  @Type(() => CreateResendReplyToOption)
+  replyToOptions: CreateResendReplyToOption[];
 }

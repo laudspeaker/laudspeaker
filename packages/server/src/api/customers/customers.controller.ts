@@ -41,6 +41,7 @@ import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
 import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
 import { AttributeType, AttributeTypeName } from './entities/attribute-type.entity';
 import { CustomerKeysService } from './customer-keys.service';
+import { UpdateNotificationPreferencesDto } from './dto/update-notification-preferences.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -195,6 +196,22 @@ export class CustomersController {
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async getSystemAttributes() {
     return this.customersService.getSystemAttributes();
+  }
+
+  @Get('/notification-preferences/:customerId/:workspaceId')
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getNotificationPreferences(
+    @Param() { customerId }: { customerId: string },
+    @Param() { workspaceId }: { workspaceId: string }
+  ) {
+    return this.customersService.getNotificationPreferences(customerId, workspaceId);
+  }
+
+  @Post('/notification-preferences')
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async setNotificationPreferences(@Body() updateNotificationPreferencesDto: UpdateNotificationPreferencesDto
+  ) {
+    return this.customersService.setNotificationPreferences(updateNotificationPreferencesDto);
   }
 
   @Get('/possible-attributes')

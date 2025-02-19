@@ -33,6 +33,9 @@ import { EventsPostProcessor } from './processors/events.postprocessor';
 import { Customer } from '../customers/entities/customer.entity';
 import { EventsPGSyncProcessor } from './processors/events-pg-sync.processor';
 import { PGEvent } from '../events/entities/pg-event.entity';
+import { NotificationPreferenceModule } from '../notification-preferences/notification-preferences.module';
+import { NotificationPreferenceService } from '../notification-preferences/notification-preferences.service';
+import { NotificationPreference } from '../notification-preferences/entities/notification-preference.entity';
 
 function getProvidersList() {
   let providerList: Array<any> = [
@@ -42,6 +45,7 @@ function getProvidersList() {
     CustomersService,
     S3Service,
     CacheService,
+    NotificationPreferenceService,
   ];
 
   if (process.env.LAUDSPEAKER_PROCESS_TYPE == 'QUEUE') {
@@ -69,7 +73,8 @@ function getProvidersList() {
       Imports,
       Step,
       Journey,
-      PGEvent
+      PGEvent,
+      NotificationPreference
     ]),
     forwardRef(() => AuthModule),
     forwardRef(() => CustomersModule),
@@ -79,6 +84,7 @@ function getProvidersList() {
     forwardRef(() => JourneysModule),
     forwardRef(() => SegmentsModule),
     forwardRef(() => WebsocketsModule),
+    forwardRef(() => NotificationPreferenceModule),
     SlackModule,
     forwardRef(() => RedlockModule),
     forwardRef(() => StepsModule),

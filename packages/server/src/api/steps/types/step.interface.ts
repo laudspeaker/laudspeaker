@@ -282,6 +282,9 @@ export class MessageStepMetadata extends SingleBranchMetadata {
   selectedPlatform?: string;
   connectionId: string;
   sendingOptionId?: string;
+  replyToOptionId?: string;
+  oneClickUnsubscribeOptionId?: string;
+  oneClickUnsubscribeEnabled: boolean;
 }
 
 /**

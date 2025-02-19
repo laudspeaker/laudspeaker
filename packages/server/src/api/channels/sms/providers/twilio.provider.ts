@@ -12,10 +12,10 @@ import { IncomingPhoneNumberInstance } from 'twilio/lib/rest/api/v2010/account/i
 import { MessageInstance } from 'twilio/lib/rest/api/v2010/account/message';
 
 @Injectable()
-export class TwilioProvider extends BaseLiquidEngineProvider implements SMSProvider {
+export class TwilioProvider  implements SMSProvider { //extends BaseLiquidEngineProvider
   private static readonly MAXIMUM_SMS_LENGTH = 1600;
   constructor() {
-    super();
+    // super();
   }
 
   private isTwilioCredentials(credentials: SMSCredentials): credentials is TwilioCredentials {
@@ -84,7 +84,7 @@ export class TwilioProvider extends BaseLiquidEngineProvider implements SMSProvi
 
     if (this.isTwilioCredentials(credentials) && this.isTwilioSendingData(data)) {
       try {
-        textWithInsertedTags = await this.parseLiquid(data.text, data.tags);
+        textWithInsertedTags = ""// await this.parseLiquid(data.text, data.tags);
       } catch (err) {
         return [{
           ...record,

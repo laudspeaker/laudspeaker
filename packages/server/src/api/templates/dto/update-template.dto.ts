@@ -60,9 +60,6 @@ export class UpdateTemplateDto {
 
   @IsOptional()
   @IsObject()
-  // TODO: fix object error
-  // @ValidateNested()
-  // @Type(() => PushBuilderDataDto)
   public pushObject?: PushBuilderDataDto;
 
   @IsObject()
@@ -71,7 +68,7 @@ export class UpdateTemplateDto {
 
   @IsObject()
   @IsOptional()
-  public modalState?: Record<string, unknown>;
+  public inAppState?: Record<string, unknown>;
 
   @IsOptional()
   @IsArray()

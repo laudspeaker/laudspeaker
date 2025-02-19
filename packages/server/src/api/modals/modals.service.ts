@@ -15,6 +15,8 @@ import { ModalEvent } from './entities/modal-event.entity';
 import { cleanTagsForSending } from '../../shared/utils/helpers';
 import { Liquid } from 'liquidjs';
 import recursivelyUpdateObject from '../../utils/recursivelyUpdateObject';
+import { Account } from '../accounts/entities/accounts.entity';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
 
 @Injectable()
 export class ModalsService {
@@ -29,10 +31,10 @@ export class ModalsService {
     private customersService: CustomersService,
     @InjectRepository(ModalEvent)
     private modalEventRepository: Repository<ModalEvent>
-  ) {}
+  ) { }
 
   public async queueModalEvent(customerId: string, template: Template) {
-    if (template?.type !== TemplateType.MODAL)
+    if (template?.type !== TemplateType.IN_APP)
       throw new BadRequestException(
         'Invalid template type: should be modal, got: ' + template.type
       );
@@ -60,6 +62,7 @@ export class ModalsService {
   }
 
   public async getQueuedModalObject(
+    auth: { account: Account; workspace: Workspaces },
     customerId: string
   ): Promise<Record<string, unknown> | undefined> {
   //   const customer = await this.customersService.CustomerModel.findById(

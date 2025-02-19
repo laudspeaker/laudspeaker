@@ -3,7 +3,7 @@ import FlowBuilderDrawer, {
 } from "pages/FlowBuilderv2/Drawer/FlowBuilderDrawer";
 import FlowEditor, { EdgeType, NodeType } from "pages/FlowBuilderv2/FlowEditor";
 import {
-  CustomModalIcon,
+  InAppMessageIcon,
   EmailIcon,
   ExitIcon,
   JumpToIcon,
@@ -582,6 +582,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
               type: MessageType.EMAIL,
               selected: { id: -1, name: "Remind email" },
             },
+            oneClickUnsubscribeEnabled: false,
           },
           position: { x: 0, y: 0 },
         },

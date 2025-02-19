@@ -31,7 +31,7 @@ const StyledContainer = styled.div`
 const SmsBuilder = () => {
   const { id } = useParams();
   const [smsText, setSmsText] = useState<string>("");
-  const [templateName, setTemplateName] = useState<string>("My sms template");
+  const [templateName, setTemplateName] = useState<string>("My SMS template");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
@@ -72,7 +72,7 @@ const SmsBuilder = () => {
   };
 
   useLayoutEffect(() => {
-    const populateSlackBuilder = async () => {
+    const populateSMSBuilder = async () => {
       try {
         const { data } = await getTemplate(id);
         setSmsText(data.smsText || "");
@@ -83,7 +83,7 @@ const SmsBuilder = () => {
         setIsLoading(false);
       }
     };
-    populateSlackBuilder();
+    populateSMSBuilder();
   }, []);
 
   const steps = ["SMS", "Test"];

@@ -192,8 +192,8 @@ export class TemplatesService {
           if (template.webhookData)
             template.webhookData.mimeType ||= MIMEType.JSON;
           break;
-        case TemplateType.MODAL:
-          template.modalState = createTemplateDto.modalState;
+        case TemplateType.IN_APP:
+          template.inAppState = createTemplateDto.inAppState;
           break;
         case TemplateType.CUSTOM_COMPONENT:
           template.customEvents = createTemplateDto.customEvents;
@@ -228,169 +228,7 @@ export class TemplatesService {
     event: EventDto,
     audienceId?: string
   ): Promise<string | number> {
-    const customerId = customer.id;
-    let template: Template,
-      job: Job<any>, // created jobId
-      installation: Installation,
-      message: any;
-    try {
-      template = await this.findOneById(account, templateId);
-      this.logger.debug(
-        'Found template: ' + template.id + ' of type ' + template.type
-      );
-    } catch (err) {
-      return Promise.reject(err);
-    }
-    const { id, ...tags } = customer;
-
-    const filteredTags = cleanTagsForSending(tags);
-
-    const { email } = account;
-
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
-
-    const {
-      mailgunAPIKey,
-      sendingName,
-      testSendingEmail,
-      testSendingName,
-      sendgridApiKey,
-      sendgridFromEmail,
-    } = workspace;
-
-    let { sendingDomain, sendingEmail } = workspace;
-
-    let key = mailgunAPIKey;
-    let from = sendingName;
-
-    switch (template.type) {
-      case TemplateType.EMAIL:
-        if (workspace.emailProvider === 'free3') {
-          if (workspace.freeEmailsCount === 0)
-            throw new HttpException(
-              'You exceeded limit of 3 emails',
-              HttpStatus.PAYMENT_REQUIRED
-            );
-          sendingDomain = process.env.MAILGUN_TEST_DOMAIN;
-          key = process.env.MAILGUN_API_KEY;
-          from = testSendingName;
-          sendingEmail = testSendingEmail;
-          workspace.freeEmailsCount--;
-        }
-
-        if (workspace.emailProvider === 'sendgrid') {
-          key = sendgridApiKey;
-          from = sendgridFromEmail;
-        }
-
-        await Producer.add(QueueType.MESSAGE, {
-            accountId: account.id,
-            audienceId,
-            cc: template.cc,
-            customerId,
-            domain: sendingDomain,
-            email: sendingEmail,
-            eventProvider: workspace.emailProvider,
-            from,
-            trackingEmail: email,
-            key,
-            subject: await this.parseApiCallTags(
-              template.subject,
-              filteredTags
-            ),
-            tags: filteredTags,
-            templateId,
-            text: await this.parseApiCallTags(template.text, filteredTags),
-            to: customer.user_attributes.phEmail ? customer.user_attributes.phEmail : customer.user_attributes.email,
-          }, MessageType.EMAIL);
-        if (workspace.emailProvider === 'free3') {
-          await account.save();
-          await workspace.save();
-        }
-        break;
-      case TemplateType.SLACK:
-        try {
-          installation = await this.slackService.getInstallation(customer);
-        } catch (err) {
-          return Promise.reject(err);
-        }
-        await Producer.add(QueueType.SLACK, {
-          accountId: account.id,
-          args: {
-            audienceId,
-            channel: customer.user_attributes.slackId,
-            customerId,
-            tags: filteredTags,
-            templateId,
-            text: await this.parseApiCallTags(
-              event?.payload ? event.payload : template.slackMessage,
-              filteredTags
-            ),
-          },
-          methodName: 'chat.postMessage',
-          token: installation.installation.bot.token,
-          trackingEmail: email,
-        }, 'send');
-        break;
-      case TemplateType.SMS:
-        await Producer.add(QueueType.MESSAGE, {
-          accountId: account.id,
-          audienceId,
-          customerId,
-          from: workspace.smsFrom,
-          sid: workspace.smsAccountSid,
-          tags: filteredTags,
-          templateId: template.id,
-          text: await this.parseApiCallTags(template.smsText, filteredTags),
-          to: customer.user_attributes.phPhoneNumber || customer.user_attributes.phone,
-          token: workspace.smsAuthToken,
-          trackingEmail: email,
-        }, MessageType.SMS);
-        break;
-      case TemplateType.PUSH:
-        // TODO: update for PUSH
-        // await this.messageQueue.add(MessageType.PUSH_FIREBASE, {
-        //   accountId: account.id,
-        //   audienceId,
-        //   customerId,
-        //   firebaseCredentials: account.firebaseCredentials,
-        //   phDeviceToken: customer.phDeviceToken,
-        //   pushText: await this.parseApiCallTags(
-        //     template.pushText,
-        //     filteredTags
-        //   ),
-        //   pushTitle: await this.parseApiCallTags(
-        //     template.pushTitle,
-        //     filteredTags
-        //   ),
-        //   trackingEmail: email,
-        //   tags: filteredTags,
-        //   templateId: template.id,
-        // });
-        break;
-      case TemplateType.WEBHOOK:
-        if (template.webhookData) {
-          await Producer.add(QueueType.WEBHOOKS, {
-            template,
-            filteredTags,
-            audienceId,
-            customerId,
-            accountId: account.id,
-          });
-        }
-        break;
-      case TemplateType.MODAL:
-        // if (template.modalState) {
-        //   const isSent = await this.websocketGateway.sendModal(
-        //     customerId.toString(),
-        //     template
-        //   );
-        //   if (!isSent)
-        //     await this.modalsService.queueModalEvent(customerId.toString(), template);
-        // }
-        break;
-    }
-    return Promise.resolve(message ? message?.sid : job?.id);
+    return Promise.resolve("message");
   }
 
   async findAll(
@@ -565,7 +403,7 @@ export class TemplatesService {
       smsText,
       webhookData,
       pushObject,
-      modalState,
+      inAppState,
       customEvents,
       customFields,
     } = foundTemplate;
@@ -603,7 +441,7 @@ export class TemplatesService {
       smsText,
       pushObject,
       webhookData,
-      modalState,
+      inAppState,
       customEvents,
       customFields,
     });
@@ -687,14 +525,14 @@ export class TemplatesService {
           retrievedData = ['data', 'body'].includes(webhookPath[0])
             ? body
             : webhookPath[0] === 'headers'
-            ? JSON.stringify(headers)
-            : '';
+              ? JSON.stringify(headers)
+              : '';
         } else {
           const objectToRetrievе = ['data', 'body'].includes(webhookPath[0])
             ? JSON.parse(body)
             : webhookPath[0] === 'headers'
-            ? headers
-            : {};
+              ? headers
+              : {};
           retrievedData = this.recursivelyRetrieveData(
             objectToRetrievе,
             webhookPath.slice(1)
@@ -710,7 +548,7 @@ export class TemplatesService {
     return str;
   }
 
-  async testWebhookTemplate(testWebhookDto: TestWebhookDto, session: string) {
+  async testWebhookTemplate(account: Account, testWebhookDto: TestWebhookDto, session: string) {
     let customer = await this.customersService.findByCustomerIdUnauthenticated(testWebhookDto.testCustomerId);
 
     if (!customer) {
@@ -726,7 +564,7 @@ export class TemplatesService {
 
     try {
       url = await this.tagEngine.parseAndRender(url, filteredTags || {}, {
-        strictVariables: true,
+        strictVariables: false,
       });
 
       url = await this.parseTemplateTags(url);
@@ -743,7 +581,7 @@ export class TemplatesService {
       } else {
         body = await this.parseTemplateTags(body);
         body = await this.tagEngine.parseAndRender(body, filteredTags || {}, {
-          strictVariables: true,
+          strictVariables: false,
         });
       }
 
@@ -752,12 +590,12 @@ export class TemplatesService {
           Object.entries(headers).map(async ([key, value]) => [
             await this.parseTemplateTags(
               await this.tagEngine.parseAndRender(key, filteredTags || {}, {
-                strictVariables: true,
+                strictVariables: false,
               })
             ),
             await this.parseTemplateTags(
               await this.tagEngine.parseAndRender(value, filteredTags || {}, {
-                strictVariables: true,
+                strictVariables: false,
               })
             ),
           ])
@@ -772,6 +610,7 @@ export class TemplatesService {
     headers['content-type'] = mimeType;
 
     try {
+      this.log({ message: `Sending Webhook`, payload: { method, body, headers } }, this.testWebhookTemplate.name, session, account.email)
       const res = await fetch(url, {
         method,
         body,
@@ -857,9 +696,9 @@ export class TemplatesService {
         retriesCount++;
         this.logger.warn(
           'Unsuccessfull webhook request. Retries: ' +
-            retriesCount +
-            '. Error: ' +
-            e
+          retriesCount +
+          '. Error: ' +
+          e
         );
         if (e instanceof Error) error = e.message;
         await wait(5000);

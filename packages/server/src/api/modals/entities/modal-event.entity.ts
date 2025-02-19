@@ -2,6 +2,7 @@ import { Template } from '../../templates/entities/template.entity';
 import {
   BaseEntity,
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -19,6 +20,9 @@ export class ModalEvent extends BaseEntity {
 
   @Column()
   public customerId: string;
+
+  @CreateDateColumn({ type: 'timestamptz' })
+  created_at: Date;
 
   @Column('timestamp')
   public expiresAt: Date | null;

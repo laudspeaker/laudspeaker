@@ -163,7 +163,7 @@ export class AccountsController {
         //return { isActive: true };
       }
       const isActive = await this.accountsService.checkActivePlanForUser(
-        (<Account>user).id,
+        <Account>user,
         session
       );
 
@@ -381,7 +381,7 @@ export class AccountsController {
         return { isActive: true };
       }
       const isActive = await this.accountsService.checkActivePlanForUser(
-        (<Account>user).id,
+        <Account>user,
         session
       );
       return { isActive };

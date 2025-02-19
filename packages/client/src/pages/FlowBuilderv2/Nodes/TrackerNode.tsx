@@ -10,7 +10,7 @@ import {
 } from "reactflow";
 import { useAppSelector } from "store/hooks";
 import {
-  CustomModalIcon,
+  InAppMessageIcon,
   TrackerVisibilityHideIcon,
   TrackerVisibilityShowIcon,
 } from "../Icons";
@@ -154,7 +154,7 @@ export const TrackerNode: FC<NodeProps<TrackerNodeData>> = ({
       >
         <div className="flex gap-[6px]">
           <div className="text-[#6366F1]">
-            <CustomModalIcon />
+            <InAppMessageIcon />
           </div>
           <div
             className={`font-inter font-semibold text-base flex justify-between items-center w-full`}

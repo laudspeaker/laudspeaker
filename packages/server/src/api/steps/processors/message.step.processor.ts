@@ -39,14 +39,19 @@ import { Producer } from '../../../common/services/queue/classes/producer';
 import { ClickHouseEventProvider } from '../../../common/services/clickhouse/types/clickhouse-event-provider';
 import { Customer } from '../../customers/entities/customer.entity';
 import { CacheConstants } from '../../../common/services/cache.constants';
+import { MailgunReplyToOption } from '@/api/workspaces/entities/mailgun-reply-to-option.entity';
+import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
+import { NotificationPreferenceService } from '@/api/notification-preferences/notification-preferences.service';
+import { NotificationPreference } from '@/api/notification-preferences/entities/notification-preference.entity';
+import { ModalsService } from '@/api/modals/modals.service';
 
 @Injectable()
 @Processor(
   'message.step', {
-    maxRetries: {
-      count: 0,
-    }
-  })
+  maxRetries: {
+    count: 0,
+  }
+})
 export class MessageStepProcessor extends ProcessorBase {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -64,6 +69,10 @@ export class MessageStepProcessor extends ProcessorBase {
     private accountRepository: Repository<Account>,
     @Inject(WebhooksService)
     private readonly webhooksService: WebhooksService,
+    @Inject(NotificationPreferenceService)
+    private readonly notificationPreferenceService: NotificationPreferenceService,
+    @Inject(ModalsService)
+    private modalsService: ModalsService,
   ) {
     super();
   }
@@ -148,7 +157,7 @@ export class MessageStepProcessor extends ProcessorBase {
       { name: 'MessageStepProcessor.process' },
       async () => {
         let nextJob;
-        const workspace =
+        const workspace: Workspaces =
           job.data.owner.teams?.[0]?.organization?.workspaces?.[0];
 
         const workspaceIds =
@@ -169,6 +178,7 @@ export class MessageStepProcessor extends ProcessorBase {
           | 'SEND' // should send
           | 'QUIET_REQUEUE' // quiet hours, requeue message when quiet hours over
           | 'QUIET_ABORT' // quiet hours, abort message, move to next step
+          | 'UNSUBSCRIBE_ABORT' // unsubscribe rules apply, abort message, move to next step
           | 'LIMIT_REQUEUE' // messages per minute rate limit hit, requeue for next minute
           | 'LIMIT_HOLD' // customers messaged per journey rate limit hit, hold at current
           | 'MOCK_SEND'; // mock message send, don't actually send message
@@ -225,6 +235,24 @@ export class MessageStepProcessor extends ProcessorBase {
             if (requeueTime < now) {
               // Date object should handle conversions of new month/new year etc
               requeueTime.setDate(requeueTime.getDate() + 1);
+            }
+          }
+        }
+
+        if (job.data.customer.unsubscribe_all) {
+          messageSendType = 'UNSUBSCRIBE_ABORT';
+        } else if (job.data.customer.unsubscribed_from.length) {
+          for (let preferenceIndex = 0; preferenceIndex < job.data.customer.unsubscribed_from.length; preferenceIndex++) {
+            const notificationPreference: NotificationPreference = await this.cacheService.getIgnoreError(
+              CacheConstants.NOTIFICATION_PREFERENCES,
+              `${workspace.id}:${job.data.customer.unsubscribed_from[preferenceIndex]}`,
+              async () => {
+                return await this.notificationPreferenceService.findOne(job.data.owner, job.data.session, job.data.customer.unsubscribed_from[preferenceIndex]) || "";
+              });
+            //Check tags
+            if (notificationPreference?.journey_tags?.some(element => job.data.journey.journeySettings?.tags?.includes(element))) {
+              messageSendType = 'UNSUBSCRIBE_ABORT'
+              break;
             }
           }
         }
@@ -311,9 +339,11 @@ export class MessageStepProcessor extends ProcessorBase {
           const { id, ...tags } =
             job.data.customer;
           const filteredTags = cleanTagsForSending(tags);
-          const sender = new MessageSender(this.logger, this.accountRepository);
+          const sender = new MessageSender(this.logger, this.accountRepository, this.cacheService, this.notificationPreferenceService);
 
           switch (template.type) {
+            case TemplateType.IN_APP:
+              await this.modalsService.queueModalEvent(job.data.customer.id, template)
             case TemplateType.EMAIL:
               const mailgunChannel = workspace.mailgunConnections.find(
                 (connection) =>
@@ -331,10 +361,10 @@ export class MessageStepProcessor extends ProcessorBase {
               const emailProvider = mailgunChannel
                 ? 'mailgun'
                 : sendgridChannel
-                ? 'sendgrid'
-                : resendChannel
-                ? 'resend'
-                : undefined;
+                  ? 'sendgrid'
+                  : resendChannel
+                    ? 'resend'
+                    : undefined;
 
               // if (emailProvider === 'free3') {
               //   if (workspace.freeEmailsCount === 0)
@@ -352,7 +382,9 @@ export class MessageStepProcessor extends ProcessorBase {
               let key: string,
                 sendingDomain: string,
                 from: string,
-                sendingEmail: string;
+                sendingEmail: string,
+                replyToEmail: string,
+                replyToName: string;
 
               switch (emailProvider) {
                 case 'mailgun':
@@ -365,6 +397,13 @@ export class MessageStepProcessor extends ProcessorBase {
                     );
                   from = mailgunSendingOption.sendingName;
                   sendingEmail = mailgunSendingOption.sendingEmail;
+                  const mailgunReplyToOption =
+                    mailgunChannel.replyToOptions?.find(
+                      ({ id }) =>
+                        id === job.data.step?.metadata?.replyToOptionId
+                    );
+                  replyToEmail = mailgunReplyToOption?.replyToEmail;
+                  replyToName = mailgunReplyToOption?.replyToName;
                   break;
                 case 'sendgrid':
                   key = sendgridChannel.apiKey;
@@ -373,7 +412,17 @@ export class MessageStepProcessor extends ProcessorBase {
                       ({ id }) =>
                         id === job.data.step?.metadata?.sendingOptionId
                     );
-                  from = sendgridSendingOption.sendingEmail;
+                  from = sendgridSendingOption.sendingName;
+                  sendingEmail = sendgridSendingOption.sendingEmail;
+
+                  const sendgridReplyToOption =
+                    sendgridChannel.replyToOptions?.find(
+                      ({ id }) =>
+                        id === job.data.step?.metadata?.replyToOptionId
+                    );
+
+                  replyToEmail = sendgridReplyToOption?.replyToEmail;
+                  replyToName = sendgridReplyToOption?.replyToName;
                   break;
                 case 'resend':
                   sendingDomain = resendChannel.sendingDomain;
@@ -383,6 +432,15 @@ export class MessageStepProcessor extends ProcessorBase {
                   );
                   from = resendSendingOption.sendingName;
                   sendingEmail = resendSendingOption.sendingEmail;
+
+
+                  const resendReplyToOption =
+                    resendChannel.replyToOptions?.find(
+                      ({ id }) =>
+                        id === job.data.step?.metadata?.replyToOptionId
+                    );
+                  replyToEmail = resendReplyToOption?.replyToEmail;
+                  replyToName = resendReplyToOption?.replyToName;
                   break;
                 default:
                   break;
@@ -414,6 +472,9 @@ export class MessageStepProcessor extends ProcessorBase {
                 templateID: template.id,
                 eventProvider: emailProvider,
                 session: job.data.session,
+                replyToName,
+                replyToEmail,
+                strictLiquidChecking: job.data.journey.journeySettings.strictLiquidChecking.enabled
               });
               this.debug(
                 `${JSON.stringify(ret)}`,
@@ -572,6 +633,7 @@ export class MessageStepProcessor extends ProcessorBase {
                 const webhookJobData = {
                   template,
                   filteredTags,
+                  strictLiquidChecking: job.data.journey.journeySettings.strictLiquidChecking.enabled,
                   stepId: job.data.step.id,
                   customerId: job.data.customer.uuid,
                   accountId: job.data.owner.id,
@@ -602,6 +664,24 @@ export class MessageStepProcessor extends ProcessorBase {
                 createdAt: new Date(),
                 customerId: job.data.customer.uuid.toString(),
                 event: 'aborted',
+                eventProvider: ClickHouseEventProvider.TRACKER,
+                messageId: job.data.step.metadata.humanReadableName,
+                templateId: job.data.step.metadata.template,
+                workspaceId: workspace.id,
+                processed: true,
+              },
+            ],
+            job.data.session
+          );
+        } else if (messageSendType === 'UNSUBSCRIBE_ABORT') {
+          // Record that the message was aborted
+          await this.webhooksService.insertMessageStatusToClickhouse(
+            [
+              {
+                stepId: job.data.step.id,
+                createdAt: new Date(),
+                customerId: job.data.customer.uuid.toString(),
+                event: 'unsubscribe_aborted',
                 eventProvider: ClickHouseEventProvider.TRACKER,
                 messageId: job.data.step.metadata.humanReadableName,
                 templateId: job.data.step.metadata.template,

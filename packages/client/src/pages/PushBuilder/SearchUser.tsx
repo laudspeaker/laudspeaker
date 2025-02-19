@@ -77,8 +77,8 @@ export const SearchUser = ({
   );
 
   const getTitle = (customer: CustomerResponse) =>
-    `${pk?.name && customer?.[pk?.name] ? capitalizeString(pk.name) : "ID"}: ${
-      pk?.name && customer?.[pk?.name] ? customer[pk.name] : customer.id
+    `${pk?.key && customer?.[pk?.key] ? capitalizeString(pk.key) : "ID"}: ${
+      pk?.key && customer?.[pk?.key] ? customer[pk.key] : customer.id
     }`;
 
   return (
@@ -86,7 +86,7 @@ export const SearchUser = ({
       placeholder={
         selectedCustomer?.[previewFieldKey]
           ? `${getTitle(selectedCustomer)}`
-          : "Search user’s id, email or phone number"
+          : "Search for customers using their primary key, email, or phone number."
       }
       value={selectedCustomer?.id}
       className="max-w-[800px] min-w-full"

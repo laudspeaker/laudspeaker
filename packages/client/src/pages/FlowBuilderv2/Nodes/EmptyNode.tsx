@@ -13,7 +13,7 @@ export const EmptyNode: FC<NodeProps<NodeData>> = ({
   data: { disabled },
 }) => {
   const drawerActionToNodeTypeMap: Record<DrawerAction, NodeType> = {
-    [DrawerAction.CUSTOM_MODAL]: NodeType.MESSAGE,
+    [DrawerAction.IN_APP_MESSAGE]: NodeType.MESSAGE,
     [DrawerAction.TRACKER]: NodeType.MESSAGE,
     [DrawerAction.EMAIL]: NodeType.MESSAGE,
     [DrawerAction.EXIT]: NodeType.EXIT,
