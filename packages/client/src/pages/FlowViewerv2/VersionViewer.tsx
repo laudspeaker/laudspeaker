@@ -53,14 +53,11 @@ const VersionViewer = () => {
   };
 
   const onRestore = async () => {
-    await ApiService.patch({
-      url: `/journeys${journeyId}/check_out`,
+    const { data } = await ApiService.post({
+      url: `/journeys/${journeyId}/check_out`,
     });
-    const draftVersionId = versions.find(
-      (version) => version.name === "Draft"
-    )?.uuid;
-    if (draftVersionId) {
-      navigate(`/flow/${draftVersionId}`, {
+    if (data.uuid) {
+      navigate(`/flow/${data.uuid}`, {
         state: { isFromVersions: true },
       });
     }
