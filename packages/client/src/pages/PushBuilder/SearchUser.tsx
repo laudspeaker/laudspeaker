@@ -77,8 +77,8 @@ export const SearchUser = ({
   );
 
   const getTitle = (customer: CustomerResponse) =>
-    `${pk?.key && customer?.[pk?.key] ? capitalizeString(pk.key) : "ID"}: ${
-      pk?.key && customer?.[pk?.key] ? customer[pk.key] : customer.id
+    `${pk?.name && customer?.[pk?.name] ? capitalizeString(pk.name) : "ID"}: ${
+      pk?.name && customer?.[pk?.name] ? customer[pk.name] : customer.id
     }`;
 
   return (
