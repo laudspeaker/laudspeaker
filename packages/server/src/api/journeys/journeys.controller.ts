@@ -270,4 +270,100 @@ export class JourneysController {
     const session = randomUUID();
     return await this.journeysService.markDeleted(<Account>user, id, session);
   }
+
+  @Get(':id/versions')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getJourneyVersions(
+    @Req() { user }: Request,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    const session = randomUUID();
+
+    const data = [
+      {
+        uuid: "01951f2b-19d8-729b-96fb-a1a0d882dce7",
+        name: "Draft",
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+      {
+        uuid: "01951f2b-19d8-7af5-aa00-f01a22fbdb53",
+        name: "3",
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+      {
+        uuid: "01951f2b-19d8-7fe8-902a-b7854cc65f68",
+        name: "2",
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+      {
+        uuid: "01951f2b-19d8-77d0-b00c-4c95d9778f43",
+        name: "1",
+        created_at: new Date(),
+        updated_at: new Date(),
+      }
+    ];
+
+    return data;
+  }
+
+  @Get(':id/versions/:version_uuid')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getJourneyVersion(
+    @Req() { user }: Request,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('version_uuid', ParseUUIDPipe) version_uuid: string,
+  ) {
+    const session = randomUUID();
+
+    const journey = await this.journeysService.findOne(<Account>user, id, session);
+
+    const data = {
+      uuid: version_uuid,
+      name: "Draft",
+      created_at: new Date(),
+      updated_at: new Date(),
+      visual_layout: journey.visualLayout
+    };
+
+    return data;
+  }
+
+  @Patch(':id/versions/:version_uuid/visual_layout')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async updateVersionLayout(
+    @Req() { user }: Request,
+    @Body() updateJourneyDto: UpdateJourneyLayoutDto
+  ) {
+    const session = randomUUID();
+    return await this.journeysService.updateLayout(
+      <Account>user,
+      updateJourneyDto,
+      session
+    );
+  }
+
+  @Post(':id/check_out/')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async checkOut(@Req() { user }: Request, @Param('id') id: string) {
+    const session = randomUUID();
+
+    const journey = await this.journeysService.findOne(<Account>user, id, session);
+
+    const data = {
+      uuid: "01951f2b-19d8-729b-96fb-a1a0d882dce7",
+      name: "Draft",
+      created_at: new Date(),
+      updated_at: new Date(),
+      visual_layout: journey.visualLayout
+    };
+
+    return data;
+  }
 }
