@@ -33,6 +33,7 @@ import {
   setJumpToTargettingNode,
   setNodes,
   transformEmptyNodeIntoInsertNode,
+  setIsMoving,
 } from "reducers/flow-builder.reducer";
 import {
   EmptyNode,
@@ -141,6 +142,7 @@ const FlowEditor: FC<FlowEditorProps> = ({
     devModeState,
     isDragging,
     dragAction,
+    isMoving,
   } = useAppSelector((state) => state.flowBuilder);
   useDevKeysHandler();
   const socket = useDevSocket();
@@ -294,32 +296,38 @@ const FlowEditor: FC<FlowEditorProps> = ({
   //   );
   // };
 
-  const onDragFinish = useCallback(
-    (x: number, y: number, movingNode: any) => {
-      // if (!isCustomDragging) return;
-      const position = project({
-        x,
-        y,
-      });
-      console.log(nodes[1], "nodes[1]", nodes.length, nodes[2], nodes[3]);
+  const onDragFinish = (x: number, y: number, movingNode: any) => {
+    // if (!isCustomDragging) return;
+    const position = project({
+      x,
+      y,
+    });
+    console.log(
+      nodes[1],
+      "nodes[1]",
+      nodes.length,
+      nodes[2],
+      nodes[3],
+      movingNode
+    );
+    const insertNode = nodes.find((node) => node.type === NodeType.INSERT_NODE);
+    // if (!insertNode) {
+    dispatch(
+      addInsertNodeBetween({
+        source: nodes[1]?.id,
+        target: nodes[2]?.id,
+        //  source: closestEdge.nodeA.id,
+        //  target: closestEdge.nodeB.id,
+      })
+    );
+    // }
 
-      dispatch(
-        addInsertNodeBetween({
-          source: nodes[1]?.id,
-          target: nodes[2]?.id,
-          //  source: closestEdge.nodeA.id,
-          //  target: closestEdge.nodeB.id,
-        })
-      );
-
-      dispatch(
-        moveNodeToNewPosition({
-          nodeId: nodes[3]?.id,
-        })
-      );
-    },
-    [nodes]
-  );
+    dispatch(
+      moveNodeToNewPosition({
+        nodeId: nodes[3]?.id,
+      })
+    );
+  };
 
   const onNodesChange = (changes: NodeChange[]) => {
     console.log("onNodesChange", changes);
@@ -350,6 +358,7 @@ const FlowEditor: FC<FlowEditorProps> = ({
       changes.find((change) => change.type === "position" && change.dragging)
     ) {
       setIsCustomDragging(true);
+      dispatch(setIsMoving(true));
       dispatch(setIsDragging(true));
       dispatch(setDragAction({ type: DrawerAction.EMAIL }));
       changes.map((change) => {
@@ -362,6 +371,7 @@ const FlowEditor: FC<FlowEditorProps> = ({
     } else {
       setIsCustomDragging(false);
       dispatch(setIsDragging(false));
+      dispatch(setIsMoving(false));
     }
 
     if (devModeState.status === ConnectionStatus.Connected) {
@@ -525,7 +535,7 @@ const FlowEditor: FC<FlowEditorProps> = ({
           ref={flowRef}
         >
           <MouseTracker
-            isVisible={isCustomDragging}
+            isVisible={isMoving}
             coordinates={stateChanges}
             flowRef={flowRef}
           >

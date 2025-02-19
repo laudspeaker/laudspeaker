@@ -574,6 +574,7 @@ export interface FlowBuilderState {
   nodes: Node<NodeData>[];
   edges: Edge<EdgeData>[];
   isDragging: boolean;
+  isMoving: boolean;
   dragAction?: DragAction;
   stepperIndex: 0 | 1 | 2 | 3;
   segments: SegmentsSettings;
@@ -676,6 +677,7 @@ const initialState: FlowBuilderState = {
   nodes: getLayoutedNodes(initialNodes.slice(), initialEdges.slice()),
   edges: initialEdges.slice(),
   isDragging: false,
+  isMoving: false,
   stepperIndex: 0,
   segments: {
     type: SegmentsSettingsType.ALL_CUSTOMERS,
@@ -1514,6 +1516,9 @@ const flowBuilderSlice = createSlice({
     setIsDragging(state, action: PayloadAction<boolean>) {
       state.isDragging = action.payload;
     },
+    setIsMoving(state, action: PayloadAction<boolean>) {
+      state.isMoving = action.payload;
+    },
     setDragAction(state, action: PayloadAction<DragAction | undefined>) {
       state.dragAction = action.payload;
     },
@@ -1748,48 +1753,54 @@ const flowBuilderSlice = createSlice({
 
       const { nodeId } = action.payload;
 
-      // const insertNode = state.nodes.find((node) => {
-      //   node.type === "insertNode";
-      // });
+      const insertNode = state.nodes.find((node) => {
+        return node.type === NodeType.INSERT_NODE;
+      });
 
-      // if (!insertNode) return;
-      console.log(nodeId, "nodeId");
-      // const nodeToMoveIndex = state.nodes.findIndex(
-      //   (node) => nodeId === node?.id
-      // );
-
-      const isInsertNode = !!state.nodes.find(
-        (node) => node.type === "insertNode"
-      );
+      if (!insertNode) return;
 
       const nodesToMove = state.nodes.filter((node) => node.id === nodeId);
-      console.log(nodesToMove, "nodesToMove");
-      if (nodesToMove.length > 1) return;
+
+      if (!nodesToMove.length || nodesToMove.length > 1) return;
 
       const nodeToMove = nodesToMove[0];
 
       console.log(nodeToMove, "nodeToMove");
-      console.log(isInsertNode, "isInsertNode");
 
-      if (!nodeToMove && !isInsertNode) return;
-
-      state.nodes = state.nodes.filter((node) => node.id !== nodeId);
+      if (!nodeToMove) return;
 
       const insertNodeIndex = state.nodes.findIndex(
-        (node) => node.type === "insertNode"
+        (node) => node.type === NodeType.INSERT_NODE
       );
 
-      const nodeToMoveIndex = state.nodes.findIndex(
-        (node) => nodeId === node?.id
+      const nodeToMoveIndex = state.nodes.findIndex((node) =>
+        node?.id.includes(nodeId)
       );
 
       console.log(nodeToMoveIndex, "nodeToMoveIndex");
+      state.nodes = state.nodes.filter((node) => node.id !== nodeId);
 
       state.nodes.splice(insertNodeIndex, 0, nodeToMove);
 
       // handleClearInsertNodes(state);
 
       state.edges = state.edges.map((edge) => {
+        //find insert node
+        //find find edge with insert node target
+        //change target to nodeToMove
+        if (edge.target === insertNode.id) {
+          return { ...edge, target: nodeToMove.id };
+        }
+
+        //find insert node
+        //find find edge with insert node source
+        //change source to nodeToMove
+        if (edge.source === insertNode.id) {
+          return { ...edge, source: nodeToMove.id };
+        }
+
+        // find edge with nodeId source
+        // change source to nodeToMove previous element
         if (edge.source === nodeId) {
           const nodeToMovePreviousNode = state.nodes[nodeToMoveIndex - 1];
           if (nodeToMovePreviousNode) {
@@ -1797,6 +1808,8 @@ const flowBuilderSlice = createSlice({
           }
         }
 
+        //find edge with nodeId target
+        //change target to nodeToMove next element
         if (edge.target === nodeId) {
           const nodeToMoveNextNode = state.nodes[nodeToMoveIndex + 1];
           if (nodeToMoveNextNode) {
@@ -1805,43 +1818,12 @@ const flowBuilderSlice = createSlice({
         }
         return edge;
       });
-      //find edge with nodeId source
-      //change source to nodeToMove previous element
+      state.nodes = state.nodes.filter(
+        (node) => node.type !== NodeType.INSERT_NODE
+      );
 
-      //find edge with nodeId target
-      //change target to nodeToMove next element
-
-      // const edgeBetween = state.edges.find(
-      //   (edge) => edge.source === source && edge.target === target
-      // );
-      // if (!edgeBetween) return;
-
-      // const newNodeUUID = uuid();
-
-      // state.nodes.push({
-      //   id: newNodeUUID,
-      //   type: NodeType.INSERT_NODE,
-      //   data: {},
-      //   position: { x: 0, y: 0 },
-      // });
-
-      // state.edges.splice(state.edges.indexOf(edgeBetween), 1);
-      // state.edges.push(
-      //   {
-      //     id: `e${source}-${newNodeUUID}`,
-      //     type: EdgeType.PRIMARY,
-      //     source,
-      //     target: newNodeUUID,
-      //   },
-      //   {
-      //     id: `e${newNodeUUID}-${target}`,
-      //     type: EdgeType.PRIMARY,
-      //     source: newNodeUUID,
-      //     target,
-      //   }
-      // );
       // handleClearInsertNodes(state);
-      // state.nodes = getLayoutedNodes(state.nodes, state.edges);
+      state.nodes = getLayoutedNodes(state.nodes, state.edges);
     },
   },
 });
@@ -1863,6 +1845,7 @@ export const {
   selectNode,
   deselectNodes,
   setIsDragging,
+  setIsMoving,
   setDragAction,
   setStepperIndex,
   setSegmentsSettings,
