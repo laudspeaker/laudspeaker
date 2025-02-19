@@ -8,17 +8,19 @@ import Select from "components/Elements/Selectv2";
 
 const VersionsSelect = () => {
   const versions = useVersions();
-  const { id } = useParams();
+  const { journeyId, versionId } = useParams();
   const navigate = useNavigate();
   const [selectedVersion, setSelectedVersion] = useState<string>("");
 
   useEffect(() => {
-    const currentVersion = versions.find((version) => `${version.uuid}` === id);
+    const currentVersion = versions.find(
+      (version) => `${version.uuid}` === versionId
+    );
 
     if (currentVersion && !selectedVersion.length) {
       setSelectedVersion(currentVersion?.name);
     }
-  }, [id]);
+  }, [versionId, versions]);
 
   const versionsOptions = versions.map((version) => {
     return {
@@ -62,11 +64,11 @@ const VersionsSelect = () => {
           setSelectedVersion(value);
 
           if (newVersion?.name === "Draft") {
-            navigate(`/flow/${newVersionId}`, {
+            navigate(`/flow/${journeyId}`, {
               state: { isFromVersions: true },
             });
           } else if (newVersionId) {
-            navigate(`/flow/${newVersionId}/review-version`);
+            navigate(`/flow/${journeyId}/${versionId}/review-version`);
           }
         }}
         renderCustomOption={renderCustomOption}

@@ -448,7 +448,7 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
-          path="/flow/:id/review-version"
+          path="/flow/:journeyId/:versionId/review-version"
           element={
             <Protected>
               <VerificationProtected>

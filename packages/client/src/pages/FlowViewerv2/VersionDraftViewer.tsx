@@ -44,27 +44,14 @@ const VersionDraftViewer = () => {
     const newVersionId = newVersion?.uuid;
 
     if (newVersion?.name === "Draft") {
-      navigate(`/flow/${newVersionId}`, {
+      navigate(`/flow/${journeyId}`, {
         state: { isFromVersions: true },
       });
     } else if (newVersionId) {
-      navigate(`/flow/${newVersionId}/review-version`, {
+      navigate(`/flow/${journeyId}/${newVersionId}/review-version`, {
         state: { isFromVersions: true },
       });
     }
-
-    // const newVersion = versions.find((version) => version.uuid === id);
-    // const newVersionId = newVersion?.uuid;
-
-    //   if (newVersion?.name === "Draft") {
-    //     navigate(`/flow/${journeyId}/${newVersionId}`, {
-    //       state: { isFromVersions: true },
-    //     });
-    //   } else if (newVersionId) {
-    //     navigate(`/flow/${journeyId}/${newVersionId}/review-version`, {
-    //       state: { isFromVersions: true },
-    //     });
-    //   }
   };
 
   return (

@@ -48,14 +48,16 @@ const useLoadJourney = ({
   setInitialJourneySettings,
   mode,
 }: loadJourneyInterface) => {
-  const { id } = useParams();
+  const { journeyId, versionId } = useParams();
+
   const dispatch = useAppDispatch();
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const isViewJourney = mode === LoadJourneyMode.VIEW_VERSION;
 
   const loadJourney = async () => {
+    if (!journeyId || !versionId) return;
     setIsLoading(true);
     try {
       const { data } = await ApiService.get<{
@@ -72,10 +74,13 @@ const useLoadJourney = ({
         journeyEntrySettings: JourneyEntrySettings;
         journeySettings: JourneySettings;
       }>({
-        url: "/journeys/" + id,
+        url: `journeys/${journeyId}/versions/${versionId}`,
       });
 
       dispatch(setFlowName(data.name));
+
+      if (!data.nodes) return;
+
       if (
         data.nodes.length !== 0 &&
         data.nodes.some((node) => node.type === NodeType.START)
@@ -166,7 +171,7 @@ const useLoadJourney = ({
         setInitialJourneySettings(data.journeySettings);
       }
 
-      dispatch(setFlowId(id));
+      dispatch(setFlowId(journeyId));
       let status: JourneyStatus = JourneyStatus.DRAFT;
 
       if (data.isActive) {

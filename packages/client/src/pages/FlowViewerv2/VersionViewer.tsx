@@ -12,9 +12,10 @@ import { useLocation } from "react-router-dom";
 import useLoadJourney, {
   LoadJourneyMode,
 } from "pages/FlowBuilderv2/hooks/useLoadJourney";
+import ApiService from "services/api.service";
 
 const VersionViewer = () => {
-  const { id } = useParams();
+  const { journeyId, versionId } = useParams();
   const versions = useVersions();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,12 +27,14 @@ const VersionViewer = () => {
   const isFromVersions = location.state?.isFromVersions;
 
   useEffect(() => {
-    const currentVersion = versions.find((version) => `${version.uuid}` === id);
+    const currentVersion = versions.find(
+      (version) => `${version.uuid}` === versionId
+    );
 
     if (currentVersion && !selectedVersion.length) {
       setSelectedVersion(currentVersion?.name);
     }
-  }, [id]);
+  }, [journeyId, versionId]);
 
   const { loadJourney, isLoading } = useLoadJourney({
     mode: LoadJourneyMode.VIEW_VERSION,
@@ -39,7 +42,7 @@ const VersionViewer = () => {
 
   const handleExit = () => {
     if (isFromVersions) {
-      navigate(`/flow/${id}/view`, {
+      navigate(`/flow/${journeyId}/view`, {
         state: {
           isFromVersions: true,
         },
@@ -49,9 +52,23 @@ const VersionViewer = () => {
     }
   };
 
+  const onRestore = async () => {
+    await ApiService.patch({
+      url: `/journeys${journeyId}/check_out`,
+    });
+    const draftVersionId = versions.find(
+      (version) => version.name === "Draft"
+    )?.uuid;
+    if (draftVersionId) {
+      navigate(`/flow/${draftVersionId}`, {
+        state: { isFromVersions: true },
+      });
+    }
+  };
+
   useEffect(() => {
     loadJourney();
-  }, [id]);
+  }, [journeyId, versionId]);
 
   return (
     <>
@@ -70,16 +87,7 @@ const VersionViewer = () => {
             isOpen={isRestoreModalOpen}
             onClose={() => setIsRestoreModalOpen(false)}
             versionName={selectedVersion}
-            onConfirm={() => {
-              const draftVersionId = versions.find(
-                (version) => version.name === "Draft"
-              )?.uuid;
-              if (draftVersionId) {
-                navigate(`/flow/${draftVersionId}`, {
-                  state: { isFromVersions: true },
-                });
-              }
-            }}
+            onConfirm={onRestore}
           />
         </div>
 
