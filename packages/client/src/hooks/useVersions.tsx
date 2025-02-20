@@ -13,15 +13,15 @@ const useVersions = () => {
   const [versions, setVersions] = useState<IVersion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const { id } = useParams();
+  const { id, journeyId } = useParams();
 
   const loadData = async () => {
-    if (!id) return;
+    if (!(id || journeyId)) return;
     setIsLoading(true);
 
     try {
       const { data } = await ApiService.get<IVersion[]>({
-        url: `/journeys/${id}/versions`,
+        url: `/journeys/${id || journeyId}/versions`,
       });
       console.log(data, "data");
       setVersions(data);

@@ -9,9 +9,7 @@ import Button, { ButtonType } from "components/Elements/Buttonv2";
 import RestoreVersionModal from "pages/FlowBuilderv2/Modals/RestoreVersionModal";
 import VersionsSelect from "components/VersionsSelect";
 import { useLocation } from "react-router-dom";
-import useLoadJourney, {
-  LoadJourneyMode,
-} from "pages/FlowBuilderv2/hooks/useLoadJourney";
+import useLoadVersion from "pages/FlowBuilderv2/hooks/useLoadVersion";
 import ApiService from "services/api.service";
 
 const VersionViewer = () => {
@@ -36,9 +34,7 @@ const VersionViewer = () => {
     }
   }, [journeyId, versionId]);
 
-  const { loadJourney, isLoading } = useLoadJourney({
-    mode: LoadJourneyMode.VIEW_VERSION,
-  });
+  const { loadVersion, isLoading } = useLoadVersion({ versionId });
 
   const handleExit = () => {
     if (isFromVersions) {
@@ -64,7 +60,7 @@ const VersionViewer = () => {
   };
 
   useEffect(() => {
-    loadJourney();
+    loadVersion();
   }, [journeyId, versionId]);
 
   return (

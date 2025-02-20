@@ -18,18 +18,21 @@ interface FlowViewerHeaderProps {
   tabs: Record<FlowViewerTab, React.ReactNode>;
   currentTab: FlowViewerTab;
   setCurrentTab: (tab: FlowViewerTab) => void;
+  selectedVersion?: string;
+  setSelectedVersion?: (version: string) => void;
 }
 
 const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
   tabs,
   currentTab,
   setCurrentTab,
+  selectedVersion,
+  setSelectedVersion,
 }) => {
   const { flowName, flowId, flowStatus } = useAppSelector(
     (state) => state.flowBuilder
   );
-  const versions = useVersions();
-  const currentVersion = versions[0]?.uuid;
+
   const navigate = useNavigate();
 
   const [isStopModalOpen, setIsStopModalOpen] = useState(false);
@@ -53,7 +56,7 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
   };
 
   const handleContinueEditingClick = () => {
-    navigate(`/flow/${currentVersion}`, {
+    navigate(`/flow/${selectedVersion}`, {
       state: { isFromVersions: true },
     });
   };
@@ -78,7 +81,10 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
         </div>
         {!!(currentTab === FlowViewerTab.JOURNEY) && (
           <div className="font-semibold text-[20px] leading-[28px]">
-            <VersionsSelect />
+            <VersionsSelect
+              selectedVersion={selectedVersion}
+              setSelectedVersion={setSelectedVersion}
+            />
           </div>
         )}
         <div className="flex items-center gap-[10px] font-roboto">

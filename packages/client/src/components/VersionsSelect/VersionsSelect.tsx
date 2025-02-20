@@ -6,21 +6,28 @@ import { TickIcon } from "pages/FlowBuilderv2/Icons";
 import { useNavigate } from "react-router-dom";
 import Select from "components/Elements/Selectv2";
 
-const VersionsSelect = () => {
+interface VersionSelectProps {
+  selectedVersion?: string;
+  setSelectedVersion?: (version: string) => void;
+}
+
+const VersionsSelect: FC<VersionSelectProps> = ({
+  selectedVersion,
+  setSelectedVersion,
+}) => {
   const versions = useVersions();
   const { journeyId, versionId } = useParams();
   const navigate = useNavigate();
-  const [selectedVersion, setSelectedVersion] = useState<string>("");
+  const [chosenVersion, setChosenVersion] = useState<string>("");
 
   useEffect(() => {
-    const currentVersion = versions.find(
-      (version) => `${version.uuid}` === versionId
-    );
+    const id = selectedVersion || versionId;
+    const currentVersion = versions.find((version) => `${version.uuid}` === id);
 
-    if (currentVersion && !selectedVersion.length) {
-      setSelectedVersion(currentVersion?.name);
+    if (currentVersion) {
+      setChosenVersion?.(currentVersion?.name);
     }
-  }, [versionId, versions]);
+  }, [versions, selectedVersion, versionId]);
 
   const versionsOptions = versions.map((version) => {
     return {
@@ -47,7 +54,7 @@ const VersionsSelect = () => {
             <div className="text-[12px] text-[#4B5563]">{additionalData}</div>
           )}
         </div>
-        {selectedVersion === title && <TickIcon />}
+        {chosenVersion === title && <TickIcon />}
       </div>
     );
   };
@@ -57,18 +64,24 @@ const VersionsSelect = () => {
       <Select
         className="border-transparent"
         options={versionsOptions}
-        value={selectedVersion}
+        value={chosenVersion}
         onChange={(value) => {
           const newVersion = versions.find((version) => version.name === value);
           const newVersionId = newVersion?.uuid;
-          setSelectedVersion(value);
+          if (!value || !newVersion) {
+            return;
+          }
+          if (newVersionId) {
+            setSelectedVersion?.(newVersionId);
+          }
+          setChosenVersion(value);
 
-          if (newVersion?.name === "Draft") {
+          if (newVersion?.name === "Draft" && versionId) {
             navigate(`/flow/${journeyId}`, {
               state: { isFromVersions: true },
             });
-          } else if (newVersionId) {
-            navigate(`/flow/${journeyId}/${versionId}/review-version`);
+          } else if (newVersionId && versionId) {
+            navigate(`/flow/${journeyId}/${newVersionId}/review-version`);
           }
         }}
         renderCustomOption={renderCustomOption}

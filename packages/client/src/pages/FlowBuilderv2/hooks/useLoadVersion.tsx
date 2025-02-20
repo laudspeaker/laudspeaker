@@ -5,23 +5,12 @@ import { useParams } from "react-router-dom";
 import { NodeData, Stats } from "../Nodes/NodeData";
 import { EdgeData } from "../Edges/EdgeData";
 import {
-  JourneyEntrySettings,
-  JourneySettings,
-  JourneyType,
   loadVisualLayout,
-  SegmentsSettings,
   selectNode,
   setFlowId,
-  setFlowName,
-  setFlowStatus,
   setIsViewMode,
-  setJourneyEntrySettings,
-  setJourneySettings,
-  setJourneyType,
-  setSegmentsSettings,
 } from "reducers/flow-builder.reducer";
 import { useAppDispatch } from "store/hooks";
-import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
 import { NodeType } from "../FlowEditor";
 
 const nodesToLoadCustomerCount: NodeType[] = [
@@ -36,59 +25,45 @@ export enum LoadJourneyMode {
 }
 
 interface loadJourneyInterface {
-  setInitialSegmentSettings?: (segments: SegmentsSettings) => void;
-  setInitialJourneyEntrySettings?: (settings: JourneyEntrySettings) => void;
-  setInitialJourneySettings?: (settings: JourneySettings) => void;
-  mode?: LoadJourneyMode;
+  versionId?: string;
 }
 
-const useLoadJourney = ({
-  setInitialSegmentSettings,
-  setInitialJourneyEntrySettings,
-  setInitialJourneySettings,
-  mode,
-}: loadJourneyInterface) => {
-  const { journeyId, versionId } = useParams();
+const useLoadVersion = ({ versionId }: loadJourneyInterface) => {
+  const {
+    id,
+    journeyId: paramJourneyId,
+    versionId: paramVersionId,
+  } = useParams();
 
   const dispatch = useAppDispatch();
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const isViewJourney = mode === LoadJourneyMode.VIEW_VERSION;
+  const loadVersion = async () => {
+    const journeyId = paramJourneyId || id;
+    const versionUuid = paramVersionId || versionId;
 
-  const loadJourney = async () => {
-    if (!journeyId || !versionId) return;
+    if (!journeyId || !versionUuid) return;
+
     setIsLoading(true);
     try {
       const { data } = await ApiService.get<{
+        visual_layout: { nodes: Node<NodeData>[]; edges: Edge<EdgeData>[] };
         name: string;
-        nodes: Node<NodeData>[];
-        edges: Edge<EdgeData>[];
-        segments: SegmentsSettings;
-        isDynamic: boolean;
-        isActive?: boolean;
-        isPaused?: boolean;
-        isStopped?: boolean;
-        isDeleted?: boolean;
-        isEnrolling?: boolean;
-        journeyEntrySettings: JourneyEntrySettings;
-        journeySettings: JourneySettings;
       }>({
-        url: `journeys/${journeyId}/versions/${versionId}`,
+        url: `journeys/${journeyId}/versions/${versionUuid}`,
       });
 
-      dispatch(setFlowName(data.name));
-
-      if (!data.nodes) return;
+      if (!data.visual_layout?.nodes) return;
 
       if (
-        data.nodes.length !== 0 &&
-        data.nodes.some((node) => node.type === NodeType.START)
+        data.visual_layout?.nodes.length !== 0 &&
+        data.visual_layout?.nodes.some((node) => node.type === NodeType.START)
       ) {
         const stepIdsToLoadCustomerCount: string[] = [];
 
         const updatedNodesWithStats = await Promise.all(
-          data.nodes.map(async (node) => {
+          data.visual_layout?.nodes.map(async (node) => {
             if (
               nodesToLoadCustomerCount.includes(node.type as NodeType) &&
               node.data.stepId
@@ -139,12 +114,12 @@ const useLoadJourney = ({
         dispatch(
           loadVisualLayout({
             nodes: updatedNodesWithStats,
-            edges: data.edges,
+            edges: data.visual_layout?.edges,
           })
         );
       }
 
-      const firstMessageNode = data.nodes.find(
+      const firstMessageNode = data.visual_layout?.nodes.find(
         (node) => node.type === NodeType.MESSAGE
       );
 
@@ -152,44 +127,14 @@ const useLoadJourney = ({
         dispatch(selectNode(firstMessageNode.id));
       }
 
-      if (
-        !isViewJourney &&
-        setInitialSegmentSettings &&
-        setInitialJourneyEntrySettings &&
-        setInitialJourneySettings
-      ) {
-        dispatch(setSegmentsSettings(data.segments));
-        setInitialSegmentSettings(data.segments);
-        dispatch(
-          setJourneyType(
-            data.isDynamic ? JourneyType.DYNAMIC : JourneyType.STATIC
-          )
-        );
-        dispatch(setJourneyEntrySettings(data.journeyEntrySettings));
-        setInitialJourneyEntrySettings(data.journeyEntrySettings);
-        dispatch(setJourneySettings(data.journeySettings));
-        setInitialJourneySettings(data.journeySettings);
-      }
-
       dispatch(setFlowId(journeyId));
-      let status: JourneyStatus = JourneyStatus.DRAFT;
-
-      if (data.isActive) {
-        if (data.isEnrolling) status = JourneyStatus.ENROLLING;
-        else status = JourneyStatus.ACTIVE;
-      }
-      if (data.isPaused) status = JourneyStatus.PAUSED;
-      if (data.isStopped) status = JourneyStatus.STOPPED;
-      if (data.isDeleted) status = JourneyStatus.DELETED;
-
-      dispatch(setFlowStatus(status));
     } finally {
       setIsLoading(false);
       dispatch(setIsViewMode(true));
     }
   };
 
-  return { loadJourney, isLoading };
+  return { loadVersion, isLoading };
 };
 
-export default useLoadJourney;
+export default useLoadVersion;

@@ -43,7 +43,8 @@ import JourneySettingsViewer from "./JourneySettingsViewer";
 import ActivityHistoryViewer from "./ActivityHistoryViewer";
 import FlowBuilderOverview from "./FlowViewerOverview";
 import VersionDraftViewer from "./VersionDraftViewer";
-import useLoadJourney from "pages/FlowBuilderv2/hooks/useLoadJourney";
+import useLoadVersion from "pages/FlowBuilderv2/hooks/useLoadVersion";
+import useVersions from "hooks/useVersions";
 
 export enum FlowViewerTab {
   OVERVIEW = "Overview",
@@ -54,11 +55,30 @@ export enum FlowViewerTab {
   VERSION_DRAFT = "Version & draft",
 }
 
+const nodesToLoadCustomerCount: NodeType[] = [
+  NodeType.WAIT_UNTIL,
+  NodeType.TIME_DELAY,
+  NodeType.TIME_WINDOW,
+];
+
 const FlowViewerv2 = () => {
   const { id } = useParams();
   const { state: locationState } = useLocation();
   const [currentTab, setCurrentTab] = useState(FlowViewerTab.OVERVIEW);
   const [onConfirmNextTab, setOnConfirmNextTab] = useState<FlowViewerTab>();
+  const [isLoading, setIsLoading] = useState(true);
+  const versions = useVersions();
+  const [selectedVersion, setSelectedVersion] = useState<string>(
+    versions[0]?.uuid
+  );
+
+  const { loadVersion } = useLoadVersion({ versionId: selectedVersion });
+
+  useEffect(() => {
+    if (!selectedVersion) {
+      setSelectedVersion(versions[0]?.uuid);
+    }
+  }, [versions]);
 
   const dispatch = useAppDispatch();
 
@@ -111,11 +131,116 @@ const FlowViewerv2 = () => {
     }
   }, [locationState]);
 
-  const { loadJourney, isLoading } = useLoadJourney({
-    setInitialSegmentSettings,
-    setInitialJourneyEntrySettings,
-    setInitialJourneySettings,
-  });
+  const loadJourney = async () => {
+    setIsLoading(true);
+    try {
+      const { data } = await ApiService.get<{
+        name: string;
+        nodes: Node<NodeData>[];
+        edges: Edge<EdgeData>[];
+        segments: SegmentsSettings;
+        isDynamic: boolean;
+        isActive?: boolean;
+        isPaused?: boolean;
+        isStopped?: boolean;
+        isDeleted?: boolean;
+        journeyEntrySettings: JourneyEntrySettings;
+        journeySettings: JourneySettings;
+      }>({
+        url: "/journeys/" + id,
+      });
+
+      dispatch(setFlowName(data.name));
+      if (
+        data.nodes.length !== 0 &&
+        data.nodes.some((node) => node.type === NodeType.START)
+      ) {
+        const stepIdsToLoadCustomerCount: string[] = [];
+
+        const updatedNodesWithStats = await Promise.all(
+          data.nodes.map(async (node) => {
+            if (
+              nodesToLoadCustomerCount.includes(node.type as NodeType) &&
+              node.data.stepId
+            ) {
+              stepIdsToLoadCustomerCount.push(node.data.stepId);
+            }
+
+            if (
+              !node.data.stepId ||
+              (node.type !== NodeType.MESSAGE &&
+                node.type !== NodeType.TRACKER &&
+                node.type !== NodeType.PUSH)
+            )
+              return { ...node };
+
+            try {
+              const { data: stats } = await ApiService.get<Stats>({
+                url: "/steps/stats/" + node.data.stepId,
+              });
+
+              return { ...node, data: { ...node.data, stats } };
+            } catch (e) {
+              return { ...node };
+            }
+          })
+        );
+
+        try {
+          const { data: bulkCustomersCount } = await ApiService.post<number[]>({
+            url: "/customers/count/bulk",
+            options: {
+              stepIds: stepIdsToLoadCustomerCount,
+            },
+          });
+
+          for (let i = 0; i < stepIdsToLoadCustomerCount.length; i++) {
+            const node = updatedNodesWithStats.find(
+              (n) => n.data.stepId === stepIdsToLoadCustomerCount[i]
+            );
+            if (!node) continue;
+
+            node.data.customersCount = bulkCustomersCount[i];
+          }
+        } catch (e) {
+          console.error("Failed to load customer count", e);
+        }
+      }
+
+      const firstMessageNode = data.nodes.find(
+        (node) => node.type === NodeType.MESSAGE
+      );
+
+      if (firstMessageNode) {
+        dispatch(selectNode(firstMessageNode.id));
+      }
+
+      dispatch(setSegmentsSettings(data.segments));
+      setInitialSegmentSettings(data.segments);
+      dispatch(
+        setJourneyType(
+          data.isDynamic ? JourneyType.DYNAMIC : JourneyType.STATIC
+        )
+      );
+      dispatch(setJourneyEntrySettings(data.journeyEntrySettings));
+      setInitialJourneyEntrySettings(data.journeyEntrySettings);
+      dispatch(setJourneySettings(data.journeySettings));
+      setInitialJourneySettings(data.journeySettings);
+      dispatch(setFlowId(id));
+
+      let status: JourneyStatus = JourneyStatus.DRAFT;
+
+      if (data.isActive) status = JourneyStatus.ACTIVE;
+      if (data.isPaused) status = JourneyStatus.PAUSED;
+      if (data.isStopped) status = JourneyStatus.STOPPED;
+      if (data.isDeleted) status = JourneyStatus.DELETED;
+
+      dispatch(setFlowStatus(status));
+    } finally {
+      setIsLoading(false);
+      dispatch(setIsViewMode(true));
+    }
+  };
 
   const onSave = async (changeSegmentOption?: ChangeSegmentOption) => {
     if (
@@ -216,7 +341,14 @@ const FlowViewerv2 = () => {
 
   useEffect(() => {
     loadJourney();
+    if (currentTab === FlowViewerTab.JOURNEY) {
+      loadVersion();
+    }
   }, [currentTab]);
+
+  useEffect(() => {
+    loadVersion();
+  }, [selectedVersion]);
 
   const handleChangeCurrentTab = (newTab: FlowViewerTab) => {
     if (
@@ -245,6 +377,8 @@ const FlowViewerv2 = () => {
         tabs={tabs}
         currentTab={currentTab}
         setCurrentTab={handleChangeCurrentTab}
+        selectedVersion={selectedVersion}
+        setSelectedVersion={setSelectedVersion}
       />
       <div className="relative flex w-full h-full max-h-[calc(100%-140px)]">
         {tabs[currentTab]}
