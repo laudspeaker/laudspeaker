@@ -43,9 +43,9 @@ const VersionDraftViewer = () => {
     const newVersion = versions.find((version) => version.uuid === id);
     const newVersionId = newVersion?.uuid;
 
-    if (newVersion?.name === "Draft") {
+    if (newVersion?.name === "Draft" && newVersionId) {
       navigate(`/flow/${journeyId}`, {
-        state: { isFromVersions: true },
+        state: { isFromVersions: true, versionId: newVersionId },
       });
     } else if (newVersionId) {
       navigate(`/flow/${journeyId}/${newVersionId}/review-version`, {

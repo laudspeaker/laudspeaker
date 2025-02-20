@@ -21,6 +21,7 @@ const VersionViewer = () => {
 
   const [selectedVersion, setSelectedVersion] = useState<string>("");
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const isFromVersions = location.state?.isFromVersions;
 
@@ -34,7 +35,7 @@ const VersionViewer = () => {
     }
   }, [journeyId, versionId]);
 
-  const { loadVersion, isLoading } = useLoadVersion({ versionId });
+  const { loadVersion } = useLoadVersion({ versionId, setIsLoading });
 
   const handleExit = () => {
     if (isFromVersions) {

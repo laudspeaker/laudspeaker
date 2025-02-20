@@ -26,9 +26,15 @@ export enum LoadJourneyMode {
 
 interface loadJourneyInterface {
   versionId?: string;
+  setIsLoading?: (isLoading: boolean) => void;
+  noStats?: boolean;
 }
 
-const useLoadVersion = ({ versionId }: loadJourneyInterface) => {
+const useLoadVersion = ({
+  versionId,
+  setIsLoading,
+  noStats,
+}: loadJourneyInterface) => {
   const {
     id,
     journeyId: paramJourneyId,
@@ -37,15 +43,13 @@ const useLoadVersion = ({ versionId }: loadJourneyInterface) => {
 
   const dispatch = useAppDispatch();
 
-  const [isLoading, setIsLoading] = useState(false);
-
   const loadVersion = async () => {
     const journeyId = paramJourneyId || id;
     const versionUuid = paramVersionId || versionId;
 
     if (!journeyId || !versionUuid) return;
 
-    setIsLoading(true);
+    setIsLoading?.(true);
     try {
       const { data } = await ApiService.get<{
         visual_layout: { nodes: Node<NodeData>[]; edges: Edge<EdgeData>[] };
@@ -113,28 +117,20 @@ const useLoadVersion = ({ versionId }: loadJourneyInterface) => {
 
         dispatch(
           loadVisualLayout({
-            nodes: updatedNodesWithStats,
+            nodes: noStats ? data.visual_layout?.nodes : updatedNodesWithStats,
             edges: data.visual_layout?.edges,
           })
         );
       }
 
-      const firstMessageNode = data.visual_layout?.nodes.find(
-        (node) => node.type === NodeType.MESSAGE
-      );
-
-      if (firstMessageNode) {
-        dispatch(selectNode(firstMessageNode.id));
-      }
-
       dispatch(setFlowId(journeyId));
     } finally {
-      setIsLoading(false);
+      setIsLoading?.(false);
       dispatch(setIsViewMode(true));
     }
   };
 
-  return { loadVersion, isLoading };
+  return { loadVersion };
 };
 
 export default useLoadVersion;

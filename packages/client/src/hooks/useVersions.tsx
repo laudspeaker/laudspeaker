@@ -11,13 +11,11 @@ interface IVersion {
 
 const useVersions = () => {
   const [versions, setVersions] = useState<IVersion[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const { id, journeyId } = useParams();
 
   const loadData = async () => {
     if (!(id || journeyId)) return;
-    setIsLoading(true);
 
     try {
       const { data } = await ApiService.get<IVersion[]>({
@@ -29,7 +27,6 @@ const useVersions = () => {
     } catch (e) {
       toast.error("Failed to load data");
     } finally {
-      setIsLoading(false);
     }
   };
 
