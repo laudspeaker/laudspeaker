@@ -56,8 +56,8 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
   };
 
   const handleContinueEditingClick = () => {
-    navigate(`/flow/${selectedVersion}`, {
-      state: { isFromVersions: true },
+    navigate(`/flow/${flowId}`, {
+      state: { isFromVersions: true, versionId: selectedVersion },
     });
   };
 
