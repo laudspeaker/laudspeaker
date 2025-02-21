@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import useVersions from "hooks/useVersions";
 import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router-dom";
+import ApiService from "services/api.service";
 
 enum SortType {
   ASC = "asc",
@@ -39,9 +40,13 @@ const VersionDraftViewer = () => {
     sortVersions();
   }, [versions, sortType]);
 
-  const handleGoToVersion = (id: string) => {
+  const handleGoToVersion = async (id: string) => {
     const newVersion = versions.find((version) => version.uuid === id);
     const newVersionId = newVersion?.uuid;
+
+    const { data } = await ApiService.post({
+      url: `/journeys/${journeyId}/check_out`,
+    });
 
     if (newVersion?.name === "Draft" && newVersionId) {
       navigate(`/flow/${journeyId}`, {

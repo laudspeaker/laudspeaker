@@ -75,12 +75,14 @@ const VersionsSelect: FC<VersionSelectProps> = ({
             setSelectedVersion?.(newVersionId);
           }
           setChosenVersion(value);
-
-          if (newVersion?.name === "Draft" && versionId) {
+          if (!newVersionId) {
+            return;
+          }
+          if (newVersion?.name === "Draft") {
             navigate(`/flow/${journeyId}`, {
-              state: { isFromVersions: true },
+              state: { isFromVersions: true, versionId: newVersionId },
             });
-          } else if (newVersionId && versionId) {
+          } else if (versionId) {
             navigate(`/flow/${journeyId}/${newVersionId}/review-version`);
           }
         }}
