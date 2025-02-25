@@ -12,10 +12,12 @@ import { getLayoutedNodes } from "pages/FlowBuilderv2/layout.helper";
 import {
   Branch,
   BranchType,
+  EventType,
   LogicRelation,
   MessageNodeData,
   MultisplitBranch,
   NodeData,
+  TimeType,
   TimeWindowTypes,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
@@ -716,6 +718,31 @@ const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
   state.nodes = getLayoutedNodes(state.nodes, state.edges);
 };
 
+const handleAttachNodesToBranch = (state: FlowBuilderState, nodeId: string) => {
+  // add existing following nodes to the first branch of the nodeId.
+  // used to attach a node to an experiment branch when it's inserted between nodes.
+
+  const node = state.nodes.find((n) => n.id === nodeId);
+
+  if (!node) return;
+
+  const nodeIndex = state.nodes.indexOf(node);
+
+  const branchSource =
+    "branches" in node.data ? node.data.branches?.[0]?.id : undefined; // get the id of the first branch of the node
+
+  const targetNode = state.nodes[nodeIndex + 1]; //get the node that needs to be attached to the branch
+
+  state.edges = state.edges.map((edge) => {
+    //change experiment branch target to the existing node that goes to the branch
+    if (branchSource && edge.id?.includes(branchSource) && targetNode.id) {
+      return { ...edge, target: targetNode.id };
+    }
+
+    return edge;
+  });
+};
+
 const handleRemoveNode = (state: FlowBuilderState, nodeId: string) => {
   const node = state.nodes.find((n) => n.id === nodeId);
   if (!node || node.type === NodeType.START) return;
@@ -957,8 +984,6 @@ const flowBuilderSlice = createSlice({
                 )[0];
                 nodeToChange.data.branches.push(element);
               }
-            } else {
-              nodeToChange.data.branches = [];
             }
           }
         }
@@ -966,13 +991,14 @@ const flowBuilderSlice = createSlice({
         // prune disconnected branches
         for (const edge of existedBranchEdges) {
           if (
-            !edge.data ||
-            edge.type !== EdgeType.BRANCH ||
-            edge.data.type !== EdgeType.BRANCH ||
-            !(nodeToChange.data.branches as Branch[]).find(
-              (branch) =>
-                branch.id === (edge as Edge<BranchEdgeData>).data?.branch.id
-            )
+            (!edge.data ||
+              edge.type !== EdgeType.BRANCH ||
+              edge.data.type !== EdgeType.BRANCH ||
+              !(nodeToChange.data.branches as Branch[]).find(
+                (branch) =>
+                  branch.id === (edge as Edge<BranchEdgeData>).data?.branch.id
+              )) &&
+            nodeToChange.type !== NodeType.EXPERIMENT
           ) {
             handlePruneNodeTree(state, edge.target);
           }
@@ -988,13 +1014,16 @@ const flowBuilderSlice = createSlice({
 
           if (!existedChildrenEdge) {
             const newEmptyNodeUUID = uuid();
-            state.nodes.push({
+            const newNode = {
               id: newEmptyNodeUUID,
               type: NodeType.EMPTY,
               data: {},
               position: { x: 0, y: 0 },
-            });
-            state.edges.push({
+            };
+
+            state.nodes.push(newNode);
+
+            const newEdge = {
               id: `b${branch.id}`,
               type: EdgeType.BRANCH,
               data: {
@@ -1003,11 +1032,18 @@ const flowBuilderSlice = createSlice({
               },
               source: nodeToChange.id,
               target: newEmptyNodeUUID,
-            });
+            };
+
+            state.edges.push(newEdge);
+
             continue;
           }
 
           existedChildrenEdge.data = { type: EdgeType.BRANCH, branch };
+        }
+
+        if (NodeType.EXPERIMENT === nodeToChange.type) {
+          handleAttachNodesToBranch(state, nodeToChange.id);
         }
 
         if (
@@ -1292,6 +1328,118 @@ const flowBuilderSlice = createSlice({
           break;
         default:
           break;
+      }
+      if (NodeType.MULTISPLIT === nodeToChange.type) {
+        // filter all nodes that are multisplit or will become multisplit and empty
+        const branchNodes = state.nodes.filter(
+          (node) =>
+            node.type === NodeType.EMPTY || node.type === NodeType.MULTISPLIT
+        );
+
+        // find the first edge that is not a multisplit branch and should become multisplit branch
+        const edgeToChange = state.edges.find((edge) => {
+          const correspondingNode = branchNodes.find((node) => {
+            return edge.source === node.id && edge.type !== EdgeType.BRANCH;
+          });
+          return correspondingNode;
+        });
+
+        state.edges = state.edges.map((edge) => {
+          if (edge.id === edgeToChange?.id) {
+            return {
+              ...edge,
+              type: EdgeType.BRANCH,
+              data: {
+                type: EdgeType.BRANCH,
+                branch: {
+                  id: edge.id,
+                  type: BranchType.MULTISPLIT,
+                  isOthers: true,
+                },
+              },
+            };
+          } else {
+            return edge;
+          }
+        });
+      }
+
+      if (NodeType.WAIT_UNTIL === nodeToChange.type) {
+        // filter all nodes that are wait until or will become wait until and empty
+        const branchNodes = state.nodes.filter(
+          (node) =>
+            node.type === NodeType.EMPTY || node.type === NodeType.WAIT_UNTIL
+        );
+
+        // find the first edge that is not a wait until branch and should become wait until branch
+        const edgeToChange = state.edges.find((edge) => {
+          const correspondingNode = branchNodes.find((node) => {
+            return edge.source === node.id && edge.type !== EdgeType.BRANCH;
+          });
+          return correspondingNode;
+        });
+
+        state.edges = state.edges.map((edge) => {
+          if (edge.id === edgeToChange?.id) {
+            return {
+              ...edge,
+              type: EdgeType.BRANCH,
+              data: {
+                type: EdgeType.BRANCH,
+                branch: {
+                  id: edge.id,
+                  type: BranchType.EVENT,
+                  conditions: [
+                    {
+                      type: EventType.ANALYTICS,
+                      name: "",
+                      providerType: ProviderType.CUSTOM,
+                      relationToNext: LogicRelation.OR,
+                      statements: [],
+                    },
+                  ],
+                },
+              },
+            };
+          } else {
+            return edge;
+          }
+        });
+
+        //add a default branch to the node
+        state.nodes = state.nodes.map((node) => {
+          if (node.id === nodeToChange?.id) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                type: NodeType.WAIT_UNTIL,
+                branches: [
+                  {
+                    id:
+                      state.edges.find(
+                        (edge) =>
+                          edge.id.includes(nodeToChange.id) &&
+                          edge.type === EdgeType.BRANCH
+                      )?.id || uuid(),
+                    type: BranchType.EVENT,
+                    conditions: [
+                      {
+                        type: EventType.ANALYTICS,
+                        name: "",
+                        providerType: ProviderType.CUSTOM,
+                        relationToNext: LogicRelation.OR,
+                        statements: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+            };
+          } else {
+            return node;
+          }
+        });
       }
 
       if (
