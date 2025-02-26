@@ -11,6 +11,10 @@ services:
     command: npx cypress run
 
   frontend:
+    build:
+      context: ./
+      dockerfile: Dockerfile.dev.client
+    mem_limit: 8g
     image: laudspeaker:latest
     depends_on:
       - backend
@@ -20,6 +24,9 @@ services:
     tty: true
 
   backend:
+    build:
+      context: ./
+      dockerfile: Dockerfile.dev.server
     image: laudspeaker:api-latest
     ports:
       - "3001:3001"

@@ -32,6 +32,7 @@ export enum MessageChannel {
   TWILIO,
   CUSTOM_MODAL,
   SLACK,
+  BYOS,
 }
 
 export interface WorkspaceNotificationPreferencesData {
@@ -73,6 +74,7 @@ const messageChannelToLinkMap: Record<MessageChannel, string> = {
   [MessageChannel.TWILIO]: "/settings/sms",
   [MessageChannel.CUSTOM_MODAL]: "",
   [MessageChannel.SLACK]: "",
+  [MessageChannel.BYOS]: "/settings/email/smtp",
 };
 
 const supportedMessageChannelCardsFixtures: Record<
@@ -124,6 +126,12 @@ const supportedMessageChannelCardsFixtures: Record<
     icon: slackCardIconImage,
     commingSoon: true,
     disabled: true,
+  },
+  [MessageChannel.BYOS]: {
+    id: "create",
+    channel: MessageChannel.BYOS,
+    title: "Bring Your Own SMTP",
+    icon: emailCardIconImage,
   },
 };
 

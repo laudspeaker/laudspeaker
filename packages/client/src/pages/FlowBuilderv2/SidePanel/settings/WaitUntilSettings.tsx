@@ -11,7 +11,7 @@ import {
   WUAttributeCondition,
   WUAttributeHappenCondition,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
-import React, { FC } from "react";
+import React, { FC, useEffect } from "react";
 import { ProviderType } from "types/Workflow";
 import EventBranchEditor from "../components/EventBranchEditor";
 import { SidePanelComponentProps } from "../FlowBuilderSidePanel";
@@ -362,7 +362,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
             // },
           ]}
         />
-        <Button
+        {/* <Button
           type={ButtonType.SECONDARY}
           onClick={handleAddMaxTimeBranch}
           disabled={
@@ -372,7 +372,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
           id="set-max-time"
         >
           Set max. time
-        </Button>
+        </Button> */}
       </div>
     </div>
   );

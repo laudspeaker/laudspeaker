@@ -121,14 +121,12 @@ describe("multisplit attribute", () => {
             cy.wait(1000);
             drag("#waitUntil", ".empty-node", { fireDragOver: false });
             cy.wait(500);
-            cy.get(".text-muted").click();
-            cy.get('[data-option="event"]').click();
-            cy.get("input").clear().type("eventA");
+            cy.get('input[data-testid="event"]').clear().type("eventA");
             cy.contains("Save").click();
             cy.get("#save-node-data").click();
 
             cy.wait(1000);
-            drag("#multisplit", ".empty-node", { fireDragOver: false });
+            drag("#multisplit", ".empty-node:first", { fireDragOver: false });
             cy.wait(500);
             cy.contains("Add branch").click();
             cy.contains("Add condition").click();
@@ -282,14 +280,12 @@ describe("multisplit attribute", () => {
             cy.wait(1000);
             drag("#waitUntil", ".empty-node", { fireDragOver: false });
             cy.wait(500);
-            cy.get(".text-muted").click();
-            cy.get('[data-option="event"]').click();
-            cy.get("input").clear().type("eventA");
+            cy.get('input[data-testid="event"]').clear().type("eventA");
             cy.contains("Save").click();
             cy.get("#save-node-data").click();
 
             cy.wait(1000);
-            drag("#multisplit", ".empty-node", { fireDragOver: false });
+            drag("#multisplit", ".empty-node:first", { fireDragOver: false });
             cy.wait(500);
             cy.contains("Add branch").click();
             cy.contains("Add condition").click();
