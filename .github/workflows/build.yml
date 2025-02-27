@@ -30,8 +30,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up Docker
-        uses: docker/setup-docker-action@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and export
+        uses: docker/build-push-action@v5
         with:
           daemon-config: |
             {
@@ -40,11 +42,6 @@ jobs:
                 "containerd-snapshotter": true
               }
             }
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Build and export
-        uses: docker/build-push-action@v5
-        with:
           platforms: linux/amd64,linux/arm64
           context: .
           file: ${{ inputs.dockerfile }}
