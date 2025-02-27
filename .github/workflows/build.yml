@@ -52,7 +52,7 @@ jobs:
           context: .
           file: ${{ inputs.dockerfile }}
           tags: ${{ inputs.output }}
-          outputs: type=docker,dest=/tmp/${{ inputs.output }}.tar
+          outputs: type=oci,dest=/tmp/${{ inputs.output }}.tar
           build-args: |
             EXTERNAL_URL=${{ inputs.external_url }}
             FRONTEND_SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
