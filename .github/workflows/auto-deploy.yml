@@ -59,41 +59,6 @@ jobs:
       image: laudspeaker
       tags: laudspeaker/laudspeaker:latest
     secrets: inherit
-  build-arm:
-    needs: [setup]
-    name: Build docker image
-    uses: ./.github/workflows/build.yml
-    secrets: inherit
-    with:
-      dockerfile: Dockerfile
-      output: laudspeaker
-      external_url: ${{ needs.setup.outputs.external_url }}
-      platforms: linux/arm64
-  # test:
-  #   needs: [setup, build]
-  #   name: Test docker image
-  #   uses: ./.github/workflows/test.yml
-  #   with:
-  #     image: laudspeaker
-  push-arm:
-    needs: [setup, build-arm]
-    name: Tag and push docker image
-    uses: ./.github/workflows/push.yml
-    with:
-      image: laudspeaker
-      tags: laudspeaker/laudspeaker:${{ needs.setup.outputs.short_sha }}
-      platforms: linux/arm64
-    secrets: inherit
-  push-latest-arm:
-    needs: [setup, build-arm]
-    name: "Tag and push 'latest' docker image"
-    uses: ./.github/workflows/push.yml
-    if: "github.ref_name == 'staging'"
-    with:
-      image: laudspeaker
-      tags: laudspeaker/laudspeaker:latest
-      platforms: linux/arm64
-    secrets: inherit    
   deploy:
     needs: [setup, push]
     name: Redeploy staging

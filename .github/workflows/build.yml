@@ -28,6 +28,16 @@ jobs:
     name: Build and save laudspeaker image
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v4
+        with:
+          daemon-config: |
+            {
+              "debug": true,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
       - name: Checkout
         uses: actions/checkout@v4
       - name: Set up Docker Buildx
@@ -35,7 +45,7 @@ jobs:
       - name: Build and export
         uses: docker/build-push-action@v5
         with:
-          # platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64
           context: .
           file: ${{ inputs.dockerfile }}
           tags: ${{ inputs.output }}
