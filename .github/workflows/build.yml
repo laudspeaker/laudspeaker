@@ -32,17 +32,11 @@ jobs:
         uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
       - name: Build and export
         uses: docker/build-push-action@v5
         with:
-          daemon-config: |
-            {
-              "debug": true,
-              "features": {
-                "containerd-snapshotter": true
-              }
-            }
-          platforms: linux/amd64,linux/arm64
           context: .
           file: ${{ inputs.dockerfile }}
           tags: ${{ inputs.output }}
