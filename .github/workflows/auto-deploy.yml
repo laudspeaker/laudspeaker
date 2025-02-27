@@ -68,7 +68,7 @@ jobs:
       dockerfile: Dockerfile
       output: laudspeaker
       external_url: ${{ needs.setup.outputs.external_url }}
-      platform: linux/arm64
+      platforms: linux/arm64
   # test:
   #   needs: [setup, build]
   #   name: Test docker image
@@ -82,7 +82,7 @@ jobs:
     with:
       image: laudspeaker
       tags: laudspeaker/laudspeaker:${{ needs.setup.outputs.short_sha }}
-      platform: linux/arm64
+      platforms: linux/arm64
     secrets: inherit
   push-latest-arm:
     needs: [setup, build-arm]
@@ -92,7 +92,7 @@ jobs:
     with:
       image: laudspeaker
       tags: laudspeaker/laudspeaker:latest
-      platform: linux/arm64
+      platforms: linux/arm64
     secrets: inherit    
   deploy:
     needs: [setup, push]
