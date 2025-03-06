@@ -493,11 +493,12 @@ export class WebhooksService {
             }
           );
 
-          await Producer.addBulk(
-            QueueType.EVENTS_PRE,
-            jobsData.map((jobData) => { return { ...jobData, workspace, step, account } }),
-            ProviderType.MESSAGE
-          );
+          if (!(process.env.DISABLE_MESSAGE_EVENTS === `true`))
+            await Producer.addBulk(
+              QueueType.EVENTS_PRE,
+              jobsData.map((jobData) => { return { ...jobData, workspace, step, account } }),
+              ProviderType.MESSAGE
+            );
 
           await this.clickhouseClient.insertAsync({
             table: ClickHouseTable.MESSAGE_STATUS,
