@@ -35,14 +35,6 @@ jobs:
       - name: Build and export
         uses: docker/build-push-action@v5
         with:
-          daemon-config: |
-            {
-              "debug": true,
-              "features": {
-                "containerd-snapshotter": true
-              }
-            }
-          platforms: linux/amd64,linux/arm64
           context: .
           file: ${{ inputs.dockerfile }}
           tags: ${{ inputs.output }}
