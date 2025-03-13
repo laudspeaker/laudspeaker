@@ -87,6 +87,7 @@ import { Customer } from '../customers/entities/customer.entity';
 import { CustomerKeysService } from '../customers/customer-keys.service';
 import { CacheConstants } from '../../common/services/cache.constants';
 import { JourneyStatisticsService } from './journey-statistics.service';
+import { JourneyVersionService } from './journey-version.service';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -240,7 +241,9 @@ export class JourneysService {
     private readonly journeyLocationsService: JourneyLocationsService,
     @Inject(RedisService) private redisService: RedisService,
     @Inject(CacheService) private cacheService: CacheService,
-    @Inject(JourneyStatisticsService) private journeyStatisticsService: JourneyStatisticsService
+    @Inject(JourneyStatisticsService) private journeyStatisticsService: JourneyStatisticsService,
+    @Inject(forwardRef(() =>JourneyVersionService))
+    private journeyVersionService: JourneyVersionService
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -355,23 +358,31 @@ export class JourneysService {
       const nextNodeUUID = uuid();
       const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
+      let layout = {
+        nodes: [],
+        edges: [
+          {
+            id: `e${startNodeUUID}-${nextNodeUUID}`,
+            type: EdgeType.PRIMARY,
+            source: startNodeUUID,
+            target: nextNodeUUID,
+          },
+        ],
+      };
+
       const journey = await this.journeysRepository.create({
         name,
         workspace: workspace,
-        visualLayout: {
-          nodes: [],
-          edges: [
-            {
-              id: `e${startNodeUUID}-${nextNodeUUID}`,
-              type: EdgeType.PRIMARY,
-              source: startNodeUUID,
-              target: nextNodeUUID,
-            },
-          ],
-        },
+        visualLayout: layout,
       });
 
       await this.journeysRepository.save(journey);
+
+      const journeyVersion = await this.journeyVersionService.create(
+        account,
+        journey.id,
+        session
+      );
 
       const step = await this.stepsService.insert(
         account,
@@ -382,7 +393,7 @@ export class JourneysService {
         session
       );
 
-      journey.visualLayout.nodes = [
+      layout.nodes = [
         {
           id: startNodeUUID,
           type: NodeType.START,
@@ -399,7 +410,10 @@ export class JourneysService {
         },
       ];
 
-      return await this.journeysRepository.save(journey);
+      journey.visualLayout = layout;
+
+      await this.journeyVersionService.updateLayout(journeyVersion, layout);
+      return this.journeysRepository.save(journey);
     } catch (err) {
       this.error(err, this.create.name, session, account.email);
       throw err;
@@ -2399,6 +2413,16 @@ export class JourneysService {
           edges,
         },
       });
+
+      let version = await this.journeyVersionService.getLatestVersion(account, journey.id);
+
+      await this.journeyVersionService.updateLayout(
+        version,
+        {
+          nodes,
+          edges,
+        });
+
       await queryRunner.commitTransaction();
       return Promise.resolve(journey);
     } catch (e) {
