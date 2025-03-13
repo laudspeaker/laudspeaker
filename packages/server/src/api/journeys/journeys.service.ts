@@ -380,7 +380,7 @@ export class JourneysService {
 
       const journeyVersion = await this.journeyVersionService.create(
         account,
-        journey.id,
+        journey,
         session
       );
 
@@ -412,7 +412,7 @@ export class JourneysService {
 
       journey.visualLayout = layout;
 
-      await this.journeyVersionService.updateLayout(journeyVersion, layout);
+      await this.journeyVersionService.updateLayout(account, journeyVersion, layout);
       return this.journeysRepository.save(journey);
     } catch (err) {
       this.error(err, this.create.name, session, account.email);
@@ -445,25 +445,33 @@ export class JourneysService {
 
       const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
+      let layout = {
+        nodes: [],
+        edges: [
+          {
+            id: `e${startNodeUUID}-${nextNodeUUID}`,
+            type: EdgeType.PRIMARY,
+            source: startNodeUUID,
+            target: nextNodeUUID,
+          },
+        ],
+      };
+
       const journey = await queryRunner.manager.create(Journey, {
         name,
         workspace: {
           id: workspace.id,
         },
-        visualLayout: {
-          nodes: [],
-          edges: [
-            {
-              id: `e${startNodeUUID}-${nextNodeUUID}`,
-              type: EdgeType.PRIMARY,
-              source: startNodeUUID,
-              target: nextNodeUUID,
-            },
-          ],
-        },
+        visualLayout: layout,
       });
 
       await queryRunner.manager.save(journey);
+
+      const journeyVersion = await this.journeyVersionService.create(
+        account,
+        journey,
+        session
+      );
 
       const step = await this.stepsService.transactionalInsert(
         account,
@@ -2417,6 +2425,7 @@ export class JourneysService {
       let version = await this.journeyVersionService.getLatestVersion(account, journey.id);
 
       await this.journeyVersionService.updateLayout(
+        account,
         version,
         {
           nodes,

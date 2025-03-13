@@ -45,7 +45,7 @@ export class CreateJourneyVersionsTable1737586945534 implements MigrationInterfa
               default: "now()",
             },
             {
-              name: "created_by",
+              name: "created_by_id",
               type: "uuid",
             },
             {
@@ -54,7 +54,7 @@ export class CreateJourneyVersionsTable1737586945534 implements MigrationInterfa
               default: "now()",
             },
             {
-              name: "updated_by",
+              name: "updated_by_id",
               type: "uuid",
             },
             {
@@ -65,35 +65,35 @@ export class CreateJourneyVersionsTable1737586945534 implements MigrationInterfa
         })
       );
 
-      await queryRunner.createForeignKeys(
-        "journey_versions",
-        [
-          new TableForeignKey({
-            columnNames: ["journey_id"],
-            referencedColumnNames: ["id"],
-            referencedTableName: "journey",
-            onDelete: "NO ACTION",
-          }),
-          new TableForeignKey({
-            columnNames: ["created_by"],
-            referencedColumnNames: ["id"],
-            referencedTableName: "account",
-            onDelete: "NO ACTION",
-          }),
-          new TableForeignKey({
-            columnNames: ["updated_by"],
-            referencedColumnNames: ["id"],
-            referencedTableName: "account",
-            onDelete: "NO ACTION",
-          }),
-          new TableForeignKey({
-            columnNames: ["workspace_id"],
-            referencedColumnNames: ["id"],
-            referencedTableName: "workspaces",
-            onDelete: "CASCADE",
-          })
-        ]
-      );
+      // await queryRunner.createForeignKeys(
+      //   "journey_versions",
+      //   [
+      //     new TableForeignKey({
+      //       columnNames: ["journey_id"],
+      //       referencedColumnNames: ["id"],
+      //       referencedTableName: "journey",
+      //       onDelete: "NO ACTION",
+      //     }),
+      //     new TableForeignKey({
+      //       columnNames: ["updated_by_id"],
+      //       referencedColumnNames: ["id"],
+      //       referencedTableName: "account",
+      //       onDelete: "NO ACTION",
+      //     }),
+      //     new TableForeignKey({
+      //       columnNames: ["created_by_id"],
+      //       referencedColumnNames: ["id"],
+      //       referencedTableName: "account",
+      //       onDelete: "NO ACTION",
+      //     }),
+      //     new TableForeignKey({
+      //       columnNames: ["workspace_id"],
+      //       referencedColumnNames: ["id"],
+      //       referencedTableName: "workspaces",
+      //       onDelete: "CASCADE",
+      //     })
+      //   ]
+      // );
 
       const fieldsToIndex = [
         // ["id"]

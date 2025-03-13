@@ -48,21 +48,23 @@ export class JourneyVersionService extends BaseLaudspeakerService {
     super();
   }
 
-  async create(account: Account, journey_id: string, session: string) {
+  async create(account: Account, journey: Journey, session: string) {
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
-    const journey = await this.journeysService.findByID(account, journey_id, session);
 
     try {
-      const count = await this.getVersionCount(journey_id, workspace.id);
+      const count = await this.getVersionCount(journey.id, workspace.id);
 
       const version = await this.journeyVersionRepository.save({
-        workspace_id: workspace.id,
-        journey_id: journey_id,
+        workspace: { id: workspace.id },
+        journey_id: journey.id,
         number: count + 1,
         layout: {
           nodes: [],
           edges: [],
         },
+        state: "Draft",
+        created_by: { id: account.id },
+        updated_by: { id: account.id },
       });
 
       return version;
@@ -89,25 +91,23 @@ export class JourneyVersionService extends BaseLaudspeakerService {
   }
 
   async updateLayout(
+    account: Account,
     journeyVersion: JourneyVersion,
-    layout: VisualLayout) {
+    layout: VisualLayout
+  ) {
     journeyVersion.layout = layout;
+    journeyVersion.updated_by = account;
 
     return this.journeyVersionRepository.save(journeyVersion);
   }
 
-  // async createJourneyVersionRecord(account: Account, id: string, session: string) {
-  //   const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
-  //   const journey = await this.journeysService.findByID(account, id, session);
-
-  //   return this.create(account, id, session);
-  // }
-
-  async publish(account: Account, id: string, session: string) {
+  async publish(account: Account, journey_id: string, session: string) {
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
+    const journey = await this.journeysService.findByID(account, journey_id, session);
+
     try {
-      await this.create(account, id, session);
+      await this.create(account, journey, session);
 
 
       // return result;
@@ -124,11 +124,13 @@ export class JourneyVersionService extends BaseLaudspeakerService {
    * @param session
    * @returns
    */
-  async checkOut(account: Account, id: string, session: string) {
-    // const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+  async checkOut(account: Account, journey_id: string, session: string) {
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
+    const journey = await this.journeysService.findByID(account, journey_id, session);
 
     try {
-      await this.create(account, id, session);
+      await this.create(account, journey, session);
 
       
       // const result = await this.journeyVersionRepository.update(

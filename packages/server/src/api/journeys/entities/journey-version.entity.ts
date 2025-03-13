@@ -31,7 +31,7 @@ export class JourneyVersion {
 
   @JoinColumn({ name: 'journey_id' })
   @ManyToOne(() => Journey, (journey) => journey.id, { onDelete: 'CASCADE' })
-  public journey: string;
+  journey: Journey;
 
   @Column({ type: 'timestamp', default: () => 'NOW()' })
   created_at: Date;
@@ -39,7 +39,7 @@ export class JourneyVersion {
   @Column({ type: 'timestamp', default: () => 'NOW()', onUpdate: 'NOW()' })
   updated_at: Date;
 
-  @JoinColumn()
+  @JoinColumn({ name: 'created_by_id' })
   @ManyToOne(() => Account, (account) => account.id, {
     nullable: true,
     onDelete: 'CASCADE',
@@ -47,13 +47,16 @@ export class JourneyVersion {
   })
   created_by: Account;
 
-  @JoinColumn()
+  @JoinColumn({ name: 'updated_by_id' })
   @ManyToOne(() => Account, (account) => account.id, {
     nullable: true,
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
   })
   updated_by: Account;
+
+  @Column()
+  state: string;
 
   @Column('jsonb', { default: { nodes: [], edges: [] } })
   layout: VisualLayout;
