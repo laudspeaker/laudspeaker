@@ -23,7 +23,7 @@ const FlowBuilderStartModal: FC<FlowBuilderStartModalProps> = ({
     confirmButtonText: "Publish",
     closeButtonAction: onClose,
     confirmButtonAction: () => {
-      handleStartJourney();
+      handleStartJourney({});
       onClose();
     },
     confirmButtonId: "journey-start-verify-button",

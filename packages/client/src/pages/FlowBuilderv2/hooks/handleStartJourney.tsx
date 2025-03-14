@@ -22,7 +22,13 @@ const useStartJourney = () => {
 
   const navigate = useNavigate();
 
-  const handleStartJourney = async () => {
+  const handleStartJourney = async ({
+    inProgress,
+    finished,
+  }: {
+    inProgress?: string;
+    finished?: string;
+  }) => {
     if (isStarting) {
       toast.error("Journey is already starting");
       return;
@@ -59,6 +65,7 @@ const useStartJourney = () => {
           isDynamic: journeyType === JourneyType.DYNAMIC,
           journeyEntrySettings,
           journeySettings,
+          versions: { inProgress, finished },
         },
       });
     } catch (e) {

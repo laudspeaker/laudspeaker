@@ -52,8 +52,8 @@ const PublishVersionModal: FC<PublishVersionModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [inProgressValue, setInProgressValue] = useState("");
-  const [finishedValue, setFinishedValue] = useState("");
+  const [inProgress, setInProgress] = useState("");
+  const [finished, setFinished] = useState("");
 
   const handleStartJourney = useStartJourney();
 
@@ -71,9 +71,9 @@ const PublishVersionModal: FC<PublishVersionModalProps> = ({
               {options[type].inProgress.title}
             </label>
             <Select
-              value={inProgressValue}
+              value={inProgress}
               options={options[type].inProgress.options}
-              onChange={setInProgressValue}
+              onChange={setInProgress}
               placeholder={options[type].inProgress.placeholder}
               className="flex-1 w-full"
               placeholderClassName="font-inter text-[14px] text-[#6B7280]"
@@ -87,8 +87,8 @@ const PublishVersionModal: FC<PublishVersionModalProps> = ({
             <Select
               options={options[type].finished.options}
               placeholder={options[type].finished.placeholder}
-              value={finishedValue}
-              onChange={setFinishedValue}
+              value={finished}
+              onChange={setFinished}
               className="flex-1 w-full"
               placeholderClassName="font-inter text-[14px] text-[#6B7280]"
               buttonClassName="w-full"
@@ -109,12 +109,13 @@ const PublishVersionModal: FC<PublishVersionModalProps> = ({
     confirmButtonText: "Publish",
     closeButtonAction: onClose,
     confirmButtonAction: () => {
-      handleStartJourney();
+      handleStartJourney({ inProgress, finished });
       onClose();
     },
     headerClassName: "!gap-0",
     modalClassName: "min-w-[500px]",
     titleClassName: "!text-[20px] font-inter font-semibold",
+    isDisabled: !(inProgress && finished),
   };
 
   return (

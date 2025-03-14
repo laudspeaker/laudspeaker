@@ -17,6 +17,7 @@ interface ConfirmationModalProps {
   headerClassName?: string;
   modalClassName?: string;
   titleClassName?: string;
+  isDisabled?: boolean;
 }
 
 const ConfirmationModal: FC<ConfirmationModalProps> = ({
@@ -35,6 +36,7 @@ const ConfirmationModal: FC<ConfirmationModalProps> = ({
   headerClassName,
   modalClassName,
   titleClassName,
+  isDisabled = false,
 }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} className={`${modalClassName}`}>
@@ -73,6 +75,7 @@ const ConfirmationModal: FC<ConfirmationModalProps> = ({
             type={ButtonType.PRIMARY}
             onClick={confirmButtonAction || onClose}
             id={confirmButtonId}
+            disabled={isDisabled}
           >
             {confirmButtonText}
           </Button>
