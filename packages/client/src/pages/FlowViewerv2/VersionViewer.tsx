@@ -53,9 +53,10 @@ const VersionViewer = () => {
     const { data } = await ApiService.post({
       url: `/journeys/${journeyId}/check_out`,
     });
+    // TODO: pass a param of version to restore
     if (data.uuid) {
-      navigate(`/flow/${data.uuid}`, {
-        state: { isFromVersions: true },
+      navigate(`/flow/${journeyId}`, {
+        state: { isFromVersions: true, versionId: data.uuid },
       });
     }
   };

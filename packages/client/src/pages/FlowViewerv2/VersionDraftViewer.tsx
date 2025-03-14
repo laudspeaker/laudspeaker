@@ -44,10 +44,6 @@ const VersionDraftViewer = () => {
     const newVersion = versions.find((version) => version.uuid === id);
     const newVersionId = newVersion?.uuid;
 
-    const { data } = await ApiService.post({
-      url: `/journeys/${journeyId}/check_out`,
-    });
-
     if (newVersion?.name === "Draft" && newVersionId) {
       navigate(`/flow/${journeyId}`, {
         state: { isFromVersions: true, versionId: newVersionId },
@@ -90,7 +86,6 @@ const VersionDraftViewer = () => {
                   />
                 </div>
               </div>,
-              <div className="px-5 py-[10px] select-none"></div>,
             ]}
             rowsData={sortedVersions}
             rows={sortedVersions.map((row) => [

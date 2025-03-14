@@ -61,9 +61,16 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
     });
   };
 
-  const handleCreateNewDraft = () => {
+  const handleCreateNewDraft = async () => {
+    const { data } = await ApiService.post({
+      url: `/journeys/${flowId}/check_out`,
+    });
+    if (data.uuid) {
+      navigate(`/flow/${flowId}`, {
+        state: { isFromVersions: true, versionId: data.uuid },
+      });
+    }
     setIsEditDraftModalOpen(false);
-    setIsNameJourneyModalOpen(true);
   };
 
   return (
