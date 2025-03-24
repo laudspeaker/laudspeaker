@@ -17,6 +17,7 @@ import {
 } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { JourneysService } from './journeys.service';
+import { JourneyVersionService } from './journey-version.service';
 import { UpdateJourneyDto } from './dto/update-journey.dto';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Request } from 'express';
@@ -30,7 +31,9 @@ import { RavenInterceptor } from 'nest-raven';
 export class JourneysController {
   constructor(
     @Inject(JourneysService)
-    private readonly journeysService: JourneysService
+    private readonly journeysService: JourneysService,
+    @Inject(JourneyVersionService)
+    private readonly journeyVersionService: JourneyVersionService
   ) {}
 
   @Get()
@@ -280,34 +283,7 @@ export class JourneysController {
   ) {
     const session = randomUUID();
 
-    const data = [
-      {
-        uuid: "01951f2b-19d8-729b-96fb-a1a0d882dce7",
-        name: "Draft",
-        created_at: new Date(),
-        updated_at: new Date(),
-      },
-      {
-        uuid: "01951f2b-19d8-7af5-aa00-f01a22fbdb53",
-        name: "3",
-        created_at: new Date(),
-        updated_at: new Date(),
-      },
-      {
-        uuid: "01951f2b-19d8-7fe8-902a-b7854cc65f68",
-        name: "2",
-        created_at: new Date(),
-        updated_at: new Date(),
-      },
-      {
-        uuid: "01951f2b-19d8-77d0-b00c-4c95d9778f43",
-        name: "1",
-        created_at: new Date(),
-        updated_at: new Date(),
-      }
-    ];
-
-    return data;
+    return this.journeyVersionService.getVersions(<Account>user, id);
   }
 
   @Get(':id/versions/:version_uuid')
@@ -358,16 +334,19 @@ export class JourneysController {
     const session = randomUUID();
 
     const journey = await this.journeysService.findOne(<Account>user, id, session);
+    // const version = awai this.journeyVersionService.getLatestVersion(<Account>user, id);
+
+    const latest = await this.journeyVersionService.getLatestVersion(<Account>user, id);
+
+    const newVersion = await this.journeyVersionService.create(<Account>user, journey, session);
+    await this.journeyVersionService.updateLayout(<Account>user, newVersion, latest.layout);
 
     const data = {
-      uuid: "01951f2b-19d8-729b-96fb-a1a0d882dce7",
+      uuid: newVersion.uuid,
       name: "Draft",
       created_at: new Date(),
       updated_at: new Date(),
-      visual_layout: {
-        nodes: journey.nodes,
-        edges: journey.edges,
-      }
+      visual_layout: latest.layout
     };
 
     return data;

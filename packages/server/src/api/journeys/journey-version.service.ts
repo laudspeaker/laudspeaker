@@ -48,16 +48,17 @@ export class JourneyVersionService extends BaseLaudspeakerService {
     super();
   }
 
-  async create(account: Account, journey: Journey, session: string) {
+  async create(account: Account, journey_id: string, session: string) {
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
     try {
-      const count = await this.getVersionCount(journey.id, workspace.id);
+      const count = await this.getVersionCount(journey_id, workspace.id);
 
       const version = await this.journeyVersionRepository.save({
         workspace: { id: workspace.id },
-        journey_id: journey.id,
+        journey_id: journey_id,
         number: count + 1,
+        name: "Draft",
         layout: {
           nodes: [],
           edges: [],
@@ -104,10 +105,10 @@ export class JourneyVersionService extends BaseLaudspeakerService {
   async publish(account: Account, journey_id: string, session: string) {
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
-    const journey = await this.journeysService.findByID(account, journey_id, session);
+    // const journey = await this.journeysService.findByID(account, journey_id, session);
 
     try {
-      await this.create(account, journey, session);
+      await this.create(account, journey_id, session);
 
 
       // return result;
@@ -127,10 +128,10 @@ export class JourneyVersionService extends BaseLaudspeakerService {
   async checkOut(account: Account, journey_id: string, session: string) {
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
-    const journey = await this.journeysService.findByID(account, journey_id, session);
+    // const journey = await this.journeysService.findByID(account, journey_id, session);
 
     try {
-      await this.create(account, journey, session);
+      await this.create(account, journey_id, session);
 
       
       // const result = await this.journeyVersionRepository.update(
@@ -147,6 +148,20 @@ export class JourneyVersionService extends BaseLaudspeakerService {
     }
   }
 
+  async getVersions(account: Account, journey_id: string) {
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
+    return this.journeyVersionRepository.find({
+      where: {
+        workspace_id: workspace.id,
+        journey_id: journey_id
+      },
+      order: {
+        number: 'desc'
+      }
+    });
+  }
+
   async getLatestVersion(account: Account, journey_id: string) {
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -158,14 +173,25 @@ export class JourneyVersionService extends BaseLaudspeakerService {
       order: {
         number: 'desc'
       }
-    })
+    });
   }
+
+  async getVersion(account: Account, journey_id: string, version_uuid: string) {
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
+    return this.journeyVersionRepository.findOne({
+      where: {
+        workspace_id: workspace.id,
+        journey_id: journey_id,
+        uuid: version_uuid,
+      }
+    });
+  }
+
   async getVersionCount(journey_id: string, workspace_id: string) {
     return this.journeyVersionRepository.countBy({
       workspace_id,
       journey_id,
     });
   }
-
 }
-

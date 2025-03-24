@@ -380,7 +380,7 @@ export class JourneysService {
 
       const journeyVersion = await this.journeyVersionService.create(
         account,
-        journey,
+        journey.id,
         session
       );
 
@@ -469,7 +469,7 @@ export class JourneysService {
 
       const journeyVersion = await this.journeyVersionService.create(
         account,
-        journey,
+        journey.id,
         session
       );
 
@@ -1901,8 +1901,8 @@ export class JourneysService {
       });
 
       if (!journey) throw new NotFoundException('Journey not found');
-      if (journey.isDeleted || journey.isStopped)
-        throw new Error('Journey is no longer editable.');
+      // if (journey.isDeleted || journey.isStopped)
+        // throw new Error('Journey is no longer editable.');
 
       const {
         isDynamic,
