@@ -327,7 +327,7 @@ export class JourneysController {
     );
   }
 
-  @Post(':id/check_out/')
+  @Post(':id/check_out/(:version_id)')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async checkOut(@Req() { user }: Request, @Param('id') id: string) {
