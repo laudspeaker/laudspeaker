@@ -51,8 +51,7 @@ const VersionViewer = () => {
 
   const onRestore = async () => {
     const { data } = await ApiService.post({
-      url: `/journeys/${journeyId}/check_out`,
-      options: { versionId },
+      url: `/journeys/${journeyId}/check_out/${versionId}`,
     });
     // TODO: pass a param of version to restore
     if (data.uuid) {

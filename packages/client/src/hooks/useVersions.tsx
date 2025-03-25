@@ -1,12 +1,20 @@
+import { EdgeData } from "pages/FlowBuilderv2/Edges/EdgeData";
+import { NodeData } from "pages/FlowBuilderv2/Nodes/NodeData";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Edge, Node } from "reactflow";
 import ApiService from "services/api.service";
 interface IVersion {
   uuid: string;
   created_at: string;
   updated_at: string;
-  name: string;
+  id: string;
+  journey_id: string;
+  layout: { nodes: Node<NodeData>[]; edges: Edge<EdgeData>[] };
+  number: 1;
+  state: string;
+  workspace_id: string;
 }
 
 const useVersions = () => {
@@ -22,7 +30,14 @@ const useVersions = () => {
         url: `/journeys/${id || journeyId}/versions`,
       });
       console.log(data, "data");
-      setVersions(data);
+      const enhancedData = data.map((version) => {
+        return {
+          ...version,
+          name:
+            version.state === "Draft" ? "Draft" : `Version ${version.number}`,
+        };
+      });
+      setVersions(enhancedData);
       setIsLoaded(true);
     } catch (e) {
       toast.error("Failed to load data");
