@@ -63,18 +63,18 @@ export const SearchUser = ({
     setIsLoading(false);
   };
 
-  useEffect(() => {
-    handleSearchForTest();
-  }, [skip]);
+  // useEffect(() => {
+  // handleSearchForTest();
+  // }, [skip]);
 
-  useDebounce(
-    () => {
-      setSkip(0);
-      handleSearchForTest();
-    },
-    300,
-    [search]
-  );
+  // useDebounce(
+  //   () => {
+  //     setSkip(0);
+  // handleSearchForTest();
+  //   },
+  //   300,
+  //   [search]
+  // );
 
   const getTitle = (customer: CustomerResponse) =>
     `${pk?.name && customer?.[pk?.name] ? capitalizeString(pk.name) : "ID"}: ${
