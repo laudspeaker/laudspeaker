@@ -48,7 +48,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       logger: 'advanced-console',
       logging: ['warn', 'error'],
       subscribers: [],
-      synchronize: process.env.SYNCHRONIZE == 'true', // never use TRUE in production!
+      synchronize: false, // never use TRUE in production!
       autoLoadEntities: true,
       maxQueryExecutionTime: 2000,
       extra: {
