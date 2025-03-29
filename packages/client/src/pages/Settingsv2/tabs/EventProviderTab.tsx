@@ -137,7 +137,7 @@ const EventProviderTab = () => {
                 </div>
                 {fixture.comingSoon && (
                   <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-5 text-[#4B5563] border border-[#E5E7EB] bg-white">
-                    comming soon
+                    coming soon
                   </div>
                 )}
               </button>

@@ -33,7 +33,7 @@ interface MessageChannelCardFixture {
   title: string;
   icon: string;
   beta?: boolean;
-  commingSoon?: boolean;
+  comingSoon?: boolean;
   disabled?: boolean;
   connected?: boolean;
   additionalInfo?: MessageChannelAdditionalInfoFixture[];
@@ -113,7 +113,7 @@ const supportedMessageChannelCardsFixtures: Record<
     channel: MessageChannel.CUSTOM_MODAL,
     title: "Onboarding Suite",
     icon: customModalCardIconImage,
-    commingSoon: true,
+    comingSoon: true,
     disabled: true,
   },
   [MessageChannel.SLACK]: {
@@ -121,7 +121,7 @@ const supportedMessageChannelCardsFixtures: Record<
     channel: MessageChannel.SLACK,
     title: "Slack",
     icon: slackCardIconImage,
-    commingSoon: true,
+    comingSoon: true,
     disabled: true,
   },
   [MessageChannel.BYOS]: {
@@ -317,9 +317,9 @@ const MessageChannelTab = () => {
                   </div>
                 )}
 
-                {fixture.commingSoon && (
+                {fixture.comingSoon && (
                   <div className="px-[10px] py-[2px] rounded-[14px] font-inter text-[12px] font-normal leading-5 text-[#4B5563] border border-[#E5E7EB] bg-white">
-                    comming soon
+                    coming soon
                   </div>
                 )}
               </div>
