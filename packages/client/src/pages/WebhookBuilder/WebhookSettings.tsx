@@ -345,6 +345,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
               checked={authType === AuthType.CUSTOM}
               className="text-[#6366F1] focus:ring-[#6366F1] mr-2"
               readOnly
+              id="authtype_custom"
             />
             Custom
           </div>
@@ -412,6 +413,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
 
             setCustomHeaders([...customHeaders, { key: "", value: "" }]);
           }}
+          id="add-header"
         >
           Add header
         </Button>
@@ -567,6 +569,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
                       onChange={(val) =>
                         setWebhookState({ ...webhookState, method: val })
                       }
+                      id="webhookMethod"
                     />
                     <Input
                       wrapperClassName="w-full"
@@ -729,6 +732,7 @@ const WebhookSettings: FC<WebhookSettingsProps> = ({
                           onKeyDown={(e) => {
                             if (e.key === "Enter") setCurrentTab(tab);
                           }}
+                          data-testid={`tab-${tab}`}
                         >
                           {tab}
                         </div>

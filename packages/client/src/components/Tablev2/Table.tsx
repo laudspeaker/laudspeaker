@@ -54,6 +54,7 @@ const Table = <T,>({
           {rows.map((row, i) => (
             <tr
               key={i}
+              data-testid={`row-${i}`}
               className={`border-b-[1px] border-[#E5E7EB] hover:bg-[#F3F4F6] ${
                 onRowClick ? "cursor-pointer" : ""
               } ${i === selectedRow ? "!bg-[#6366F1] !text-white" : ""}`}

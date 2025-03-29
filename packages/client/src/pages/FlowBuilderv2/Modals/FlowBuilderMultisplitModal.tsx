@@ -114,7 +114,13 @@ const FlowBuilderMultisplitModal = ({
         </Button>
 
         {!isViewMode && (
-          <Button type={ButtonType.PRIMARY} onClick={handleSave}>
+          <Button
+            data-testid={`flow-builder-multisplit-${
+              branch ? "save" : "add"
+            }-button`}
+            type={ButtonType.PRIMARY}
+            onClick={handleSave}
+          >
             {branch ? "Save" : "Add"}
           </Button>
         )}

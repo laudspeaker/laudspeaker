@@ -19,6 +19,7 @@ const TimeDelayEditor: FC<TimeDelayEditorProps> = ({ delay, onChange }) => {
       </div>
 
       <input
+        data-testid="time-delay-days"
         type="number"
         value={delay.days || undefined}
         onChange={(e) =>
@@ -31,6 +32,7 @@ const TimeDelayEditor: FC<TimeDelayEditorProps> = ({ delay, onChange }) => {
       <div>:</div>
 
       <input
+        data-testid="time-delay-hours"
         type="number"
         value={delay.hours || undefined}
         onChange={(e) =>
@@ -43,6 +45,7 @@ const TimeDelayEditor: FC<TimeDelayEditorProps> = ({ delay, onChange }) => {
       <div>:</div>
 
       <input
+        data-testid="time-delay-minutes"
         type="number"
         value={delay.minutes || undefined}
         onChange={(e) =>

@@ -73,6 +73,7 @@ export const EmptyNode: FC<NodeProps<NodeData>> = ({
         dispatch(handleDrawerAction({ id, action, stepId }));
         setIsDraggedOver(false);
       }}
+      data-testid="empty-node"
     >
       <Handle
         position={Position.Top}

@@ -35,10 +35,12 @@ describe("time triggers", () => {
     cy.get("#journey-name-input").clear().type("test1");
     cy.get("#create-journey-modal-button").click();
 
+    cy.wait(1000);
     drag("#timeDelay", ".empty-node");
     cy.get('[placeholder="Mins"]').type("1");
     cy.get("#save-node-data").click();
 
+    cy.wait(1000);
     drag("#timeWindow", ".last-empty-node:last", { fireDragOver: false });
     cy.wait(100);
     cy.get("#time-window-type-select").click();
@@ -50,14 +52,23 @@ describe("time triggers", () => {
     cy.get("#time-window-week-day-option-5").click();
     cy.get("#save-node-data").click();
 
+    cy.wait(1000);
     drag("#email", ".last-empty-node:last", { fireDragOver: false });
     cy.get("#template-select").select("example-template-invoice");
     cy.get("#save-node-data").click();
+
+    cy.wait(1000);
     drag("#exit", ".last-empty-node:last", { fireDragOver: false });
 
     cy.get("#next-button").click();
+    cy.wait(1000);
+
     cy.get("#next-button").click();
+    cy.wait(1000);
+
     cy.get("#next-button").click();
+    cy.wait(1000);
+
     cy.get("#start-journey-button").click();
     cy.get("#journey-start-verify-button").click();
 

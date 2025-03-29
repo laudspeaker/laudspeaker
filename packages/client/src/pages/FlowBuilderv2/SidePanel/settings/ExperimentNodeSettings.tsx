@@ -92,6 +92,7 @@ const ExperimentNodeSettings: FC<
                       Branch {i + 1}
                     </span>
                     <Input
+                      data-testid={`branch-${i + 1}-hours`}
                       type="number"
                       name="hours"
                       id="hours"
@@ -184,6 +185,7 @@ const ExperimentNodeSettings: FC<
         )}
         <Button
           type={ButtonType.SECONDARY}
+          id="experiment-add-branch"
           onClick={handleAddBranch}
           className="!text-[#111827] !border-[#E5E7EB]"
         >

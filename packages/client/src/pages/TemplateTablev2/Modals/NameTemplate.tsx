@@ -123,6 +123,7 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
               </label>
               <Select
                 id="handleTemplateType"
+                dataTestId="select-button"
                 value={templateType}
                 onChange={handleType}
                 className="min-w-[80px]"
