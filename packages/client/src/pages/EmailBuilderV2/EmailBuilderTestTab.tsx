@@ -3,8 +3,7 @@ import Button, { ButtonType } from "components/Elements/Buttonv2";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import ApiService from "services/api.service";
-import type { CustomerResponse } from "./SearchUser";
-import { SearchUser } from "./SearchUser";
+import { CustomerResponse, SearchUser } from "pages/PushBuilder/SearchUser";
 import styled from "@emotion/styled";
 
 const StyledContainer = styled.div`

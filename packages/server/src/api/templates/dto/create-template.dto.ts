@@ -40,7 +40,7 @@ export class CreateTemplateDto {
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  public style?: string;
+  public json?: string;
 
   @IsString()
   @IsNotEmpty()

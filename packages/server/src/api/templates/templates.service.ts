@@ -176,7 +176,7 @@ export class TemplatesService {
           template.subject = createTemplateDto.subject;
           template.text = createTemplateDto.text;
           if (createTemplateDto.cc) template.cc = createTemplateDto.cc;
-          template.style = createTemplateDto.style;
+          template.json = createTemplateDto.json;
           break;
         case TemplateType.SLACK:
           template.slackMessage = createTemplateDto.slackMessage;
@@ -558,7 +558,7 @@ export class TemplatesService {
     const {
       workspace,
       slackMessage,
-      style,
+      json,
       subject,
       text,
       type,
@@ -596,7 +596,7 @@ export class TemplatesService {
       name: newName,
       workspace: { id: workspaceId },
       slackMessage,
-      style,
+      json,
       subject,
       text,
       type,

@@ -103,7 +103,7 @@ export class Template {
   text: string;
 
   @Column({ nullable: true })
-  style: string;
+  json: string;
 
   @Column({ nullable: true })
   subject: string;
