@@ -34,6 +34,8 @@ import {
   setNodes,
   transformEmptyNodeIntoInsertNode,
   setIsMoving,
+  copyNodes,
+  clearCopyNodes,
 } from "reducers/flow-builder.reducer";
 import {
   EmptyNode,
@@ -65,6 +67,10 @@ import { DrawerAction } from "./Drawer/drawer.fixtures";
 import { EdgeData } from "./Edges/EdgeData";
 import MouseTracker from "./MouseTacker";
 import { v4 as uuid } from "uuid";
+import { debounce, throttle } from "lodash";
+import { select } from "@material-tailwind/react";
+import CopyIcon from "assets/icons/CopyIcon";
+import { toast } from "react-toastify";
 
 export enum NodeType {
   START = "start",
@@ -153,227 +159,256 @@ const FlowEditor: FC<FlowEditorProps> = ({
   const [isDraggingSelected, setIsDraggingSelected] = useState(false);
   const [isCustomDragging, setIsCustomDragging] = useState(false);
   const [stateChanges, setStateChanges] = useState({ x: 0, y: 0 });
-  // const [changes, setChanges] = useState<NodeChange[]>([]);
+  const [previousIsDragging, setPreviousIsDragging] = useState(false);
+  const [changesDrag, setChangesDrag] = useState<NodeChange[]>([]);
   // const [nodes, setNodesState, onNodesChangeState] =
   //   useNodesState(initialNodes);
   const [setEdges] = useEdgesState(edges);
+  const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
   const flowRef = useRef<HTMLDivElement>(null);
 
-  // useEffect(() => {
-  //   setNodesState(initialNodes);
-  // }, [initialNodes]);
-
   const { x: viewX, y: viewY, zoom } = useViewport();
-  const { project } = useReactFlow();
 
-  // const onDragOver = (x: number, y: number, movingNode: any) => {
-  //   // console.log("onDragOveronDragOver", x, y, isDragging);
-  //   // e.stopPropagation();
-  //   // if (!isDragging || !flowRef.current || edges.length === 0) return;
+  const onDrag = (x: number, y: number, movingNode: any) => {
+    console.log(x, y, "x, y");
 
-  //   // const boudingClientRect = flowRef.current.getBoundingClientRect();
+    console.log(movingNode, "movingNode");
 
-  //   // const canvasMouseX = (x - viewX - boudingClientRect.left) / zoom;
-  //   // const canvasMouseY = (y - viewY - boudingClientRect.top) / zoom;
+    if (!isDragging || !flowRef.current || edges.length === 0) return;
 
-  //   // const insertNode = nodes.find((node) => node.id === movingNode.id);
-  //   // console.log(insertNode, "insertNode");
-  //   // if (insertNode && e.dataTransfer) {
-  //   //   e.preventDefault();
-  //   //   e.dataTransfer.dropEffect = "move";
-  //   // }
+    const boudingClientRect = flowRef.current.getBoundingClientRect();
 
-  //   // let lengthToInsertNode = insertNode
-  //   //   ? Math.sqrt(
-  //   //       (canvasMouseX - insertNode.position.x) *
-  //   //         (canvasMouseX - insertNode.position.x) +
-  //   //         (canvasMouseY - insertNode.position.y) *
-  //   //           (canvasMouseY - insertNode.position.y)
-  //   //     ) - 750
-  //   //   : Infinity;
+    console.log(boudingClientRect, "boudingClientRect");
 
-  //   // if (lengthToInsertNode > MAXIMUM_INSERT_RADIUS) {
-  //   //   dispatch(clearInsertNodes());
-  //   //   lengthToInsertNode = Infinity;
-  //   // }
+    // const canvasMouseX = (x - viewX - boudingClientRect.left) / zoom;
 
-  //   let closestEdge:
-  //     | {
-  //         edge: Edge<EdgeData>;
-  //         lengthToLabel: number;
-  //         nodeA: Node<NodeData>;
-  //         nodeB: Node<NodeData>;
-  //       }
-  //     | undefined;
+    // console.log(canvasMouseX, "canvasMouseX");
 
-  //   if (
-  //     !dragActionsNotToDoBetweenNodes.includes(dragAction?.type) &&
-  //     !isOnboarding
-  //   ) {
-  //     for (const edge of edges) {
-  //       console.log(edge.type, "edge.type");
-  //       if (edge.type !== EdgeType.PRIMARY) continue;
+    // const canvasMouseY = (y - viewY - boudingClientRect.top) / zoom;
+    // console.log(canvasMouseY, "canvasMouseY");
 
-  //       const nodeA = nodes.find((node) => node.id === edge.source);
-  //       const nodeB = nodes.find((node) => node.id === edge.target);
-  //       console.log(nodeA, "nodeA", nodeB);
-  //       if (
-  //         !nodeA?.type ||
-  //         !nodeB?.type ||
-  //         ([NodeType.EMPTY, NodeType.INSERT_NODE] as string[]).includes(
-  //           nodeA.type
-  //         ) ||
-  //         ([NodeType.EMPTY, NodeType.INSERT_NODE] as string[]).includes(
-  //           nodeB.type
-  //         )
-  //       )
-  //         continue;
+    const canvasMouseX = x + viewX - boudingClientRect.left / zoom; //- 200
+    const canvasMouseY = y - viewY - boudingClientRect.top / zoom; //- 570
 
-  //       if (!nodeA || !nodeB) continue;
+    const insertNode = nodes.find((node) => node.id === movingNode.id);
+    console.log(insertNode, "insertNode");
+    // if (insertNode && e.dataTransfer) {
+    //   // e.preventDefault();
+    //   // e.dataTransfer.dropEffect = "move";
+    // }
+    const example1 = 240 / 114; // 2.1052631578947367
+    const example2 = 440 / 362; // 1.2154696132596685
+    const example3 = 540 / 486; // 1.1111111111111112
+    const example4 = 410 / 238; // 1.7226890756302522
 
-  //       const labelX = (nodeA.position.x + nodeB.position.x) / 2;
-  //       const labelY = (nodeA.position.y + nodeB.position.y) / 2;
+    console.log(example1, example2, example3, "examples");
+    if (insertNode) {
+      console.log(
+        x,
+        y,
+        canvasMouseX,
+        canvasMouseY,
+        "canvasMouseX, canvasMouseY",
+        insertNode.position.x,
+        insertNode.position.y
+      );
+    }
 
-  //       const lengthToLabel = Math.sqrt(
-  //         (canvasMouseX - labelX) * (canvasMouseX - labelX) +
-  //           (canvasMouseY - labelY) * (canvasMouseY - labelY)
-  //       );
-  //       console.log(lengthToLabel, "lengthToLabel");
-  //       // if (lengthToLabel > 50) continue;
+    let distanceToInsertNode = insertNode
+      ? Math.sqrt(
+          (canvasMouseX - insertNode.position.x) ** 2 +
+            (canvasMouseY - insertNode.position.y) ** 2
+        ) - 400 // Calculate distance
+      : Infinity; // If no insertNode, set distance to Infinity
+    console.log(distanceToInsertNode, "distanceToInsertNode");
+    // return;
+    if (distanceToInsertNode > 130) {
+      dispatch(clearInsertNodes());
+      distanceToInsertNode = Infinity;
+    }
 
-  //       console.log(closestEdge, "closestEdge");
+    let closestEdge:
+      | {
+          edge: Edge<EdgeData>;
+          lengthToLabel: number;
+          nodeA: Node<NodeData>;
+          nodeB: Node<NodeData>;
+        }
+      | undefined;
 
-  //       if (!closestEdge || lengthToLabel < closestEdge.lengthToLabel)
-  //         closestEdge = { edge, lengthToLabel, nodeA, nodeB };
-  //     }
-  //   }
+    for (const edge of edges) {
+      if (edge.type !== EdgeType.PRIMARY) continue;
 
-  //   let closestEmptyNode: { node: Node<NodeData>; length: number } | undefined;
+      //finds all pairs of closely located nodes
+      const nodeA = nodes.find((node) => node.id === edge.source);
+      const nodeB = nodes.find((node) => node.id === edge.target);
 
-  //   for (const node of nodes) {
-  //     console.log(node.type, "node.type");
-  //     if (node.type !== NodeType.EMPTY) continue;
+      if (
+        !nodeA?.type ||
+        !nodeB?.type ||
+        ([NodeType.EMPTY, NodeType.INSERT_NODE] as string[]).includes(
+          nodeA.type
+        ) ||
+        ([NodeType.EMPTY, NodeType.INSERT_NODE] as string[]).includes(
+          nodeB.type
+        )
+      )
+        continue;
 
-  //     const length = Math.sqrt(
-  //       (canvasMouseX - node.position.x) * (canvasMouseX - node.position.x) +
-  //         (canvasMouseY - node.position.y) * (canvasMouseY - node.position.y)
-  //     );
+      const labelX = (nodeA.position.x + nodeB.position.x) / 2;
+      const labelY = (nodeA.position.y + nodeB.position.y) / 2;
+      console.log(labelX, "labelX");
+      console.log(labelY, "labelY");
+      const lengthToLabel =
+        Math.sqrt(
+          (canvasMouseX - labelX) * (canvasMouseX - labelX) +
+            (canvasMouseY - labelY) * (canvasMouseY - labelY)
+        ) - 450;
 
-  //     if (length > MAXIMUM_INSERT_RADIUS) continue;
+      console.log(
+        nodeA.position,
+        nodeB.position,
+        lengthToLabel,
+        closestEdge,
+        "lengthToLabel closestEdge"
+      );
+      // continue;
+      if (lengthToLabel < 0 || lengthToLabel > 200) continue;
 
-  //     if (!closestEmptyNode || closestEmptyNode.length > length)
-  //       closestEmptyNode = { node, length };
-  //   }
-  //   console.log(
-  //     closestEmptyNode,
-  //     closestEdge,
-  //     lengthToInsertNode,
-  //     "closestEmptyNode"
-  //   );
-  //   if (
-  //     closestEmptyNode &&
-  //     (!closestEdge ||
-  //       closestEmptyNode.length < closestEdge.lengthToLabel - 750)
-  //     // &&
-  //     // closestEmptyNode.length < lengthToInsertNode
-  //   ) {
-  //     dispatch(transformEmptyNodeIntoInsertNode(closestEmptyNode.node.id));
-  //     return;
-  //   }
-  //   if (!closestEdge) return;
+      if (!closestEdge || lengthToLabel < closestEdge.lengthToLabel)
+        closestEdge = { edge, lengthToLabel, nodeA, nodeB };
+    }
+    console.log(closestEdge, "closestEdge");
+    let closestEmptyNode: { node: Node<NodeData>; length: number } | undefined;
 
-  //   console.log(
-  //     closestEdge.lengthToLabel > lengthToInsertNode,
-  //     "closestEdge.lengthToLabel > lengthToInsertNode"
-  //   );
-  //   if (!closestEdge) return;
-  //   console.log("Dispatching insert node");
-  //   dispatch(
-  //     addInsertNodeBetween({
-  //       source: closestEdge.nodeA.id,
-  //       target: closestEdge.nodeB.id,
-  //     })
-  //   );
-  // };
+    for (const node of nodes) {
+      if (node.type !== NodeType.EMPTY) continue;
 
-  const onDragFinish = (x: number, y: number, movingNode: any) => {
-    // if (!isCustomDragging) return;
-    const position = project({
-      x,
-      y,
-    });
-    console.log(
-      nodes[1],
-      "nodes[1]",
-      nodes.length,
-      nodes[2],
-      nodes[3],
-      movingNode
-    );
-    const insertNode = nodes.find((node) => node.type === NodeType.INSERT_NODE);
-    // if (!insertNode) {
+      const length = Math.sqrt(
+        (canvasMouseX - node.position.x) * (canvasMouseX - node.position.x) +
+          (canvasMouseY - node.position.y) * (canvasMouseY - node.position.y)
+      );
+
+      if (length > MAXIMUM_INSERT_RADIUS) continue;
+
+      if (!closestEmptyNode || closestEmptyNode.length > length)
+        closestEmptyNode = { node, length };
+    }
+
+    // if (
+    //   closestEmptyNode &&
+    //   (!closestEdge || closestEmptyNode.length < closestEdge.lengthToLabel) &&
+    //   closestEmptyNode.length < distanceToInsertNode
+    // ) {
+    //   dispatch(transformEmptyNodeIntoInsertNode(closestEmptyNode.node.id));
+    //   return;
+    // }
+
+    if (!closestEdge || closestEdge.lengthToLabel > distanceToInsertNode)
+      return;
+
+    console.log(closestEdge.nodeA.id, closestEdge.nodeB.id, "closestEdge");
+    //:TODO
     dispatch(
       addInsertNodeBetween({
-        source: nodes[1]?.id,
-        target: nodes[2]?.id,
-        //  source: closestEdge.nodeA.id,
-        //  target: closestEdge.nodeB.id,
+        source: closestEdge.nodeA.id,
+        target: closestEdge.nodeB.id,
       })
     );
+
+    // const insertNode = nodes.find((node) => node.type === NodeType.INSERT_NODE);
+    // if (!insertNode) {
+    // dispatch(
+    //   addInsertNodeBetween({
+    //     source: nodes[1]?.id,
+    //     target: nodes[2]?.id,
+    //   })
+    // );
     // }
+
+    // dispatch(
+    //   moveNodeToNewPosition({
+    //     nodeId: nodes[3]?.id,
+    //   })
+    // );
+  };
+  const debouncedOnDrag = debounce(onDrag, 500);
+
+  const handleOnSelectionDrag = (x: number, y: number) => {
+    const boundingClientRect = flowRef?.current?.getBoundingClientRect();
+    if (!boundingClientRect) return;
+    // console.log(boudingClientRect, "boudingClientRect");
+
+    // const canvasMouseX = (x - viewX - boudingClientRect.left) / zoom;
+
+    // const canvasMouseY = (y - viewY - boudingClientRect.top) / zoom;
+    const canvasMouseX = x + viewX - boundingClientRect.left / zoom - 200;
+    const canvasMouseY = y - viewY - boundingClientRect.top / zoom - 570;
+    setStateChanges({ x: x, y: y });
+    console.log(changesDrag, "changesDrag");
+    if (changesDrag.length) {
+      debouncedOnDrag(x, y, changesDrag[0]);
+    }
+  };
+
+  const handleStopDrag = () => {
+    setIsCustomDragging(false);
+    dispatch(setIsDragging(false));
+    dispatch(setIsMoving(false));
+    setIsSelecting(false);
+    setStateChanges({ x: 0, y: 0 });
+
+    const draggedNode = changesDrag.find(
+      (change) => change.type === "position"
+    );
+    if (!draggedNode) return;
 
     dispatch(
       moveNodeToNewPosition({
-        nodeId: nodes[3]?.id,
+        nodeId: (draggedNode as NodeChange & { id: string }).id,
       })
     );
   };
 
   const onNodesChange = (changes: NodeChange[]) => {
-    console.log("onNodesChange", changes);
-    if (changes[0]?.type === "position" && changes[0]?.position) {
-      setStateChanges(changes[0]?.position);
+    console.log(changes, "NODES CHANGES");
+    // setSelectedNodes(changes);
+    // changes.map((change) => {
+    //   if (change.type !== "select") return;
+    //   if (change.selected) {
+    //     setSelectedNodes([...selectedNodes, change]);
+    //   } else {
+    //     setSelectedNodes(
+    //       selectedNodes.filter((node) => {
+    //         if ("id" in node) {
+    //           return node.id !== change.id;
+    //         }
+    //         return true;
+    //       })
+    //     );
+    //   }
+    // });
+    if (isSelecting) {
+      const movingNode = changes.find(
+        (change) =>
+          change.type === "position" && change.dragging && change.position
+      );
+
+      if (movingNode) {
+        setChangesDrag(changes);
+      }
+
+      const draggedNode = changes.find(
+        (change) =>
+          change.type === "position" && change.dragging && !!movingNode
+      );
+      if (draggedNode) {
+        setIsCustomDragging(true);
+        dispatch(setIsMoving(true));
+        dispatch(setIsDragging(true));
+        dispatch(setDragAction({ type: DrawerAction.EMAIL }));
+      }
     }
-    const handleDragAndDrop = (ch: NodeChange[]) => {
-      //implement a function to drag and drop the element and change its position while dragging
-      // by following the mouse position and taking 'position' in an array element and applying it to the node
-
-      const updatedNodes = nodes.map((node) => {
-        const change = ch.find((c) => "id" in c && c.id === node.id);
-        if (change && change.type === "position" && change.dragging) {
-          if (change.position) {
-            return {
-              ...node,
-              position: change.position,
-            };
-          }
-        }
-        return node;
-      });
-
-      // dispatch(setNodes(applyNodeChanges(changes, updatedNodes)));
-    };
-
-    if (
-      changes.find((change) => change.type === "position" && change.dragging)
-    ) {
-      setIsCustomDragging(true);
-      dispatch(setIsMoving(true));
-      dispatch(setIsDragging(true));
-      dispatch(setDragAction({ type: DrawerAction.EMAIL }));
-      changes.map((change) => {
-        if (change.type === "position" && change.dragging && change.position) {
-          onDragFinish(change.position?.x, change.position?.y, changes[0]);
-        }
-      });
-
-      // handleDragAndDrop(changes);
-    } else {
-      setIsCustomDragging(false);
-      dispatch(setIsDragging(false));
-      dispatch(setIsMoving(false));
-    }
-
     if (devModeState.status === ConnectionStatus.Connected) {
       changes = changes.filter((change) => change.type !== "select");
     } else {
@@ -383,17 +418,20 @@ const FlowEditor: FC<FlowEditorProps> = ({
           nodes.find((node) => node.id === change.id)?.type !== NodeType.EMPTY
       );
     }
-
-    // if (isSelecting) return;
-    // dispatch(setNodes(applyNodeChanges(changes, nodes)));
+    // if (isSelecting) {
+    //   console.log("setNodes3");
+    //   dispatch(setNodes(applyNodeChanges(changes, nodes)));
+    // }
+    if (!isSelecting) {
+      console.log("setNodes2");
+      dispatch(setNodes(applyNodeChanges(changes, nodes)));
+    }
   };
 
   const handleStopSelecting = (e: any) => {
-    // console.log(e, "e");
     setIsSelecting(false);
-    // onNodesChange(changes);
   };
-
+  // console.log(isSelecting, "isSelecting");
   const handleDevModeDBClick = (node: Node<any, string | undefined>) => {
     if (
       devModeState.status !== ConnectionStatus.Connected ||
@@ -419,6 +457,7 @@ const FlowEditor: FC<FlowEditorProps> = ({
   };
 
   const handleDevModeClick = (node: Node<any, string | undefined>) => {
+    setIsSelecting(false);
     if (devModeState.status !== ConnectionStatus.Connected) return;
 
     if (!devModeState.availableNodeToJump?.includes(node.id)) return;
@@ -470,6 +509,69 @@ const FlowEditor: FC<FlowEditorProps> = ({
     };
   }, []);
 
+  const handleCopy = () => {
+    // const nodeToCopy = nodes.find((node) => node.id === selectedNodes?.id);
+    // console.log(nodeToCopy, "nodeToCopy", selectedNodes);
+    if (!selectedNodes) return;
+    dispatch(copyNodes({ nodes: selectedNodes }));
+    dispatch(deselectNodes());
+    setIsSelecting(false);
+  };
+
+  const handleClearCopy = () => {
+    dispatch(clearCopyNodes());
+    dispatch(deselectNodes());
+    setIsSelecting(false);
+  };
+
+  const handleOnSelectionEnd = () => {
+    setIsSelecting(false);
+
+    const hasNodes = !!selectedNodes.filter((node) => node.type !== "empty")
+      ?.length;
+
+    if (!hasNodes) {
+      dispatch(deselectNodes());
+    }
+
+    let multisplitCount = 0;
+    let waitUntilCount = 0;
+    let experimentCount = 0;
+
+    selectedNodes?.map((node) => {
+      if (node.type === DrawerAction.WAIT_UNTIL) {
+        waitUntilCount++;
+      }
+      if (node.type === DrawerAction.MULTISPLIT) {
+        multisplitCount++;
+      }
+      if (node.type === DrawerAction.EXPERIMENT) {
+        experimentCount++;
+      }
+    });
+
+    const isMaxMultisplitNodes = waitUntilCount > 1;
+    const isMaxWaitUntilNodes = waitUntilCount > 1;
+    const isMaxExperimentNodes = experimentCount > 1;
+
+    const isMax = multisplitCount + waitUntilCount + experimentCount > 1;
+
+    const maxDisplayNodes = [];
+    if (isMaxWaitUntilNodes || (isMax && waitUntilCount))
+      maxDisplayNodes.push("Wait Until");
+    if (isMaxMultisplitNodes || (isMax && multisplitCount))
+      maxDisplayNodes.push("Multisplit");
+    if (isMaxExperimentNodes || (isMax && experimentCount))
+      maxDisplayNodes.push("Experiment");
+
+    const message = `Please select only one ${maxDisplayNodes.join(" or ")}`;
+
+    if (maxDisplayNodes.length) {
+      dispatch(deselectNodes());
+      toast.warning(message);
+    }
+  };
+
   return (
     <div
       className={`relative w-full h-full bg-[#F3F4F6] text-[#111827] flex flex-col ${
@@ -518,8 +620,13 @@ const FlowEditor: FC<FlowEditorProps> = ({
           panOnDrag={[1, 2]}
           selectionOnDrag={isSelectionAvailable}
           selectionMode={SelectionMode.Partial}
-          onSelectionStart={() => setIsSelecting(true)}
-          onSelectionEnd={handleStopSelecting}
+          onSelectionStart={(e) => setIsSelecting(true)}
+          onSelectionDragStop={handleStopDrag}
+          onSelectionDrag={(e) => {
+            handleOnSelectionDrag(e.clientX, e.clientY);
+          }}
+          onSelectionEnd={(e) => handleOnSelectionEnd}
+          onSelectionChange={(e) => setSelectedNodes(e.nodes)}
           elevateEdgesOnSelect
           nodeOrigin={[0.5, 0.5]}
           defaultEdgeOptions={{
@@ -538,8 +645,10 @@ const FlowEditor: FC<FlowEditorProps> = ({
             isVisible={isMoving}
             coordinates={stateChanges}
             flowRef={flowRef}
+            setStateChanges={setStateChanges}
+            selectedNode={nodes.find((node) => node.id === changesDrag[0]?.id)}
           >
-            This is a moving node
+            <></>
           </MouseTracker>
           <NodeDraggingProvider flowRef={flowRef} />
           <Controls
@@ -547,10 +656,8 @@ const FlowEditor: FC<FlowEditorProps> = ({
             position="top-left"
             className="rounded-sm"
           >
-            <ControlButton
-              onClick={() => setIsSelectionAvailable(!isSelectionAvailable)}
-            >
-              <div>{isSelectionAvailable ? "Select" : "Move"}</div>
+            <ControlButton onClick={handleCopy}>
+              <CopyIcon width={26} height={27} />
             </ControlButton>
             {devModeState.status !== ConnectionStatus.Disabled && (
               <DevModeControlHint />

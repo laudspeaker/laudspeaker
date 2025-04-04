@@ -9,7 +9,10 @@ import { NodeAction } from "reducers/flow-builder.reducer";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import { DrawerAction } from "../Drawer/drawer.fixtures";
 import { NodeType } from "../FlowEditor";
-import { dragActionsNotToDoBetweenNodes } from "../FlowPlugins/NodeDraggingProvider";
+import {
+  dragActionsNotToDoBetweenNodes,
+  pastedDragActionsNotToDoBetweenNodes,
+} from "../FlowPlugins/NodeDraggingProvider";
 
 export const PrimaryEdge: FC<EdgeProps> = ({
   sourceX,
@@ -23,9 +26,8 @@ export const PrimaryEdge: FC<EdgeProps> = ({
   source,
   target,
 }) => {
-  const { isDragging, nodes, dragAction, isOnboarding } = useAppSelector(
-    (state) => state.flowBuilder
-  );
+  const { isDragging, nodes, dragAction, isOnboarding, copiedNodes } =
+    useAppSelector((state) => state.flowBuilder);
   const dispatch = useAppDispatch();
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
@@ -43,6 +45,9 @@ export const PrimaryEdge: FC<EdgeProps> = ({
   const isSourceEmptyNode = sourceNode?.type === NodeType.EMPTY;
   const isTargetInsertNode = targetNode?.type === NodeType.INSERT_NODE;
   const isSourceInsertNode = sourceNode?.type === NodeType.INSERT_NODE;
+  const canBeBetweenNodes = copiedNodes
+    ? !pastedDragActionsNotToDoBetweenNodes.includes(dragAction?.type)
+    : !dragActionsNotToDoBetweenNodes.includes(dragAction?.type);
 
   return (
     <>
@@ -52,7 +57,7 @@ export const PrimaryEdge: FC<EdgeProps> = ({
         !isTargetInsertNode &&
         !isSourceInsertNode &&
         isDragging &&
-        !dragActionsNotToDoBetweenNodes.includes(dragAction?.type) &&
+        canBeBetweenNodes &&
         !isOnboarding && (
           <EdgeLabelRenderer>
             <div

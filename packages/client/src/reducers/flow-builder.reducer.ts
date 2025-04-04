@@ -12,6 +12,7 @@ import { getLayoutedNodes } from "pages/FlowBuilderv2/layout.helper";
 import {
   Branch,
   BranchType,
+  EventBranch,
   EventType,
   LogicRelation,
   MessageNodeData,
@@ -26,6 +27,7 @@ import { PushBuilderData } from "pages/PushBuilder/PushBuilderContent";
 import {
   applyNodeChanges,
   Edge,
+  getConnectedEdges,
   getIncomers,
   getOutgoers,
   Node,
@@ -35,6 +37,7 @@ import { MessageType, ProviderType } from "types/Workflow";
 import getClosestNextAndPrevious from "utils/getClosestNextAndPrevious";
 import { v4 as uuid } from "uuid";
 import { Attribute, AttributeType } from "pages/PeopleSettings/PeopleSettings";
+import { dragActionsNotToDoBetweenNodes } from "pages/FlowBuilderv2/FlowPlugins/NodeDraggingProvider";
 
 export enum SegmentsSettingsType {
   ALL_CUSTOMERS = "allCustomers",
@@ -596,6 +599,7 @@ export interface FlowBuilderState {
   journeySettings: JourneySettings;
   availableTags: string[];
   isStarting: boolean;
+  copiedNodes: Node<NodeData>[];
 }
 
 const startNodeUUID = uuid();
@@ -699,6 +703,7 @@ const initialState: FlowBuilderState = {
   journeyEntrySettings: defaultJourneyEntrySettings,
   journeySettings: defaultJourneySettings,
   isStarting: false,
+  copiedNodes: [],
 };
 
 const handlePruneNodeTree = (state: FlowBuilderState, nodeId: string) => {
@@ -882,6 +887,8 @@ const flowBuilderSlice = createSlice({
       const edgeBetween = state.edges.find(
         (edge) => edge.source === source && edge.target === target
       );
+
+      console.log(edgeBetween, "edgeBetween");
       if (!edgeBetween) return;
 
       const newNodeUUID = uuid();
@@ -1025,8 +1032,10 @@ const flowBuilderSlice = createSlice({
 
             state.nodes.push(newNode);
 
+            const isPastedNode = state.copiedNodes.length;
+
             const newEdge = {
-              id: `b${branch.id}`,
+              id: `b${isPastedNode ? "c" : ""}${branch.id}`,
               type: EdgeType.BRANCH,
               data: {
                 type: EdgeType.BRANCH,
@@ -1150,23 +1159,421 @@ const flowBuilderSlice = createSlice({
     },
     handleDrawerAction(
       state,
-      action: PayloadAction<{ id: string; action: string; stepId?: string }>
+      action: PayloadAction<{
+        id: string;
+        action: DrawerAction;
+        stepId?: string;
+        copiedId?: string;
+        index?: number;
+      }>
     ) {
-      const { stepId } = action.payload;
+      const { stepId, copiedId } = action.payload;
 
-      const nodeToChange = state.nodes.find(
+      const nodeToChangeIndex = state.nodes.findIndex(
         (node) => node.id === action.payload.id
       );
 
+      const newNodeId = uuid();
+
+      const isMultisplit = DrawerAction.MULTISPLIT === action.payload.action;
+      const isWaitUntil = DrawerAction.WAIT_UNTIL === action.payload.action;
+      const isExperiment = DrawerAction.EXPERIMENT === action.payload.action;
+      const isBranchParentNode = isMultisplit || isWaitUntil || isExperiment;
+
+      const isFirstCopiedNode = action.payload.index === 0;
+
+      const isEmptyBranchParent =
+        (isMultisplit || isWaitUntil || isExperiment) &&
+        (action.payload.index || 0) + 1 === state.copiedNodes.length;
+
+      let branchIndex = 0;
+      const pastedNode = state.copiedNodes.find((node) => node.id === copiedId);
+
+      const pastedNodeData = pastedNode?.data as MessageNodeData;
+      console.log(pastedNodeData, "pastedNodeData");
+      let pastedNodeBranches = pastedNodeData?.branches;
+      console.log(pastedNodeBranches, "pastedNodeBranches");
+
+      const pastedNodeFromState = state.nodes.find((node) =>
+        state.copiedNodes?.find((copiedNode) =>
+          copiedNode?.id ? copiedNode?.id === node.id : false
+        )
+      );
+      console.log(isFirstCopiedNode, "isFirstCopiedNode");
+
+      //handle One branch
+
+      console.log(
+        pastedNodeBranches,
+        "pastedNodeBranches pastedNodeBranches",
+        pastedNodeBranches?.length
+      );
+      if (
+        isBranchParentNode &&
+        pastedNodeBranches &&
+        pastedNodeBranches?.length
+      ) {
+        console.log("CHANGING BRANCHES");
+        const copiedNodesBranches = pastedNodeFromState?.data?.branches;
+        const copiedBranchesEdges = state.edges.filter((edge) =>
+          copiedNodesBranches?.find(
+            (copiedBranch) => copiedBranch?.id === edge.data?.branch?.id
+          )
+        );
+        const copiedNodesBranchEdge = copiedBranchesEdges?.filter((edge) =>
+          state.copiedNodes.find((node) => node.id === edge.target)
+        );
+
+        console.log(
+          copiedBranchesEdges?.length,
+          copiedBranchesEdges?.[0]?.id,
+          copiedBranchesEdges?.[1]?.id,
+          "copiedBranchesEdges"
+        );
+
+        const branches = pastedNodeBranches?.map((branchNode, idx) => {
+          if (
+            !!copiedNodesBranchEdge?.find(
+              (edge) => edge.data?.branch?.id === branchNode.id
+            ) ||
+            isEmptyBranchParent ||
+            isExperiment
+          ) {
+            const newBranchId = uuid();
+            return { ...branchNode, id: `b${newBranchId}` };
+          }
+          return null;
+        });
+        console.log(branches, "branchesbranchesbranches");
+        pastedNodeBranches = branches?.filter(Boolean);
+      }
+
+      const pastedNodeTargetEdge = state.edges.find(
+        (edge) => edge.target === copiedId
+      );
+      const pastedNodeTargetEdgeBranchId =
+        pastedNodeTargetEdge?.data?.branch?.id;
+
+      const isBranch = !!pastedNodeFromState?.data?.branches?.find(
+        (branch) => branch?.id === pastedNodeTargetEdgeBranchId
+      );
+
+      const isBranchNode = !!(
+        state.copiedNodes.find(
+          (node) =>
+            node.type === DrawerAction.MULTISPLIT ||
+            node.type === DrawerAction.WAIT_UNTIL ||
+            node.type === DrawerAction.EXPERIMENT
+        ) &&
+        action.payload.index &&
+        !isBranchParentNode &&
+        isBranch
+      );
+
+      if (
+        (copiedId && !isFirstCopiedNode && !!nodeToChangeIndex) ||
+        isEmptyBranchParent
+      ) {
+        console.log(
+          nodeToChangeIndex,
+          "nodeToChangeIndex",
+          action.payload.index
+        );
+
+        //Paste a node into a correct place
+        state.nodes.splice(nodeToChangeIndex + (action.payload.index || 0), 0, {
+          id: newNodeId,
+          type: NodeType.EMPTY,
+          data: {},
+          position: {
+            x: 0,
+            y: 0,
+          },
+        });
+        console.log(newNodeId, "newNodeId!newNodeId");
+
+        // 1. Find index of a branch inside multisplit
+        // 2. How to detect it?
+
+        let firstBranchNode = null;
+
+        let nodeId = copiedId;
+        let limit = 0; //set limit so the function doesn't block the rest of the code
+
+        while (
+          pastedNodeFromState &&
+          !firstBranchNode &&
+          limit < 10 &&
+          !isBranchNode
+        ) {
+          const previousNodeTargetEdge = state.edges.find(
+            (edge) => edge.target === nodeId
+          );
+
+          console.log(previousNodeTargetEdge, "previousNodeTargetEdgeWHILE");
+
+          if (previousNodeTargetEdge) {
+            nodeId = previousNodeTargetEdge?.source;
+            console.log(nodeId, "nodeId WHILE");
+            if (previousNodeTargetEdge.data?.branch?.id) {
+              firstBranchNode = previousNodeTargetEdge.data?.branch?.id;
+            }
+          }
+
+          limit++;
+        }
+
+        branchIndex = pastedNodeFromState
+          ? pastedNodeFromState?.data?.branches?.findIndex(
+              (branch) => branch.id === firstBranchNode
+            ) || 0
+          : 0;
+
+        console.log(branchIndex, "branchIndex WHILE");
+
+        const sourceEdge = state.edges.find((edge) => {
+          console.log(edge.source, "edge.source");
+          console.log(action.payload.index, "action.payload.index");
+          console.log(nodeToChangeIndex, "nodeToChangeIndex");
+          return (
+            edge.source ===
+              state.nodes?.[
+                nodeToChangeIndex +
+                  (action.payload.index || 1) -
+                  1 +
+                  (branchIndex ? branchIndex + 1 : 0)
+              ]?.id || 0
+          );
+        });
+
+        console.log(sourceEdge, "sourceEdge");
+
+        // if (sourceEdge && !isBranchNode) {
+        if (sourceEdge && !isBranchNode) {
+          // if (action.payload.action !== "jumpTo") {
+          sourceEdge.target = newNodeId;
+        }
+
+        const pastedNodeNotToBeBetweenNodes =
+          dragActionsNotToDoBetweenNodes.includes(action.payload.action);
+
+        console.log(
+          pastedNodeNotToBeBetweenNodes,
+          "pastedNodeNotToBeBetweenNodes"
+        );
+
+        if (
+          copiedId &&
+          !pastedNodeNotToBeBetweenNodes &&
+          !isBranchNode &&
+          !branchIndex &&
+          !isEmptyBranchParent
+        ) {
+          const newEdgeId = uuid();
+          console.log("PUSH1");
+          state.edges.push({
+            id: `${newEdgeId}`,
+            type: EdgeType.PRIMARY,
+            source: newNodeId,
+            target:
+              state.nodes[nodeToChangeIndex + 1 + (action.payload.index || 0)]
+                ?.id,
+          });
+        }
+      }
+
+      // console.log(action.payload, emptyNode.id, "emptyNode");
+      const nodeToChange = state.nodes.find((node) =>
+        copiedId && !isFirstCopiedNode
+          ? node.id === newNodeId
+          : node.id === action.payload.id
+      );
+      console.log(nodeToChange, "nodeToChange");
       if (!nodeToChange) return;
+
+      console.log(isBranchNode, "isBranchNode");
+      const addBranches = ({
+        currentBranch,
+        currentBranchParentNode,
+        hasNoNextNode,
+      }) => {
+        if (!currentBranchParentNode) return;
+        if (currentBranchParentNode.type === NodeType.EMPTY) {
+          currentBranchParentNode.type = action.payload.action;
+        }
+        const branchEdgeData = {
+          type: EdgeType.BRANCH,
+          branch: {
+            id: currentBranch?.id || "",
+            type:
+              currentBranchParentNode.type === NodeType.MULTISPLIT
+                ? BranchType.MULTISPLIT
+                : currentBranchParentNode.type === NodeType.EXPERIMENT
+                ? BranchType.EXPERIMENT
+                : BranchType.EVENT,
+            ...(currentBranch?.conditions
+              ? {
+                  conditions: currentBranch?.conditions,
+                }
+              : currentBranch?.ratio
+              ? { ratio: currentBranch?.ratio }
+              : { isOthers: true }),
+          },
+        };
+        console.log("PUSH3");
+        state.edges.push({
+          id: `${uuid()}`,
+          source: currentBranchParentNode.id,
+          target: hasNoNextNode ? uuid() : newNodeId,
+          type: EdgeType.BRANCH,
+          data: branchEdgeData,
+        });
+      };
+
+      const addEmptyBranchNodes = ({
+        sourceId,
+        index = 0,
+      }: {
+        sourceId?: string;
+        index: number;
+      }) => {
+        console.log(sourceId, "sourceId");
+        const targetEdge = state.edges.filter(
+          (edge) => edge.source === sourceId
+        )?.[index];
+
+        const hasTarget =
+          targetEdge?.target &&
+          state.nodes.find((node) => node.id === targetEdge.target);
+
+        console.log(targetEdge, "targetEdge", hasTarget?.id);
+        if (targetEdge && !hasTarget) {
+          const emptyNodeId = uuid();
+          state.nodes.push({
+            id: emptyNodeId,
+            type: NodeType.EMPTY,
+            data: {},
+            position: {
+              x: 0,
+              y: 0,
+            },
+          });
+          targetEdge.target = emptyNodeId;
+        }
+      };
+
+      if (isBranchNode) {
+        addEmptyBranchNodes({ sourceId: newNodeId, index: 0 });
+      }
+
+      if (pastedNodeFromState && copiedId && isBranchNode) {
+        const currentBranchParentNode = state.nodes.findLast((node) => {
+          return (
+            node.type === DrawerAction.MULTISPLIT ||
+            node.type === DrawerAction.WAIT_UNTIL ||
+            node.type === DrawerAction.EXPERIMENT
+          );
+        });
+        const currentBranchIndex =
+          pastedNodeFromState?.data?.branches?.findIndex(
+            (branch) => branch?.id === pastedNodeTargetEdgeBranchId
+          );
+
+        if (currentBranchParentNode) {
+          const currentBranch =
+            currentBranchParentNode?.data?.branches?.[currentBranchIndex];
+
+          if (currentBranch) {
+            addBranches({
+              currentBranch,
+              currentBranchParentNode,
+              hasNoNextNode: isEmptyBranchParent,
+            });
+          }
+        }
+        //check if there are more nodes in copied
+        const isLastPastedNode =
+          (action.payload.index || 0) + 1 === state.copiedNodes.length;
+
+        //check if it's the last branch to paste
+        const notPastedBranches =
+          currentBranchParentNode?.data?.branches?.filter(
+            (branch) =>
+              !state.edges.find((edge) => edge.data?.branch?.id === branch.id)
+          );
+
+        const isAllBranchesPasted =
+          currentBranchParentNode?.data?.branches?.filter((branch) =>
+            state.edges.find((edge) => edge.data?.branch?.id === branch.id)
+          )?.length === currentBranchParentNode?.data?.branches?.length;
+
+        const hasEmptyBranch = !isAllBranchesPasted && isLastPastedNode;
+      }
+
+      if (isEmptyBranchParent && pastedNodeBranches && copiedId) {
+        pastedNodeBranches.map((currentBranch, index) => {
+          const currentParentNode = nodeToChange;
+          if (currentParentNode) {
+            addBranches({
+              currentBranch,
+              currentBranchParentNode: currentParentNode,
+              hasNoNextNode: true,
+            });
+            addEmptyBranchNodes({
+              sourceId: currentParentNode.id,
+              index,
+            });
+          }
+        });
+      }
+
+      //check if there are more nodes in copied
+      //check if it's the last branch to paste
+
+      const currentBranchParentNode = state.nodes.findLast((node) => {
+        console.log(node.type, "TYPE", action.payload.action);
+        return node.type === DrawerAction.EXPERIMENT;
+      });
+
+      if (currentBranchParentNode) {
+        const isLastPastedNode =
+          (action.payload.index || 0) + 1 === state.copiedNodes.length;
+
+        const notPastedBranches =
+          currentBranchParentNode?.data?.branches?.filter(
+            (branch) =>
+              !state.edges.find((edge) => edge.data?.branch?.id === branch.id)
+          );
+
+        if (
+          !!notPastedBranches &&
+          isLastPastedNode &&
+          currentBranchParentNode
+        ) {
+          notPastedBranches.map((branch) => {
+            addBranches({
+              currentBranch: branch,
+              currentBranchParentNode,
+              hasNoNextNode: true,
+            });
+            addEmptyBranchNodes({
+              sourceId: currentBranchParentNode.id,
+              index: currentBranchParentNode?.data?.branches?.length - 1 || 1,
+            });
+          });
+        }
+      }
 
       let newMessageNodeName = "";
 
       const messageNodes = state.nodes.filter((node) => node.type == "message");
       let postFixValue = messageNodes.length;
-      newMessageNodeName = `${capitalize(action.payload.action)} ${
-        postFixValue + 1
-      }`;
+
+      const pastedNodeName = pastedNodeData?.customName;
+
+      newMessageNodeName = !!pastedNodeName
+        ? pastedNodeName
+        : `${capitalize(action.payload.action)} ${postFixValue + 1}`;
 
       while (
         messageNodes.find(
@@ -1176,17 +1583,47 @@ const flowBuilderSlice = createSlice({
         )
       ) {
         postFixValue++;
-        newMessageNodeName = `${capitalize(
-          action.payload.action
-        )} ${postFixValue}`;
+        const cleanPastedNodeName = pastedNodeName?.split(" (")[0];
+        let postFixValuePasted =
+          parseInt(pastedNodeName?.split(" (")[1]?.replace(")", "") || "") || 0;
+        postFixValuePasted++;
+
+        let newPastedMessageNodeName = `${cleanPastedNodeName} (${postFixValuePasted})`;
+
+        while (
+          messageNodes.find(
+            (node) =>
+              (node?.data as MessageNodeData)?.customName ===
+              newPastedMessageNodeName
+          )
+        ) {
+          postFixValuePasted++;
+          newPastedMessageNodeName = `${cleanPastedNodeName} (${postFixValuePasted})`;
+        }
+
+        newMessageNodeName =
+          (pastedNodeName && newPastedMessageNodeName) ||
+          `${capitalize(action.payload.action)} ${postFixValue}`;
       }
+
+      const pastedNodeTemplate = pastedNodeData?.template?.selected;
+      const pastedNodeTemplateSelected = pastedNodeTemplate
+        ? { selected: pastedNodeTemplate }
+        : {};
+
+      //targetId for jumpTo
+      const pastedNodeTargetId = pastedNodeData?.targetId || null;
+      const pastedNodeTimeDelay = pastedNodeData?.delay || null;
 
       switch (action.payload.action) {
         case DrawerAction.EMAIL:
           nodeToChange.type = NodeType.MESSAGE;
           nodeToChange.data = {
             type: NodeType.MESSAGE,
-            template: { type: MessageType.EMAIL },
+            template: {
+              type: MessageType.EMAIL,
+              ...pastedNodeTemplateSelected,
+            },
             customName: newMessageNodeName,
             stepId,
           };
@@ -1195,7 +1632,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.type = NodeType.MESSAGE;
           nodeToChange.data = {
             type: NodeType.MESSAGE,
-            template: { type: MessageType.SMS },
+            template: { type: MessageType.SMS, ...pastedNodeTemplateSelected },
             customName: newMessageNodeName,
             stepId,
           };
@@ -1204,7 +1641,10 @@ const flowBuilderSlice = createSlice({
           nodeToChange.type = NodeType.MESSAGE;
           nodeToChange.data = {
             type: NodeType.MESSAGE,
-            template: { type: MessageType.SLACK },
+            template: {
+              type: MessageType.SLACK,
+              ...pastedNodeTemplateSelected,
+            },
             customName: newMessageNodeName,
             stepId,
           };
@@ -1213,7 +1653,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.type = NodeType.PUSH;
           nodeToChange.data = {
             type: NodeType.PUSH,
-            template: { type: MessageType.PUSH },
+            template: { type: MessageType.PUSH, ...pastedNodeTemplateSelected },
             customName: newMessageNodeName,
             stepId,
           };
@@ -1222,15 +1662,21 @@ const flowBuilderSlice = createSlice({
           nodeToChange.type = NodeType.MESSAGE;
           nodeToChange.data = {
             type: NodeType.MESSAGE,
-            template: { type: MessageType.WEBHOOK },
+            template: {
+              type: MessageType.WEBHOOK,
+              ...pastedNodeTemplateSelected,
+            },
             stepId,
+            customName: newMessageNodeName,
           };
           break;
         case DrawerAction.CUSTOM_MODAL:
           nodeToChange.type = NodeType.MESSAGE;
           nodeToChange.data = {
             type: NodeType.MESSAGE,
-            template: { type: MessageType.MODAL },
+            template: {
+              type: MessageType.MODAL,
+            },
             stepId,
           };
           break;
@@ -1246,6 +1692,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.JUMP_TO,
             stepId,
+            targetId: pastedNodeTargetId,
           };
           handleJumpToTargettingNodeChange(state, nodeToChange.id);
           break;
@@ -1259,20 +1706,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.type = NodeType.WAIT_UNTIL;
           nodeToChange.data = {
             type: NodeType.WAIT_UNTIL,
-            branches: [
-              // {
-              //   id: uuid(),
-              //   type: BranchType.EVENT,
-              //   conditions: [
-              //     {
-              //       name: "",
-              //       providerType: ProviderType.CUSTOM,
-              //       statements: [],
-              //       relationToNext: LogicRelation.OR,
-              //     },
-              //   ],
-              // },
-            ],
+            branches: pastedNodeBranches ? pastedNodeBranches : [],
             stepId,
           };
           break;
@@ -1280,7 +1714,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.type = NodeType.TIME_DELAY;
           nodeToChange.data = {
             type: NodeType.TIME_DELAY,
-            delay: {
+            delay: pastedNodeTimeDelay || {
               days: 0,
               hours: 0,
               minutes: 0,
@@ -1292,11 +1726,11 @@ const flowBuilderSlice = createSlice({
           nodeToChange.type = NodeType.TIME_WINDOW;
           nodeToChange.data = {
             type: NodeType.TIME_WINDOW,
-            from: undefined,
-            to: undefined,
-            fromTime: "12:00",
-            toTime: "23:59",
-            onDays: [...new Array(7)].map(() => 0),
+            from: pastedNodeData?.from || undefined,
+            to: pastedNodeData?.to || undefined,
+            fromTime: pastedNodeData?.fromTime || "12:00",
+            toTime: pastedNodeData?.toTime || "23:59",
+            onDays: pastedNodeData?.onDays || [...new Array(7)].map(() => 0),
             windowType: TimeWindowTypes.SPEC_DATES,
             stepId,
           };
@@ -1306,7 +1740,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.MULTISPLIT,
             stepId,
-            branches: [],
+            branches: pastedNodeBranches ? pastedNodeBranches : [],
           };
           break;
         case DrawerAction.EXPERIMENT:
@@ -1314,30 +1748,37 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.EXPERIMENT,
             stepId,
-            branches: [
-              {
-                id: uuid(),
-                type: BranchType.EXPERIMENT,
-                ratio: 0.5,
-              },
-              {
-                id: uuid(),
-                type: BranchType.EXPERIMENT,
-                ratio: 0.5,
-              },
-            ],
+            branches: pastedNodeBranches
+              ? pastedNodeBranches
+              : [
+                  {
+                    id: uuid(),
+                    type: BranchType.EXPERIMENT,
+                    ratio: 0.5,
+                  },
+                  {
+                    id: uuid(),
+                    type: BranchType.EXPERIMENT,
+                    ratio: 0.5,
+                  },
+                ],
           };
           break;
         default:
           break;
       }
-      if (NodeType.MULTISPLIT === nodeToChange.type) {
+      console.log(copiedId, action.payload.action === "jumpTo", "jumpTo");
+      if (copiedId && action.payload.action === "jumpTo") {
+        handleJumpToTargettingNodeChange(state, undefined);
+      }
+
+      if (NodeType.MULTISPLIT === nodeToChange.type && !copiedId) {
         // filter all nodes that are multisplit or will become multisplit and empty
         const branchNodes = state.nodes.filter(
           (node) =>
             node.type === NodeType.EMPTY || node.type === NodeType.MULTISPLIT
         );
-
+        console.log(branchNodes, "branchNodes");
         // find the first edge that is not a multisplit branch and should become multisplit branch
         const edgeToChange = state.edges.find((edge) => {
           const correspondingNode = branchNodes.find((node) => {
@@ -1345,7 +1786,7 @@ const flowBuilderSlice = createSlice({
           });
           return correspondingNode;
         });
-
+        console.log(edgeToChange?.id, "edgeToChange");
         state.edges = state.edges.map((edge) => {
           if (edge.id === edgeToChange?.id) {
             return {
@@ -1366,7 +1807,7 @@ const flowBuilderSlice = createSlice({
         });
       }
 
-      if (NodeType.WAIT_UNTIL === nodeToChange.type) {
+      if (NodeType.WAIT_UNTIL === nodeToChange.type && !copiedId) {
         // filter all nodes that are wait until or will become wait until and empty
         const branchNodes = state.nodes.filter(
           (node) =>
@@ -1444,6 +1885,27 @@ const flowBuilderSlice = createSlice({
         });
       }
 
+      //   // if (othersBranchEdge) {
+      //   //   console.log(othersBranchEdge, "isOthersBranchEdge");
+      //   //   const othersBranchNode = state.nodes.find(
+      //   //     (node) => othersBranchEdge?.target === node.id
+      //   //   );
+      //   //   console.log(othersBranchNode, "isOthersBranchNode");
+      //   //   if (othersBranchNode) {
+      //   //     state.nodes = state.nodes.filter(
+      //   //       (node) => node.id !== othersBranchNode.id
+      //   //     );
+
+      //   //     state.nodes.push(othersBranchNode);
+
+      //   //     state.edges = state.edges.filter(
+      //   //       (edge) => edge.id !== othersBranchEdge?.id
+      //   //     );
+      //   //     state.edges.push(othersBranchEdge);
+      //   //   }
+      //   // }
+      // }
+
       if (
         !state.edges.some((edge) => edge.source === nodeToChange.id) &&
         !(
@@ -1457,7 +1919,9 @@ const flowBuilderSlice = createSlice({
           ] as string[]
         ).includes(nodeToChange.type || "")
       ) {
+        console.log("CREATING EMPTY");
         const newNodeId = uuid();
+
         state.nodes.push({
           id: newNodeId,
           type: NodeType.EMPTY,
@@ -1467,7 +1931,7 @@ const flowBuilderSlice = createSlice({
             y: 0,
           },
         });
-
+        console.log("PUSH2");
         state.edges.push({
           id: `${nodeToChange.id}-${newNodeId}`,
           type: EdgeType.PRIMARY,
@@ -1476,17 +1940,23 @@ const flowBuilderSlice = createSlice({
         });
       }
 
-      state.nodes = applyNodeChanges(
-        [
-          ...state.nodes.map<NodeChange>((node) => ({
-            type: "select",
-            id: node.id,
-            selected: false,
-          })),
-          { type: "select", id: nodeToChange.id, selected: true },
-        ],
-        state.nodes
-      );
+      console.log(copiedId, "copiedId OPEN");
+      console.log(nodeToChange.type, "nodeToChange.type");
+
+      if (!copiedId) {
+        console.log("OPEN");
+        state.nodes = applyNodeChanges(
+          [
+            ...state.nodes.map<NodeChange>((node) => ({
+              type: "select",
+              id: node.id,
+              selected: false,
+            })),
+            { type: "select", id: nodeToChange.id, selected: true },
+          ],
+          state.nodes
+        );
+      }
 
       state.nodes = getLayoutedNodes(state.nodes, state.edges);
     },
@@ -1765,8 +2235,6 @@ const flowBuilderSlice = createSlice({
 
       const nodeToMove = nodesToMove[0];
 
-      console.log(nodeToMove, "nodeToMove");
-
       if (!nodeToMove) return;
 
       const insertNodeIndex = state.nodes.findIndex(
@@ -1777,21 +2245,30 @@ const flowBuilderSlice = createSlice({
         node?.id.includes(nodeId)
       );
 
-      console.log(nodeToMoveIndex, "nodeToMoveIndex");
       state.nodes = state.nodes.filter((node) => node.id !== nodeId);
 
       state.nodes.splice(insertNodeIndex, 0, nodeToMove);
 
       // handleClearInsertNodes(state);
 
-      state.edges = state.edges.map((edge) => {
+      const nodeToMoveIndexWithInsertNode = state.nodes.findIndex((node) =>
+        node?.id.includes(nodeId)
+      );
+
+      const edgesToRemove: Edge<EdgeData>[] = [];
+
+      state.edges = state.edges.map((edge, _, edges) => {
+        const index =
+          nodeToMoveIndex >= insertNodeIndex
+            ? nodeToMoveIndex + 1
+            : nodeToMoveIndex;
+        if (!(edge && insertNode && nodeId && nodeToMove)) return edge;
         //find insert node
         //find find edge with insert node target
         //change target to nodeToMove
         if (edge.target === insertNode.id) {
           return { ...edge, target: nodeToMove.id };
         }
-
         //find insert node
         //find find edge with insert node source
         //change source to nodeToMove
@@ -1802,8 +2279,15 @@ const flowBuilderSlice = createSlice({
         // find edge with nodeId source
         // change source to nodeToMove previous element
         if (edge.source === nodeId) {
-          const nodeToMovePreviousNode = state.nodes[nodeToMoveIndex - 1];
+          const nodeToMovePreviousNode = state.nodes[index - 1];
+
           if (nodeToMovePreviousNode) {
+            const edgeToRemove = edges.find(
+              (edge) => edge.source === nodeToMovePreviousNode.id
+            );
+            if (edgeToRemove) {
+              edgesToRemove.push(edgeToRemove);
+            }
             return { ...edge, source: nodeToMovePreviousNode.id };
           }
         }
@@ -1811,19 +2295,46 @@ const flowBuilderSlice = createSlice({
         //find edge with nodeId target
         //change target to nodeToMove next element
         if (edge.target === nodeId) {
-          const nodeToMoveNextNode = state.nodes[nodeToMoveIndex + 1];
+          const nodeToMoveNextNode = state.nodes[index + 1];
           if (nodeToMoveNextNode) {
             return { ...edge, target: nodeToMoveNextNode.id };
           }
         }
         return edge;
       });
+      const shouldKeepEdge = (
+        edge: Edge<EdgeData>,
+        nodes: Node<NodeData>[],
+        edgesToRemove: Edge<EdgeData>[]
+      ): boolean => {
+        return (
+          nodes.some((node) => node.id === edge.source) &&
+          nodes.some((node) => node.id === edge.target) &&
+          edgesToRemove.every((edgeToRemove) => edgeToRemove.id !== edge.id)
+        );
+      };
+
+      state.edges = state.edges.filter((edge) =>
+        shouldKeepEdge(edge, state.nodes, edgesToRemove)
+      );
+
       state.nodes = state.nodes.filter(
         (node) => node.type !== NodeType.INSERT_NODE
       );
-
+      // state.edges = getConnectedEdges(state.nodes, state.edges);
+      // console.log(state.edges.length, state.edges);
       // handleClearInsertNodes(state);
       state.nodes = getLayoutedNodes(state.nodes, state.edges);
+    },
+    copyNodes(state, action: PayloadAction<{ nodes: Node<NodeData>[] }>) {
+      const newNodes = action.payload.nodes.filter(
+        (node) => node.type !== NodeType.EMPTY && node.type !== NodeType.EXIT
+      );
+      state.copiedNodes = newNodes;
+    },
+    pasteNodes() {},
+    clearCopyNodes(state) {
+      state.copiedNodes = [];
     },
   },
 });
@@ -1884,6 +2395,9 @@ export const {
   setIsStarting,
   setJourneySettingsConversionTracking,
   moveNodeToNewPosition,
+  copyNodes,
+  pasteNodes,
+  clearCopyNodes,
 } = flowBuilderSlice.actions;
 
 export { defaultDevMode };

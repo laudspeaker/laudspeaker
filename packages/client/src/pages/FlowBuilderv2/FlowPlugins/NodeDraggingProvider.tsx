@@ -9,6 +9,7 @@ import {
   handleDrawerAction,
   removeNode,
   NodeAction,
+  clearCopyNodes,
 } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import { useAppSelector, useAppDispatch } from "store/hooks";
@@ -30,6 +31,13 @@ export const dragActionsNotToDoBetweenNodes: (
   | undefined
 )[] = [DrawerAction.EXIT, DrawerAction.JUMP_TO, DrawerAction.USER_ATTRIBUTE];
 
+export const pastedDragActionsNotToDoBetweenNodes = [
+  ...dragActionsNotToDoBetweenNodes,
+  DrawerAction.MULTISPLIT,
+  DrawerAction.WAIT_UNTIL,
+  DrawerAction.EXPERIMENT,
+];
+
 const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
   const drawerActionToNodeTypeMap: Record<DrawerAction, NodeType> = {
     [DrawerAction.CUSTOM_MODAL]: NodeType.MESSAGE,
@@ -49,8 +57,15 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
     [DrawerAction.EXPERIMENT]: NodeType.EXPERIMENT,
   };
 
-  const { nodes, edges, isDragging, flowId, dragAction, isOnboarding } =
-    useAppSelector((state) => state.flowBuilder);
+  const {
+    nodes,
+    edges,
+    isDragging,
+    flowId,
+    dragAction,
+    isOnboarding,
+    copiedNodes,
+  } = useAppSelector((state) => state.flowBuilder);
 
   const dispatch = useAppDispatch();
 
@@ -61,10 +76,8 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
     if (!isDragging || !flowRef.current || edges.length === 0) return;
 
     const boudingClientRect = flowRef.current.getBoundingClientRect();
-
     const canvasMouseX = (e.clientX - viewX - boudingClientRect.left) / zoom;
     const canvasMouseY = (e.clientY - viewY - boudingClientRect.top) / zoom;
-
     const insertNode = nodes.find((node) => node.type === NodeType.INSERT_NODE);
 
     if (insertNode && e.dataTransfer) {
@@ -95,10 +108,11 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
         }
       | undefined;
 
-    if (
-      !dragActionsNotToDoBetweenNodes.includes(dragAction?.type) &&
-      !isOnboarding
-    ) {
+    const canBeBetweenNodes = copiedNodes
+      ? !pastedDragActionsNotToDoBetweenNodes.includes(dragAction?.type)
+      : !dragActionsNotToDoBetweenNodes.includes(dragAction?.type);
+
+    if (canBeBetweenNodes && !isOnboarding) {
       for (const edge of edges) {
         if (edge.type !== EdgeType.PRIMARY) continue;
 
@@ -124,7 +138,6 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
           (canvasMouseX - labelX) * (canvasMouseX - labelX) +
             (canvasMouseY - labelY) * (canvasMouseY - labelY)
         );
-
         if (lengthToLabel > 50) continue;
 
         if (!closestEdge || lengthToLabel < closestEdge.lengthToLabel)
@@ -167,8 +180,11 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
     );
   };
 
-  const onDrop = (e: DragEvent) => {
+  const onDrop = async (e: DragEvent) => {
     const insertNode = nodes.find((node) => node.type === NodeType.INSERT_NODE);
+
+    const copiedIds = e.dataTransfer?.getData("copiedId")?.split(",") || [];
+    const actionIds = e.dataTransfer?.getData("actionIds")?.split(",") || [];
     const action = e.dataTransfer?.getData("action");
 
     if (
@@ -191,23 +207,52 @@ const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
       return;
     }
 
-    (async () => {
+    const addNode = async ({
+      copiedId,
+      index,
+    }: {
+      copiedId?: string;
+      index?: number;
+    }) => {
+      const actionParsed = action !== "null" ? action : actionIds[index || 0];
+      const type = drawerActionToNodeTypeMap[actionParsed as DrawerAction];
+
       try {
         const {
           data: { id: stepId },
         } = await ApiService.post({
           url: "/steps",
           options: {
-            type: drawerActionToNodeTypeMap[action as DrawerAction],
+            type,
             journeyID: flowId,
           },
         });
 
-        dispatch(handleDrawerAction({ id: insertNode.id, action, stepId }));
+        if (copiedId) {
+          dispatch(
+            handleDrawerAction({
+              id: insertNode.id,
+              action: actionParsed,
+              stepId,
+              copiedId,
+              index,
+            })
+          );
+        } else {
+          dispatch(handleDrawerAction({ id: insertNode.id, action, stepId }));
+        }
       } catch (err) {
         dispatch(removeNode(insertNode.id));
       }
-    })();
+    };
+
+    if (copiedIds) {
+      for (let index = 0; index < copiedIds.length; index++) {
+        await addNode({ copiedId: copiedIds[index], index });
+      }
+      return;
+    }
+    await addNode({});
   };
 
   useEffect(() => {
