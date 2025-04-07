@@ -327,28 +327,16 @@ export class JourneysController {
     );
   }
 
-  @Post(':id/check_out/(:version_id)')
+  @Post(':id/check_out/(:version_uuid)')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  async checkOut(@Req() { user }: Request, @Param('id') id: string) {
+  async checkOut(
+    @Req() { user }: Request,
+    @Param('id') id: string,
+    @Param('version_uuid') version_uuid?: string
+  ) {
     const session = randomUUID();
 
-    const journey = await this.journeysService.findOne(<Account>user, id, session);
-    // const version = awai this.journeyVersionService.getLatestVersion(<Account>user, id);
-
-    const latest = await this.journeyVersionService.getLatestVersion(<Account>user, id);
-
-    const newVersion = await this.journeyVersionService.create(<Account>user, journey, session);
-    await this.journeyVersionService.updateLayout(<Account>user, newVersion, latest.layout);
-
-    const data = {
-      uuid: newVersion.uuid,
-      name: "Draft",
-      created_at: new Date(),
-      updated_at: new Date(),
-      visual_layout: latest.layout
-    };
-
-    return data;
+    return this.journeyVersionService.checkOut(<Account>user, id, version_uuid, session);
   }
 }

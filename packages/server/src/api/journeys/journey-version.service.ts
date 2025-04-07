@@ -58,7 +58,6 @@ export class JourneyVersionService extends BaseLaudspeakerService {
         workspace: { id: workspace.id },
         journey_id: journey_id,
         number: count + 1,
-        name: "Draft",
         layout: {
           nodes: [],
           edges: [],
@@ -102,18 +101,19 @@ export class JourneyVersionService extends BaseLaudspeakerService {
     return this.journeyVersionRepository.save(journeyVersion);
   }
 
-  async publish(account: Account, journey_id: string, session: string) {
+  async publish(account: Account, journey_id: string, version_uuid: string, session: string) {
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
-    // const journey = await this.journeysService.findByID(account, journey_id, session);
+    let version = await this.getVersion(account, journey_id, version_uuid);
 
     try {
-      await this.create(account, journey_id, session);
+      version = await this.journeyVersionRepository.save({
+        ...version,
+        state: "Published"
+      });
 
-
-      // return result;
+      return version;
     } catch (err) {
-      // this.error(err, this.markDeleted.name, session, account.email);
       throw err;
     }
   }
@@ -125,27 +125,35 @@ export class JourneyVersionService extends BaseLaudspeakerService {
    * @param session
    * @returns
    */
-  async checkOut(account: Account, journey_id: string, session: string) {
+  async checkOut(account: Account, journey_id: string, version_uuid: string, session: string) {
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+    const journey = await this.journeysService.findByID(account, journey_id, session);
+    // const journey = await this.journeysService.findOne(<Account>user, id, session);
+    let version = null;
 
-    // const journey = await this.journeysService.findByID(account, journey_id, session);
+    if (!journey) throw new NotFoundException('Journey not found');
 
-    try {
-      await this.create(account, journey_id, session);
+    if (version_uuid)
+      version = await this.getVersion(account, journey_id, version_uuid);
 
-      
-      // const result = await this.journeyVersionRepository.update(
-      //   {
-      //     workspace_id: workspace.id
-      //     // id: id,
-      //   },
-      // );
+    // mark any drafts as abandoned
+    await this.abandonDraft(account, journey_id);
+    let newVersion = await this.create(account, journey_id, session);
 
-      // return result;
-    } catch (err) {
-      // this.error(err, this.markDeleted.name, session, account.email);
-      throw err;
+    if (version) {
+      // Update Draft layout from the existing version;
+      newVersion = await this.updateLayout(account, newVersion, version.layout);
     }
+
+    const data = {
+      uuid: newVersion.uuid,
+      name: "Draft",
+      created_at: new Date(),
+      updated_at: new Date(),
+      visual_layout: newVersion.layout
+    };
+
+    return data;
   }
 
   async getVersions(account: Account, journey_id: string) {
@@ -157,7 +165,7 @@ export class JourneyVersionService extends BaseLaudspeakerService {
         journey_id: journey_id
       },
       order: {
-        number: 'desc'
+        id: 'desc'
       }
     });
   }
@@ -171,7 +179,7 @@ export class JourneyVersionService extends BaseLaudspeakerService {
         journey_id: journey_id
       },
       order: {
-        number: 'desc'
+        id: 'desc'
       }
     });
   }
@@ -188,10 +196,36 @@ export class JourneyVersionService extends BaseLaudspeakerService {
     });
   }
 
+  async getDraftVersion(account: Account, journey_id: string) {
+    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
+
+    return this.journeyVersionRepository.findOne({
+      where: {
+        workspace_id: workspace.id,
+        journey_id: journey_id,
+        state: "Draft"
+      },
+      order: {
+        id: 'desc'
+      }
+    });
+  }
+
   async getVersionCount(journey_id: string, workspace_id: string) {
     return this.journeyVersionRepository.countBy({
       workspace_id,
       journey_id,
     });
+  }
+
+  async abandonDraft(account: Account, journey_id: string) {
+    let version = await this.getDraftVersion(account, journey_id);
+
+    if (version) {
+      return this.journeyVersionRepository.save({
+        ...version,
+        State: "Abandoned"
+      });
+    }
   }
 }

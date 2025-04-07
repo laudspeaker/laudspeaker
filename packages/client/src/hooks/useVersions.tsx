@@ -13,6 +13,7 @@ interface IVersion {
   journey_id: string;
   layout: { nodes: Node<NodeData>[]; edges: Edge<EdgeData>[] };
   number: 1;
+  name: string;
   state: string;
   workspace_id: string;
 }

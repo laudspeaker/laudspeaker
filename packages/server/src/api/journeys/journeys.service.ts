@@ -20,6 +20,7 @@ import {
 import { Account } from '../accounts/entities/accounts.entity';
 import { UpdateJourneyDto } from './dto/update-journey.dto';
 import { Journey } from './entities/journey.entity';
+import { JourneyVersion } from './entities/journey-version.entity';
 import errors from '../../shared/utils/errors';
 import { CustomersService } from '../customers/customers.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -1612,6 +1613,7 @@ export class JourneysService {
    */
   async start(account: Account, journeyID: string, session: string) {
     let journey: Journey;
+    let journeyVersion: JourneyVersion;
     let err: any;
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -1667,6 +1669,12 @@ export class JourneysService {
       });
       if (!journey) {
         throw new Error(errors.ERROR_DOES_NOT_EXIST);
+      }
+
+      journeyVersion = await this.journeyVersionService.getDraftVersion(account, journey.id);
+
+      if (!journeyVersion) {
+        throw new Error("This journey doesn't have a draft version");
       }
 
       if (journey.isActive || journey.isStopped || journey.isDeleted) {
@@ -1769,6 +1777,13 @@ export class JourneysService {
           startedAt: new Date(Date.now()),
           totalSystemSegments: jobs.length,
         });
+
+      journeyVersion = await this.journeyVersionService.publish(
+        account,
+        journey.id,
+        journeyVersion.uuid,
+        session
+      );
       } else {
         journey = await queryRunner.manager.save(Journey, {
           ...journey,
@@ -1777,6 +1792,13 @@ export class JourneysService {
           startedAt: new Date(Date.now()),
           totalSystemSegments: jobs.length,
         });
+
+        journeyVersion = await this.journeyVersionService.publish(
+          account,
+          journey.id,
+          journeyVersion.uuid,
+          session
+        );
       }
 
       await this.trackChange(account, journeyID, queryRunner);
@@ -1787,12 +1809,14 @@ export class JourneysService {
             return {
               ...job.data,
               journey,
+              journeyVersion,
             };
           }), 'createSystem');
       else
         await Producer.add(QueueType.ENROLLMENT, {
           account,
           journey,
+          journeyVersion,
           session,
         });
     } catch (e) {
