@@ -18,6 +18,9 @@ import { JourneyLocationsService } from './journey-locations.service';
 import { JourneyChange } from './entities/journey-change.entity';
 import { CacheService } from '../../common/services/cache.service';
 import { JourneyStatisticsService } from './journey-statistics.service';
+import { JourneyVersionService } from './journey-version.service';
+import { JourneyVersion } from './entities/journey-version.entity';
+
 
 @Module({
   imports: [
@@ -28,6 +31,7 @@ import { JourneyStatisticsService } from './journey-statistics.service';
       State,
       Template,
       Journey,
+      JourneyVersion,
       JourneyLocation,
       JourneyChange,
     ]),
@@ -42,7 +46,8 @@ import { JourneyStatisticsService } from './journey-statistics.service';
     JourneysService,
     JourneyLocationsService,
     CacheService,
-    JourneyStatisticsService
+    JourneyStatisticsService,
+    JourneyVersionService
   ],
   exports: [JourneysService],
 })

@@ -20,6 +20,7 @@ import {
 import { Account } from '../accounts/entities/accounts.entity';
 import { UpdateJourneyDto } from './dto/update-journey.dto';
 import { Journey } from './entities/journey.entity';
+import { JourneyVersion } from './entities/journey-version.entity';
 import errors from '../../shared/utils/errors';
 import { CustomersService } from '../customers/customers.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -87,6 +88,7 @@ import { Customer } from '../customers/entities/customer.entity';
 import { CustomerKeysService } from '../customers/customer-keys.service';
 import { CacheConstants } from '../../common/services/cache.constants';
 import { JourneyStatisticsService } from './journey-statistics.service';
+import { JourneyVersionService } from './journey-version.service';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -240,7 +242,9 @@ export class JourneysService {
     private readonly journeyLocationsService: JourneyLocationsService,
     @Inject(RedisService) private redisService: RedisService,
     @Inject(CacheService) private cacheService: CacheService,
-    @Inject(JourneyStatisticsService) private journeyStatisticsService: JourneyStatisticsService
+    @Inject(JourneyStatisticsService) private journeyStatisticsService: JourneyStatisticsService,
+    @Inject(forwardRef(() =>JourneyVersionService))
+    private journeyVersionService: JourneyVersionService
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -355,23 +359,31 @@ export class JourneysService {
       const nextNodeUUID = uuid();
       const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
+      let layout = {
+        nodes: [],
+        edges: [
+          {
+            id: `e${startNodeUUID}-${nextNodeUUID}`,
+            type: EdgeType.PRIMARY,
+            source: startNodeUUID,
+            target: nextNodeUUID,
+          },
+        ],
+      };
+
       const journey = await this.journeysRepository.create({
         name,
         workspace: workspace,
-        visualLayout: {
-          nodes: [],
-          edges: [
-            {
-              id: `e${startNodeUUID}-${nextNodeUUID}`,
-              type: EdgeType.PRIMARY,
-              source: startNodeUUID,
-              target: nextNodeUUID,
-            },
-          ],
-        },
+        visualLayout: layout,
       });
 
       await this.journeysRepository.save(journey);
+
+      const journeyVersion = await this.journeyVersionService.create(
+        account,
+        journey.id,
+        session
+      );
 
       const step = await this.stepsService.insert(
         account,
@@ -382,7 +394,7 @@ export class JourneysService {
         session
       );
 
-      journey.visualLayout.nodes = [
+      layout.nodes = [
         {
           id: startNodeUUID,
           type: NodeType.START,
@@ -399,7 +411,10 @@ export class JourneysService {
         },
       ];
 
-      return await this.journeysRepository.save(journey);
+      journey.visualLayout = layout;
+
+      await this.journeyVersionService.updateLayout(account, journeyVersion, layout);
+      return this.journeysRepository.save(journey);
     } catch (err) {
       this.error(err, this.create.name, session, account.email);
       throw err;
@@ -431,25 +446,33 @@ export class JourneysService {
 
       const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
+      let layout = {
+        nodes: [],
+        edges: [
+          {
+            id: `e${startNodeUUID}-${nextNodeUUID}`,
+            type: EdgeType.PRIMARY,
+            source: startNodeUUID,
+            target: nextNodeUUID,
+          },
+        ],
+      };
+
       const journey = await queryRunner.manager.create(Journey, {
         name,
         workspace: {
           id: workspace.id,
         },
-        visualLayout: {
-          nodes: [],
-          edges: [
-            {
-              id: `e${startNodeUUID}-${nextNodeUUID}`,
-              type: EdgeType.PRIMARY,
-              source: startNodeUUID,
-              target: nextNodeUUID,
-            },
-          ],
-        },
+        visualLayout: layout,
       });
 
       await queryRunner.manager.save(journey);
+
+      const journeyVersion = await this.journeyVersionService.create(
+        account,
+        journey.id,
+        session
+      );
 
       const step = await this.stepsService.transactionalInsert(
         account,
@@ -1590,6 +1613,7 @@ export class JourneysService {
    */
   async start(account: Account, journeyID: string, session: string) {
     let journey: Journey;
+    let journeyVersion: JourneyVersion;
     let err: any;
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -1645,6 +1669,12 @@ export class JourneysService {
       });
       if (!journey) {
         throw new Error(errors.ERROR_DOES_NOT_EXIST);
+      }
+
+      journeyVersion = await this.journeyVersionService.getDraftVersion(account, journey.id);
+
+      if (!journeyVersion) {
+        throw new Error("This journey doesn't have a draft version");
       }
 
       if (journey.isActive || journey.isStopped || journey.isDeleted) {
@@ -1747,6 +1777,13 @@ export class JourneysService {
           startedAt: new Date(Date.now()),
           totalSystemSegments: jobs.length,
         });
+
+      journeyVersion = await this.journeyVersionService.publish(
+        account,
+        journey.id,
+        journeyVersion.uuid,
+        session
+      );
       } else {
         journey = await queryRunner.manager.save(Journey, {
           ...journey,
@@ -1755,6 +1792,13 @@ export class JourneysService {
           startedAt: new Date(Date.now()),
           totalSystemSegments: jobs.length,
         });
+
+        journeyVersion = await this.journeyVersionService.publish(
+          account,
+          journey.id,
+          journeyVersion.uuid,
+          session
+        );
       }
 
       await this.trackChange(account, journeyID, queryRunner);
@@ -1765,12 +1809,14 @@ export class JourneysService {
             return {
               ...job.data,
               journey,
+              journeyVersion,
             };
           }), 'createSystem');
       else
         await Producer.add(QueueType.ENROLLMENT, {
           account,
           journey,
+          journeyVersion,
           session,
         });
     } catch (e) {
@@ -1879,8 +1925,8 @@ export class JourneysService {
       });
 
       if (!journey) throw new NotFoundException('Journey not found');
-      if (journey.isDeleted || journey.isStopped)
-        throw new Error('Journey is no longer editable.');
+      // if (journey.isDeleted || journey.isStopped)
+        // throw new Error('Journey is no longer editable.');
 
       const {
         isDynamic,
@@ -2399,6 +2445,17 @@ export class JourneysService {
           edges,
         },
       });
+
+      let version = await this.journeyVersionService.getLatestVersion(account, journey.id);
+
+      await this.journeyVersionService.updateLayout(
+        account,
+        version,
+        {
+          nodes,
+          edges,
+        });
+
       await queryRunner.commitTransaction();
       return Promise.resolve(journey);
     } catch (e) {

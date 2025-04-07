@@ -8,23 +8,37 @@ import ApiService from "services/api.service";
 import { useAppSelector } from "store/hooks";
 import { FlowViewerTab } from "../FlowViewerv2";
 import FlowViewerStopModal from "../Modals/FlowViewerStopModal";
+import { useNavigate } from "react-router-dom";
+import FlowBuilderEditDraftModal from "pages/FlowBuilderv2/Modals/FlowBuilderEditDraft";
+import NameJourneyModal from "pages/JourneyTablev2/Modals/NameJourneyModal";
+import useVersions from "hooks/useVersions";
+import VersionsSelect from "components/VersionsSelect";
 
 interface FlowViewerHeaderProps {
   tabs: Record<FlowViewerTab, React.ReactNode>;
   currentTab: FlowViewerTab;
   setCurrentTab: (tab: FlowViewerTab) => void;
+  selectedVersion?: string;
+  setSelectedVersion?: (version: string) => void;
 }
 
 const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
   tabs,
   currentTab,
   setCurrentTab,
+  selectedVersion,
+  setSelectedVersion,
 }) => {
   const { flowName, flowId, flowStatus } = useAppSelector(
     (state) => state.flowBuilder
   );
 
+  const navigate = useNavigate();
+
   const [isStopModalOpen, setIsStopModalOpen] = useState(false);
+  const [isEditDraftModalOpen, setIsEditDraftModalOpen] = useState(false);
+  const [isNameJourneyModalOpen, setIsNameJourneyModalOpen] = useState(false);
+  const { versions, refetchVersions } = useVersions();
 
   const handleResume = async () => {
     await ApiService.patch({ url: "/journeys/resume/" + flowId });
@@ -36,6 +50,34 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
     await ApiService.patch({ url: "/journeys/pause/" + flowId });
 
     window.location.reload();
+  };
+
+  const handleCreateNewDraft = async () => {
+    const { data } = await ApiService.post({
+      url: `/journeys/${flowId}/check_out`,
+    });
+    if (data.uuid) {
+      navigate(`/flow/${flowId}`, {
+        state: { isFromVersions: true, versionId: data.uuid },
+      });
+    }
+    refetchVersions();
+    setIsEditDraftModalOpen(false);
+  };
+
+  const handleEdit = () => {
+    const hasDraft = !!versions.find((version) => version?.state === "Draft");
+    if (hasDraft) {
+      setIsEditDraftModalOpen(true);
+    } else {
+      handleCreateNewDraft();
+    }
+  };
+
+  const handleContinueEditingClick = () => {
+    navigate(`/flow/${flowId}`, {
+      state: { isFromVersions: true, versionId: selectedVersion },
+    });
   };
 
   return (
@@ -51,27 +93,43 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
             {flowStatus}
           </div>
         </div>
-        {flowStatus !== JourneyStatus.STOPPED &&
-          flowStatus !== JourneyStatus.DELETED && (
-            <div className="flex items-center gap-[10px] font-roboto">
-              {flowStatus === JourneyStatus.PAUSED ? (
-                <Button type={ButtonType.PRIMARY} onClick={handleResume}>
-                  Resume
+        {!!(currentTab === FlowViewerTab.JOURNEY) && (
+          <div className="font-semibold text-[20px] leading-[28px]">
+            <VersionsSelect
+              selectedVersion={selectedVersion}
+              setSelectedVersion={setSelectedVersion}
+            />
+          </div>
+        )}
+        <div className="flex items-center gap-[10px] font-roboto">
+          <Button
+            type={ButtonType.SECONDARY_GREY}
+            onClick={handleEdit}
+            className="font-roboto"
+          >
+            Edit
+          </Button>
+          {flowStatus !== JourneyStatus.STOPPED &&
+            flowStatus !== JourneyStatus.DELETED && (
+              <>
+                {flowStatus === JourneyStatus.PAUSED ? (
+                  <Button type={ButtonType.PRIMARY} onClick={handleResume}>
+                    Resume
+                  </Button>
+                ) : (
+                  <Button type={ButtonType.SECONDARY} onClick={handlePause}>
+                    Pause
+                  </Button>
+                )}
+                <Button
+                  type={ButtonType.DANGEROUS}
+                  onClick={() => setIsStopModalOpen(true)}
+                >
+                  Stop
                 </Button>
-              ) : (
-                <Button type={ButtonType.SECONDARY} onClick={handlePause}>
-                  Pause
-                </Button>
-              )}
-
-              <Button
-                type={ButtonType.DANGEROUS}
-                onClick={() => setIsStopModalOpen(true)}
-              >
-                Stop
-              </Button>
-            </div>
-          )}
+              </>
+            )}
+        </div>
       </div>
       <div className="px-5 flex gap-[32px] font-roboto font-normal text-[14px] leading-[22px]">
         {(Object.keys(tabs) as FlowViewerTab[]).map((tabKey, i) => (
@@ -91,6 +149,16 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
       <FlowViewerStopModal
         isOpen={isStopModalOpen}
         onClose={() => setIsStopModalOpen(false)}
+      />
+      <FlowBuilderEditDraftModal
+        isOpen={isEditDraftModalOpen}
+        onClose={() => setIsEditDraftModalOpen(false)}
+        onConfirm={handleContinueEditingClick}
+        onCancel={handleCreateNewDraft}
+      />
+      <NameJourneyModal
+        isOpen={isNameJourneyModalOpen}
+        onClose={() => setIsNameJourneyModalOpen(false)}
       />
     </div>
   );

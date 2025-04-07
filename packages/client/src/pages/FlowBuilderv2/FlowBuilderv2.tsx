@@ -40,6 +40,9 @@ import FlowBuilderSettings from "./FlowBuilderSettings";
 import { capitalize } from "lodash";
 import PushBuilder from "pages/PushBuilder/PushBuilder";
 import { MessageType } from "types/Workflow";
+import Progress from "components/Progress";
+import useLoadVersion from "./hooks/useLoadVersion";
+import { useLocation } from "react-router-dom";
 
 const FlowBuilderv2 = () => {
   const { id } = useParams();
@@ -53,6 +56,16 @@ const FlowBuilderv2 = () => {
   const flowBuilderState = useAppSelector((state) => state.flowBuilder);
 
   const throttledFlowBuilderState = useThrottle(flowBuilderState, 1000);
+
+  const location = useLocation();
+  const isFromVersions = location.state?.isFromVersions;
+  const versionId = location.state?.versionId;
+
+  const { loadVersion } = useLoadVersion({
+    versionId,
+    setIsLoading,
+    noStats: true,
+  });
 
   const loadAllTags = async () => {
     try {
@@ -131,7 +144,11 @@ const FlowBuilderv2 = () => {
   };
 
   useEffect(() => {
-    loadJourney();
+    if (isFromVersions && versionId) {
+      loadVersion();
+    } else {
+      loadJourney();
+    }
 
     return () => {
       dispatch(setTemplateInlineCreator(undefined));
@@ -143,9 +160,13 @@ const FlowBuilderv2 = () => {
   }, [flowBuilderState.stepperIndex]);
 
   const handleSaveLayout = async () => {
+    const url =
+      isFromVersions && versionId
+        ? `journeys/${id}/versions/${versionId}/visual_layout`
+        : "/journeys/visual-layout";
     try {
       await ApiService.patch({
-        url: "/journeys/visual-layout",
+        url,
         options: {
           id,
           nodes: throttledFlowBuilderState.nodes,
@@ -231,6 +252,8 @@ const FlowBuilderv2 = () => {
     return templates?.[flowBuilderState.templateInlineCreation.type] || <></>;
   };
 
+  if (isLoading) return <Progress />;
+
   return (
     <SocketProvider>
       <>
@@ -239,7 +262,7 @@ const FlowBuilderv2 = () => {
             flowBuilderState.templateInlineCreation && "hidden"
           } relative w-full h-full`}
         >
-          <FlowBuilderHeader />
+          <FlowBuilderHeader handleSaveLayout={handleSaveLayout} />
           <div className="relative flex w-full h-full max-h-[calc(100%-60px)]">
             {flowBuilderState.stepperIndex === 0 && <FlowBuilderDrawer />}
 

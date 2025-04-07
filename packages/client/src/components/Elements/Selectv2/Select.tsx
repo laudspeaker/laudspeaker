@@ -31,6 +31,7 @@ interface SelectProps<T, U = any> {
   id?: string;
   disabled?: boolean;
   dataTestId?: string;
+  placeholderClassName?: string;
 }
 
 const Select = <T, U = any>({
@@ -53,6 +54,7 @@ const Select = <T, U = any>({
   customBTN,
   disabled,
   dataTestId,
+  placeholderClassName,
 }: SelectProps<T, U>) => {
   const scrollableRef = useRef(null);
 
@@ -90,7 +92,9 @@ const Select = <T, U = any>({
               >
                 <div
                   className={`${
-                    value ? "text-ellipsis" : "text-muted"
+                    value
+                      ? "text-ellipsis"
+                      : `text-muted ${placeholderClassName}`
                   } max-w-full overflow-hidden  whitespace-nowrap`}
                 >
                   {options.find((option) => option.key === value)?.title ||

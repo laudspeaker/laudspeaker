@@ -3,6 +3,7 @@ import React, { FC, MouseEvent, ReactNode } from "react";
 export enum ButtonType {
   PRIMARY,
   SECONDARY,
+  SECONDARY_GREY,
   LINK,
   DANGEROUS,
   STOP,
@@ -22,6 +23,8 @@ const specificTypeClassNameMap: Record<ButtonType, string> = {
     "bg-[#6366F1] border border-[#6366F1] rounded px-[15px] py-[4px] text-white flex items-center justify-center hover:border-[#818CF8] hover:bg-[#818CF8] focus:border-[#4338CA] focus:bg-[#4338CA] disabled:!bg-[#F3F4F6]",
   [ButtonType.SECONDARY]:
     "bg-white border border-[#6366F1] rounded px-[15px] py-[4px] text-[#6366F1] flex items-center justify-center hover:border-[#818CF8] hover:text-[#818CF8] focus:border-[#4338CA] focus:text-[#4338CA] disabled:!bg-[#F3F4F6]",
+  [ButtonType.SECONDARY_GREY]:
+    "bg-white border border-[#E5E7EB] rounded px-[15px] py-[4px] text-[#111827] flex items-center justify-center hover:border-[#9CA3AF] hover:text-[#111827] focus:border-[#9CA3AF] focus:text-[#111827] disabled:!bg-[#F3F4F6]",
   [ButtonType.LINK]:
     "text-[#111827] underline hover:text-[#818CF8] focus:text-[#4338CA]",
   [ButtonType.DANGEROUS]:

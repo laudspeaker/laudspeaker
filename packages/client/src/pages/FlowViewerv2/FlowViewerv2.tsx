@@ -42,6 +42,9 @@ import JourneyEntrySettingsViewer from "./JourneyEntrySettingsViewer";
 import JourneySettingsViewer from "./JourneySettingsViewer";
 import ActivityHistoryViewer from "./ActivityHistoryViewer";
 import FlowBuilderOverview from "./FlowViewerOverview";
+import VersionDraftViewer from "./VersionDraftViewer";
+import useLoadVersion from "pages/FlowBuilderv2/hooks/useLoadVersion";
+import useVersions from "hooks/useVersions";
 
 export enum FlowViewerTab {
   OVERVIEW = "Overview",
@@ -49,6 +52,7 @@ export enum FlowViewerTab {
   ENTRY = "Entry",
   SETTINGS = "Settings",
   ACTIVITY_HISTORY = "Activity history",
+  VERSION_DRAFT = "Version & draft",
 }
 
 const nodesToLoadCustomerCount: NodeType[] = [
@@ -60,14 +64,25 @@ const nodesToLoadCustomerCount: NodeType[] = [
 const FlowViewerv2 = () => {
   const { id } = useParams();
   const { state: locationState } = useLocation();
-  const [isLoading, setIsLoading] = useState(true);
   const [currentTab, setCurrentTab] = useState(FlowViewerTab.OVERVIEW);
   const [onConfirmNextTab, setOnConfirmNextTab] = useState<FlowViewerTab>();
+  const [isLoading, setIsLoading] = useState(true);
+  const { versions } = useVersions();
+  const [selectedVersion, setSelectedVersion] = useState<string>(
+    versions[0]?.uuid
+  );
+
+  const { loadVersion } = useLoadVersion({ versionId: selectedVersion });
+
+  useEffect(() => {
+    if (!selectedVersion) {
+      setSelectedVersion(versions[0]?.uuid);
+    }
+  }, [versions]);
 
   const dispatch = useAppDispatch();
 
   const {
-    journeyType,
     segments: segmentsSettings,
     journeyEntrySettings,
     journeySettings,
@@ -110,6 +125,12 @@ const FlowViewerv2 = () => {
     }
   }, [nodes]);
 
+  useEffect(() => {
+    if (locationState?.isFromVersions) {
+      setCurrentTab(FlowViewerTab.VERSION_DRAFT);
+    }
+  }, [locationState]);
+
   const loadJourney = async () => {
     setIsLoading(true);
     try {
@@ -123,7 +144,6 @@ const FlowViewerv2 = () => {
         isPaused?: boolean;
         isStopped?: boolean;
         isDeleted?: boolean;
-        isEnrolling?: boolean;
         journeyEntrySettings: JourneyEntrySettings;
         journeySettings: JourneySettings;
       }>({
@@ -185,13 +205,6 @@ const FlowViewerv2 = () => {
         } catch (e) {
           console.error("Failed to load customer count", e);
         }
-
-        dispatch(
-          loadVisualLayout({
-            nodes: updatedNodesWithStats,
-            edges: data.edges,
-          })
-        );
       }
 
       const firstMessageNode = data.nodes.find(
@@ -217,10 +230,7 @@ const FlowViewerv2 = () => {
 
       let status: JourneyStatus = JourneyStatus.DRAFT;
 
-      if (data.isActive) {
-        if (data.isEnrolling) status = JourneyStatus.ENROLLING;
-        else status = JourneyStatus.ACTIVE;
-      }
+      if (data.isActive) status = JourneyStatus.ACTIVE;
       if (data.isPaused) status = JourneyStatus.PAUSED;
       if (data.isStopped) status = JourneyStatus.STOPPED;
       if (data.isDeleted) status = JourneyStatus.DELETED;
@@ -326,11 +336,19 @@ const FlowViewerv2 = () => {
         />
       ),
     [FlowViewerTab.ACTIVITY_HISTORY]: <ActivityHistoryViewer id={id} />,
+    [FlowViewerTab.VERSION_DRAFT]: <VersionDraftViewer />,
   };
 
   useEffect(() => {
     loadJourney();
+    if (currentTab === FlowViewerTab.JOURNEY) {
+      loadVersion();
+    }
   }, [currentTab]);
+
+  useEffect(() => {
+    loadVersion();
+  }, [selectedVersion]);
 
   const handleChangeCurrentTab = (newTab: FlowViewerTab) => {
     if (
@@ -359,6 +377,8 @@ const FlowViewerv2 = () => {
         tabs={tabs}
         currentTab={currentTab}
         setCurrentTab={handleChangeCurrentTab}
+        selectedVersion={selectedVersion}
+        setSelectedVersion={setSelectedVersion}
       />
       <div className="relative flex w-full h-full max-h-[calc(100%-140px)]">
         {tabs[currentTab]}

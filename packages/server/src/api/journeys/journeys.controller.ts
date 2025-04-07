@@ -17,6 +17,7 @@ import {
 } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { JourneysService } from './journeys.service';
+import { JourneyVersionService } from './journey-version.service';
 import { UpdateJourneyDto } from './dto/update-journey.dto';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Request } from 'express';
@@ -30,7 +31,9 @@ import { RavenInterceptor } from 'nest-raven';
 export class JourneysController {
   constructor(
     @Inject(JourneysService)
-    private readonly journeysService: JourneysService
+    private readonly journeysService: JourneysService,
+    @Inject(JourneyVersionService)
+    private readonly journeyVersionService: JourneyVersionService
   ) {}
 
   @Get()
@@ -269,5 +272,71 @@ export class JourneysController {
   async delete(@Req() { user }: Request, @Param('id') id: string) {
     const session = randomUUID();
     return await this.journeysService.markDeleted(<Account>user, id, session);
+  }
+
+  @Get(':id/versions')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getJourneyVersions(
+    @Req() { user }: Request,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    const session = randomUUID();
+
+    return this.journeyVersionService.getVersions(<Account>user, id);
+  }
+
+  @Get(':id/versions/:version_uuid')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getJourneyVersion(
+    @Req() { user }: Request,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('version_uuid', ParseUUIDPipe) version_uuid: string,
+  ) {
+    const session = randomUUID();
+
+    const journey = await this.journeysService.findOne(<Account>user, id, session);
+
+    const data = {
+      uuid: version_uuid,
+      name: "Draft",
+      created_at: new Date(),
+      updated_at: new Date(),
+      visual_layout: {
+        nodes: journey.nodes,
+        edges: journey.edges,
+      }
+    };
+
+    return data;
+  }
+
+  @Patch(':id/versions/:version_uuid/visual_layout')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async updateVersionLayout(
+    @Req() { user }: Request,
+    @Body() updateJourneyDto: UpdateJourneyLayoutDto
+  ) {
+    const session = randomUUID();
+    return await this.journeysService.updateLayout(
+      <Account>user,
+      updateJourneyDto,
+      session
+    );
+  }
+
+  @Post(':id/check_out/:version_uuid?')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async checkOut(
+    @Req() { user }: Request,
+    @Param('id') id: string,
+    @Param('version_uuid') version_uuid?: string
+  ) {
+    const session = randomUUID();
+
+    return this.journeyVersionService.checkOut(<Account>user, id, version_uuid, session);
   }
 }
