@@ -15,7 +15,7 @@ const VersionsSelect: FC<VersionSelectProps> = ({
   selectedVersion,
   setSelectedVersion,
 }) => {
-  const versions = useVersions();
+  const { versions } = useVersions();
   const { journeyId, versionId } = useParams();
   const navigate = useNavigate();
   const [chosenVersion, setChosenVersion] = useState<string>("");

@@ -14,7 +14,7 @@ import ApiService from "services/api.service";
 
 const VersionViewer = () => {
   const { journeyId, versionId } = useParams();
-  const versions = useVersions();
+  const { versions } = useVersions();
   const navigate = useNavigate();
   const location = useLocation();
   const { flowName, isStarting } = useAppSelector((state) => state.flowBuilder);

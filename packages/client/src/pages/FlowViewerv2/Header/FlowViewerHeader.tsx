@@ -38,6 +38,7 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
   const [isStopModalOpen, setIsStopModalOpen] = useState(false);
   const [isEditDraftModalOpen, setIsEditDraftModalOpen] = useState(false);
   const [isNameJourneyModalOpen, setIsNameJourneyModalOpen] = useState(false);
+  const { versions, refetchVersions } = useVersions();
 
   const handleResume = async () => {
     await ApiService.patch({ url: "/journeys/resume/" + flowId });
@@ -51,16 +52,6 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
     window.location.reload();
   };
 
-  const handleEdit = () => {
-    setIsEditDraftModalOpen(true);
-  };
-
-  const handleContinueEditingClick = () => {
-    navigate(`/flow/${flowId}`, {
-      state: { isFromVersions: true, versionId: selectedVersion },
-    });
-  };
-
   const handleCreateNewDraft = async () => {
     const { data } = await ApiService.post({
       url: `/journeys/${flowId}/check_out`,
@@ -70,7 +61,23 @@ const FlowViewerHeader: FC<FlowViewerHeaderProps> = ({
         state: { isFromVersions: true, versionId: data.uuid },
       });
     }
+    refetchVersions();
     setIsEditDraftModalOpen(false);
+  };
+
+  const handleEdit = () => {
+    const hasDraft = !!versions.find((version) => version?.state === "Draft");
+    if (hasDraft) {
+      setIsEditDraftModalOpen(true);
+    } else {
+      handleCreateNewDraft();
+    }
+  };
+
+  const handleContinueEditingClick = () => {
+    navigate(`/flow/${flowId}`, {
+      state: { isFromVersions: true, versionId: selectedVersion },
+    });
   };
 
   return (

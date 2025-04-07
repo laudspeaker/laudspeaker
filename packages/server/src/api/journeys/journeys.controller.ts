@@ -327,7 +327,7 @@ export class JourneysController {
     );
   }
 
-  @Post(':id/check_out/(:version_uuid)')
+  @Post(':id/check_out/:version_uuid?')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async checkOut(

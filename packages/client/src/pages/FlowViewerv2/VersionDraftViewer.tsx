@@ -17,7 +17,7 @@ const VersionDraftViewer = () => {
   const navigate = useNavigate();
   const [sortType, setSortType] = useState<SortType>(SortType.DESC);
 
-  const versions = useVersions();
+  const { versions } = useVersions();
   const [sortedVersions, setSortedVersions] = useState(versions);
   const { id: journeyId } = useParams();
 

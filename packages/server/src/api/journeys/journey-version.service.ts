@@ -34,6 +34,7 @@ import { JourneysService } from './journeys.service';
 import { BaseLaudspeakerService } from '../../common/services/base.laudspeaker.service';
 import { Account } from '../accounts/entities/accounts.entity';
 import { VisualLayout } from './types/visual-layout.interface';
+import { randomUUID } from 'node:crypto';
 
 @Injectable()
 export class JourneyVersionService extends BaseLaudspeakerService {
@@ -65,6 +66,7 @@ export class JourneyVersionService extends BaseLaudspeakerService {
         state: "Draft",
         created_by: { id: account.id },
         updated_by: { id: account.id },
+        uuid: randomUUID(),
       });
 
       return version;

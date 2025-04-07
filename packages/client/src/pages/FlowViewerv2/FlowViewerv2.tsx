@@ -67,7 +67,7 @@ const FlowViewerv2 = () => {
   const [currentTab, setCurrentTab] = useState(FlowViewerTab.OVERVIEW);
   const [onConfirmNextTab, setOnConfirmNextTab] = useState<FlowViewerTab>();
   const [isLoading, setIsLoading] = useState(true);
-  const versions = useVersions();
+  const { versions } = useVersions();
   const [selectedVersion, setSelectedVersion] = useState<string>(
     versions[0]?.uuid
   );
