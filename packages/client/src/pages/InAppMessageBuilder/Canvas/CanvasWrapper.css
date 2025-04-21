@@ -1,0 +1,22 @@
+.card,
+.trayCard,
+.trayOverlayCard {
+    cursor: grab
+}
+
+.tray {
+    display: flex;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.canvasWindow {
+    overflow: hidden;
+    border-radius: 3px;
+    border-width: 1px;
+    border-style: solid;
+    background-color: #E5E5E5;
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+}

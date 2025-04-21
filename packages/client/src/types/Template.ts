@@ -10,6 +10,7 @@ export enum TemplateType {
   MODAL = "modal",
   CUSTOM_MODAL = "custom-modal",
   PUSH = "push",
+  IN_APP_MESSAGE = "in-app-message",
 }
 
 export default interface Template {

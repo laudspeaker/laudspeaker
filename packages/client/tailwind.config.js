@@ -8,6 +8,7 @@ module.exports = withMT({
         segoe: ["Segoe UI", "Roboto"],
         roboto: ["Roboto"],
         inter: ["Inter", "Roboto"],
+        pingFangSC: ["PingFang SC", "Roboto"],
       },
     },
   },

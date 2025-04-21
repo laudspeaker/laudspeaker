@@ -44,6 +44,10 @@ export const requestCreationBody = (templateName: string) => ({
     name: templateName,
     type: TemplateType.PUSH,
   },
+  [TemplateType.IN_APP_MESSAGE]: {
+    name: templateName,
+    type: TemplateType.IN_APP_MESSAGE,
+  },
 });
 
 const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
@@ -143,8 +147,12 @@ const NameTemplate = ({ onSubmit, isPrimary }: INameSegment) => {
                     key: TemplateType.PUSH,
                     title: "push notification",
                   },
+                  {
+                    key: TemplateType.IN_APP_MESSAGE,
+                    title: "in app message",
+                  },
                   // { value: TemplateType.MODAL },
-                  // { value: TemplateType.CUSTOM_MODAL, title: "custom modal" },
+                  { key: TemplateType.CUSTOM_MODAL, title: "custom modal" },
                 ]}
               />
             </form>

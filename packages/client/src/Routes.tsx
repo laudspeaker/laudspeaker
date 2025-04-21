@@ -60,6 +60,9 @@ import SegmentViewer from "pages/SegmentViewer";
 import DataTransferTable from "pages/DataTransferTable";
 import DataTransfer from "pages/DataTransfer";
 import SubscriptionPayment from "pages/SubscriptionPayment/SubscriptionPayment";
+import InAppMessageBuilder from "pages/InAppMessageBuilder";
+import ModalBackgroundProvider from "pages/ModalBuilder/ModalBackgroundProvider";
+import ModalBuilder from "pages/ModalBuilder";
 
 interface IProtected {
   children: ReactElement;
@@ -696,7 +699,26 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
-        {/*
+
+        <Route
+          path="/templates/in-app-message/:id"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout
+                  expandable
+                  crumbs={[
+                    { text: "Message Template", link: "/templates" },
+                    { text: "Create an in-app message" },
+                  ]}
+                >
+                  <InAppMessageBuilder />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+
         <Route
           path="/templates/modal/:name"
           element={
@@ -708,7 +730,7 @@ const RouteComponent: React.FC = () => {
               </VerificationProtected>
             </Protected>
           }
-        /> */}
+        />
         <Route
           path="/templates"
           element={
