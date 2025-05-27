@@ -48,7 +48,7 @@ export enum TemplateType {
   SLACK = 'slack',
   SMS = 'sms',
   WEBHOOK = 'webhook',
-  MODAL = 'modal',
+  IN_APP = 'in-app',
   CUSTOM_COMPONENT = 'custom_component',
   PUSH = 'push',
 }
@@ -130,7 +130,7 @@ export class Template {
   webhookData?: WebhookData;
 
   @Column({ type: 'jsonb', nullable: true })
-  modalState?: Record<string, unknown>;
+  inAppState?: Record<string, unknown>;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

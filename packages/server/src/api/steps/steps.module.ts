@@ -38,6 +38,9 @@ import { TimeWindowStepProcessor } from './processors/time.window.step.processor
 import { WaitUntilStepProcessor } from './processors/wait.until.step.processor';
 import { SegmentsModule } from '../segments/segments.module';
 import { StepsHelper } from './steps.helper';
+import { NotificationPreferenceModule } from '../notification-preferences/notification-preferences.module';
+import { NotificationPreferenceService } from '../notification-preferences/notification-preferences.service';
+import { NotificationPreference } from '../notification-preferences/entities/notification-preference.entity';
 
 function getProvidersList() {
   let providerList: Array<any> = [
@@ -47,6 +50,7 @@ function getProvidersList() {
     JourneyLocationsService,
     CacheService,
     StepsHelper,
+    NotificationPreferenceService,
   ];
 
   if (process.env.LAUDSPEAKER_PROCESS_TYPE == 'QUEUE') {
@@ -79,6 +83,7 @@ function getProvidersList() {
       JourneyLocation,
       Requeue,
       Workspaces,
+      NotificationPreference,
     ]),
     forwardRef(() => CustomersModule),
     forwardRef(() => WebhooksModule),
@@ -92,6 +97,7 @@ function getProvidersList() {
     forwardRef(() => OrganizationsModule),
     forwardRef(() => WorkspacesModule),
     forwardRef(() => SegmentsModule),
+    forwardRef(() => NotificationPreferenceModule),
     SlackModule,
   ],
   providers: getProvidersList(),

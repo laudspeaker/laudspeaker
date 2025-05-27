@@ -98,10 +98,15 @@ export interface JourneySettingsConversionTracking {
   timeLimit: JourneySettingsConversionTrackingTimeLimit;
 }
 
+export interface JourneySettingsStrictLiquidChecking {
+  enabled: boolean;
+}
+
 export interface JourneySettings {
   tags: string[];
   quietHours: JourneySettingsQuietHours;
   maxEntries: JourneySettingsMaxUserEntries;
   maxMessageSends: JourneySettingsMaxMessageSends;
   conversionTracking: JourneySettingsConversionTracking;
+  strictLiquidChecking: JourneySettingsStrictLiquidChecking;
 }

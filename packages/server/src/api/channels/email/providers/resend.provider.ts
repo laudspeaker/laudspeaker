@@ -11,9 +11,9 @@ import { ResendCallbackData, ResendCredentials, ResendSendingData } from '../typ
 import { Webhook } from 'svix';
 
 @Injectable()
-export class ResendProvider extends BaseLiquidEngineProvider implements EmailProvider {
+export class ResendProvider implements EmailProvider { //extends BaseLiquidEngineProvider
   constructor() {
-    super();
+    // super();
   }
 
   private isResendCredentials(credentials: EmailCredentials): credentials is ResendCredentials {
@@ -70,8 +70,8 @@ export class ResendProvider extends BaseLiquidEngineProvider implements EmailPro
 
     if (this.isResendCredentials(credentials) && this.isResendSendingData(data)) {
       try {
-        textWithInsertedTags = await this.parseLiquid(data.html, data.tags);
-        subjectWithInsertedTags = await this.parseLiquid(data.subject, data.tags);
+        textWithInsertedTags = ""//await this.parseLiquid(data.html, data.tags);
+        subjectWithInsertedTags = ""//await this.parseLiquid(data.subject, data.tags);
       } catch (err) {
         return [{
           ...record,

@@ -13,7 +13,7 @@ export enum MessageType {
   SMS = "sms",
   PUSH = "push",
   WEBHOOK = "webhook",
-  MODAL = "modal",
+  IN_APP = "in-app",
 }
 
 export enum EventConditionElementsFilter {

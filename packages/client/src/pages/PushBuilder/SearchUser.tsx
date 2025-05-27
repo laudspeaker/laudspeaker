@@ -86,7 +86,7 @@ export const SearchUser = ({
       placeholder={
         selectedCustomer?.[previewFieldKey]
           ? `${getTitle(selectedCustomer)}`
-          : "Search user’s id, email or phone number"
+          : "Search for customers using their primary key, email, or phone number."
       }
       value={selectedCustomer?.id}
       className="max-w-[800px] min-w-full"

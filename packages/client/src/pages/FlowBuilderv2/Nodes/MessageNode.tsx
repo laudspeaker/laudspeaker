@@ -3,7 +3,7 @@ import { Handle, NodeProps, Position } from "reactflow";
 import { useAppSelector } from "store/hooks";
 import { MessageType } from "types/Workflow";
 import {
-  CustomModalIcon,
+  InAppMessageIcon,
   EmailIcon,
   PushIcon,
   SlackIcon,
@@ -53,9 +53,9 @@ export const messageFixtures: Record<
       },
     ],
   },
-  [MessageType.MODAL]: {
-    icon: <CustomModalIcon />,
-    text: "Custom Modal",
+  [MessageType.IN_APP]: {
+    icon: <InAppMessageIcon />,
+    text: "In App Message",
   },
   [MessageType.PUSH]: {
     icon: <PushIcon />,

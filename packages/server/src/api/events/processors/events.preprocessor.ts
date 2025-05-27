@@ -176,8 +176,8 @@ export class EventsPreProcessor extends ProcessorBase {
         await this.eventsService.findOrCreateCustomer(
           job.data.workspace,
           job.data.session,
-          null,
-          null,
+          job.data.event.correlationKey !== '_id' ? job.data.event.correlationValue : null,
+          job.data.event.correlationKey !== '_id' ? job.data.event.correlationKey : null,
           job.data.event
         );
       let journeys: Journey[] = await this.cacheService.get(

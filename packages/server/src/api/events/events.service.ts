@@ -40,7 +40,7 @@ import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
 import { BatchEventDto } from './dto/batch-event.dto';
 import e from 'express';
 import { WebhooksService } from '../webhooks/webhooks.service';
-import { Liquid } from 'liquidjs';
+import { Context, Liquid, TagToken } from 'liquidjs';
 import { cleanTagsForSending } from '../../shared/utils/helpers';
 import { randomUUID } from 'crypto';
 import * as Sentry from '@sentry/node';
@@ -54,6 +54,13 @@ import { CustomerKeysService } from '../customers/customer-keys.service';
 import { AttributeTypeName } from '../customers/entities/attribute-type.entity';
 import { ClickHouseClient, ClickHouseEvent, ClickHouseEventSource, ClickHouseTable } from '../../common/services/clickhouse';
 import { NodeFactory, Query, QuerySyntax } from '../../common/services/query';
+import { CacheService } from '@/common/services/cache.service';
+import { NotificationPreferenceService } from '../notification-preferences/notification-preferences.service';
+import { CacheConstants } from '@/common/services/cache.constants';
+
+interface CustomTagToken extends TagToken {
+  parsedData?: string[];
+}
 
 @Injectable()
 export class EventsService {
@@ -75,6 +82,9 @@ export class EventsService {
     private readonly journeysService: JourneysService,
     @Inject(ClickHouseClient)
     private clickhouseClient: ClickHouseClient,
+    @Inject(CacheService) private cacheService: CacheService,
+    @Inject(NotificationPreferenceService)
+    private readonly notificationPreferenceService: NotificationPreferenceService,
   ) {
     this.tagEngine.registerTag('api_call', {
       parse(token) {
@@ -105,6 +115,39 @@ export class EventsService {
         } catch (e) {
           throw new Error('Error while processing api_call tag');
         }
+      },
+    });
+    const parentThis = this;
+
+    this.tagEngine.registerTag('unsubscribe', {
+      parse: function (token: CustomTagToken) {
+        this.defininition = token.args.split('.');
+      },
+      render: async function (ctx: Context) {
+        const contextData = ctx.getAll();
+        const customerId = contextData['customerId'];
+        const workspaceId = contextData['workspaceId'];
+
+        if (!customerId || !workspaceId) {
+          throw new Error('Customer ID and workspace ID are required to generate an unsubscribe link.');
+        }
+
+        let unsubscribeUrl;
+
+        try {
+          const preferenceId = await parentThis.fetchUnsubscribeData(workspaceId, this.definition);
+
+          if (this.definition === 'all') {
+            unsubscribeUrl = `${process.env.FRONTEND_URL}/notification-preferences/${workspaceId}/${customerId}/all`;
+          } else {
+            unsubscribeUrl = `${process.env.FRONTEND_URL}/notification-preferences/${workspaceId}/${customerId}/${preferenceId}`;
+          }
+        } catch (error) {
+          parentThis.error(error, `unsubscribe_render`, randomUUID())
+          throw error;
+        }
+
+        return unsubscribeUrl;
       },
     });
 
@@ -178,6 +221,21 @@ export class EventsService {
         user: user,
       })
     );
+  }
+
+  private async fetchUnsubscribeData(workspaceId: string, definition: string) {
+
+    const notificationPreference = await this.cacheService.getIgnoreError(
+      CacheConstants.NOTIFICATION_PREFERENCES,
+      `${workspaceId}:${definition}`,
+      async () => {
+        return await this.notificationPreferenceService.findOneByName(workspaceId, definition);
+      });
+    if (!notificationPreference) {
+      throw new Error(`Notification preference "${definition}" not found.`);
+    }
+
+    return notificationPreference.id;
   }
 
   async getJobStatus(body: StatusJobDto, type: JobTypes, session: string) {
@@ -664,8 +722,8 @@ export class EventsService {
           ? 'androidDeviceToken'
           : 'iosDeviceToken']: body.token,
       },
-      session
-    );
+        session
+      );
 
     return customer.id;
   }
@@ -782,28 +840,28 @@ export class EventsService {
               android:
                 platform === PushPlatforms.ANDROID
                   ? {
-                    notification: {
-                      sound: 'default',
-                      imageUrl: settings?.image?.imageSrc,
-                    },
-                  }
+                      notification: {
+                        sound: 'default',
+                        imageUrl: settings?.image?.imageSrc,
+                      },
+                    }
                   : undefined,
               apns:
                 platform === PushPlatforms.IOS
                   ? {
-                    payload: {
-                      aps: {
-                        badge: 1,
-                        sound: 'default',
-                        category: settings.clickBehavior?.type,
-                        contentAvailable: true,
-                        mutableContent: true,
+                      payload: {
+                        aps: {
+                          badge: 1,
+                          sound: 'default',
+                          category: settings.clickBehavior?.type,
+                          contentAvailable: true,
+                          mutableContent: true,
+                        },
                       },
-                    },
-                    fcmOptions: {
-                      imageUrl: settings?.image?.imageSrc,
-                    },
-                  }
+                      fcmOptions: {
+                        imageUrl: settings?.image?.imageSrc,
+                      },
+                    }
                   : undefined,
               data: body.pushObject.fields.reduce((acc, field) => {
                 acc[field.key] = field.value;
@@ -928,8 +986,8 @@ export class EventsService {
     const { customer, findType } = await this.findOrCreateCustomer(
       auth.workspace,
       session,
-      null,
-      null,
+      event.correlationKey !== '_id' ? event.correlationValue as string : null,
+      event.correlationKey !== '_id' ? event.correlationKey : null,
       event
     );
 
@@ -1258,7 +1316,7 @@ export class EventsService {
     const updatedCustomer =
       await this.customersService.updateCustomer(auth.account, customer.id, 'user_attributes',
         {
-          [deviceTokenField]: deviceTokenValue,
+            [deviceTokenField]: deviceTokenValue,
           [deviceTokenSetAtField]: new Date(),
         },
         session

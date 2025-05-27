@@ -10,7 +10,7 @@ interface NameTemplateModalProps {
 const NameTemplateModal: FC<NameTemplateModalProps> = ({ isOpen, onClose }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <NameTemplate isPrimary={true} />
+      <NameTemplate />
     </Modal>
   );
 };

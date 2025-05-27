@@ -50,6 +50,16 @@ export class Customers1724873583654 implements MigrationInterface {
             default: "ARRAY[]::text[]",
           },
           {
+            name: "unsubscribed_from",
+            type: "text array",
+            default: "ARRAY[]::text[]",
+          },
+          {
+            name: "unsubscribe_all",
+            type: "boolean",
+            default: "false",
+          },
+          {
             name: "workspace_id",
             type: "uuid",
           },

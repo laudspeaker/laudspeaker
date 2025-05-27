@@ -1997,6 +1997,9 @@ export class JourneysService {
 
             metadata.connectionId = nodes[i].data.connectionId;
             metadata.sendingOptionId = nodes[i].data.sendingOptionId;
+            metadata.replyToOptionId = nodes[i].data.replyToOptionId;
+            metadata.oneClickUnsubscribeOptionId = nodes[i].data.oneClickUnsubscribeOptionId;
+            metadata.oneClickUnsubscribeEnabled = nodes[i].data.oneClickUnsubscribeEnabled;
 
             metadata.customName = nodes[i].data['customName'] || 'Unknown name';
             if (nodes[i].data['template']['selected'])

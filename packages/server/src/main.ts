@@ -11,7 +11,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { urlencoded } from 'body-parser';
 import { readFileSync } from 'fs';
 import * as Sentry from '@sentry/node';
-import { nodeProfilingIntegration } from '@sentry/profiling-node';
+// import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { setTimeout as originalSetTimeout } from 'timers';
 import { setInterval as originalSetInterval } from 'timers';
 import express from 'express';
@@ -71,7 +71,7 @@ if (cluster.isPrimary) {
         // }),
         // new Sentry.postgresIntegration({ usePgNative: true }),
         // new Sentry.Integrations.Http({ tracing: true }),
-        nodeProfilingIntegration(),
+        // nodeProfilingIntegration(),
         // ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
       ],
       debug: false,

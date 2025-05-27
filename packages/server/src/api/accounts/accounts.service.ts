@@ -539,8 +539,8 @@ export class AccountsService extends BaseJwtHelper {
     session: string
   ): Promise<void> {
 
-    const account = await this.findOne(user, session);
-    if (!bcrypt.compareSync(removeAccountDto.password, account.password))
+      const account = await this.findOne(user, session);
+      if (!bcrypt.compareSync(removeAccountDto.password, account.password))
       throw new BadRequestException('Password is incorrect!');
     this.debug(`Account deletion request,please contact support@laudspeaker.com`, this.remove.name, session, user.email)
 
@@ -675,7 +675,7 @@ export class AccountsService extends BaseJwtHelper {
           smsText: null,
           pushObject: null,
           webhookData: null,
-          modalState: null,
+          inAppState: null,
           customEvents: [
             'show-start-journey-page',
             'show-customers-page',
@@ -888,8 +888,8 @@ export class AccountsService extends BaseJwtHelper {
         after_completion: {
           type: 'redirect',
           redirect: {
-            //url: process.env.FRONTEND_URL + '/payment-gate',
-            url: 'https://app.laudspeaker.com/home',
+            url: `${process.env.FRONTEND_URL}/home`,
+            //url: 'https://app.laudspeaker.com/home',
           },
         },
         //success_url: 'http://your_success_url_here',
@@ -909,33 +909,43 @@ export class AccountsService extends BaseJwtHelper {
   }
 
   async checkActivePlanForUser(
-    userId: string,
+    account: Account,
     session: string
   ): Promise<boolean> {
     try {
-      // Find the related organization using the userId as the owner
-      const organization = await this.organizationRepository.findOne({
-        where: { owner: { id: userId } },
-        relations: ['plan'],
-      });
-
+      const organization = account.teams?.[0]?.organization;
       if (!organization) {
         this.warn(
           'User does not own any organization',
           this.checkActivePlanForUser.name,
           session,
-          userId
+          account.email
+        );
+        return false;
+      }
+      const organizationWithPlan = await this.organizationRepository.find({
+        where: { id: organization.id },
+        relations: ['plan']
+      })
+
+      if (!organizationWithPlan.length) {
+        this.warn(
+          'User is not part of any organization',
+          this.checkActivePlanForUser.name,
+          session,
+          account.email
         );
         return false;
       }
 
-      // Check if the organization's plan is active
-      const isActive =
-        organization.plan && organization.plan.activePlan == true;
-      return isActive;
+      // Check if at least one organization the user belongs to has an active plan
+      const hasActivePlan = organizationWithPlan[0].plan.activePlan === true
+
+      return hasActivePlan;
     } catch (error) {
-      this.error(error, this.checkActivePlanForUser.name, session, userId);
+      this.error(error, this.checkActivePlanForUser.name, session, account.email);
       throw error;
     }
   }
+
 }

@@ -7,8 +7,7 @@ export enum TemplateType {
   SLACK = "slack",
   SMS = "sms",
   WEBHOOK = "webhook",
-  MODAL = "modal",
-  CUSTOM_MODAL = "custom-modal",
+  IN_APP_MESSAGE = "in-app",
   PUSH = "push",
 }
 

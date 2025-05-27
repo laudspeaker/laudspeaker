@@ -121,11 +121,11 @@ export class WorkspacesController {
   @UseInterceptors(ClassSerializerInterceptor)
   public async createSendgridChannel(
     @Req() { user }: Request,
-    @Body() createMailgunChannelDto: CreateSendgridChannelDto
+    @Body() createSendgridChannelDto: CreateSendgridChannelDto
   ) {
     return this.workspacesService.createSendgridChannel(
       <Account>user,
-      createMailgunChannelDto
+      createSendgridChannelDto
     );
   }
 

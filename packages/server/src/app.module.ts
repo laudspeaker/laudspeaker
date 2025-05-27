@@ -49,6 +49,7 @@ import { HealthCheckService } from './app.healthcheck.service';
 import { QueueModule } from './common/services/queue/queue.module';
 import { ClickHouseModule } from './common/services/clickhouse/clickhouse.module';
 import { ChannelsModule } from './api/channels/channels.module';
+import { NotificationPreferenceModule } from './api/notification-preferences/notification-preferences.module';
 
 const sensitiveKeys = [
   /cookie/i,
@@ -234,6 +235,7 @@ export const formatMongoConnectionString = (mongoConnectionString: string) => {
     RavenModule,
     OrganizationsModule,
     ChannelsModule,
+    NotificationPreferenceModule
   ],
   controllers: [AppController],
   providers: getProvidersList(),

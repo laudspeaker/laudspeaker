@@ -548,6 +548,10 @@ export interface JourneySettingsConversionTracking {
   timeLimit: JourneySettingsConversionTrackingTimeLimit;
 }
 
+export interface JourneySettingsStrictLiquidChecking {
+  enabled: boolean;
+}
+
 export interface JourneySettings {
   tags: string[];
   quietHours: JourneySettingsQuietHours;
@@ -555,6 +559,7 @@ export interface JourneySettings {
   maxMessageSends: JourneySettingsMaxMessageSends;
   frequencyCapping: JourneySettingsEnableFrequencyCapping;
   conversionTracking: JourneySettingsConversionTracking;
+  strictLiquidChecking: JourneySettingsStrictLiquidChecking;
 }
 
 export interface TemplateInlineEditor {
@@ -668,6 +673,7 @@ export const defaultJourneySettings = {
       value: 3,
     },
   },
+  strictLiquidChecking: { enabled: false },
 };
 
 const initialState: FlowBuilderState = {
@@ -1185,6 +1191,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.MESSAGE,
             template: { type: MessageType.EMAIL },
+            oneClickUnsubscribeEnabled: false,
             customName: newMessageNodeName,
             stepId,
           };
@@ -1194,6 +1201,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.MESSAGE,
             template: { type: MessageType.SMS },
+            oneClickUnsubscribeEnabled: false,
             customName: newMessageNodeName,
             stepId,
           };
@@ -1203,6 +1211,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.MESSAGE,
             template: { type: MessageType.SLACK },
+            oneClickUnsubscribeEnabled: false,
             customName: newMessageNodeName,
             stepId,
           };
@@ -1212,6 +1221,7 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.PUSH,
             template: { type: MessageType.PUSH },
+            oneClickUnsubscribeEnabled: false,
             customName: newMessageNodeName,
             stepId,
           };
@@ -1221,14 +1231,16 @@ const flowBuilderSlice = createSlice({
           nodeToChange.data = {
             type: NodeType.MESSAGE,
             template: { type: MessageType.WEBHOOK },
+            oneClickUnsubscribeEnabled: false,
             stepId,
           };
           break;
-        case DrawerAction.CUSTOM_MODAL:
+        case DrawerAction.IN_APP_MESSAGE:
           nodeToChange.type = NodeType.MESSAGE;
           nodeToChange.data = {
             type: NodeType.MESSAGE,
-            template: { type: MessageType.MODAL },
+            template: { type: MessageType.IN_APP },
+            oneClickUnsubscribeEnabled: false,
             stepId,
           };
           break;
@@ -1743,6 +1755,15 @@ const flowBuilderSlice = createSlice({
         new Set(state.journeySettings.conversionTracking.events)
       );
     },
+    setJourneySettingsStrictLiquidChecking(
+      state,
+      action: PayloadAction<JourneySettingsStrictLiquidChecking>
+    ) {
+      if (action.payload === undefined)
+        state.journeySettings.strictLiquidChecking =
+          defaultJourneySettings.strictLiquidChecking;
+      else state.journeySettings.strictLiquidChecking = action.payload;
+    },
   },
 });
 
@@ -1800,6 +1821,7 @@ export const {
   setJourneyFrequencyCappingRules,
   setIsStarting,
   setJourneySettingsConversionTracking,
+  setJourneySettingsStrictLiquidChecking,
 } = flowBuilderSlice.actions;
 
 export { defaultDevMode };

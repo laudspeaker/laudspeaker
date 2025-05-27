@@ -63,6 +63,7 @@ import { CustomerKey } from './entities/customer-keys.entity';
 import { CacheConstants } from '../../common/services/cache.constants';
 import { Query, QuerySyntax } from '../../common/services/query';
 import { SegmentCustomersService } from '../segments/segment-customers.service';
+import { UpdateNotificationPreferencesDto } from './dto/update-notification-preferences.dto';
 
 export type Correlation = {
   cust: Customer;
@@ -406,6 +407,45 @@ export class CustomersService {
     });
 
     return { data: customers, totalPages };
+  }
+
+
+  async getNotificationPreferences(customerId: string, workspaceId: string) {
+    // const customer = (await this.CustomerModel.findOne({
+    //   workspaceId,
+    //   _id: customerId
+    // }))
+    // return {
+    //   unsubscribed_from: customer?.unsubscribed_from,
+    //   unsubscribe_all: customer?.unsubscribe_all
+    // };
+  }
+
+  async setNotificationPreferences(updateNotificationPreferencesDto: UpdateNotificationPreferencesDto) {
+    // const { customerId, workspaceId, unsubscribeFromAll, preferences } = updateNotificationPreferencesDto;
+
+    // const customer = await this.CustomerModel.findOne({ _id: customerId, workspaceId }).exec();
+
+    // if (!customer) {
+    //   return;
+    // }
+
+    // if (unsubscribeFromAll) {
+    //   customer.unsubscribed_from = [];
+    //   customer.unsubscribe_all = true;
+    // } else if (preferences && preferences.length > 0) {
+    //   customer.unsubscribed_from = preferences
+    //     .filter(pref => !pref.subscribed)
+    //     .map(pref => pref.id);
+    //   customer.unsubscribe_all = false;
+    // }
+
+    // await customer.save();
+
+    // return {
+    //   unsubscribed_from: customer?.unsubscribed_from,
+    //   unsubscribe_all: customer?.unsubscribe_all
+    // };
   }
 
   async findOne(account: Account, id: string, session: string) {

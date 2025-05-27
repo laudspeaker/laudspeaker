@@ -9,6 +9,7 @@ ARG FRONTEND_SENTRY_DSN_URL=https://2444369e8e13b39377ba90663ae552d1@o4506038702
 ARG REACT_APP_POSTHOG_HOST
 ARG REACT_APP_POSTHOG_KEY
 ARG REACT_APP_ONBOARDING_API_KEY
+ENV NODE_OPTIONS=--max-old-space-size=4096
 ENV SENTRY_AUTH_TOKEN=${FRONTEND_SENTRY_AUTH_TOKEN}
 ENV SENTRY_ORG=${FRONTEND_SENTRY_ORG}
 ENV SENTRY_PROJECT=${FRONTEND_SENTRY_PROJECT}
@@ -20,7 +21,6 @@ ENV REACT_APP_ONBOARDING_API_KEY=${REACT_APP_ONBOARDING_API_KEY}
 WORKDIR /app
 COPY ./packages/client/package.json /app/
 COPY ./package-lock.json /app/
-RUN npm install -g npm@latest
 RUN npm install --legacy-peer-deps
 COPY . /app
 RUN npm run format:client
@@ -63,7 +63,7 @@ ENV PATH /app/node_modules/.bin:$PATH
 ENV FRONTEND_URL=${EXTERNAL_URL}
 ENV POSTHOG_HOST=https://app.posthog.com
 ENV POSTHOG_KEY=RxdBl8vjdTwic7xTzoKTdbmeSC1PCzV6sw-x-FKSB-k
-
+ENV NODE_OPTIONS=--max-old-space-size=2560
 # Setting working directory
 WORKDIR /app
 
