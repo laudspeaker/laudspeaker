@@ -123,12 +123,12 @@ We're currently in Public Beta.
         ✅️ Introduce rabbitmq, deprecate mongo
       </td>
       <td align="left" valign="middle">
-        🚧 Handle >100m user scale
+        ✅️ Handle >100m user scale
       </td>
     </tr>
     <tr>
       <td align="left" valign="middle">
-        🚧 User timezone support
+        ✅️ User timezone support
       </td>
       <td align="left" valign="middle">
         🚧 Improve A/B testing capability 
@@ -136,7 +136,7 @@ We're currently in Public Beta.
     </tr>
     <tr>
       <td align="left" valign="middle">
-        🚧 Mobile Feature #1
+        🚧 In App Notifications
       </td>
       <td align="left" valign="middle">
         🔜 Exportable journey audit logs
