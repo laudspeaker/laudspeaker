@@ -1,4 +1,4 @@
-
+Laudspeaker is s no longer under active development or being supported.
 
 <p align="center"><a  href="https://laudspeaker.com/?ref=github"><img  src="https://user-images.githubusercontent.com/7728266/194206039-0faecc9d-c500-4c64-8401-dfbefe501e4a.png"  height="100"/></a></p>
 
