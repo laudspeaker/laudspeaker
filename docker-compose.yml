@@ -1,4 +1,22 @@
 services:
+  laudspeaker-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod.client
+    container_name: laudspeaker-frontend
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_WS_BASE_URL=https://api.laudspeaker.com
+      - REACT_APP_API_BASE_URL=https://api.laudspeaker.com
+      - REACT_APP_ONBOARDING_API_KEY=ONBOARDING-API-KEY
+      - REACT_APP_POSTHOG_HOST=https://app.posthog.com
+      - REACT_APP_POSTHOG_KEY=RxdBl8vjdTwic7xTzoKTdbmeSC1PCzV6sw-x-FKSB-k
+      - REACT_APP_SENTRY_DSN_URL_FRONTEND=https://2444369e8e13b39377ba90663ae552d1@o4506038702964736.ingest.sentry.io/4506038705192960
+    depends_on:
+      - laudspeaker-web
+    networks:
+      - laudspeaker_default
   redis:
     hostname: redis
     container_name: redis
