@@ -197,24 +197,30 @@ const Signup: FC<SignupProps> = ({ fromInvite, setShowWelcomeBanner }) => {
               </label>
               <div>
                 <input
-                  required
-                  value={signUpForm.firstName}
-                  placeholder="John"
-                  name="firstName"
-                  id="firstName"
-                  onChange={handlesignUpFormChange}
-                  className={`${
-                    isInvalids.firstName && checkedFields.firstName
-                      ? "border-red-600 text-red-600 focus:border-red-600 focus:ring-red-600"
-                      : "focus:border-[#818CF8] focus:ring-[#818CF8]"
-                  } block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm  sm:text-sm focus:outline-none`}
-                  onBlur={handleFieldBlur("firstName")}
-                />
-                {isInvalids.firstName && checkedFields.firstName && (
-                  <p className="mt-2 text-sm text-red-600">
-                    First Name is required
-                  </p>
-                )}
+  required
+  value={signUpForm.firstName}
+  placeholder="John"
+  name="firstName"
+  id="firstName"
+  onChange={(e) => {
+    const regex = /^[a-zA-Z\s]*$/; // Allow only letters and spaces
+    if (regex.test(e.target.value)) {
+      handlesignUpFormChange(e); // Update state if input is valid
+    }
+  }}
+  className={`${
+    isInvalids.firstName && checkedFields.firstName
+      ? "border-red-600 text-red-600 focus:border-red-600 focus:ring-red-600"
+      : "focus:border-[#818CF8] focus:ring-[#818CF8]"
+  } block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm sm:text-sm focus:outline-none`}
+  onBlur={handleFieldBlur("firstName")}
+/>
+{isInvalids.firstName && checkedFields.firstName && (
+  <p className="mt-2 text-sm text-red-600">
+    First Name is required and must only contain letters.
+  </p>
+)}
+
               </div>
             </div>
             <div className="flex flex-col gap-2.5">
@@ -226,24 +232,30 @@ const Signup: FC<SignupProps> = ({ fromInvite, setShowWelcomeBanner }) => {
               </label>
               <div>
                 <input
-                  required
-                  value={signUpForm.lastName}
-                  placeholder="Doe"
-                  name="lastName"
-                  id="lastName"
-                  onChange={handlesignUpFormChange}
-                  className={`${
-                    isInvalids.lastName && checkedFields.lastName
-                      ? "border-red-600 text-red-600 focus:border-red-600 focus:ring-red-600"
-                      : "focus:border-[#818CF8] focus:ring-[#818CF8]"
-                  } block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm  sm:text-sm focus:outline-none`}
-                  onBlur={handleFieldBlur("lastName")}
-                />
-                {isInvalids.lastName && checkedFields.lastName && (
-                  <p className="mt-2 text-sm text-red-600">
-                    Last Name is required
-                  </p>
-                )}
+  required
+  value={signUpForm.lastName}
+  placeholder="Doe"
+  name="lastName"
+  id="lastName"
+  onChange={(e) => {
+    const regex = /^[a-zA-Z\s]*$/; // Allow only letters and spaces
+    if (regex.test(e.target.value)) {
+      handlesignUpFormChange(e); // Proceed with updating the state
+    }
+  }}
+  className={`${
+    isInvalids.lastName && checkedFields.lastName
+      ? "border-red-600 text-red-600 focus:border-red-600 focus:ring-red-600"
+      : "focus:border-[#818CF8] focus:ring-[#818CF8]"
+  } block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm sm:text-sm focus:outline-none`}
+  onBlur={handleFieldBlur("lastName")}
+/>
+{isInvalids.lastName && checkedFields.lastName && (
+  <p className="mt-2 text-sm text-red-600">
+    Last Name is required and must only contain letters.
+  </p>
+)}
+
               </div>
             </div>
           </div>
