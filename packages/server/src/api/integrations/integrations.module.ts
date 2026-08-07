@@ -1,9 +1,6 @@
-import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountsModule } from '../accounts/accounts.module';
-import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
 import { Database } from './entities/database.entity';
 import { Integration } from './entities/integration.entity';
 import { IntegrationsController } from './integrations.controller';
@@ -23,16 +20,10 @@ function getProvidersList() {
 @Module({
   imports: [
     AccountsModule,
-    TypeOrmModule.forFeature([Integration, Database]),
-    MongooseModule.forFeature([
-      { name: Customer.name, schema: CustomerSchema },
-    ]),
-    BullModule.registerQueue({
-      name: '{integrations}',
-    }),
+    TypeOrmModule.forFeature([Integration, Database])
   ],
   controllers: [IntegrationsController],
   providers: getProvidersList(),
   exports: [IntegrationsService],
 })
-export class IntegrationsModule {}
+export class IntegrationsModule { }

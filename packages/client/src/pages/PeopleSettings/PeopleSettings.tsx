@@ -4,7 +4,6 @@ import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Input from "components/Elements/Inputv2";
 import Select from "components/Elements/Selectv2";
 import DateFormatPicker from "pages/PeopleImport/DateFormatPicker";
-import { AttributeType } from "pages/PeopleImport/PeopleImport";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -14,17 +13,33 @@ import { StatementValueType } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import { useAppSelector } from "store/hooks";
 import Account, { UserPK } from "types/Account";
-import { v4 as uuid, validate as validateUUID } from "uuid";
+import * as uuid from "uuid";
+import { setUserSchemaSetupped } from "reducers/onboarding.reducer";
 
+//TODO: Shared NPM module with these types (Attribute, AttributeType, and AttributeParameter)
 export interface Attribute {
-  id: string;
+  id?: string;
+  name: string;
+  attribute_type: AttributeType;
+  attribute_subtype?: AttributeType;
+  attribute_parameter?: AttributeParameter;
+  is_primary?: boolean;
+}
+
+export interface AttributeParameter {
+  id: number;
   key: string;
-  type: AttributeType;
-  dateFormat?: string;
-  isArray: boolean;
-  isPrimary?: boolean;
-  isPosthog?: boolean;
-  isSystem?: boolean;
+  display_value: string;
+  attribute_type: AttributeType;
+  example: string;
+}
+
+export interface AttributeType {
+  id: number;
+  name: string;
+  can_be_subtype: boolean;
+  subtype_required: boolean;
+  parameters_required: boolean;
 }
 
 interface AttributeChanges {
@@ -36,10 +51,15 @@ interface AttributeChanges {
 const PeopleSettings = () => {
   const [isPKLoading, setIsPKLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [pk, setPK] = useState<UserPK>();
-  const [newPK, setNewPK] = useState<{ key: string; type: AttributeType }>();
+  const [initialPK, setInitialPK] = useState<Attribute>();
+  const [newPK, setNewPK] = useState<Attribute>();
   const [initialAttributes, setInitialAttributes] = useState<Attribute[]>([]);
   const [possibleAttributes, setPossibleAttributes] = useState<Attribute[]>([]);
+  const [possibleAttributeTypes, setPossibleAttributeTypes] = useState<
+    AttributeType[]
+  >([]);
+  const [possibleAttributeParameters, setPossibleAttributeParameters] =
+    useState<AttributeParameter[]>([]);
 
   const [createdAttributes, setCreatedAttributes] = useState<Attribute[]>([]);
   const [updatedAttributes, setUpdatedAttributes] = useState<Attribute[]>([]);
@@ -51,6 +71,7 @@ const PeopleSettings = () => {
   });
   const [isDuplicationDetected, setIsDuplicationDetected] = useState(false);
   const [isAttributeKeysDefined, setIsAttributeKeysDefined] = useState(false);
+  const [invalidJsonKeys, setInvalidJsonKeys] = useState<string[]>([]);
 
   const [search, setSearch] = useState("");
   const dispatch = useDispatch();
@@ -62,10 +83,26 @@ const PeopleSettings = () => {
       url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Email&type=Boolean&type=Date&type=DateTime`,
     });
 
+    setPossibleAttributes(data);
+    setInitialAttributes([...data]);
+  };
+
+  const loadKeyTypes = async () => {
+    const { data } = await ApiService.get<any[]>({
+      url: `/customers/possible-attribute-types`,
+    });
+
+    setPossibleAttributeTypes(data);
+  };
+
+  const loadKeyParameters = async () => {
+    const { data } = await ApiService.get<any[]>({
+      url: `/customers/possible-attribute-parameters/`,
+    });
+
     const nonSystemAttributes = data.filter((item) => !item.isSystem);
 
-    setPossibleAttributes(nonSystemAttributes);
-    setInitialAttributes([...nonSystemAttributes]);
+    setPossibleAttributeParameters(nonSystemAttributes);
   };
 
   const loadPK = async () => {
@@ -75,28 +112,36 @@ const PeopleSettings = () => {
       const {
         data: { workspace },
       } = await ApiService.get<Account>({ url: "/accounts" });
-      setPK(workspace?.pk);
+      if (possibleAttributes.length)
+        setInitialPK(
+          possibleAttributes.filter((attribute) => {
+            return attribute.is_primary;
+          })[0]
+        );
 
       setIsPKLoading(false);
     } catch (error) {
-      toast.error("Error loading user data");
+      console.error(error);
+      toast.error(`Couldn't load the primary key: ${JSON.stringify(error)}`);
+      setIsPKLoading(false);
       navigate("/people");
     }
   };
 
-  const handlePKChange = (value: string) => {
-    const [key, type] = value.split(";;");
-    if (!key || !type) return;
+  const handlePKChange = (nameAndTypeId: string) => {
+    const [name, attributeTypeId] = nameAndTypeId.split(";;");
 
-    setNewPK({
-      key,
-      type: type as AttributeType,
-    });
+    setNewPK(
+      possibleAttributes.filter((attribute) => {
+        return (
+          attribute.name?.toString() === name &&
+          attribute.attribute_type.id.toString() === attributeTypeId
+        );
+      })[0]
+    );
   };
 
   const handleSave = async () => {
-    console.log(attributeChanges);
-
     if (
       (!newPK &&
         [
@@ -106,7 +151,8 @@ const PeopleSettings = () => {
         ].length === 0) ||
       isSaving ||
       isDuplicationDetected ||
-      !isAttributeKeysDefined
+      !isAttributeKeysDefined ||
+      invalidJsonKeys.length > 0
     ) {
       return;
     }
@@ -131,6 +177,7 @@ const PeopleSettings = () => {
             e.response?.data?.message ||
               "Unexpected error during attribute modification."
           );
+        console.log(e);
       }
     }
 
@@ -139,7 +186,10 @@ const PeopleSettings = () => {
         await ApiService.put({
           url: "/customers/primary-key",
           options: {
-            ...newPK,
+            name: newPK.name,
+            attribute_type: possibleAttributeTypes.filter((type) => {
+              return type.id === newPK.attribute_type.id;
+            })[0],
           },
         });
         const { data } = await ApiService.get<Account>({ url: "/accounts" });
@@ -153,6 +203,8 @@ const PeopleSettings = () => {
         });
 
         toast.success("Primary Key Updated!");
+        // Dispatch the action to update userSchemaSetupped
+        dispatch(setUserSchemaSetupped(true));
       } catch (error) {
         if (error instanceof AxiosError)
           toast.error(
@@ -166,25 +218,40 @@ const PeopleSettings = () => {
     navigate("/people");
   };
 
+  const isValidJsonKey = (key: string) => {
+    // JSON key naming rules: must start with a letter, underscore, or dollar sign,
+    // followed by letters, digits, underscores, or dollar signs
+    const jsonKeyRegex = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
+    return jsonKeyRegex.test(key);
+  };
+
+  useEffect(() => {
+    loadKeyTypes();
+    loadPossibleKeys();
+    loadKeyParameters();
+  }, []);
+
   useEffect(() => {
     loadPK();
-    loadPossibleKeys();
-  }, []);
+  }, [possibleAttributes]);
 
   useEffect(() => {
     const changes: AttributeChanges = {
       created: createdAttributes.filter(
         (createdAttr) =>
           !initialAttributes
-            .map((attr) => `${attr.key}:${attr.type}`)
-            .includes(`${createdAttr.key}:${createdAttr.type}`)
+            .map((attr) => `${attr.name}:${attr.attribute_type}`)
+            .includes(`${createdAttr.name}:${createdAttr.attribute_type}`)
       ),
       updated: updatedAttributes,
       deleted: deletedAttributes.filter(
         (deletedAttr) =>
           !createdAttributes
-            .map((createdAttr) => `${createdAttr.key}:${createdAttr.type}`)
-            .includes(`${deletedAttr.key}:${deletedAttr.type}`)
+            .map(
+              (createdAttr) =>
+                `${createdAttr.name}:${createdAttr.attribute_type}`
+            )
+            .includes(`${deletedAttr.name}:${deletedAttr.attribute_type}`)
       ),
     };
     console.log(changes);
@@ -196,11 +263,19 @@ const PeopleSettings = () => {
       possibleAttributes.some(
         (attr1) =>
           possibleAttributes.filter(
-            (attr2) => attr1.key === attr2.key && attr1.type === attr2.type
+            (attr2) =>
+              attr1.name === attr2.name &&
+              attr1.attribute_type === attr2.attribute_type
           ).length > 1
       )
     );
-    setIsAttributeKeysDefined(possibleAttributes.every((attr) => !!attr.key));
+    setIsAttributeKeysDefined(possibleAttributes.every((attr) => !!attr.name));
+
+    // Validate JSON key names
+    const invalidKeys = possibleAttributes
+      .filter((attr) => !isValidJsonKey(attr.name))
+      .map((attr) => attr.name);
+    setInvalidJsonKeys(invalidKeys);
   }, [possibleAttributes]);
 
   const handleTrackAttributeCreate = (attribute: Attribute) => {
@@ -208,23 +283,25 @@ const PeopleSettings = () => {
     const newUpdatedAttributes = [...updatedAttributes];
     const newDeletedAttributes = [...deletedAttributes];
 
+    console.log(newCreatedAttributes);
+
     const indexOfCreated = newCreatedAttributes
-      .map((attr) => `${attr.key}:${attr.type}`)
-      .indexOf(`${attribute.key}:${attribute.type}`);
+      .map((attr) => `${attr.name}:${JSON.stringify(attr.attribute_type)}`)
+      .indexOf(`${attribute.name}:${attribute.attribute_type}`);
     if (indexOfCreated >= 0) {
       newCreatedAttributes.splice(indexOfCreated, 1);
     }
 
     const indexOfDeleted = newDeletedAttributes
-      .map((attr) => `${attr.key}:${attr.type}`)
-      .indexOf(`${attribute.key}:${attribute.type}`);
+      .map((attr) => `${attr.name}:${attr.attribute_type}`)
+      .indexOf(`${attribute.name}:${attribute.attribute_type}`);
     if (indexOfDeleted >= 0) {
       newDeletedAttributes.splice(indexOfDeleted, 1);
     }
 
     const indexOfUpdated = newUpdatedAttributes
-      .map((attr) => `${attr.key}:${attr.type}`)
-      .indexOf(`${attribute.key}:${attribute.type}`);
+      .map((attr) => `${attr.name}:${attr.attribute_type}`)
+      .indexOf(`${attribute.name}:${attribute.attribute_type}`);
     if (indexOfUpdated >= 0) {
       newUpdatedAttributes.splice(indexOfUpdated, 1);
     }
@@ -287,7 +364,8 @@ const PeopleSettings = () => {
       newDeletedAttributes.splice(indexOfDeleted, 1);
     }
 
-    if (!validateUUID(attribute.id)) newDeletedAttributes.push(attribute);
+    if (!uuid.validate(attribute.id || ""))
+      newDeletedAttributes.push(attribute);
 
     setCreatedAttributes(newCreatedAttributes);
     setUpdatedAttributes(newUpdatedAttributes);
@@ -301,7 +379,7 @@ const PeopleSettings = () => {
       }`}
     >
       <div className="w-full bg-white py-8 px-5 font-inter font-semibold text-[#111827] text-xl border-t border-b border-[#E5E7EB]">
-        Setting
+        Schema Settings
       </div>
       <div className="w-full px-5 mt-4">
         <div className="flex flex-col w-full h-full bg-white py-5">
@@ -312,22 +390,29 @@ const PeopleSettings = () => {
             <Select
               className="px-5"
               placeholder={
-                (search && (newPK || pk)?.key) || "Select user attribute as PK"
+                (search && (newPK || initialPK)?.name) ||
+                "Select which customer attribute to use as the primary key"
               }
               searchValue={search}
               onSearchValueChange={setSearch}
               searchPlaceholder="Search attribute by name"
               id="attribute-search"
               value={
-                pk || newPK
-                  ? `${(newPK || pk)?.key};;${(newPK || pk)?.type}`
+                initialPK || newPK
+                  ? `${(newPK || initialPK)?.name};;${
+                      (newPK || initialPK)?.attribute_type.id
+                    }`
                   : ""
               }
               options={possibleAttributes
-                .filter((el) => el.key.includes(search) && !el.isArray)
+                .filter(
+                  (el) =>
+                    el.name.includes(search) &&
+                    el.attribute_type.subtype_required === false
+                )
                 .map((el) => ({
-                  key: `${el.key};;${el.type}`,
-                  title: el.key,
+                  key: `${el.name};;${el.attribute_type.id}`,
+                  title: el.name,
                 }))}
               onChange={handlePKChange}
             />
@@ -344,12 +429,15 @@ const PeopleSettings = () => {
                 >
                   <div className="flex items-center gap-2.5">
                     <Input
-                      value={attr.key}
+                      value={attr.name}
                       onChange={(value) => {
-                        if (pk && pk.key === possibleAttributes[i].key) {
-                          pk.key = value;
+                        if (
+                          initialPK &&
+                          initialPK.name === possibleAttributes[i].name
+                        ) {
+                          initialPK.name = value;
                         }
-                        possibleAttributes[i].key = value;
+                        possibleAttributes[i].name = value;
                         handleTrackAttributeUpdate(possibleAttributes[i]);
                         setPossibleAttributes([...possibleAttributes]);
                       }}
@@ -357,72 +445,107 @@ const PeopleSettings = () => {
                     <Select
                       className="!w-[200px]"
                       buttonClassName="!w-[200px]"
-                      value={
-                        attr.isArray ? StatementValueType.ARRAY : attr.type
-                      }
+                      value={attr.attribute_type.name}
                       onChange={(type) => {
-                        if (type === StatementValueType.ARRAY) {
-                          possibleAttributes[i].isArray = true;
-                        } else {
-                          possibleAttributes[i].type = type;
-                        }
+                        possibleAttributes[i].attribute_type =
+                          possibleAttributeTypes.find((possibleType) => {
+                            return possibleType.name === type;
+                          }) || possibleAttributeTypes[0];
                         handleTrackAttributeUpdate(possibleAttributes[i]);
                         setPossibleAttributes([...possibleAttributes]);
                       }}
-                      options={Object.values(StatementValueType).map(
-                        (type) => ({ key: type, title: type })
+                      options={Object.values(possibleAttributeTypes).map(
+                        (type) => ({ key: type.name, title: type.name })
                       )}
-                      disabled={!validateUUID(attr.id)}
+                      disabled={!!attr.id}
                     />
-                    {attr.isArray && (
+                    {attr.attribute_type.subtype_required && (
                       <Select
                         className="!w-[200px]"
                         buttonClassName="!w-[200px]"
-                        value={attr.type}
+                        value={
+                          attr.attribute_subtype
+                            ? attr.attribute_subtype?.name
+                            : possibleAttributeTypes.filter(
+                                (possibleType) =>
+                                  possibleType.can_be_subtype === true
+                              )[0].name
+                        }
                         onChange={(type) => {
-                          possibleAttributes[i].type = type;
+                          possibleAttributes[i].attribute_subtype =
+                            possibleAttributeTypes
+                              .filter(
+                                (possibleType) =>
+                                  possibleType.can_be_subtype === true
+                              )
+                              .find((possibleType) => {
+                                return possibleType.name === type;
+                              }) ||
+                            possibleAttributeTypes.filter(
+                              (possibleType) =>
+                                possibleType.can_be_subtype === true
+                            )[0];
                           handleTrackAttributeUpdate(possibleAttributes[i]);
                           setPossibleAttributes([...possibleAttributes]);
                         }}
-                        options={Object.values(StatementValueType)
-                          .filter(
-                            (type) =>
-                              type !== StatementValueType.ARRAY &&
-                              type !== StatementValueType.OBJECT
-                          )
+                        options={Object.values(possibleAttributeTypes)
+                          .filter((type) => type.can_be_subtype === true)
                           .map((type) => ({
-                            key: type,
-                            title: type,
+                            key: type.name,
+                            title: type.name,
                           }))}
-                        disabled={!validateUUID(attr.id)}
+                        disabled={!!attr.id}
                       />
                     )}
-                    {(attr.type === StatementValueType.DATE ||
-                      attr.type === StatementValueType.DATE_TIME) && (
+                    {(attr.attribute_type.parameters_required ||
+                      attr.attribute_subtype?.parameters_required) && (
                       <DateFormatPicker
-                        type={attr.type}
-                        value={attr.dateFormat || ""}
+                        type={
+                          attr.attribute_parameter?.attribute_type.name ===
+                          StatementValueType.DATE
+                            ? StatementValueType.DATE
+                            : StatementValueType.DATE_TIME
+                        }
+                        value={
+                          attr.attribute_parameter?.display_value ||
+                          possibleAttributeParameters[0].display_value
+                        }
                         onChange={(dateFormat) => {
-                          possibleAttributes[i].dateFormat = dateFormat;
+                          // possibleAttributes[i].dateFormat = dateFormat;
                           handleTrackAttributeUpdate(possibleAttributes[i]);
                           setPossibleAttributes([...possibleAttributes]);
                         }}
-                        disabled={!validateUUID(attr.id)}
+                        disabled={!!attr.id}
                       />
                     )}
                   </div>
                   {possibleAttributes.filter(
                     (attr2) =>
-                      attr2.key === attr.key && attr2.type === attr.type
+                      attr2.name === attr.name &&
+                      attr2.attribute_type.id === attr.attribute_type.id
                   ).length > 1 && (
                     <div className="text-red-500">
                       Attribute duplication is not allowed!
                     </div>
                   )}
 
-                  {!attr.key && (
+                  {!attr.name && (
                     <div className="text-red-500">
                       Attribute key must be defined!
+                    </div>
+                  )}
+
+                  {!isValidJsonKey(attr.name) && (
+                    <div className="text-red-500">
+                      Invalid key name; keys must adhere to JSON key naming
+                      rules. See{" "}
+                      <a
+                        href="https://docs.n8n.io/reference/json-key-names"
+                        className="text-blue-500"
+                      >
+                        here
+                      </a>{" "}
+                      for more information.
                     </div>
                   )}
 
@@ -443,10 +566,8 @@ const PeopleSettings = () => {
                 type={ButtonType.SECONDARY}
                 onClick={() => {
                   const newAttribute: Attribute = {
-                    id: uuid(),
-                    key: "",
-                    type: StatementValueType.STRING,
-                    isArray: false,
+                    name: "",
+                    attribute_type: possibleAttributeTypes[0],
                   };
                   setPossibleAttributes([...possibleAttributes, newAttribute]);
                   handleTrackAttributeCreate(newAttribute);
@@ -469,7 +590,8 @@ const PeopleSettings = () => {
                     ].length === 0) ||
                   isSaving ||
                   isDuplicationDetected ||
-                  !isAttributeKeysDefined
+                  !isAttributeKeysDefined ||
+                  invalidJsonKeys.length > 0
                 }
                 onClick={handleSave}
               >

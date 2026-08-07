@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Workspaces } from './workspaces.entity';
 import { SendgridSendingOption } from './sendgrid-sending-option.entity';
+import { SendgridReplyToOption } from './sendgrid-reply-to-option.entity';
 
 @Entity()
 export class WorkspaceSendgridConnection {
@@ -33,6 +34,9 @@ export class WorkspaceSendgridConnection {
 
   @OneToMany(() => SendgridSendingOption, (option) => option.sendgridConnection)
   sendingOptions: SendgridSendingOption[];
+
+  @OneToMany(() => SendgridReplyToOption, (option) => option.sendgridConnection)
+  replyToOptions: SendgridReplyToOption[];
 
   @Column()
   workspaceId: string;

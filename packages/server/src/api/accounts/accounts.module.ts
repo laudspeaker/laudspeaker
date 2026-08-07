@@ -10,20 +10,13 @@ import { S3Service } from '../s3/s3.service';
 import { JourneysModule } from '../journeys/journeys.module';
 import { TemplatesModule } from '../templates/templates.module';
 import { StepsModule } from '../steps/steps.module';
-import { MongooseModule } from '@nestjs/mongoose';
-import {
-  CustomerKeys,
-  CustomerKeysSchema,
-} from '../customers/schemas/customer-keys.schema';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { OrganizationPlan } from '../organizations/entities/organization-plan.entity';
+import { ChannelsModule } from '../channels/channels.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: CustomerKeys.name, schema: CustomerKeysSchema },
-    ]),
     TypeOrmModule.forFeature([
       Account,
       Workspaces,
@@ -35,6 +28,7 @@ import { OrganizationPlan } from '../organizations/entities/organization-plan.en
     forwardRef(() => JourneysModule),
     forwardRef(() => TemplatesModule),
     forwardRef(() => StepsModule),
+    forwardRef(() => ChannelsModule),
     WebhooksModule,
   ],
   controllers: [AccountsController],

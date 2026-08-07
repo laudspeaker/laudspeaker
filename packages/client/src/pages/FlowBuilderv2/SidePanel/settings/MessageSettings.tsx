@@ -23,6 +23,8 @@ import LockScreenAndroid from "pages/PushBuilder/Badges/LockScreenAndroid";
 import Select from "components/Elements/Selectv2";
 import CogIcon from "@heroicons/react/24/outline/CogIcon";
 import { Link } from "react-router-dom";
+import ToggleSwitch from "components/Elements/ToggleSwitch";
+import { WorkspaceNotificationPreferencesData } from "pages/Settingsv2/tabs/MessageChannelTab";
 
 const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
   nodeData,
@@ -45,7 +47,18 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
         sendingEmail: string;
         sendingName?: string;
       }[];
+      replyToOptions: {
+        id: string;
+        replyToEmail: string;
+        replyToName?: string;
+      }[];
     }[]
+  >([]);
+
+  const [oneClick, setOneClick] = useState<boolean>(false);
+  const [oneClickPreference, setOneClickPreference] = useState<string>("");
+  const [preferencesData, setPreferencesData] = useState<
+    WorkspaceNotificationPreferencesData[]
   >([]);
 
   const dispatch = useDispatch();
@@ -78,13 +91,19 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
 
   const getAllTemplates = async () => {
     const { data: templates } = await ApiService.get<{ data: Template[] }>({
-      url: `${ApiConfig.getAllTemplates}`,
+      url: `${ApiConfig.getAllTemplates}?type=${templateType}`,
     });
 
-    const filteredTemplates = templates?.data?.filter(
-      (item: { type?: string }) => item.type === templateType
-    );
-    setTemplateList(filteredTemplates);
+    setTemplateList(templates?.data);
+  };
+
+  const getAllNotificationPreferences = async () => {
+    const { data } = await ApiService.get<
+      WorkspaceNotificationPreferencesData[]
+    >({
+      url: "/notification-preferences",
+    });
+    setPreferencesData(data);
   };
 
   const handleTemplateInlineEdit = () => {
@@ -180,6 +199,7 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
 
   useEffect(() => {
     getAllTemplates();
+    getAllNotificationPreferences();
   }, [templateType]);
 
   useEffect(() => {
@@ -193,7 +213,175 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
 
   return (
     <div className="flex flex-col gap-[10px]">
-      {templateType !== MessageType.PUSH ? (
+      {templateType !== MessageType.PUSH &&
+      templateType !== MessageType.WEBHOOK ? (
+        <div className="font-inter font-normal text-[14px] leading-[22px]">
+          <div className="flex p-5 justify-between items-center">
+            <div>Template</div>
+            <div className="flex flex-col gap-[10px]">
+              <select
+                className="w-[200px] h-[32px] rounded-sm px-[12px] py-[4px] text-[14px] font-roboto leading-[22px]"
+                value={selectedTemplate?.id}
+                id="template-select"
+                onChange={(e) =>
+                  setNodeData({
+                    ...nodeData,
+                    template: {
+                      type: templateType,
+                      selected: {
+                        id: +e.target.value,
+                        name:
+                          templateList.find(
+                            (template) => template.id === +e.target.value
+                          )?.name || "",
+                      },
+                    },
+                  })
+                }
+              >
+                <option disabled selected value={undefined}>
+                  Select a template
+                </option>
+                {templateList.map((template) => (
+                  <option value={template.id} key={template.id}>
+                    {template.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-2.5 p-5 justify-between items-center">
+            <div>Connection</div>
+            <div className="flex flex-col gap-[10px]">
+              <Select
+                className="w-[200px] min-h-[32px]"
+                buttonClassName="w-[200px] min-h-[32px]"
+                buttonInnerWrapperClassName="w-[200px] min-h-[32px]"
+                value={nodeData.connectionId}
+                onChange={(value) =>
+                  setNodeData({ ...nodeData, connectionId: value })
+                }
+                options={connectionList.map((connection) => ({
+                  key: connection.id,
+                  title: connection.name,
+                }))}
+                placeholder="Select a connection"
+              />
+            </div>
+          </div>
+          {templateType === MessageType.EMAIL && (
+            <>
+              <div className="flex gap-2.5 p-5 justify-between items-center">
+                <div>Sending option</div>
+                <div className="flex flex-col gap-[10px]">
+                  <Select
+                    className="w-[200px] min-h-[32px]"
+                    buttonClassName="w-[200px] min-h-[32px]"
+                    buttonInnerWrapperClassName="w-[200px] min-h-[32px]"
+                    value={nodeData.sendingOptionId}
+                    onChange={(value) =>
+                      setNodeData({ ...nodeData, sendingOptionId: value })
+                    }
+                    options={
+                      nodeData.connectionId
+                        ? connectionList
+                            .find(
+                              (connection) =>
+                                connection.id === nodeData.connectionId
+                            )
+                            ?.sendingOptions.map((option) => ({
+                              key: option.id,
+                              title: `${option.sendingEmail}${
+                                option.sendingName
+                                  ? ` <${option.sendingName}>`
+                                  : ""
+                              }`,
+                            })) || []
+                        : []
+                    }
+                    placeholder="Select an option"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2.5 p-5 justify-between items-center">
+                <div>Reply To Option</div>
+                <div className="flex flex-col gap-[10px]">
+                  <Select
+                    className="w-[200px] min-h-[32px]"
+                    buttonClassName="w-[200px] min-h-[32px]"
+                    buttonInnerWrapperClassName="w-[200px] min-h-[32px]"
+                    value={nodeData.replyToOptionId}
+                    onChange={(value) =>
+                      setNodeData({ ...nodeData, replyToOptionId: value })
+                    }
+                    options={
+                      nodeData.connectionId
+                        ? connectionList
+                            .find(
+                              (connection) =>
+                                connection.id === nodeData.connectionId
+                            )
+                            ?.replyToOptions?.map((option: any) => ({
+                              key: option.id,
+                              title: `${option.replyToEmail}${
+                                option.replyToName
+                                  ? ` <${option.replyToName}>`
+                                  : ""
+                              }`,
+                            })) || []
+                        : []
+                    }
+                    placeholder="Select an option"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2.5 p-5 justify-between items-center">
+                <div>One-Click Unsubscribe:</div>
+                <div className="flex flex-col gap-[10px]">
+                  <ToggleSwitch
+                    onChange={() =>
+                      setNodeData({
+                        ...nodeData,
+                        oneClickUnsubscribeEnabled:
+                          !nodeData.oneClickUnsubscribeEnabled,
+                      })
+                    }
+                    checked={nodeData.oneClickUnsubscribeEnabled}
+                    iconRequired={false}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2.5 p-5 justify-between items-center">
+                <div>Unsubscribe preference:</div>
+                <div className="flex flex-col gap-[10px]">
+                  <Select
+                    className="w-[200px] min-h-[32px]"
+                    buttonClassName="w-[200px] min-h-[32px]"
+                    buttonInnerWrapperClassName="w-[200px] min-h-[32px]"
+                    value={nodeData.oneClickUnsubscribeOptionId}
+                    onChange={(value) =>
+                      setNodeData({
+                        ...nodeData,
+                        oneClickUnsubscribeOptionId: value,
+                      })
+                    }
+                    disabled={!nodeData.oneClickUnsubscribeEnabled}
+                    options={[
+                      ...preferencesData.map((preference: any) => ({
+                        key: preference.id,
+                        title: preference.name,
+                      })),
+                      { key: "all", title: "all" },
+                    ]}
+                    placeholder="Select a notification preference"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      ) : templateType === MessageType.WEBHOOK ? (
+        // New case for WEBHOOK type
         <div className="font-inter font-normal text-[14px] leading-[22px]">
           <div className="flex p-5 justify-between items-center">
             <div>Template</div>
@@ -227,55 +415,6 @@ const MessageSettings: FC<SidePanelComponentProps<MessageNodeData>> = ({
                   </option>
                 ))}
               </select>
-            </div>
-          </div>
-          <div className="flex gap-2.5 p-5 justify-between items-center">
-            <div>Connection</div>
-            <div className="flex flex-col gap-[10px]">
-              <Select
-                className="w-[200px] min-h-[32px]"
-                buttonClassName="w-[200px] min-h-[32px]"
-                buttonInnerWrapperClassName="w-[200px] min-h-[32px]"
-                value={nodeData.connectionId}
-                onChange={(value) =>
-                  setNodeData({ ...nodeData, connectionId: value })
-                }
-                options={connectionList.map((connection) => ({
-                  key: connection.id,
-                  title: connection.name,
-                }))}
-                placeholder="select connection"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2.5 p-5 justify-between items-center">
-            <div>Sending option</div>
-            <div className="flex flex-col gap-[10px]">
-              <Select
-                className="w-[200px] min-h-[32px]"
-                buttonClassName="w-[200px] min-h-[32px]"
-                buttonInnerWrapperClassName="w-[200px] min-h-[32px]"
-                value={nodeData.sendingOptionId}
-                onChange={(value) =>
-                  setNodeData({ ...nodeData, sendingOptionId: value })
-                }
-                options={
-                  nodeData.connectionId
-                    ? connectionList
-                        .find(
-                          (connection) =>
-                            connection.id === nodeData.connectionId
-                        )
-                        ?.sendingOptions.map((option) => ({
-                          key: option.id,
-                          title: `${option.sendingEmail}${
-                            option.sendingName ? ` <${option.sendingName}>` : ""
-                          }`,
-                        })) || []
-                    : []
-                }
-                placeholder="select option"
-              />
             </div>
           </div>
         </div>

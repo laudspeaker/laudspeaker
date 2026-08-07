@@ -135,36 +135,6 @@ export class EventsController {
     );
   }
 
-  @Post('/identify-customer')
-  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  @UseGuards(ApiKeyAuthGuard)
-  async identifyCustomer(
-    @Req() { user }: Request,
-    @Body() body: IdentifyCustomerDTO
-  ) {
-    const session = randomUUID();
-    return this.eventsService.identifyCustomer(
-      <{ account: Account; workspace: Workspaces }>user,
-      body,
-      session
-    );
-  }
-
-  @Post('/set-customer-props')
-  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  @UseGuards(ApiKeyAuthGuard)
-  async setCustomerProperpties(
-    @Req() { user }: Request,
-    @Body() body: SetCustomerPropsDTO
-  ) {
-    const session = randomUUID();
-    return this.eventsService.setCustomerProperties(
-      <{ account: Account; workspace: Workspaces }>user,
-      body,
-      session
-    );
-  }
-
   @Get('/possible-attributes/:resourceId?')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
@@ -262,21 +232,6 @@ export class EventsController {
     return this.eventsService.getPossibleValues(key, search, session);
   }
 
-  @Get('/possible-posthog-types')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  async getPossiblePothogTypes(
-    @Query('search') search: string,
-    @Req() { user }: Request
-  ) {
-    const session = randomUUID();
-    return this.eventsService.getPossiblePosthogTypes(
-      (<Account>user).id,
-      session,
-      search
-    );
-  }
-
   @Get('/custom-events')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
@@ -298,29 +253,10 @@ export class EventsController {
     );
   }
 
-  @Get('/posthog-events')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  async getPosthogEvents(
-    @Req() { user }: Request,
-    @Query('take') take?: string,
-    @Query('skip') skip?: string,
-    @Query('search') search?: string
-  ) {
-    const session = randomUUID();
-    return this.eventsService.getPosthogEvents(
-      <Account>user,
-      session,
-      take && +take,
-      skip && +skip,
-      search
-    );
-  }
-
   @Post('/batch/')
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   @UseGuards(ApiKeyAuthGuard)
-  async testEndpoint(
+  async batchEndpoint(
     @Req() { user }: Request,
     @Body() body: any
   ): Promise<void | HttpException> {

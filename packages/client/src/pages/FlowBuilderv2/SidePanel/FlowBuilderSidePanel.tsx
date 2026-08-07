@@ -1,4 +1,4 @@
-import MulisplitSettings from "./settings/MulisplitSettings";
+import MultisplitSettings from "./settings/MultisplitSettings";
 import { Transition } from "@headlessui/react";
 import React, { FC, ReactNode, useEffect, useState } from "react";
 import Scrollbars from "react-custom-scrollbars-2";
@@ -169,16 +169,16 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
     ),
     [NodeType.USER_ATTRIBUTE]: (
       <>
-        {nodeData.type === NodeType.USER_ATTRIBUTE && (
-          <div className="p-5">
-            <UserAttributeSettings
+        {/* {nodeData.type === NodeType.USER_ATTRIBUTE && ( */}
+        <div className="p-5">
+          {/* <UserAttributeSettings
               nodeData={nodeData}
               setNodeData={setNodeData}
               setIsError={setIsError}
               showErrors={showErrors}
-            />
-          </div>
-        )}
+            /> */}
+        </div>
+        {/* )} */}
       </>
     ),
     [NodeType.TRACKER]: (
@@ -214,7 +214,7 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
       <>
         {nodeData.type === NodeType.MULTISPLIT && (
           <div className="p-5">
-            <MulisplitSettings
+            <MultisplitSettings
               setIsError={setIsError}
               showErrors={showErrors}
               nodeData={nodeData}
@@ -468,10 +468,10 @@ const FlowBuilderSidePanel: FC<FlowBuilderSidePanelProps> = ({ className }) => {
                     return "Users on this trigger will move to another step only after a time delay";
                   case NodeType.TIME_WINDOW:
                     return "Users on this trigger will move to another step only during a time window";
-                  case NodeType.USER_ATTRIBUTE:
-                    return "Users on this trigger will move to another step only if they satisfy some user attribute condition";
+                  // case NodeType.USER_ATTRIBUTE:
+                  //   return "Users on this trigger will move to another step only if they satisfy some user attribute condition";
                   case NodeType.MULTISPLIT:
-                    return "Description Description Description";
+                    return "Users in this step will be split based on events and attributes";
                   default:
                     return "";
                 }

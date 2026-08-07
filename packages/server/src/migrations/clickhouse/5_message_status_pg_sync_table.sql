@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS message_status_pg_sync (
+  created_at              Datetime64(6)   NOT NULL DEFAULT now64(),
+  stepId                  UUID            NOT NULL,
+  customerId              String          NOT NULL,
+  templateId              String          NOT NULL,
+  messageId               String          NOT NULL,
+  event                   String          NOT NULL,
+  eventProvider           String          NOT NULL,
+  createdAt               DateTime(6)     NOT NULL,
+  processed               Boolean         NOT NULL,
+  userId                  UUID            NOT NULL,
+) ENGINE = RabbitMQ SETTINGS
+  rabbitmq_host_port = 'rabbitmq:5672',
+  rabbitmq_exchange_name = '',
+  -- rabbitmq_exchange_type = 'direct',
+  rabbitmq_format = 'JSONEachRow',
+  rabbitmq_persistent = 1,
+  rabbitmq_queue_consume  = 1,
+  rabbitmq_max_rows_per_message = 100,
+  rabbitmq_routing_key_list = 'message_status_pg_sync.pending', 
+  rabbitmq_queue_base = 'message_status_pg_sync.pending';

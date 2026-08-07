@@ -29,7 +29,7 @@ interface CustomEvent {
   correlationKey: string;
   correlationValue: string;
   payload: string;
-  createdAt: string;
+  created_at: string;
   errorMessage?: string;
 }
 
@@ -219,7 +219,7 @@ const EventTracker = () => {
                     handleSelectCustomEvent(JSON.stringify(customEvent))
                   }
                 >
-                  {format(new Date(customEvent.createdAt), "MM/dd/yyyy HH:mm")}
+                  {format(new Date(customEvent.created_at), "MM/dd/yyyy HH:mm")}
                 </div>,
               ])}
               className="w-full"

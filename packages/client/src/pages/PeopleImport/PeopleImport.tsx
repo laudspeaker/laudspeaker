@@ -17,6 +17,7 @@ import ImportCompletion, {
 import ImportTabOne, { ImportOptions } from "./ImportTabOne";
 import MappingTab from "./MappingTab";
 import MapValidationErrors from "./Modals/MapValidationErrors";
+import { Attribute, AttributeType } from "pages/PeopleSettings/PeopleSettings";
 
 const tabs = [
   { title: "Upload CSV File" },
@@ -24,15 +25,8 @@ const tabs = [
   { title: "Import Completion" },
 ];
 
-export type AttributeType = Exclude<
-  StatementValueType,
-  StatementValueType.ARRAY & StatementValueType.OBJECT
->;
-
 export interface ImportAttribute {
-  key: string;
-  type: AttributeType;
-  dateFormat?: string;
+  attribute: Attribute;
   skip?: boolean;
 }
 
@@ -43,14 +37,14 @@ export interface ImportParams {
     fileKey: string;
   };
   emptyCount: number;
-  primaryAttribute: null | { key: string; type: AttributeType };
+  primaryAttribute: null | Attribute;
 }
 
 export type MappingParams = Record<
   string,
   {
     asAttribute?: ImportAttribute;
-    isPrimary: boolean;
+    is_primary: boolean;
     doNotOverwrite: boolean;
   }
 >;
@@ -62,6 +56,8 @@ enum ValidationError {
 }
 
 export interface PreviewImportResults {
+  total: number;
+  final: number;
   updated: number;
   created: number;
   skipped: number;
@@ -118,7 +114,7 @@ const PeopleImport: FC<PeopleImportProps> = ({ inSegment }) => {
             Object.keys(data.headers).map((el) => ({
               head: el,
               asAttribute: undefined,
-              isPrimary: false,
+              is_primary: false,
               doNotOverwrite: false,
             })),
             "head"
@@ -138,13 +134,13 @@ const PeopleImport: FC<PeopleImportProps> = ({ inSegment }) => {
     },
     [ValidationError.PRIMARY_REQUIRED]: {
       title: "Primary key missing",
-      desc: "You don't have primary key specified, without it you can't proceed, please specify primary key.",
+      desc: "You don't have a primary key specified, please specify a primary key and try again.",
       cancel: "",
       confirm: "Got it",
     },
     [ValidationError.PRIMARY_MAP_REQUIRED]: {
       title: "Primary key attribute not mapped",
-      desc: `You don't have a field that maps to your primary key (${fileData?.primaryAttribute?.key}), it's required to map your data properly.`,
+      desc: `You don't have a field that maps to your primary key (${fileData?.primaryAttribute?.name}), please specify a field that maps to ${fileData?.primaryAttribute?.name} and try again.`,
       cancel: "",
       confirm: "Got it",
     },
@@ -273,9 +269,9 @@ const PeopleImport: FC<PeopleImportProps> = ({ inSegment }) => {
   const handle2TabValidation = async () => {
     const pk = Object.values(mappingSettings).find(
       (el) =>
-        el.isPrimary &&
-        el.asAttribute?.key &&
-        el.asAttribute?.type &&
+        el.is_primary &&
+        el.asAttribute?.attribute.name &&
+        el.asAttribute?.attribute.attribute_type.name &&
         !el.asAttribute.skip
     );
     const errors: ValidationError[] = [];
@@ -288,7 +284,9 @@ const PeopleImport: FC<PeopleImportProps> = ({ inSegment }) => {
     }
     if (
       Object.values(mappingSettings).some(
-        (el) => !el.asAttribute?.key || !el.asAttribute?.type
+        (el) =>
+          !el.asAttribute?.attribute?.name ||
+          !el.asAttribute?.attribute?.attribute_type.name
       )
     ) {
       errors.push(ValidationError.UNMAPPED_ATTRIBUTES);

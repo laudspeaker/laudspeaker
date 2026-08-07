@@ -8,7 +8,6 @@ import {
   InstallURLOptions,
   InvalidStateError,
 } from '@slack/oauth';
-import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Request, Response } from 'express';
 import { onboardingBlock } from './blocks/onboarding.block';
@@ -19,9 +18,11 @@ import { CustomersService } from '../customers/customers.service';
 import { CreateCustomerDto } from '../customers/dto/create-customer.dto';
 import { State } from './entities/state.entity';
 import { platform, release } from 'os';
-import { CustomerDocument } from '../customers/schemas/customer.schema';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { QueueType } from '../../common/services/queue/types/queue-type';
+import { Producer } from '../../common/services/queue/classes/producer';
+import { Customer } from '../customers/entities/customer.entity';
 
 interface ResponseError extends Error {
   status?: number;
@@ -53,8 +54,6 @@ export class SlackService {
     private workspacesRepository: Repository<Workspaces>,
     @InjectRepository(Account)
     private readonly accountsRepository: Repository<Account>,
-    @InjectQueue('{slack}') private readonly slackQueue: Queue,
-    @InjectQueue('{message}') private readonly messageQueue: Queue,
     @Inject(forwardRef(() => CustomersService))
     private readonly customersService: CustomersService
   ) {
@@ -341,7 +340,7 @@ export class SlackService {
   async sendMagicEmail(install_id: string, toEmail: string) {
     const textLink = 'https://app.laudspeaker.com/slack/cor/' + install_id;
 
-    await this.messageQueue.add('email', {
+    await Producer.add(QueueType.MESSAGE, {
       key: process.env.MAGIC_EMAIL_KEY,
       from: 'Laudspeaker Team',
       domain: process.env.MAGIC_EMAIL_DOMAIN,
@@ -353,7 +352,7 @@ export class SlackService {
             To link your laudspeaker account with slack, please click this link: ${textLink}
             
             -Team laudspeaker`,
-    });
+    }, 'email');
   }
 
   validateEmail(email: any) {
@@ -489,11 +488,11 @@ export class SlackService {
   }
 
   async enqueueMessage(job: any) {
-    await this.slackQueue.add('send', {
+    await Producer.add(QueueType.SLACK, {
       methodName: job.method,
       token: job.token,
       args: job.args,
-    });
+    }, 'send');
   }
 
   packageIdentifier(): string {
@@ -523,9 +522,9 @@ export class SlackService {
     };
   }
 
-  async getInstallation(customer: CustomerDocument): Promise<Installation> {
+  async getInstallation(customer: Customer): Promise<Installation> {
     return await this.installationRepository.findOneBy({
-      id: customer?.slackTeamId[0]?.trim(),
+      id: customer?.user_attributes.slackTeamId[0]?.trim(),
     });
   }
 }

@@ -6,8 +6,11 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { StatementValueType } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
-import { AttributeType } from "../PeopleImport";
 import DateFormatPicker from "../DateFormatPicker";
+import {
+  AttributeParameter,
+  AttributeType,
+} from "pages/PeopleSettings/PeopleSettings";
 
 interface FormatData {
   key: string;
@@ -116,27 +119,57 @@ const AddAttributeModal = ({
   onAdded,
 }: AddAttributeModalProps) => {
   const [newName, setNewName] = useState("");
-  const [type, setType] = useState<StatementValueType>();
+  const [selectedType, setSelectedType] = useState<AttributeType>();
   const [dateFormat, setDateFormat] = useState<string>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  const [possibleAttributeTypes, setPossibleAttributeTypes] = useState<
+    AttributeType[]
+  >([]);
+  const [possibleAttributeParameters, setPossibleAttributeParameters] =
+    useState<AttributeParameter[]>([]);
+
+  const loadKeyTypes = async () => {
+    const { data } = await ApiService.get<any[]>({
+      url: `/customers/possible-attribute-types`,
+    });
+
+    setPossibleAttributeTypes(data);
+  };
+
+  const loadKeyParameters = async () => {
+    const { data } = await ApiService.get<any[]>({
+      url: `/customers/possible-attribute-parameters/`,
+    });
+
+    const nonSystemAttributes = data.filter((item) => !item.isSystem);
+
+    setPossibleAttributeParameters(nonSystemAttributes);
+  };
+
   useEffect(() => {
-    if (isOpen) return;
+    if (isOpen) {
+      loadKeyParameters();
+      loadKeyTypes();
+      return;
+    }
 
     setNewName("");
-    setType(undefined);
+    setSelectedType(undefined);
     setDateFormat(undefined);
   }, [isOpen]);
 
   useEffect(() => {
     setDateFormat(undefined);
-  }, [type]);
+  }, [selectedType]);
 
   const handleSave = async () => {
     if (
-      !type ||
+      !selectedType ||
       !newName ||
-      ([StatementValueType.DATE, StatementValueType.DATE_TIME].includes(type) &&
+      ([StatementValueType.DATE, StatementValueType.DATE_TIME].includes(
+        selectedType.name as StatementValueType
+      ) &&
         !dateFormat) ||
       isLoading
     )
@@ -144,15 +177,15 @@ const AddAttributeModal = ({
 
     setIsLoading(true);
     try {
+      console.log(JSON.stringify(selectedType, null, 2));
       await ApiService.post({
         url: `/customers/attributes/create`,
         options: {
           name: newName.trim(),
-          type,
-          dateFormat,
+          attribute_type: selectedType,
         },
       });
-      onAdded(newName, type, dateFormat);
+      onAdded(newName, selectedType, dateFormat);
     } catch (error) {
       toast.error("Apply another type or name.");
     }
@@ -174,18 +207,18 @@ const AddAttributeModal = ({
       >
         <div className="font-roboto">
           <div className="font-inter text-xl text-[#111827] font-semibold">
-            Add filed
+            Add an Attribute
           </div>
           <hr className="border-[#E5E7EB] my-3" />
           <div>
             <div className="flex justify-between items-center mb-3">
               <span className="text-sm text-[#111827] font-inter">
-                Field name
+                Attribute Name
               </span>
               <Input
                 wrapperClassName="!max-w-[300px] !w-full"
                 className="!max-w-[300px] !w-full"
-                placeholder="field name you want to import"
+                placeholder="my-attribute-name"
                 value={newName}
                 onChange={setNewName}
                 id="fieldNameInput"
@@ -194,37 +227,40 @@ const AddAttributeModal = ({
             <div className="flex justify-between items-center">
               <span className="text-sm text-[#111827] font-inter">Type</span>
               <Select
-                value={type}
+                value={selectedType?.name}
                 placeholder="Select type"
                 id="selectTypeInput"
                 className="max-w-[300px] w-full"
-                options={Object.values(StatementValueType)
-                  .slice(0, 6)
-                  .map((el) => ({
-                    key: el,
-                    title: el,
-                  }))}
-                onChange={setType}
+                options={Object.values(possibleAttributeTypes).map(
+                  (attrType) => ({
+                    key: attrType.name,
+                    title: attrType.name,
+                  })
+                )}
+                onChange={(typeName) =>
+                  setSelectedType(
+                    possibleAttributeTypes.find((possibleType) => {
+                      return possibleType.name === typeName;
+                    })
+                  )
+                }
               />
             </div>
-            {type &&
-              (type === StatementValueType.DATE ||
-                type === StatementValueType.DATE_TIME) && (
-                <div
-                  className="flex justify-between items-center mt-3"
-                  id="dateFormatPicker"
-                >
-                  <span className="text-sm text-[#111827] font-inter">
-                    {type === StatementValueType.DATE ? "Date" : "Date-time"}{" "}
-                    format
-                  </span>
-                  <DateFormatPicker
-                    value={dateFormat || ""}
-                    type={type}
-                    onChange={setDateFormat}
-                  />
-                </div>
-              )}
+            {selectedType && selectedType.parameters_required && (
+              <div
+                className="flex justify-between items-center mt-3"
+                id="dateFormatPicker"
+              >
+                <span className="text-sm text-[#111827] font-inter">
+                  {selectedType.name === "Date" ? "Date" : "Date-time"} format
+                </span>
+                <DateFormatPicker
+                  value={dateFormat || ""}
+                  type={StatementValueType.DATE}
+                  onChange={setDateFormat}
+                />
+              </div>
+            )}
           </div>
           <div className="flex justify-end items-center mt-6 gap-2">
             <Button
@@ -238,11 +274,11 @@ const AddAttributeModal = ({
             <Button
               disabled={
                 !newName ||
-                !type ||
+                !selectedType ||
                 ([
                   StatementValueType.DATE,
                   StatementValueType.DATE_TIME,
-                ].includes(type) &&
+                ].includes(selectedType.name as StatementValueType) &&
                   !dateFormat) ||
                 isLoading
               }

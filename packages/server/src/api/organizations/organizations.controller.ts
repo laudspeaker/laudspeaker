@@ -13,20 +13,14 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import { randomUUID } from 'crypto';
 import { Request } from 'express';
-import { Model } from 'mongoose';
 import { RavenInterceptor } from 'nest-raven';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { DisconnectFirebaseDTO } from '../accounts/dto/disconnect-firebase.dto';
 import { Account } from '../accounts/entities/accounts.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import {
-  CustomerKeys,
-  CustomerKeysDocument,
-} from '../customers/schemas/customer-keys.schema';
 import { S3Service } from '../s3/s3.service';
 import { CreateOrganizationDTO } from './dto/create-ogranization.dto';
 import { InviteMemberDTO } from './dto/invite-user.dto';
@@ -39,8 +33,6 @@ export class OrganizationsController {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
     private readonly s3Service: S3Service,
-    @InjectModel(CustomerKeys.name)
-    public CustomerKeysModel: Model<CustomerKeysDocument>,
     @Inject(OrganizationService)
     public organizationService: OrganizationService
   ) {}

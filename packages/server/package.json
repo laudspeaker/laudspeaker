@@ -29,10 +29,9 @@
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --release $(sentry-cli releases propose-version) ./dist && sentry-cli sourcemaps upload --release $(sentry-cli releases propose-version) ./dist"
   },
   "dependencies": {
-    "@clickhouse/client": "^0.0.9",
+    "@clickhouse/client": "^1.4.0",
     "@dagrejs/graphlib": "^2.1.13",
     "@databricks/sql": "1.0.0",
-    "@depyronick/nestjs-clickhouse": "^1.0.16",
     "@golevelup/ts-jest": "^0.3.7",
     "@good-ghosting/random-name-generator": "^1.0.3",
     "@js-temporal/polyfill": "^0.4.4",
@@ -46,7 +45,6 @@
     "@nestjs/core": "^9.0.0",
     "@nestjs/jwt": "^9.0.0",
     "@nestjs/mapped-types": "^1.2.2",
-    "@nestjs/mongoose": "^9.2.0",
     "@nestjs/passport": "^9.0.3",
     "@nestjs/platform-express": "^9.0.0",
     "@nestjs/platform-socket.io": "^9.4.0",
@@ -57,12 +55,12 @@
     "@sendgrid/eventwebhook": "^8.0.0",
     "@sendgrid/mail": "^7.7.0",
     "@sentry/cli": "^2.21.2",
-    "@sentry/node": "^7.73.0",
-    "@sentry/profiling-node": "^1.2.1",
+    "@sentry/node": "8.33.1",
     "@sentry/tracing": "^7.102.1",
     "@slack/oauth": "^2.5.4",
     "@slack/web-api": "^6.7.2",
     "@types/bcryptjs": "^2.4.2",
+    "amqplib": "^0.10.4",
     "async-dash": "^1.0.4",
     "aws-sdk": "^2.1354.0",
     "bcrypt": "^5.0.1",
@@ -86,7 +84,6 @@
     "liquidjs": "^9.42.0",
     "lodash": "^4.17.21",
     "mailgun.js": "^8.2.1",
-    "mongoose": "^7.0.3",
     "morgan": "1.10.0",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^2.3.3",
@@ -114,7 +111,7 @@
     "socket.io-client": "^4.6.1",
     "starkbank-ecdsa": "^1.1.5",
     "stripe": "^15.7.0",
-    "svix": "^1.15.0",
+    "svix": "1.15.0",
     "sync-fetch": "^0.4.2",
     "tr-nestjs-clickhouse": "^1.1.1",
     "traverse": "0.6.7",
@@ -123,6 +120,7 @@
     "typeorm": "^0.3.12",
     "undici": "^5.21.0",
     "winston": "^3.8.1",
+    "uuidv7": "^1.0.2",
     "winston-papertrail": "^1.0.5",
     "winston-syslog": "^2.6.0"
   },
@@ -177,5 +175,8 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "overrides": {
+    "uuid": "^10.0.0"
   }
 }

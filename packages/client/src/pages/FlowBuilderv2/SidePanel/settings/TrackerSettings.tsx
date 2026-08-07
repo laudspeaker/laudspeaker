@@ -201,11 +201,11 @@ const TrackerSettings: FC<SidePanelComponentProps<TrackerNodeData>> = ({
                       <div className="text-[#4B5563]">({field.type})</div>
                     </div>
                     <div className="bg-white rounded-sm">
-                      <DynamicInput
+                      {/* <DynamicInput
                         type={field.type}
                         value={field.value}
                         onChange={(value) => handleChangeField(i, value)}
-                      />
+                      /> */}
                     </div>
                   </div>
                 ))}

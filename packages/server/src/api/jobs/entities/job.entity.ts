@@ -7,8 +7,8 @@ import {
 } from 'typeorm';
 import { IsDate, IsDefined, ValidateIf } from 'class-validator';
 import { Account } from '../../accounts/entities/accounts.entity';
-import { Audience } from '../../audiences/entities/audience.entity';
-import { Workflow } from '../../workflows/entities/workflow.entity';
+import { Step } from '../../steps/entities/step.entity';
+import { Journey } from '../../journeys/entities/journey.entity';
 
 export enum TimeJobType {
   DELAY,
@@ -31,16 +31,16 @@ export class Job {
   owner: Account;
 
   @JoinColumn()
-  @ManyToOne(() => Audience, (audience) => audience.id, { onDelete: 'CASCADE' })
-  from: Audience;
+  @ManyToOne(() => Step, (step) => step.id, { onDelete: 'CASCADE' })
+  from: Step;
 
   @JoinColumn()
-  @ManyToOne(() => Audience, (audience) => audience.id, { onDelete: 'CASCADE' })
-  to: Audience;
+  @ManyToOne(() => Step, (step) => step.id, { onDelete: 'CASCADE' })
+  to: Step;
 
   @JoinColumn()
-  @ManyToOne(() => Workflow, (workflow) => workflow.id, { onDelete: 'CASCADE' })
-  workflow: Workflow;
+  @ManyToOne(() => Journey, (journey) => journey.id, { onDelete: 'CASCADE' })
+  workflow: Journey;
 
   @Column({ type: 'varchar', nullable: false })
   customer: string;

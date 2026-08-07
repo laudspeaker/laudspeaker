@@ -1,4 +1,3 @@
-import { PushPlatforms } from '@/api/templates/entities/template.entity';
 import { Trim } from 'class-sanitizer';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 

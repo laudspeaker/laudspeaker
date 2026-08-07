@@ -41,8 +41,10 @@ export class EventDto {
   @IsNotEmpty()
   public correlationKey: string;
 
-  @Validate(IsArrayOrString)
-  correlationValue?: string | string[];
+  @Trim()
+  @IsString()
+  @IsOptional()
+  correlationValue?: string;
 
   @Trim()
   @IsString()
@@ -52,6 +54,9 @@ export class EventDto {
 
   @IsOptional()
   public payload?: any;
+
+  @IsOptional()
+  public context?: any;
 
   @IsOptional()
   public $fcm?: FCMToken;

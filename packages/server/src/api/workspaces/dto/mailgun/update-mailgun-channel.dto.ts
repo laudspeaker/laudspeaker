@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { CreateMailgunSendingOption } from './create-mailgun-sending-option.dto';
+import { CreateMailgunReplyToOption } from './create-mailgun-reply-to-option.dto';
 
 export class UpdateMailgunChannelDto {
   @IsOptional()
@@ -20,4 +21,10 @@ export class UpdateMailgunChannelDto {
   @ValidateNested()
   @Type(() => CreateMailgunSendingOption)
   sendingOptions?: CreateMailgunSendingOption[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested()
+  @Type(() => CreateMailgunReplyToOption)
+  replyToOptions?: CreateMailgunReplyToOption[];
 }

@@ -1,7 +1,7 @@
-import { CustomerDocument } from '../schemas/customer.schema';
+import { Customer } from '../entities/customer.entity';
 import { FindType } from '../enums/FindType.enum';
 
 export interface CustomerSearchOptionResult {
-  customer: CustomerDocument;
+  customer: Customer;
   findType: FindType;
 }

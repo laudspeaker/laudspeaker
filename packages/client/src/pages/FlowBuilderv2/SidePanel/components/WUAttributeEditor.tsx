@@ -75,12 +75,12 @@ const WUAttributeEditor = ({
         onChange={(el, i) => {
           if (i === undefined) return;
 
-          onChange({
-            ...condition,
-            attributeName: el,
-            // @ts-ignore IGNORED BECAUSE ARRAY AND OBJECT UNSUPPORTABLE
-            valueType: possibleKeys[i].type,
-          });
+          // onChange({
+          //   ...condition,
+          //   attributeName: el,
+          //   // @ts-ignore IGNORED BECAUSE ARRAY AND OBJECT UNSUPPORTABLE
+          //   valueType: possibleKeys[i].type,
+          // });
         }}
         noDataPlaceholder={"No results"}
         options={possibleKeys.map((el) => ({
@@ -133,7 +133,7 @@ const WUAttributeEditor = ({
                 }),
             ]}
           />
-          <FilterBuilderDynamicInput
+          {/* <FilterBuilderDynamicInput
             type={condition.valueType}
             value={condition.value || ""}
             onChange={(value) => {
@@ -142,7 +142,7 @@ const WUAttributeEditor = ({
                 value,
               });
             }}
-          />
+          /> */}
         </>
       )}
       {showErrors &&

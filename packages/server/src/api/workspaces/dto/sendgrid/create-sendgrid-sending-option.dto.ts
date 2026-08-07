@@ -4,4 +4,8 @@ export class CreateSendgridSendingOption {
   @IsNotEmpty()
   @IsString()
   sendingEmail: string;
+
+  @IsNotEmpty()
+  @IsString()
+  sendingName: string;
 }

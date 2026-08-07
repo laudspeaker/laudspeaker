@@ -1,9 +1,7 @@
 import {
-  AttributeBranch,
   AttributeCondition,
   BranchType,
   LogicRelation,
-  UserAttributeNodeData,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC } from "react";
 import { SidePanelComponentProps } from "../FlowBuilderSidePanel";
@@ -11,15 +9,16 @@ import { v4 as uuid } from "uuid";
 import AttributeBranchEditor from "../components/AttributeBranchEditor";
 import Button, { ButtonType } from "components/Elements/Buttonv2/Button";
 
-const UserAttributeSettings: FC<
-  SidePanelComponentProps<UserAttributeNodeData>
-> = ({ nodeData, setNodeData }) => {
+const UserAttributeSettings: FC<SidePanelComponentProps<any>> = ({
+  nodeData,
+  setNodeData,
+}) => {
   const { branches } = nodeData;
 
   const handleAddAttributeBranch = () => {
-    const newBranch: AttributeBranch = {
+    const newBranch: any = {
       id: uuid(),
-      type: BranchType.ATTRIBUTE,
+      // type: BranchType.ATTRIBUTE,
       attributeConditions: [],
     };
     setNodeData({ ...nodeData, branches: [...branches, newBranch] });
@@ -52,9 +51,9 @@ const UserAttributeSettings: FC<
     const branchToChange = branches[i];
 
     branchToChange.attributeConditions[j] = condition;
-    const branchesWithUpdatedConditions = branches.map((el) => ({
+    const branchesWithUpdatedConditions = branches.map((el: any) => ({
       ...el,
-      attributeConditions: el.attributeConditions.map((at) => ({
+      attributeConditions: el.attributeConditions.map((at: any) => ({
         ...at,
         relationToNext: condition.relationToNext,
       })),
@@ -79,7 +78,7 @@ const UserAttributeSettings: FC<
 
   return (
     <div>
-      {branches.map((branch, i) => (
+      {branches.map((branch: any, i: any) => (
         <div key={i} className="mb-[20px] flex flex-col gap-[10px]">
           <div className="font-inter font-semibold text-base text-[#18181B]">
             Branch {i + 1} - Attribute

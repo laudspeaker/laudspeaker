@@ -3,10 +3,9 @@ import { Handle, Node, NodeProps, Position } from "reactflow";
 import { useAppSelector } from "store/hooks";
 import BranchPopover from "../Edges/components/BranchPopover";
 import { UserAttributeIcon } from "../Icons";
-import { UserAttributeNodeData } from "./NodeData";
 import { NodeDevModeHighlighter } from "./NodeDevModeHighlighter";
 
-export const UserAttributeNode: FC<NodeProps<UserAttributeNodeData>> = ({
+export const UserAttributeNode: FC<NodeProps<any>> = ({
   isConnectable,
   selected,
   data: { branches, disabled },
@@ -14,9 +13,7 @@ export const UserAttributeNode: FC<NodeProps<UserAttributeNodeData>> = ({
 }) => {
   const { nodes } = useAppSelector((state) => state.flowBuilder);
 
-  const thisNode = nodes.find(
-    (node) => node.id === id
-  ) as Node<UserAttributeNodeData>;
+  const thisNode = nodes.find((node) => node.id === id) as Node<any>;
 
   return (
     <div

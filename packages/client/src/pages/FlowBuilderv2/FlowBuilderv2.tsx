@@ -47,6 +47,7 @@ const FlowBuilderv2 = () => {
   const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(true);
+  const [journeyStatus, setJourneyStatus] = useState<JourneyStatus>();
 
   const dispatch = useAppDispatch();
   const flowBuilderState = useAppSelector((state) => state.flowBuilder);
@@ -120,6 +121,8 @@ const FlowBuilderv2 = () => {
       if (data.isPaused) status = JourneyStatus.PAUSED;
       if (data.isStopped) status = JourneyStatus.STOPPED;
       if (data.isDeleted) status = JourneyStatus.DELETED;
+
+      setJourneyStatus(status);
 
       if (status !== JourneyStatus.DRAFT) navigate(`/flow/${id}/view`);
     } finally {
@@ -243,7 +246,7 @@ const FlowBuilderv2 = () => {
             {flowBuilderState.stepperIndex === 0 ? (
               <FlowEditor />
             ) : flowBuilderState.stepperIndex === 1 ? (
-              <FlowBuilderSegmentEditor />
+              <FlowBuilderSegmentEditor journeyStatus={journeyStatus} />
             ) : flowBuilderState.stepperIndex === 2 ? (
               <FlowBuilderSettings />
             ) : (

@@ -1,0 +1,13 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "PGBouncer",
+            "Group": "Servers",
+            "Host": "pgbouncer",
+            "Port": 6432,
+            "Username": "postgres",
+            "Password": "password",
+            "SSLMode": "prefer"
+        }
+    }
+}

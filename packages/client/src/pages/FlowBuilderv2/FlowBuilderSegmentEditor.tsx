@@ -38,6 +38,8 @@ import { DateComponent } from "./Elements/DynamicInput";
 import FilterBuilder from "./FilterBuilder/FilterBuilder";
 import { FC } from "react";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
+import FilterViewer from "./FilterViewer/FilterViewer";
+import { JourneyStatus } from "pages/JourneyTablev2/JourneyTablev2";
 
 const enrollmentTypes = [
   {
@@ -61,18 +63,20 @@ const enrollmentTypes = [
         Only enroll <b>future</b> matching users
       </>
     ),
-    desc: "Only users that do currently exist in the Laudspeaker database, and are created after the journey begins",
+    desc: "Only users that don't currently exist in the Laudspeaker database, and are created after the journey begins",
   },
 ];
 
 interface FlowBuilderSegmentEditorProps {
   onSave?: () => void;
   onCancel?: () => void;
+  journeyStatus?: JourneyStatus;
 }
 
 const FlowBuilderSegmentEditor: FC<FlowBuilderSegmentEditorProps> = ({
   onCancel,
   onSave,
+  journeyStatus,
 }) => {
   const {
     segments: segmentsSettings,
@@ -82,7 +86,6 @@ const FlowBuilderSegmentEditor: FC<FlowBuilderSegmentEditorProps> = ({
   const dispatch = useAppDispatch();
 
   if (!journeyEntrySettings) return <></>;
-
   return (
     <div className="m-5 max-h-full overflow-y-scroll w-full bg-white rounded p-5 text-[#111827] font-inter">
       <div className="flex flex-col gap-5">
@@ -452,14 +455,18 @@ const FlowBuilderSegmentEditor: FC<FlowBuilderSegmentEditorProps> = ({
         {segmentsSettings.type === SegmentsSettingsType.CONDITIONAL && (
           <div className="flex flex-col gap-[10px]">
             <div className="font-semibold text-base">Conditions</div>
-            <FilterBuilder
-              settings={segmentsSettings}
-              onSettingsChange={(settings) =>
-                dispatch(
-                  setSegmentsSettings(settings as ConditionalSegmentsSettings)
-                )
-              }
-            />
+            {journeyStatus === JourneyStatus.DRAFT ? (
+              <FilterBuilder
+                settings={segmentsSettings}
+                onSettingsChange={(settings) =>
+                  dispatch(
+                    setSegmentsSettings(settings as ConditionalSegmentsSettings)
+                  )
+                }
+              />
+            ) : (
+              <FilterViewer settingsQuery={segmentsSettings.query} />
+            )}
           </div>
         )}
 

@@ -1,5 +1,5 @@
 import { OrganizationTeam } from '../../organizations/entities/organization-team.entity';
-import { PushPlatforms } from '@/api/templates/entities/template.entity';
+import { PushPlatforms } from '../../templates/entities/template.entity';
 import { Exclude } from 'class-transformer';
 import {
   BaseEntity,

@@ -2,14 +2,12 @@ import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PublicKey, Signature, Ecdsa } from 'starkbank-ecdsa';
-import { Audience } from '../audiences/entities/audience.entity';
 import { Account } from '../accounts/entities/accounts.entity';
 import { createHmac } from 'crypto';
 import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common/exceptions';
-import { createClient } from '@clickhouse/client';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import Mailgun from 'mailgun.js';
 import formData from 'form-data';
@@ -18,11 +16,10 @@ import FormData from 'form-data';
 import { randomUUID } from 'crypto';
 import { Step } from '../steps/entities/step.entity';
 import { EventWebhook } from '@sendgrid/eventwebhook';
-import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Webhook } from 'svix';
 import fetch from 'node-fetch'; // Ensure you have node-fetch if you're using Node.js
-import { ProviderType } from '../events/events.preprocessor';
+import { ProviderType } from '../events/processors/events.preprocessor';
 import { Organization } from '../organizations/entities/organization.entity';
 import {
   DEFAULT_PLAN,
@@ -30,30 +27,17 @@ import {
 } from '../organizations/entities/organization-plan.entity';
 import * as Sentry from '@sentry/node';
 import Stripe from 'stripe';
-
-export enum ClickHouseEventProvider {
-  MAILGUN = 'mailgun',
-  SENDGRID = 'sendgrid',
-  TWILIO = 'twilio',
-  SLACK = 'slack',
-  PUSH = 'PUSH',
-  WEBHOOKS = 'webhooks',
-  TRACKER = 'tracker',
-  RESEND = 'resend',
-}
-
-export interface ClickHouseMessage {
-  audienceId?: string;
-  stepId?: string;
-  createdAt: Date;
-  customerId: string;
-  event: string;
-  eventProvider: ClickHouseEventProvider;
-  messageId: string;
-  templateId: string;
-  workspaceId: string;
-  processed: boolean;
-}
+import { QueueType } from '../../common/services/queue/types/queue-type';
+import { Producer } from '../../common/services/queue/classes/producer';
+import {
+  ClickHouseTable,
+  ClickHouseEventProvider,
+  ClickHouseMessage,
+  ClickHouseClient
+} from '../../common/services/clickhouse';
+import { CacheService } from '../../common/services/cache.service';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
+import { CacheConstants } from '../../common/services/cache.constants';
 
 @Injectable()
 export class WebhooksService {
@@ -73,16 +57,6 @@ export class WebhooksService {
   };
 
   private stripeClient = new Stripe.Stripe(process.env.STRIPE_SECRET_KEY);
-  private clickhouseClient = createClient({
-    host: process.env.CLICKHOUSE_HOST
-      ? process.env.CLICKHOUSE_HOST.includes('http')
-        ? process.env.CLICKHOUSE_HOST
-        : `http://${process.env.CLICKHOUSE_HOST}`
-      : 'http://localhost:8123',
-    username: process.env.CLICKHOUSE_USER ?? 'default',
-    password: process.env.CLICKHOUSE_PASSWORD ?? '',
-    database: process.env.CLICKHOUSE_DB ?? 'default',
-  });
 
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -95,8 +69,11 @@ export class WebhooksService {
     private organizationRepository: Repository<Organization>,
     @InjectRepository(OrganizationPlan)
     private organizationPlanRepository: Repository<OrganizationPlan>,
-    @InjectQueue('{events_pre}')
-    private readonly eventPreprocessorQueue: Queue
+    @Inject(ClickHouseClient)
+    private clickhouseClient: ClickHouseClient,
+    @Inject(CacheService) private cacheService: CacheService,
+    @InjectRepository(Workspaces) private workspacesRepository: Repository<Workspaces>,
+
   ) {
     const session = randomUUID();
     (async () => {
@@ -295,13 +272,12 @@ export class WebhooksService {
       where: {
         id: body.data.tags.stepId,
       },
-      relations: ['workspace'],
+      relations: ['workspace.resendConnections'],
     });
 
     const payload = req.rawBody.toString('utf8');
     const headers = req.headers;
-
-    const webhook = new Webhook(step.workspace.resendSigningSecret);
+    const webhook = new Webhook(step.workspace.resendConnections[0].signingSecret);
 
     try {
       const event: any = webhook.verify(payload, headers);
@@ -363,7 +339,7 @@ export class WebhooksService {
     const hash = createHmac(
       'sha256',
       account?.teams?.[0]?.organization?.workspaces?.[0]?.mailgunAPIKey ||
-        process.env.MAILGUN_API_KEY
+      process.env.MAILGUN_API_KEY
     )
       .update(value)
       .digest('hex');
@@ -394,7 +370,7 @@ export class WebhooksService {
     };
 
     this.debug(
-      `${JSON.stringify({ clickhouseMessage: clickHouseRecord })}`,
+      `${JSON.stringify({ ClickHouseMessage: clickHouseRecord })}`,
       this.processMailgunData.name,
       session
     );
@@ -443,8 +419,7 @@ export class WebhooksService {
             );
           } else {
             this.error(
-              `Failed to update webhook ${
-                this.MAILGUN_HOOKS_TO_INSTALL[index]
+              `Failed to update webhook ${this.MAILGUN_HOOKS_TO_INSTALL[index]
               }:${JSON.stringify(result)}`,
               this.setupMailgunWebhook.name,
               randomUUID()
@@ -465,36 +440,70 @@ export class WebhooksService {
       { name: 'WebhooksService.insertMessageStatusToClickhouse' },
       async () => {
         if (clickhouseMessages?.length) {
-          await this.eventPreprocessorQueue.addBulk(
-            clickhouseMessages.map((element) => {
-              return {
-                name: ProviderType.MESSAGE,
-                data: {
-                  workspaceId: element.workspaceId,
-                  message: element,
-                  session: session,
-                  customer: element.customerId,
-                },
-              };
-            })
+          const jobsData = clickhouseMessages.map((element) => {
+            return {
+              workspaceId: element.workspaceId,
+              message: element,
+              session: session,
+              customer: element.customerId,
+              stepId: element.stepId,
+            };
+          });
+
+          let workspace: Workspaces = await this.cacheService.get(
+            CacheConstants.WORKSPACES,
+            jobsData[0].workspaceId,
+            async () => {
+              return await this.workspacesRepository.findOne({
+                where: { id: jobsData[0].workspaceId },
+                relations: [
+                  'organization.owner',
+                ]
+              });
+            }
           );
 
-          await this.clickhouseClient.insert({
-            table: 'message_status',
+          let step: Step = await this.cacheService.get(
+            CacheConstants.STEPS,
+            jobsData[0].stepId,
+            async () => {
+              return await this.stepRepository.findOneBy({
+                id: jobsData[0].stepId
+              });
+            }
+          );
+
+          let account: Account = await this.cacheService.get(
+            CacheConstants.ACCOUNTS,
+            workspace.organization.owner.id,
+            async () => {
+              return await this.accountRepository.findOne({
+                where: { id: workspace.organization.owner.id },
+                relations: [
+                  'teams.organization.workspaces',
+                  'teams.organization.plan',
+                  'teams.organization.workspaces.mailgunConnections.sendingOptions',
+                  'teams.organization.workspaces.sendgridConnections.sendingOptions',
+                  'teams.organization.workspaces.resendConnections.sendingOptions',
+                  'teams.organization.workspaces.twilioConnections',
+                  'teams.organization.workspaces.pushConnections',
+                  'teams.organization.owner',
+                ]
+              });
+            }
+          );
+
+          if (!(process.env.DISABLE_MESSAGE_EVENTS === `true`))
+            await Producer.addBulk(
+              QueueType.EVENTS_PRE,
+              jobsData.map((jobData) => { return { ...jobData, workspace, step, account } }),
+              ProviderType.MESSAGE
+            );
+
+          await this.clickhouseClient.insertAsync({
+            table: ClickHouseTable.MESSAGE_STATUS,
             values: clickhouseMessages,
             format: 'JSONEachRow',
-            clickhouse_settings: {
-              date_time_input_format: 'best_effort',
-              async_insert: 1,
-              wait_for_async_insert: 1,
-              async_insert_max_data_size:
-                process.env.CLICKHOUSE_MESSAGE_STATUS_ASYNC_MAX_SIZE ||
-                '1000000',
-              async_insert_busy_timeout_ms: process.env
-                .CLICKHOUSE_MESSAGE_STATUS_ASYNC_TIMEOUT_MS
-                ? +process.env.CLICKHOUSE_MESSAGE_STATUS_ASYNC_TIMEOUT_MS
-                : 1000,
-            },
           });
         }
       }

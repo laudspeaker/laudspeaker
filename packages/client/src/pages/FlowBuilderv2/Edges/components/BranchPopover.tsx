@@ -9,13 +9,12 @@ import {
   MultisplitNodeData,
   StatementType,
   TimeType,
-  UserAttributeNodeData,
   WaitUntilNodeData,
   WUAttributeCondition,
   WUAttributeHappenCondition,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import MultisplitCondtionsReview from "pages/FlowBuilderv2/SidePanel/components/MultisplitCondtionsReview";
-import { limitQuery } from "pages/FlowBuilderv2/SidePanel/settings/MulisplitSettings";
+import { limitQuery } from "pages/FlowBuilderv2/SidePanel/settings/MultisplitSettings";
 import React, { FC, Fragment, ReactNode, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Node, useViewport } from "reactflow";
@@ -29,15 +28,12 @@ import { ProviderType } from "types/Workflow";
 const popperNameMap: Record<BranchType, string> = {
   [BranchType.EVENT]: "Wait people until",
   [BranchType.MAX_TIME]: "If wait until",
-  [BranchType.ATTRIBUTE]: "If attribute",
-  [BranchType.MESSAGE]: "Wait people until",
-  [BranchType.WU_ATTRIBUTE]: "Wait people until",
   [BranchType.MULTISPLIT]: "If users are",
   [BranchType.EXPERIMENT]: "Percentage of users",
 };
 
 interface BranchPopoverProps {
-  node: Node<WaitUntilNodeData | UserAttributeNodeData | MultisplitNodeData>;
+  node: Node<WaitUntilNodeData | MultisplitNodeData>;
   branch: Branch;
   children: ReactNode;
   className?: string;
@@ -95,8 +91,7 @@ const BranchPopover: FC<BranchPopoverProps> = ({
               <div className="font-inter font-semibold text-base">
                 {popperNameMap[branch.type]}
               </div>
-              {branch.type === BranchType.EVENT ||
-              branch.type === BranchType.MESSAGE ? (
+              {branch.type === BranchType.EVENT ? (
                 <>
                   {branch.conditions.length === 0 ? (
                     <div className="bg-[#FFF1F2] p-[10px] font-inter font-normal text-[12px] leading-5 text-[#E11D48]">
@@ -284,34 +279,6 @@ const BranchPopover: FC<BranchPopoverProps> = ({
                     })
                   )}
                 </>
-              ) : branch.type === BranchType.ATTRIBUTE ? (
-                <>
-                  {branch.attributeConditions
-                    .slice(0, 3)
-                    .map((condition, i) => (
-                      <React.Fragment key={i}>
-                        <div className="p-[10px] bg-[#F3F4F6] flex flex-col gap-[5px]">
-                          {condition.statements.map((statement, j) => (
-                            <div
-                              key={j}
-                              className="font-inter font-normal text-[12px] leading-5 text-[#18181B]"
-                            >
-                              "{statement.key}" {statement.comparisonType} "
-                              {statement.value}"
-                            </div>
-                          ))}
-                        </div>
-                        {i !== branch.attributeConditions.length - 1 &&
-                          i !== 2 && (
-                            <div className="font-inter font-normal text-[14px] leading-[22px]">
-                              {condition.relationToNext === LogicRelation.AND
-                                ? "And"
-                                : "Or"}
-                            </div>
-                          )}
-                      </React.Fragment>
-                    ))}
-                </>
               ) : branch.type === BranchType.MAX_TIME ? (
                 <>
                   {branch.timeType === TimeType.TIME_DELAY ? (
@@ -371,15 +338,11 @@ const BranchPopover: FC<BranchPopoverProps> = ({
               )}
 
               <div className="font-inter font-normal text-[14px] leading-[22px]">
-                {(branch.type === BranchType.EVENT ||
-                  branch.type === BranchType.MESSAGE) &&
+                {branch.type === BranchType.EVENT &&
                 branch.conditions.length === 0 ? (
                   <></>
-                ) : ((branch.type === BranchType.EVENT ||
-                    branch.type === BranchType.MESSAGE) &&
+                ) : (branch.type === BranchType.EVENT &&
                     branch.conditions.length > 3) ||
-                  (branch.type === BranchType.ATTRIBUTE &&
-                    branch.attributeConditions.length > 3) ||
                   (branch.type === BranchType.MULTISPLIT &&
                     branch.conditions &&
                     limitQuery(branch.conditions.query, 3)[1] >= 3) ? (

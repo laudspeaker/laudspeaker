@@ -41,13 +41,14 @@ const isValidNodes = (nodes: Node<NodeData | EdgeData>[]): boolean => {
         data.branches.some(
           (branch) =>
             branch.type === BranchType.EVENT && branch.conditions.length === 0
-        )) ||
-      (data.type === NodeType.USER_ATTRIBUTE &&
-        data.branches.some(
-          (branch) =>
-            branch.type === BranchType.ATTRIBUTE &&
-            branch.attributeConditions.length === 0
         ))
+    // ||
+    // (data.type === NodeType.USER_ATTRIBUTE &&
+    //   data.branches.some(
+    //     (branch) =>
+    //       branch.type === BranchType.ATTRIBUTE &&
+    //       branch.attributeConditions.length === 0
+    //   ))
     //   ||
     // (data.type === NodeType.TIME_WINDOW &&
     //   data.branches.some(

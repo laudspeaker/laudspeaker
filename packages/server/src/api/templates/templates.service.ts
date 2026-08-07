@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  forwardRef,
   HttpException,
   HttpStatus,
   Inject,
@@ -10,11 +11,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, QueryRunner, Like, Repository, FindManyOptions } from 'typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
-import {
-  Customer,
-  CustomerDocument,
-} from '../customers/schemas/customer.schema';
-import { InjectModel } from '@nestjs/mongoose';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
 import {
@@ -25,33 +21,29 @@ import {
   WebhookData,
   WebhookMethod,
 } from './entities/template.entity';
-import {
-  InjectQueue,
-  OnQueueEvent,
-  QueueEventsHost,
-  QueueEventsListener,
-} from '@nestjs/bullmq';
-import { Job, Queue } from 'bullmq';
+import { Job } from 'bullmq';
 import { Installation } from '../slack/entities/installation.entity';
 import { SlackService } from '../slack/slack.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { EventDto } from '../events/dto/event.dto';
-import { Audience } from '../audiences/entities/audience.entity';
 import { cleanTagsForSending } from '../../shared/utils/helpers';
 import { MessageType } from '../email/email.processor';
 import { Response, fetch } from 'undici';
-import { Model } from 'mongoose';
 import { Liquid } from 'liquidjs';
 import { format, parseISO } from 'date-fns';
 import { TestWebhookDto } from './dto/test-webhook.dto';
 import wait from '../../utils/wait';
 import { ModalsService } from '../modals/modals.service';
+import { CacheService } from '../../common/services/cache.service';
+import { QueueType } from '../../common/services/queue/types/queue-type';
+import { Producer } from '../../common/services/queue/classes/producer';
+import { Customer } from '../customers/entities/customer.entity';
+import { CustomersService } from '../customers/customers.service';
 import { WebsocketGateway } from '../../websockets/websocket.gateway';
-import { CacheService } from '@/common/services/cache.service';
+import { CacheConstants } from '../../common/services/cache.constants';
 
 @Injectable()
-@QueueEventsListener('message')
-export class TemplatesService extends QueueEventsHost {
+export class TemplatesService {
   private tagEngine = new Liquid();
 
   constructor(
@@ -59,19 +51,11 @@ export class TemplatesService extends QueueEventsHost {
     private readonly logger: Logger,
     @InjectRepository(Template)
     public templatesRepository: Repository<Template>,
-    @InjectModel(Customer.name) private customerModel: Model<CustomerDocument>,
-    @InjectRepository(Audience)
-    private audiencesRepository: Repository<Audience>,
-    @Inject(WebsocketGateway)
-    private websocketGateway: WebsocketGateway,
     @Inject(SlackService) private slackService: SlackService,
     @Inject(ModalsService) private modalsService: ModalsService,
-    @InjectQueue('{message}') private readonly messageQueue: Queue,
-    @InjectQueue('{webhooks}') private readonly webhooksQueue: Queue,
-    @InjectQueue('{slack}') private readonly slackQueue: Queue,
-    @Inject(CacheService) private cacheService: CacheService
+    @Inject(CacheService) private cacheService: CacheService,
+    @Inject(forwardRef(()=>CustomersService)) private customersService: CustomersService
   ) {
-    super();
     this.tagEngine.registerFilter('date', (input, formatString) => {
       const date = input === 'now' ? new Date() : parseISO(input);
       // Adjust the formatString to fit JavaScript's date formatting if necessary
@@ -176,151 +160,6 @@ export class TemplatesService extends QueueEventsHost {
     );
   }
 
-  @OnQueueEvent('active')
-  onActive(args: { jobId: string; prev?: string }, id: string) {
-    this.logger.debug(
-      `${args.jobId} ${args.prev} ${id}`,
-      `templates.service.ts:TemplatesService.onActive()`
-    );
-  }
-
-  @OnQueueEvent('added')
-  onAdded(args: { jobId: string; name: string }, id: string) {
-    this.logger.debug(
-      `${args.jobId} ${args.name} ${id}`,
-      `templates.service.ts:TemplatesService.onAdded()`
-    );
-  }
-
-  @OnQueueEvent('cleaned')
-  onCleaned(args: { count: string }, id: string) {
-    this.logger.debug(
-      `${args.count} ${id}`,
-      `templates.service.ts:TemplatesService.onCleaned()`
-    );
-  }
-
-  @OnQueueEvent('completed')
-  onCompleted(
-    args: { jobId: string; returnvalue: string; prev?: string },
-    id: string
-  ) {
-    this.logger.debug(
-      `${args.jobId} ${args.returnvalue} ${args.prev} ${id}`,
-      `templates.service.ts:TemplatesService.onCompleted()`
-    );
-  }
-
-  @OnQueueEvent('delayed')
-  onDelayed(args: { jobId: string; delay: number }, id: string) {
-    this.logger.debug(
-      `${args.jobId} ${args.delay} ${id}`,
-      `templates.service.ts:TemplatesService.onDelayed()`
-    );
-  }
-
-  @OnQueueEvent('drained')
-  onDrained(id: string) {
-    this.logger.debug(
-      `${id}`,
-      `templates.service.ts:TemplatesService.onDrained()`
-    );
-  }
-
-  @OnQueueEvent('duplicated')
-  onDuplicated(args: { jobId: string }, id: string) {
-    this.logger.debug(
-      `${args.jobId} ${id}`,
-      `templates.service.ts:TemplatesService.onDuplicated()`
-    );
-  }
-
-  @OnQueueEvent('error')
-  onError(args: Error) {
-    this.logger.debug(
-      `${args}`,
-      `templates.service.ts:TemplatesService.onError()`
-    );
-  }
-
-  @OnQueueEvent('failed')
-  onFailed(
-    args: { jobId: string; failedReason: string; prev?: string },
-    id: string
-  ) {
-    this.logger.debug(
-      `${args.jobId} ${args.failedReason} ${args.prev} ${id}`,
-      `templates.service.ts:TemplatesService.onFailed()`
-    );
-  }
-
-  @OnQueueEvent('paused')
-  onPaused(args: unknown, id: string) {
-    this.logger.debug(
-      `${id}`,
-      `templates.service.ts:TemplatesService.onPaused()`
-    );
-  }
-
-  @OnQueueEvent('progress')
-  onProgress(args: { jobId: string; data: number | object }, id: string) {
-    this.logger.debug(
-      `${args.jobId} ${args.data} ${id}`,
-      `templates.service.ts:TemplatesService.onProgress()`
-    );
-  }
-
-  @OnQueueEvent('removed')
-  onRemoved(args: { jobId: string; prev: string }, id: string) {
-    this.logger.debug(
-      `${args.jobId} ${args.prev} ${id}`,
-      `templates.service.ts:TemplatesService.onRemoved()`
-    );
-  }
-
-  @OnQueueEvent('resumed')
-  onResumed(args: unknown, id: string) {
-    this.logger.debug(
-      `${id}`,
-      `templates.service.ts:TemplatesService.onResumed()`
-    );
-  }
-
-  @OnQueueEvent('retries-exhausted')
-  onRetriesExhausted(
-    args: { jobId: string; attemptsMade: string },
-    id: string
-  ) {
-    this.logger.debug(
-      `${args.jobId} ${args.attemptsMade} ${id}`,
-      `templates.service.ts:TemplatesService.onRetriesExhausted()`
-    );
-  }
-
-  @OnQueueEvent('stalled')
-  onStalled(args: { jobId: string }, id: string) {
-    this.logger.debug(
-      `${args.jobId} ${id}`,
-      `templates.service.ts:TemplatesService.onStalled()`
-    );
-  }
-
-  @OnQueueEvent('waiting')
-  onWaiting(args: { jobId: string; prev?: string }, id: string) {
-    this.logger.debug(
-      `${args.jobId} ${args.prev} ${id}`,
-      `templates.service.ts:TemplatesService.onWaiting()`
-    );
-  }
-
-  @OnQueueEvent('waiting-children')
-  onWaitingChildren(args: { jobId: string }, id: string) {
-    this.logger.debug(
-      `${args.jobId} ${id}`,
-      `templates.service.ts:TemplatesService.onWaitingChildren()`
-    );
-  }
-
   create(
     account: Account,
     createTemplateDto: CreateTemplateDto,
@@ -353,8 +192,8 @@ export class TemplatesService extends QueueEventsHost {
           if (template.webhookData)
             template.webhookData.mimeType ||= MIMEType.JSON;
           break;
-        case TemplateType.MODAL:
-          template.modalState = createTemplateDto.modalState;
+        case TemplateType.IN_APP:
+          template.inAppState = createTemplateDto.inAppState;
           break;
         case TemplateType.CUSTOM_COMPONENT:
           template.customEvents = createTemplateDto.customEvents;
@@ -385,177 +224,11 @@ export class TemplatesService extends QueueEventsHost {
   async queueMessage(
     account: Account,
     templateId: string,
-    customer: CustomerDocument,
+    customer: Customer,
     event: EventDto,
     audienceId?: string
   ): Promise<string | number> {
-    const customerId = customer._id;
-    let template: Template,
-      job: Job<any>, // created jobId
-      installation: Installation,
-      message: any;
-    try {
-      template = await this.findOneById(account, templateId);
-      this.logger.debug(
-        'Found template: ' + template.id + ' of type ' + template.type
-      );
-    } catch (err) {
-      return Promise.reject(err);
-    }
-    const { _id, workspaceId, workflows, ...tags } = customer.toObject();
-
-    const filteredTags = cleanTagsForSending(tags);
-
-    const { email } = account;
-
-    const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
-
-    const {
-      mailgunAPIKey,
-      sendingName,
-      testSendingEmail,
-      testSendingName,
-      sendgridApiKey,
-      sendgridFromEmail,
-    } = workspace;
-
-    let { sendingDomain, sendingEmail } = workspace;
-
-    let key = mailgunAPIKey;
-    let from = sendingName;
-
-    switch (template.type) {
-      case TemplateType.EMAIL:
-        if (workspace.emailProvider === 'free3') {
-          if (workspace.freeEmailsCount === 0)
-            throw new HttpException(
-              'You exceeded limit of 3 emails',
-              HttpStatus.PAYMENT_REQUIRED
-            );
-          sendingDomain = process.env.MAILGUN_TEST_DOMAIN;
-          key = process.env.MAILGUN_API_KEY;
-          from = testSendingName;
-          sendingEmail = testSendingEmail;
-          workspace.freeEmailsCount--;
-        }
-
-        if (workspace.emailProvider === 'sendgrid') {
-          key = sendgridApiKey;
-          from = sendgridFromEmail;
-        }
-
-        job = await this.messageQueue.add(
-          MessageType.EMAIL,
-          {
-            accountId: account.id,
-            audienceId,
-            cc: template.cc,
-            customerId,
-            domain: sendingDomain,
-            email: sendingEmail,
-            eventProvider: workspace.emailProvider,
-            from,
-            trackingEmail: email,
-            key,
-            subject: await this.parseApiCallTags(
-              template.subject,
-              filteredTags
-            ),
-            tags: filteredTags,
-            templateId,
-            text: await this.parseApiCallTags(template.text, filteredTags),
-            to: customer.phEmail ? customer.phEmail : customer.email,
-          },
-          { attempts: Number.MAX_SAFE_INTEGER }
-        );
-        if (workspace.emailProvider === 'free3') {
-          await account.save();
-          await workspace.save();
-        }
-        break;
-      case TemplateType.SLACK:
-        try {
-          installation = await this.slackService.getInstallation(customer);
-        } catch (err) {
-          return Promise.reject(err);
-        }
-        job = await this.slackQueue.add('send', {
-          accountId: account.id,
-          args: {
-            audienceId,
-            channel: customer.slackId,
-            customerId,
-            tags: filteredTags,
-            templateId,
-            text: await this.parseApiCallTags(
-              event?.payload ? event.payload : template.slackMessage,
-              filteredTags
-            ),
-          },
-          methodName: 'chat.postMessage',
-          token: installation.installation.bot.token,
-          trackingEmail: email,
-        });
-        break;
-      case TemplateType.SMS:
-        job = await this.messageQueue.add(MessageType.SMS, {
-          accountId: account.id,
-          audienceId,
-          customerId,
-          from: workspace.smsFrom,
-          sid: workspace.smsAccountSid,
-          tags: filteredTags,
-          templateId: template.id,
-          text: await this.parseApiCallTags(template.smsText, filteredTags),
-          to: customer.phPhoneNumber || customer.phone,
-          token: workspace.smsAuthToken,
-          trackingEmail: email,
-        });
-        break;
-      case TemplateType.PUSH:
-        // TODO: update for PUSH
-        // job = await this.messageQueue.add(MessageType.PUSH_FIREBASE, {
-        //   accountId: account.id,
-        //   audienceId,
-        //   customerId,
-        //   firebaseCredentials: account.firebaseCredentials,
-        //   phDeviceToken: customer.phDeviceToken,
-        //   pushText: await this.parseApiCallTags(
-        //     template.pushText,
-        //     filteredTags
-        //   ),
-        //   pushTitle: await this.parseApiCallTags(
-        //     template.pushTitle,
-        //     filteredTags
-        //   ),
-        //   trackingEmail: email,
-        //   tags: filteredTags,
-        //   templateId: template.id,
-        // });
-        break;
-      case TemplateType.WEBHOOK:
-        if (template.webhookData) {
-          job = await this.webhooksQueue.add('whapicall', {
-            template,
-            filteredTags,
-            audienceId,
-            customerId,
-            accountId: account.id,
-          });
-        }
-        break;
-      case TemplateType.MODAL:
-        if (template.modalState) {
-          const isSent = await this.websocketGateway.sendModal(
-            customerId,
-            template
-          );
-          if (!isSent)
-            await this.modalsService.queueModalEvent(customerId, template);
-        }
-        break;
-    }
-    return Promise.resolve(message ? message?.sid : job?.id);
+    return Promise.resolve("message");
   }
 
   async findAll(
@@ -686,7 +359,7 @@ export class TemplatesService extends QueueEventsHost {
   ) {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    await this.cacheService.delete(Template, id);
+    await this.cacheService.delete(CacheConstants.TEMPLATES, id);
 
     return this.templatesRepository.update(
       { workspace: { id: workspace.id }, id },
@@ -730,7 +403,7 @@ export class TemplatesService extends QueueEventsHost {
       smsText,
       webhookData,
       pushObject,
-      modalState,
+      inAppState,
       customEvents,
       customFields,
     } = foundTemplate;
@@ -768,40 +441,12 @@ export class TemplatesService extends QueueEventsHost {
       smsText,
       pushObject,
       webhookData,
-      modalState,
+      inAppState,
       customEvents,
       customFields,
     });
 
     return { id: tmp.id };
-  }
-
-  async findUsedInJourneys(account: Account, id: string, session: string) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-
-    const template = await this.templatesRepository.findOneBy({
-      id,
-      workspace: { id: workspace.id },
-    });
-    if (!template) throw new NotFoundException('Template not found');
-
-    const data = await this.audiencesRepository
-      .createQueryBuilder('audience')
-      .select(`DISTINCT(workflow."name")`)
-      .leftJoin(
-        'audience_templates_template',
-        'audience_templates_template',
-        'audience_templates_template."audienceId" = audience.id'
-      )
-      .leftJoin('workflow', 'workflow', 'workflow.id = audience."workflowId"')
-      .where(
-        `workflow."isDeleted" = false AND audience."ownerId" = :ownerId AND audience_templates_template."templateId" = :templateId`,
-        // update if used
-        { workspaceId: account.id, templateId: template.id }
-      )
-      .execute();
-
-    return data.map((item) => item.name);
   }
 
   public async parseTemplateTags(str: string) {
@@ -880,14 +525,14 @@ export class TemplatesService extends QueueEventsHost {
           retrievedData = ['data', 'body'].includes(webhookPath[0])
             ? body
             : webhookPath[0] === 'headers'
-            ? JSON.stringify(headers)
-            : '';
+              ? JSON.stringify(headers)
+              : '';
         } else {
           const objectToRetrievе = ['data', 'body'].includes(webhookPath[0])
             ? JSON.parse(body)
             : webhookPath[0] === 'headers'
-            ? headers
-            : {};
+              ? headers
+              : {};
           retrievedData = this.recursivelyRetrieveData(
             objectToRetrievе,
             webhookPath.slice(1)
@@ -903,16 +548,14 @@ export class TemplatesService extends QueueEventsHost {
     return str;
   }
 
-  async testWebhookTemplate(testWebhookDto: TestWebhookDto, session: string) {
-    let customer = await this.customerModel.findOne({
-      _id: testWebhookDto.testCustomerId,
-    });
+  async testWebhookTemplate(account: Account, testWebhookDto: TestWebhookDto, session: string) {
+    let customer = await this.customersService.findByCustomerIdUnauthenticated(testWebhookDto.testCustomerId);
 
     if (!customer) {
-      customer = new this.customerModel({});
+      customer = new Customer();
     }
 
-    const { _id, workspaceId, workflows, ...tags } = customer.toObject();
+    const { id, ...tags } = customer.toObject();
     const filteredTags = cleanTagsForSending(tags);
 
     const { method, mimeType } = testWebhookDto.webhookData;
@@ -921,7 +564,7 @@ export class TemplatesService extends QueueEventsHost {
 
     try {
       url = await this.tagEngine.parseAndRender(url, filteredTags || {}, {
-        strictVariables: true,
+        strictVariables: false,
       });
 
       url = await this.parseTemplateTags(url);
@@ -938,7 +581,7 @@ export class TemplatesService extends QueueEventsHost {
       } else {
         body = await this.parseTemplateTags(body);
         body = await this.tagEngine.parseAndRender(body, filteredTags || {}, {
-          strictVariables: true,
+          strictVariables: false,
         });
       }
 
@@ -947,12 +590,12 @@ export class TemplatesService extends QueueEventsHost {
           Object.entries(headers).map(async ([key, value]) => [
             await this.parseTemplateTags(
               await this.tagEngine.parseAndRender(key, filteredTags || {}, {
-                strictVariables: true,
+                strictVariables: false,
               })
             ),
             await this.parseTemplateTags(
               await this.tagEngine.parseAndRender(value, filteredTags || {}, {
-                strictVariables: true,
+                strictVariables: false,
               })
             ),
           ])
@@ -967,6 +610,7 @@ export class TemplatesService extends QueueEventsHost {
     headers['content-type'] = mimeType;
 
     try {
+      this.log({ message: `Sending Webhook`, payload: { method, body, headers } }, this.testWebhookTemplate.name, session, account.email)
       const res = await fetch(url, {
         method,
         body,
@@ -1052,9 +696,9 @@ export class TemplatesService extends QueueEventsHost {
         retriesCount++;
         this.logger.warn(
           'Unsuccessfull webhook request. Retries: ' +
-            retriesCount +
-            '. Error: ' +
-            e
+          retriesCount +
+          '. Error: ' +
+          e
         );
         if (e instanceof Error) error = e.message;
         await wait(5000);

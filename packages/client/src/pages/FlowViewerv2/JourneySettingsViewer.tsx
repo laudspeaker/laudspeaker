@@ -2,6 +2,7 @@ import JourneyTagsViewer from "pages/FlowBuilderv2/JourneyTagsViewer";
 import MaxMessageSendsViewer from "pages/FlowBuilderv2/MaxMessageSendsViewer";
 import MaxUserEntriesViewer from "pages/FlowBuilderv2/MaxUserEntriesViewer";
 import QuiteHoursViewer from "pages/FlowBuilderv2/QuiteHoursViewer";
+import ConversionTrackingViewer from "pages/FlowBuilderv2/ConversionTrackingViewer";
 import React, { FC } from "react";
 import { JourneySettings } from "reducers/flow-builder.reducer";
 
@@ -25,8 +26,13 @@ const JourneySettingsViewer: FC<JourneySettingsViewerProps> = ({
       <div className="border-b border-[#E5E7EB]">
         <MaxUserEntriesViewer maxEntriesSettings={journeySettings.maxEntries} />
       </div>
-      <MaxMessageSendsViewer
-        maxMessageSendsSettings={journeySettings.maxMessageSends}
+      <div className="border-b border-[#E5E7EB]">
+        <MaxMessageSendsViewer
+          maxMessageSendsSettings={journeySettings.maxMessageSends}
+        />
+      </div>
+      <ConversionTrackingViewer
+        conversionTrackingSettings={journeySettings.conversionTracking}
       />
     </div>
   );

@@ -9,13 +9,13 @@ import { Repository } from 'typeorm';
 import { Logger } from 'winston';
 import { AccountsService } from '../accounts/accounts.service';
 import { Account } from '../accounts/entities/accounts.entity';
-import { Customer } from '../customers/schemas/customer.schema';
 import { Journey } from '../journeys/entities/journey.entity';
 import { NodeType } from '../journeys/types/visual-layout.interface';
 import { Step } from '../steps/entities/step.entity';
 import { CustomComponentAction, StepType } from '../steps/types/step.interface';
 import { Template } from '../templates/entities/template.entity';
 import { DevMode, DevModeState } from './entities/dev-mode.entity';
+import { Customer } from '../customers/entities/customer.entity';
 
 @Injectable()
 export class DevModeService {
@@ -139,12 +139,7 @@ export class DevModeService {
       const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
       const customer = new Customer();
-      customer.email = 'devmode@email.com';
-      customer.firstName = 'dev';
-      customer.lastName = 'mode';
-      customer.workspaceId = workspace.id;
-      customer.journeys = [journey.id];
-      customer.customComponents = {};
+      customer.workspace = workspace;
 
       await this.devModeRepository.upsert(
         {
@@ -181,130 +176,130 @@ export class DevModeService {
     }
   }
 
-  public async moveToNode(
-    account: Account,
-    journeyId: string,
-    toNodeId: string
-  ) {
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+  // public async moveToNode(
+  //   account: Account,
+  //   journeyId: string,
+  //   toNodeId: string
+  // ) {
+  //   const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    try {
-      const devMode = await this.devModeRepository.findOneBy({
-        journeyId,
-        workspaceId: workspace.id,
-      });
+  //   try {
+  //     const devMode = await this.devModeRepository.findOneBy({
+  //       journeyId,
+  //       workspaceId: workspace.id,
+  //     });
 
-      const journey = await this.journeysRepository.findOneBy({
-        id: journeyId,
-      });
+  //     const journey = await this.journeysRepository.findOneBy({
+  //       id: journeyId,
+  //     });
 
-      if (!devMode)
-        throw new WsException("Dev mode not found can't be moved to step");
-      if (!journey)
-        throw new WsException("Journey not found, can't be moved to step");
+  //     if (!devMode)
+  //       throw new WsException("Dev mode not found can't be moved to step");
+  //     if (!journey)
+  //       throw new WsException("Journey not found, can't be moved to step");
 
-      const node = journey.visualLayout.nodes.find(
-        (el) => el.id === toNodeId && el.type !== NodeType.EMPTY
-      );
+  //     const node = journey.visualLayout.nodes.find(
+  //       (el) => el.id === toNodeId && el.type !== NodeType.EMPTY
+  //     );
 
-      if (!node)
-        throw new WsException(
-          "Current node don't have stepId, try again or recreate step"
-        );
+  //     if (!node)
+  //       throw new WsException(
+  //         "Current node don't have stepId, try again or recreate step"
+  //       );
 
-      // handle moving to Custom component(Tracker)
-      if (node.type === NodeType.TRACKER) {
-        const stepFromDB = await this.stepRepository.findOne({
-          where: {
-            id: node.data.stepId,
-          },
-        });
+  //     // handle moving to Custom component(Tracker)
+  //     if (node.type === NodeType.TRACKER) {
+  //       const stepFromDB = await this.stepRepository.findOne({
+  //         where: {
+  //           id: node.data.stepId,
+  //         },
+  //       });
 
-        const { action, humanReadableName, pushedValues, template } =
-          stepFromDB.metadata;
+  //       const { action, humanReadableName, pushedValues, template } =
+  //         stepFromDB.metadata;
 
-        const templateFromDB = await this.templateRepository.findOne({
-          where: {
-            id: template,
-          },
-        });
+  //       const templateFromDB = await this.templateRepository.findOne({
+  //         where: {
+  //           id: template,
+  //         },
+  //       });
 
-        if (
-          !devMode.devModeState.customerData.customComponents[humanReadableName]
-        )
-          devMode.devModeState.customerData.customComponents[
-            humanReadableName
-          ] = {
-            hidden: true,
-            ...templateFromDB.customFields,
-            delivered: false,
-          };
+  //       if (
+  //         !devMode.devModeState.customerData.customComponents[humanReadableName]
+  //       )
+  //         devMode.devModeState.customerData.customComponents[
+  //           humanReadableName
+  //         ] = {
+  //           hidden: true,
+  //           ...templateFromDB.customFields,
+  //           delivered: false,
+  //         };
 
-        devMode.devModeState.customerData.customComponents[
-          humanReadableName
-        ].hidden = action === CustomComponentAction.HIDE ? true : false;
-        devMode.devModeState.customerData.customComponents[
-          humanReadableName
-        ].step = stepFromDB.id;
-        devMode.devModeState.customerData.customComponents[
-          humanReadableName
-        ].template = String(templateFromDB.id);
-        devMode.devModeState.customerData.customComponents[humanReadableName] =
-          {
-            ...devMode.devModeState.customerData.customComponents[
-              humanReadableName
-            ],
-            ...pushedValues,
-          };
+  //       devMode.devModeState.customerData.customComponents[
+  //         humanReadableName
+  //       ].hidden = action === CustomComponentAction.HIDE ? true : false;
+  //       devMode.devModeState.customerData.customComponents[
+  //         humanReadableName
+  //       ].step = stepFromDB.id;
+  //       devMode.devModeState.customerData.customComponents[
+  //         humanReadableName
+  //       ].template = String(templateFromDB.id);
+  //       devMode.devModeState.customerData.customComponents[humanReadableName] =
+  //         {
+  //           ...devMode.devModeState.customerData.customComponents[
+  //             humanReadableName
+  //           ],
+  //           ...pushedValues,
+  //         };
 
-        devMode.devModeState.customerStory[toNodeId] =
-          devMode.devModeState.customerData;
-        // handle moving to one of previous nodes
-      } else if (devMode.devModeState.customerStory[toNodeId]) {
-        // get keys from node that should be next
-        const futureKeys = Object.keys(
-          devMode.devModeState.customerData.customComponents
-        );
+  //       devMode.devModeState.customerStory[toNodeId] =
+  //         devMode.devModeState.customerData;
+  //       // handle moving to one of previous nodes
+  //     } else if (devMode.devModeState.customerStory[toNodeId]) {
+  //       // get keys from node that should be next
+  //       const futureKeys = Object.keys(
+  //         devMode.devModeState.customerData.customComponents
+  //       );
 
-        // get current keys
-        const toNodeKeys = Object.keys(
-          devMode.devModeState.customerStory[toNodeId].customComponents
-        );
+  //       // get current keys
+  //       const toNodeKeys = Object.keys(
+  //         devMode.devModeState.customerStory[toNodeId].customComponents
+  //       );
 
-        // those keys that not exist in node should be set to null and let client side know that state is undefined as if it wasn't set yet
-        const keysToNull = futureKeys.filter((el) => !toNodeKeys.includes(el));
-        keysToNull.forEach((key) => {
-          devMode.devModeState.customerStory[toNodeId].customComponents[key] =
-            null;
-        });
+  //       // those keys that not exist in node should be set to null and let client side know that state is undefined as if it wasn't set yet
+  //       const keysToNull = futureKeys.filter((el) => !toNodeKeys.includes(el));
+  //       keysToNull.forEach((key) => {
+  //         devMode.devModeState.customerStory[toNodeId].customComponents[key] =
+  //           null;
+  //       });
 
-        devMode.devModeState.customerData =
-          devMode.devModeState.customerStory[toNodeId];
-      } else {
-        devMode.devModeState.customerStory[toNodeId] =
-          devMode.devModeState.customerData;
-      }
+  //       devMode.devModeState.customerData =
+  //         devMode.devModeState.customerStory[toNodeId];
+  //     } else {
+  //       devMode.devModeState.customerStory[toNodeId] =
+  //         devMode.devModeState.customerData;
+  //     }
 
-      await this.devModeRepository.update(
-        {
-          workspaceId: workspace.id,
-          journeyId: journeyId,
-        },
-        {
-          devModeState: {
-            ...devMode.devModeState,
-            customerIn: {
-              nodeId: toNodeId,
-              stepId: node.data.stepId,
-            },
-          },
-        }
-      );
-    } catch (error: any) {
-      this.error(error, this.moveToNode.name, '', account.id);
-      throw new WsException(error);
-    }
-  }
+  //     await this.devModeRepository.update(
+  //       {
+  //         workspaceId: workspace.id,
+  //         journeyId: journeyId,
+  //       },
+  //       {
+  //         devModeState: {
+  //           ...devMode.devModeState,
+  //           customerIn: {
+  //             nodeId: toNodeId,
+  //             stepId: node.data.stepId,
+  //           },
+  //         },
+  //       }
+  //     );
+  //   } catch (error: any) {
+  //     this.error(error, this.moveToNode.name, '', account.id);
+  //     throw new WsException(error);
+  //   }
+  // }
 
   public async reactOnCustom(
     socketClient: RemoteSocket<DefaultEventsMap, any>,
@@ -389,20 +384,20 @@ export class DevModeService {
 
       if (!node) throw new WsException("Can't find node");
 
-      await this.moveToNode(socketLocal.data.account, journey.id, node.id);
+      // await this.moveToNode(socketLocal.data.account, journey.id, node.id);
 
       const devModeUpdated = await this.devModeRepository.findOneBy({
         journeyId: socketClient.handshake.auth.journeyId,
         workspaceId: workspace.id,
       });
 
-      for (const key in devModeUpdated.devModeState.customerData
-        .customComponents) {
-        socketLocal.emit('custom', {
-          trackerId: key,
-          ...devModeUpdated.devModeState.customerData.customComponents[key],
-        });
-      }
+      // for (const key in devModeUpdated.devModeState.customerData
+      //   .customComponents) {
+      //   socketLocal.emit('custom', {
+      //     trackerId: key,
+      //     ...devModeUpdated.devModeState.customerData.customComponents[key],
+      //   });
+      // }
 
       socketClient.emit('nodeMovedTo', node.id);
     } catch (error) {

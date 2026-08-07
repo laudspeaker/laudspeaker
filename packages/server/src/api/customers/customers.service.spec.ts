@@ -1,4 +1,3 @@
-import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CustomersService } from './customers.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -32,14 +31,6 @@ describe('CustomersService', () => {
         },
         {
           provide: getQueueToken('customers'),
-          useValue: { add: jest.fn() },
-        },
-        {
-          provide: getModelToken('Customer'),
-          useValue: { add: jest.fn() },
-        },
-        {
-          provide: getModelToken('CustomerKeys'),
           useValue: { add: jest.fn() },
         },
         {

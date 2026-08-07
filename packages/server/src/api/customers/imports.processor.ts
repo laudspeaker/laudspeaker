@@ -1,4 +1,3 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Injectable } from '@nestjs/common';
 import { Job, MetricsTime } from 'bullmq';
 import { Account } from '../accounts/entities/accounts.entity';
@@ -6,9 +5,6 @@ import { S3Service } from '../s3/s3.service';
 import { CustomersService } from './customers.service';
 import { ImportOptions } from './dto/import-customers.dto';
 import * as fastcsv from 'fast-csv';
-import { Customer, CustomerDocument } from './schemas/customer.schema';
-import { Model } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -16,33 +12,20 @@ import { Segment } from '../segments/entities/segment.entity';
 import { Repository } from 'typeorm';
 import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
 import { randomUUID } from 'crypto';
+import { Processor } from '../../common/services/queue/decorators/processor';
+import { ProcessorBase } from '../../common/services/queue/classes/processor-base';
+import { Customer } from './entities/customer.entity';
 
 @Injectable()
-@Processor('{imports}', {
-  stalledInterval: process.env.IMPORTS_PROCESSOR_STALLED_INTERVAL
-    ? +process.env.IMPORTS_PROCESSOR_STALLED_INTERVAL
-    : 30000,
-  removeOnComplete: {
-    age: 0,
-    count: process.env.IMPORTS_PROCESSOR_REMOVE_ON_COMPLETE
-      ? +process.env.IMPORTS_PROCESSOR_REMOVE_ON_COMPLETE
-      : 0,
-  },
-  metrics: {
-    maxDataPoints: MetricsTime.ONE_WEEK,
-  },
-  concurrency: process.env.IMPORTS_PROCESSOR_CONCURRENCY
-    ? +process.env.IMPORTS_PROCESSOR_CONCURRENCY
-    : 1,
-})
-export class ImportProcessor extends WorkerHost {
+@Processor('imports')
+export class ImportProcessor extends ProcessorBase {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
     @Inject(CustomersService) private customersService: CustomersService,
     @Inject(S3Service) private s3Service: S3Service,
-    @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @InjectRepository(Segment) public segmentRepository: Repository<Segment>,
+    @InjectRepository(Customer) public customersRepository: Repository<Customer>,
     @InjectRepository(SegmentCustomers)
     public segmentCustomersRepository: Repository<SegmentCustomers>
   ) {
@@ -139,7 +122,7 @@ export class ImportProcessor extends WorkerHost {
               if (isSkipped) return;
               const convertResult = this.customersService.convertForImport(
                 data[el],
-                clearedMapping[el].asAttribute.type,
+                clearedMapping[el].asAttribute?.attribute.attribute_type.name,
                 el,
                 clearedMapping[el].asAttribute.dateFormat
               );
@@ -147,10 +130,10 @@ export class ImportProcessor extends WorkerHost {
                 isSkipped = true;
                 return;
               }
-              if (clearedMapping[el].isPrimary) {
+              if (clearedMapping[el].is_primary) {
                 convertedPKValue = convertResult.converted;
               }
-              convertedRecord[clearedMapping[el].asAttribute.key] =
+              convertedRecord[clearedMapping[el].asAttribute?.attribute.name] =
                 convertResult.converted;
             });
             if (isSkipped) {
@@ -160,14 +143,14 @@ export class ImportProcessor extends WorkerHost {
             Object.keys(clearedMapping).forEach((el) => {
               if (clearedMapping[el].doNotOverwrite) {
                 delete filteredUpdateOptions[
-                  clearedMapping[el].asAttribute.key
+                  clearedMapping[el].asAttribute.attribute.name
                 ];
               }
               if (
-                convertedRecord[clearedMapping[el].asAttribute.key] &&
-                filteredUpdateOptions?.[clearedMapping?.[el].asAttribute.key]
+                convertedRecord[clearedMapping[el].asAttribute.attribute.name] &&
+                filteredUpdateOptions?.[clearedMapping?.[el].asAttribute.attribute.name]
               ) {
-                delete convertedRecord[clearedMapping[el].asAttribute.key];
+                delete convertedRecord[clearedMapping[el].asAttribute.attribute.name];
               }
             });
             batch.push({
@@ -190,7 +173,7 @@ export class ImportProcessor extends WorkerHost {
               this.processImportRecord(
                 account,
                 settings.importOption,
-                passedPK.asAttribute.key,
+                passedPK.asAttribute.attribute.name,
                 batch,
                 segmentId,
                 session
@@ -201,7 +184,7 @@ export class ImportProcessor extends WorkerHost {
                 .finally(() => {
                   promiseSet.delete(batchId);
                 });
-              await new Promise((resolve) => setTimeout(resolve, 10000));
+
               batch = [];
               csvStream.resume();
             }
@@ -227,7 +210,7 @@ export class ImportProcessor extends WorkerHost {
                   await this.processImportRecord(
                     account,
                     settings.importOption,
-                    passedPK.asAttribute.key,
+                    passedPK.asAttribute.attribute.name,
                     batch,
                     segmentId,
                     session
@@ -239,20 +222,23 @@ export class ImportProcessor extends WorkerHost {
                 return;
               }
             };
-            await checkAllBatchesCompleted();
+            interval = setInterval(checkAllBatchesCompleted, 200);
 
-            setInterval(checkAllBatchesCompleted, 200);
             setTimeout(() => {
               if (interval) clearInterval(interval);
               reject('Timeout while waiting for all batches to complete');
-            }, 5000);
+            }, 30000);
           })
           .on('error', (err) => {
             reject(err);
           });
         s3CSVStream.pipe(csvStream);
       });
-      await readPromise;
+
+      await readPromise.catch((error) => {
+        throw new Error(error);
+      });
+
       await this.customersService.removeImportFile(account);
 
       if (segmentId) {
@@ -261,6 +247,8 @@ export class ImportProcessor extends WorkerHost {
           isUpdating: false,
         });
       }
+
+      this.warn(`Import complete.`, this.process.name, session);
     } catch (error) {
       this.error(error, 'Processing customer import', session);
       throw error;
@@ -287,26 +275,32 @@ export class ImportProcessor extends WorkerHost {
     const organization = account?.teams?.[0]?.organization;
     const workspace = organization?.workspaces?.[0];
 
-    const foundExisting = await this.CustomerModel.find({
-      workspaceId: workspace.id,
-      [pkKey]: { $in: withoutDuplicateKeys },
-    }).exec();
 
-    const existing = foundExisting.map((el) => el.toObject()[pkKey]);
+    const foundExisting = await this.customersRepository
+      .createQueryBuilder("customer")
+      .where("customer.workspace = :workspaceId", { workspaceId: workspace.id })
+      .andWhere(`customer.user_attributes ->> :pkKey IN (:...keys)`, { pkKey, keys: withoutDuplicateKeys })
+      .getMany();
+
+    const existing = foundExisting.map((el) => el.user_attributes[pkKey]);
 
     const toCreate = withoutDuplicateKeys
       .filter((el) => !existing.includes(el))
       .map((el) => {
         return data.find((el2) => el2.pkKeyValue === el);
       })
-      .map((el) => ({
-        _id: randomUUID(),
-        createdAt: new Date(),
-        workspaceId: workspace.id,
-        [pkKey]: el.pkKeyValue,
-        ...el.create,
-        ...el.update,
-      }));
+      .map((el) => {
+        const cust = new Customer();
+        cust.created_at = new Date();
+        cust.workspace_id = workspace.id;
+        cust.user_attributes = {
+          [pkKey]: el.pkKeyValue,
+          ...el.create,
+          ...el.update,
+        }
+        return cust;
+      }
+      );
 
     await this.customersService.checkCustomerLimit(
       organization,
@@ -317,14 +311,12 @@ export class ImportProcessor extends WorkerHost {
 
     if (importOption === ImportOptions.NEW) {
       try {
-        const insertedResults = await this.CustomerModel.insertMany(toCreate, {
-          ordered: false,
-        });
+        await this.customersRepository.save(toCreate);
 
         if (segmentId)
-          addToSegment.push(
-            ...insertedResults.map((doc) => doc._id.toString())
-          );
+          for(const customer of toCreate)
+            addToSegment.push(customer.id);
+
       } catch (error) {
         this.error(
           error,
@@ -341,7 +333,7 @@ export class ImportProcessor extends WorkerHost {
           return data.find((el2) => el2.pkKeyValue === el);
         })
         .map((el) => ({
-          workspaceId: workspace.id,
+          workspace_id: workspace.id,
           [pkKey]: el.pkKeyValue,
           ...el.update,
         }));
@@ -358,18 +350,12 @@ export class ImportProcessor extends WorkerHost {
       }));
 
       try {
-        const insertedResults = await this.CustomerModel.insertMany(toCreate, {
-          ordered: false,
-        });
+        await this.customersRepository.save(toCreate);
 
         if (segmentId)
-          addToSegment.push(
-            ...insertedResults.map((doc) => doc._id.toString())
-          );
+          for(const customer of toCreate)
+            addToSegment.push(customer.id);
 
-        await this.CustomerModel.bulkWrite(bulk, {
-          ordered: false,
-        });
       } catch (error) {
         this.error(
           error,
@@ -386,7 +372,7 @@ export class ImportProcessor extends WorkerHost {
           return data.find((el2) => el2.pkKeyValue === el);
         })
         .map((el) => ({
-          workspaceId: workspace.id,
+          workspace_id: workspace.id,
           [pkKey]: el.pkKeyValue,
           ...el.update,
         }));
@@ -401,9 +387,9 @@ export class ImportProcessor extends WorkerHost {
         },
       }));
       try {
-        await this.CustomerModel.bulkWrite(bulk, {
-          ordered: false,
-        });
+        // await this.CustomerModel.bulkWrite(bulk, {
+        //   ordered: false,
+        // });
       } catch (error) {
         this.error(
           error,
@@ -420,7 +406,9 @@ export class ImportProcessor extends WorkerHost {
       (importOption === ImportOptions.NEW_AND_EXISTING ||
         importOption === ImportOptions.EXISTING)
     )
-      addToSegment.push(...foundExisting.map((doc) => doc._id.toString()));
+      if (segmentId)
+        for(const customer of foundExisting)
+          addToSegment.push(customer.id);
 
     if (segmentId && addToSegment.length !== 0) {
       const segment = await this.segmentRepository.findOne({
@@ -431,20 +419,29 @@ export class ImportProcessor extends WorkerHost {
 
       if (!segment) {
         this.error(
-          `Segment ${segmentId} doesn't exist in database`,
-          'Processing customer import -> moving to segment',
+          `Segment ${segmentId} doesn't exist in database,
+           Processing customer import -> moving to segment`,
+          this.processImportRecord.name,
           session
         );
         return;
       }
 
-      await this.segmentCustomersRepository.insert(
-        addToSegment.map((el) => ({
-          customerId: el,
-          segment: segmentId, //segment,
-          workspace: workspace,
-        }))
-      );
+      const customersToBeAdded = addToSegment.map((el) => ({
+        customer_id: el,
+        segment_id: segment.id,
+        workspace_id: workspace.id,
+      }));
+
+      await this.segmentCustomersRepository
+          .createQueryBuilder()
+          .insert()
+          // explicitly use the column names otherwise
+          // typeorm duplicates these columns and produces
+          // column specified more than once error
+          .into(SegmentCustomers, ["customer_id", "segment_id", "workspace_id"])
+          .values(customersToBeAdded)
+          .execute();
     }
   }
 }

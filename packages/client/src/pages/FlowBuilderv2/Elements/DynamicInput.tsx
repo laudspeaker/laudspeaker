@@ -1,10 +1,9 @@
-import Button, { ButtonType } from "components/Elements/Buttonv2";
 import Input from "components/Elements/Inputv2";
-import Modal from "components/Elements/Modalv2";
 import Select from "components/Elements/Selectv2";
-import React, { FC, ReactNode, useEffect, useMemo, useState } from "react";
+import { FC, ReactNode, useEffect, useState } from "react";
 import { StatementValueType } from "reducers/flow-builder.reducer";
 import { ArrayComponent } from "./ArrayComponent";
+import { AttributeType } from "pages/PeopleSettings/PeopleSettings";
 
 export interface ValueChanger {
   value: any;
@@ -184,7 +183,7 @@ const StringComponent: FC<ValueChanger> = ({
 };
 
 interface DynamicInputProps extends ValueChanger {
-  type: StatementValueType;
+  type: AttributeType;
   isArray?: boolean;
   isRelativeDate?: boolean;
   dateFormat?: string;
@@ -212,6 +211,12 @@ const DynamicInput: FC<DynamicInputProps> = ({
     [StatementValueType.STRING]: "",
     [StatementValueType.ARRAY]: JSON.stringify([]),
     [StatementValueType.OBJECT]: "",
+  };
+
+  const getType = (typeObj: any): StatementValueType => {
+    if (!typeObj) return StatementValueType.STRING;
+
+    return typeObj.name as StatementValueType;
   };
 
   const valueTypeToComponentMap: Record<StatementValueType, ReactNode> = {
@@ -285,10 +290,10 @@ const DynamicInput: FC<DynamicInputProps> = ({
       return;
     }
 
-    onChange(defaultValuesMap[type]);
+    onChange(defaultValuesMap[getType(type)]);
   }, [type]);
 
-  const dynamicComponent = valueTypeToComponentMap[type];
+  const dynamicComponent = valueTypeToComponentMap[getType(type)];
 
   return (
     <>

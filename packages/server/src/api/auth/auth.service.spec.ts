@@ -10,7 +10,6 @@ import { Verification } from './entities/verification.entity';
 import { Recovery } from './entities/recovery.entity';
 import { AuthHelper } from './auth.helper';
 import { CustomersService } from '../customers/customers.service';
-import { getConnectionToken } from '@nestjs/mongoose';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -57,10 +56,6 @@ describe('AuthService', () => {
         {
           provide: CustomersService,
           useValue: createMock<CustomersService>(),
-        },
-        {
-          provide: getConnectionToken(),
-          useValue: { add: jest.fn() },
         },
       ],
     }).compile();

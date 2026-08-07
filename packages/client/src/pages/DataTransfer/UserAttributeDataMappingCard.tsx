@@ -36,8 +36,8 @@ const UserAttributeDataMappingCard: FC<UserAttributeDataMappingCardProps> = ({
     () =>
       attributes.find(
         (attribute) =>
-          attribute.key === mapping.attributeKey &&
-          attribute.type === mapping.attributeType
+          attribute.name === mapping.attributeKey &&
+          attribute.attribute_type.name === mapping.attributeType
       ),
     [attributes, mapping]
   );
@@ -58,7 +58,7 @@ const UserAttributeDataMappingCard: FC<UserAttributeDataMappingCardProps> = ({
                   title: capitalize(dataSourceMappingType.split("-").join(" ")),
                 })
               )}
-              disabled={currentMappingAttribute?.isPrimary}
+              disabled={currentMappingAttribute?.is_primary}
             />
           ) : (
             <div className="whitespace-nowrap">User attribute</div>
@@ -72,16 +72,16 @@ const UserAttributeDataMappingCard: FC<UserAttributeDataMappingCardProps> = ({
             onChange={(value) => onChange({ ...mapping, importedValue: value })}
           />
           <div className="whitespace-nowrap">maps to</div>
-          {currentMappingAttribute?.isPrimary ? (
+          {currentMappingAttribute?.is_primary ? (
             <div className="relative max-w-[220px] w-full">
               <Input
                 className="!max-w-[220px] !w-full !h-[32px] bg-[#E5E7EB]"
                 wrapperClassName="!max-w-[220px] !w-full !h-[32px]"
-                value={`${currentMappingAttribute.key} (${
-                  currentMappingAttribute.type
+                value={`${currentMappingAttribute.name} (${
+                  currentMappingAttribute.attribute_type
                 })  ${
-                  currentMappingAttribute.dateFormat
-                    ? ` [${currentMappingAttribute.dateFormat}]`
+                  currentMappingAttribute.attribute_parameter
+                    ? ` [${currentMappingAttribute.attribute_parameter}]`
                     : ""
                 }`}
                 onChange={() => {}}
@@ -101,26 +101,30 @@ const UserAttributeDataMappingCard: FC<UserAttributeDataMappingCardProps> = ({
 
                 onChange({
                   ...mapping,
-                  attributeKey: attribute.key,
-                  attributeType: attribute.type,
+                  attributeKey: attribute.name,
+                  attributeType: attribute.attribute_type
+                    .name as StatementValueType,
                 });
               }}
               placeholder="select system attribute"
               options={attributes
                 .filter(
                   (attribute) =>
-                    (attribute.key === currentMappingAttribute?.key &&
-                      attribute.type === currentMappingAttribute?.type) ||
+                    (attribute.name === currentMappingAttribute?.name &&
+                      attribute.attribute_type ===
+                        currentMappingAttribute?.attribute_type) ||
                     existingAttributes.every(
                       (existingAttribute) =>
-                        existingAttribute.key !== attribute.key ||
-                        existingAttribute.type !== attribute.type
+                        existingAttribute.key !== attribute.name ||
+                        existingAttribute.type !== attribute.attribute_type.name
                     )
                 )
                 .map((attribute) => ({
                   key: attribute,
-                  title: `${attribute.key} (${attribute.type})  ${
-                    attribute.dateFormat ? ` [${attribute.dateFormat}]` : ""
+                  title: `${attribute.name} (${attribute.attribute_type})  ${
+                    attribute.attribute_parameter
+                      ? ` [${attribute.attribute_parameter}]`
+                      : ""
                   }`,
                 }))}
             />
@@ -143,7 +147,7 @@ const UserAttributeDataMappingCard: FC<UserAttributeDataMappingCardProps> = ({
         </div>
       </div>
 
-      {!currentMappingAttribute?.isPrimary && (
+      {!currentMappingAttribute?.is_primary && (
         <div onClick={onDelete} className="cursor-pointer">
           <TrashIcon />
         </div>

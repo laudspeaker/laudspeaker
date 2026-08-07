@@ -1,19 +1,17 @@
-import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job, MetricsTime, Queue } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { KEYS_TO_SKIP } from '@/utils/customer-key-name-validator';
+import { KEYS_TO_SKIP } from '../../../utils/customer-key-name-validator';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { EachMessagePayload } from 'kafkajs';
 import { CustomersService } from '../customers.service';
-import { JourneysService } from '@/api/journeys/journeys.service';
+import { JourneysService } from '../../journeys/journeys.service';
 import { ChangeStreamDocument, DataSource } from 'typeorm';
-import { AccountsService } from '@/api/accounts/accounts.service';
-import { SegmentsService } from '@/api/segments/segments.service';
-import { InjectConnection } from '@nestjs/mongoose';
-import mongoose from 'mongoose';
-import { Customer, CustomerDocument } from '../schemas/customer.schema';
-import { Account } from '@/api/accounts/entities/accounts.entity';
-import { ProviderType } from '@/api/events/events.preprocessor';
+import { AccountsService } from '../../accounts/accounts.service';
+import { SegmentsService } from '../../segments/segments.service';
+import { Account } from '../../accounts/entities/accounts.entity';
+import { ProviderType } from '../../events/processors/events.preprocessor';
+import { Processor } from '../../../common/services/queue/decorators/processor';
+import { ProcessorBase } from '../../../common/services/queue/classes/processor-base';
 
 const containsUnskippedKeys = (updateDescription) => {
   // Combine keys from updatedFields, removedFields, and the fields of truncatedArrays
@@ -70,24 +68,8 @@ const copyMessageWithFilteredUpdateDescription = (message) => {
 };
 
 @Injectable()
-@Processor('{customer_change}', {
-  stalledInterval: process.env.CUSTOMER_CHANGE_PROCESSOR_STALLED_INTERVAL
-    ? +process.env.CUSTOMER_CHANGE_PROCESSOR_STALLED_INTERVAL
-    : 30000,
-  removeOnComplete: {
-    age: 0,
-    count: process.env.CUSTOMER_CHANGE_PROCESSOR_REMOVE_ON_COMPLETE
-      ? +process.env.CUSTOMER_CHANGE_PROCESSOR_REMOVE_ON_COMPLETE
-      : 0,
-  },
-  metrics: {
-    maxDataPoints: MetricsTime.ONE_WEEK,
-  },
-  concurrency: process.env.CUSTOMER_CHANGE_PROCESSOR_CONCURRENCY
-    ? +process.env.CUSTOMER_CHANGE_PROCESSOR_CONCURRENCY
-    : 1,
-})
-export class CustomerChangeProcessor extends WorkerHost {
+@Processor('customer_change')
+export class CustomerChangeProcessor extends ProcessorBase {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
@@ -95,9 +77,6 @@ export class CustomerChangeProcessor extends WorkerHost {
     private readonly journeysService: JourneysService,
     private readonly accountsService: AccountsService,
     private readonly segmentsService: SegmentsService,
-    @InjectQueue('{events_pre}')
-    private readonly eventPreprocessorQueue: Queue,
-    @InjectConnection() private readonly connection: mongoose.Connection,
     private dataSource: DataSource
   ) {
     super();
@@ -169,92 +148,92 @@ export class CustomerChangeProcessor extends WorkerHost {
       string
     >
   ): Promise<any> {
-    let err: any;
-    const queryRunner = await this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    const clientSession = await this.connection.startSession();
-    await clientSession.startTransaction();
+    // let err: any;
+    // const queryRunner = await this.dataSource.createQueryRunner();
+    // await queryRunner.connect();
+    // await queryRunner.startTransaction();
+    // const clientSession = await this.connection.startSession();
+    // await clientSession.startTransaction();
     try {
-      let message: ChangeStreamDocument<Customer> | String = Buffer.from(
-        job.data.changeMessage.message.value
-      ).toString();
+    //   let message: ChangeStreamDocument<Customer> | String = Buffer.from(
+    //     job.data.changeMessage.message.value
+    //   ).toString();
 
-      // keep parsing until the kafka payload is turned into an object
-      while (typeof message === 'string' || message instanceof String) {
-        message = JSON.parse(message.toString());
-      }
+    //   // keep parsing until the kafka payload is turned into an object
+    //   while (typeof message === 'string' || message instanceof String) {
+    //     message = JSON.parse(message.toString());
+    //   }
 
-      let account: Account;
-      let customer: CustomerDocument;
-      switch (message.operationType) {
-        case 'insert':
-        case 'update':
-        case 'replace':
-          if (
-            message.operationType === 'update' &&
-            !containsUnskippedKeys(message.updateDescription)
-          )
-            break;
-          customer = await this.customersService.findByCustomerId(
-            message.documentKey._id,
-            clientSession
-          );
-          if (!customer) {
-            this.warn(
-              `No customer with id ${message.documentKey._id}`,
-              this.process.name,
-              job.data.session
-            );
-            break;
-          }
-          account =
-            await this.accountsService.findOrganizationOwnerByWorkspaceId(
-              customer.workspaceId,
-              job.data.session
-            );
-          await this.segmentsService.updateCustomerSegments(
-            account,
-            customer._id,
-            job.data.session,
-            queryRunner
-          );
-          await this.journeysService.updateEnrollmentForCustomer(
-            account,
-            customer._id,
-            message.operationType === 'insert' ? 'NEW' : 'CHANGE',
-            job.data.session,
-            queryRunner,
-            clientSession
-          );
-          if (message.operationType === 'update')
-            await this.eventPreprocessorQueue.add(ProviderType.WU_ATTRIBUTE, {
-              account: account,
-              session: job.data.session,
-              message: copyMessageWithFilteredUpdateDescription(message),
-            });
-          break;
-        case 'delete': {
-          // TODO_JH: remove customerID from all steps also
-          const customerId = message.documentKey._id;
-          await this.segmentsService.removeCustomerFromAllSegments(
-            customerId,
-            queryRunner
-          );
-          break;
-        }
-      }
-      await clientSession.commitTransaction();
-      await queryRunner.commitTransaction();
+    //   let account: Account;
+    //   let customer: CustomerDocument;
+    //   switch (message.operationType) {
+    //     case 'insert':
+    //     case 'update':
+    //     case 'replace':
+    //       if (
+    //         message.operationType === 'update' &&
+    //         !containsUnskippedKeys(message.updateDescription)
+    //       )
+    //         break;
+    //       customer = await this.customersService.findByCustomerId(
+    //         message.documentKey._id,
+    //         clientSession
+    //       );
+    //       if (!customer) {
+    //         this.warn(
+    //           `No customer with id ${message.documentKey._id}`,
+    //           this.process.name,
+    //           job.data.session
+    //         );
+    //         break;
+    //       }
+    //       account =
+    //         await this.accountsService.findOrganizationOwnerByWorkspaceId(
+    //           customer.workspaceId,
+    //           job.data.session
+    //         );
+    //       await this.segmentsService.updateCustomerSegments(
+    //         account,
+    //         customer._id,
+    //         job.data.session,
+    //         queryRunner
+    //       );
+    //       await this.journeysService.updateEnrollmentForCustomer(
+    //         account,
+    //         customer._id,
+    //         message.operationType === 'insert' ? 'NEW' : 'CHANGE',
+    //         job.data.session,
+    //         queryRunner,
+    //         clientSession
+    //       );
+    //       if (message.operationType === 'update')
+    //         await Producer.add(QueueType.EVENTS_PRE, {
+    //           account: account,
+    //           session: job.data.session,
+    //           message: copyMessageWithFilteredUpdateDescription(message),
+    //         }, ProviderType.WU_ATTRIBUTE);
+    //       break;
+    //     case 'delete': {
+    //       // TODO_JH: remove customerID from all steps also
+    //       const customerId = message.documentKey._id;
+    //       await this.segmentsService.removeCustomerFromAllSegments(
+    //         customerId,
+    //         queryRunner
+    //       );
+    //       break;
+    //     }
+    //   }
+    //   await clientSession.commitTransaction();
+    //   await queryRunner.commitTransaction();
     } catch (e) {
-      this.error(e, this.process.name, job.data.session);
-      err = e;
-      await clientSession.abortTransaction();
-      await queryRunner.rollbackTransaction();
+      // this.error(e, this.process.name, job.data.session);
+      // err = e;
+      // await clientSession.abortTransaction();
+      // await queryRunner.rollbackTransaction();
     } finally {
-      await clientSession.endSession();
-      await queryRunner.release();
-      if (err) throw err;
+      // await clientSession.endSession();
+      // await queryRunner.release();
+      // if (err) throw err;
     }
   }
 }

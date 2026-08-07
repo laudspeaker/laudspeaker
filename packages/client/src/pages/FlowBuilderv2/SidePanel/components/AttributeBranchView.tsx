@@ -1,14 +1,13 @@
-import { AttributeBranch } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC } from "react";
 
 interface AttributeBranchViewProps {
-  branch: AttributeBranch;
+  branch: any;
 }
 
 const AttributeBranchView: FC<AttributeBranchViewProps> = ({ branch }) => {
   return (
     <div className="flex flex-col gap-3">
-      {branch.attributeConditions.map((condition, i) => (
+      {branch.attributeConditions.map((condition: any, i: any) => (
         <React.Fragment key={i}>
           <div className="p-3 flex flex-col bg-gray-100 rounded">
             <div className="flex justify-between items-center">
@@ -16,7 +15,7 @@ const AttributeBranchView: FC<AttributeBranchViewProps> = ({ branch }) => {
                 Attribute {i + 1}
               </div>
             </div>
-            {condition.statements.map((statement, k) => (
+            {condition.statements.map((statement: any, k: any) => (
               <div
                 className="font-inter font-normal text-[14px] leading-[22px]"
                 key={k}

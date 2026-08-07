@@ -15,6 +15,8 @@ import { ModalEvent } from './entities/modal-event.entity';
 import { cleanTagsForSending } from '../../shared/utils/helpers';
 import { Liquid } from 'liquidjs';
 import recursivelyUpdateObject from '../../utils/recursivelyUpdateObject';
+import { Account } from '../accounts/entities/accounts.entity';
+import { Workspaces } from '../workspaces/entities/workspaces.entity';
 
 @Injectable()
 export class ModalsService {
@@ -23,15 +25,16 @@ export class ModalsService {
   private tagEngine = new Liquid();
 
   constructor(
+    @Inject(forwardRef(() => AccountsService))
     private accountsService: AccountsService,
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
     @InjectRepository(ModalEvent)
     private modalEventRepository: Repository<ModalEvent>
-  ) {}
+  ) { }
 
   public async queueModalEvent(customerId: string, template: Template) {
-    if (template?.type !== TemplateType.MODAL)
+    if (template?.type !== TemplateType.IN_APP)
       throw new BadRequestException(
         'Invalid template type: should be modal, got: ' + template.type
       );
@@ -47,47 +50,48 @@ export class ModalsService {
     const account = await this.accountsService.findOneByAPIKey(apiKey);
     if (!account) throw new NotFoundException('Account not found');
 
-    const customer = await this.customersService.CustomerModel.findById(
-      customerId
-    );
-    if (!customer) throw new NotFoundException('Customer not found');
+    // const customer = await this.customersService.CustomerModel.findById(
+    //   customerId
+    // // );
+    // if (!customer) throw new NotFoundException('Customer not found');
 
-    const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
+    // const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    if (customer.workspaceId !== workspace.id)
-      throw new ForbiddenException("Customer does't belongs to account");
+    // if (customer.workspaceId !== workspace.id)
+    //   throw new ForbiddenException("Customer does't belongs to account");
   }
 
   public async getQueuedModalObject(
+    auth: { account: Account; workspace: Workspaces },
     customerId: string
   ): Promise<Record<string, unknown> | undefined> {
-    const customer = await this.customersService.CustomerModel.findById(
-      customerId
-    );
-    if (!customer) throw new NotFoundException('Customer not found');
+  //   const customer = await this.customersService.CustomerModel.findById(
+  //     customerId
+  //   );
+  //   if (!customer) throw new NotFoundException('Customer not found');
 
-    const modalEvent = await this.modalEventRepository.findOne({
-      where: { customerId },
-      relations: ['template'],
-    });
-    if (!modalEvent) return;
+  //   const modalEvent = await this.modalEventRepository.findOne({
+  //     where: { customerId },
+  //     relations: ['template'],
+  //   });
+  //   if (!modalEvent) return;
 
-    const modalState = modalEvent.template.modalState;
-    const { _id, workspaceId, workflows, ...tags } = customer.toObject();
-    const filteredTags = cleanTagsForSending(tags);
+  //   const modalState = modalEvent.template.modalState;
+  //   const { _id, workspaceId, workflows, ...tags } = customer.toObject();
+  //   const filteredTags = cleanTagsForSending(tags);
 
-    recursivelyUpdateObject(modalState, (item, type) => {
-      if (type !== 'string') return item;
+  //   recursivelyUpdateObject(modalState, (item, type) => {
+  //     if (type !== 'string') return item;
 
-      return this.tagEngine.parseAndRenderSync(
-        item as string,
-        filteredTags || {}
-      );
-    });
+  //     return this.tagEngine.parseAndRenderSync(
+  //       item as string,
+  //       filteredTags || {}
+  //     );
+  //   });
 
-    await this.modalEventRepository.delete({ customerId });
+  //   await this.modalEventRepository.delete({ customerId });
 
-    return modalState;
+    return null;
   }
 
   public async deleteExpiredModalEvents() {

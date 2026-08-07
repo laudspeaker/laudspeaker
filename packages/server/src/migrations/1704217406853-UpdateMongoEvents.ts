@@ -1,7 +1,3 @@
-import { EventKeysSchema } from '@/api/events/schemas/event-keys.schema';
-import { EventSchema } from '@/api/events/schemas/event.schema';
-import { formatMongoConnectionString } from '@/app.module';
-import mongoose from 'mongoose';
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class UpdateMongoEvents1704217406853 implements MigrationInterface {

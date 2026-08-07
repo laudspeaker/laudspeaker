@@ -3,9 +3,6 @@ import { Inject, Logger } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import {
-  Processor,
-  WorkerHost,
-  InjectQueue,
   OnWorkerEvent,
 } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
@@ -15,29 +12,30 @@ import * as Sentry from '@sentry/node';
 import { Account } from '../../accounts/entities/accounts.entity';
 import { Journey } from '../entities/journey.entity';
 import { Step } from '../../steps/entities/step.entity';
-import { StepsService } from '@/api/steps/steps.service';
-import { CustomersService } from '@/api/customers/customers.service';
-import { JourneysService } from '@/api/journeys/journeys.service';
+import { StepsService } from '../../steps/steps.service';
+import { CustomersService } from '../../customers/customers.service';
+import { JourneysService } from '../../journeys/journeys.service';
+import { Processor } from '../../../common/services/queue/decorators/processor';
+import { ProcessorBase } from '../../../common/services/queue/classes/processor-base';
+import { QueueType } from '../../../common/services/queue/types/queue-type';
+import { Producer } from '../../../common/services/queue/classes/producer';
 
 @Injectable()
-@Processor('{enrollment}', {
-  stalledInterval: process.env.ENROLLMENT_PROCESSOR_STALLED_INTERVAL
-    ? +process.env.ENROLLMENT_PROCESSOR_STALLED_INTERVAL
-    : 600000,
-  removeOnComplete: { count: 100 },
-})
-export class EnrollmentProcessor extends WorkerHost {
+@Processor(
+  'enrollment', {
+    prefetchCount: 1
+  })
+export class EnrollmentProcessor extends ProcessorBase {
   constructor(
     private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
-    @InjectQueue('{start}') private readonly startQueue: Queue,
     @Inject(StepsService)
     private readonly stepsService: StepsService,
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
     @Inject(JourneysService)
-    private journeyService: JourneysService
+    private journeyService: JourneysService,
   ) {
     super();
   }
@@ -118,29 +116,25 @@ export class EnrollmentProcessor extends WorkerHost {
   ): Promise<any> {
     let err: any;
     let triggerStartTasks: {
-      collectionName: string;
-      job: { name: string; data: any };
+      jobData: any;
     };
-    let collectionName: string;
-    let count: number;
 
-    try {
-      ({ collectionName, count } = await this.customersService.getAudienceSize(
-        job.data.account,
-        job.data.journey.inclusionCriteria,
-        job.data.session,
-        null
-      ));
-    } catch (error) {
-      this.error(
-        error,
-        this.process.name,
-        job.data.session,
-        job.data.account.email
-      );
+    // try {
+    //   ({ collectionName, count } = await this.customersService.getAudienceSize(
+    //     job.data.account,
+    //     job.data.journey.inclusionCriteria,
+    //     job.data.session,
+    //   ));
+    // } catch (error) {
+    //   this.error(
+    //     error,
+    //     this.process.name,
+    //     job.data.session,
+    //     job.data.account.email
+    //   );
 
-      throw error;
-    }
+    //   throw error;
+    // }
     const queryRunner = await this.dataSource.createQueryRunner();
     const client = await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -149,16 +143,9 @@ export class EnrollmentProcessor extends WorkerHost {
         job.data.account,
         job.data.journey,
         job.data.journey.inclusionCriteria,
-        job.data.journey?.journeySettings?.maxEntries?.enabled &&
-          count >
-            parseInt(job.data.journey?.journeySettings?.maxEntries?.maxEntries)
-          ? parseInt(job.data.journey?.journeySettings?.maxEntries?.maxEntries)
-          : count,
-        queryRunner,
-        client,
         job.data.session,
-        collectionName
       );
+
       await queryRunner.manager.save(Journey, {
         ...job.data.journey,
         isEnrolling: false,
@@ -172,10 +159,11 @@ export class EnrollmentProcessor extends WorkerHost {
       });
 
       await queryRunner.commitTransaction();
+
       if (triggerStartTasks) {
-        await this.startQueue.add(
-          triggerStartTasks.job.name,
-          triggerStartTasks.job.data
+        await Producer.add(
+          QueueType.START,
+          triggerStartTasks.jobData
         );
       }
     } catch (e) {

@@ -251,7 +251,7 @@ const OverviewUserTable = () => {
                 Customer ID
               </div>,
               <div key="pk" className="px-5 py-[10px] select-none">
-                {pk?.key}
+                {pk?.name}
               </div>,
               <div
                 key="status"
@@ -331,7 +331,7 @@ const OverviewUserTable = () => {
               >
                 {row.customerId}
               </button>,
-              <div key={pk?.key}>{pk ? row[pk.key] : ""}</div>,
+              <div key={pk?.name}>{pk ? row[pk.name] : ""}</div>,
               <div
                 key={row.status}
                 className={`px-[10px] py-[2px] rounded-[14px] w-fit ${

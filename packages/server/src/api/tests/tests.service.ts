@@ -5,27 +5,17 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Model } from 'mongoose';
 import { DataSource, Repository } from 'typeorm';
 import { AccountsService } from '../accounts/accounts.service';
 import { Account } from '../accounts/entities/accounts.entity';
-import { Audience } from '../audiences/entities/audience.entity';
 import { AuthService } from '../auth/auth.service';
 import { Recovery } from '../auth/entities/recovery.entity';
 import { CustomersService } from '../customers/customers.service';
-import { CreateCustomerDto } from '../customers/dto/create-customer.dto';
-import {
-  CustomerKeys,
-  CustomerKeysDocument,
-} from '../customers/schemas/customer-keys.schema';
 import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
 import { Installation } from '../slack/entities/installation.entity';
 import { Template } from '../templates/entities/template.entity';
-import { Workflow } from '../workflows/entities/workflow.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { isThursday } from 'date-fns';
 
 @Injectable()
 export class TestsService {
@@ -37,10 +27,6 @@ export class TestsService {
     private readonly customersService: CustomersService,
     @Inject(AccountsService)
     private accountService: AccountsService,
-    @InjectRepository(Workflow)
-    private workflowsRepository: Repository<Workflow>,
-    @InjectRepository(Audience)
-    private audienceRepository: Repository<Audience>,
     @InjectRepository(Template)
     private templateRepository: Repository<Template>,
     @InjectRepository(Installation)
@@ -49,11 +35,9 @@ export class TestsService {
     private recoveryRepository: Repository<Recovery>,
     @Inject(AuthService)
     private readonly authService: AuthService,
-    @InjectModel(CustomerKeys.name)
-    private CustomerKeysModel: Model<CustomerKeysDocument>,
     @InjectRepository(SegmentCustomers)
     private segmentCustomersRepository: Repository<SegmentCustomers>
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -150,9 +134,7 @@ export class TestsService {
 
       if (workspaces) {
         for (const workspace of workspaces) {
-          await this.customersService.CustomerModel.deleteMany({
-            workspaceId: workspace.id,
-          });
+          await this.customersService.deleteFromWorkspace(workspace.id, session);
         }
       }
 
@@ -317,36 +299,12 @@ export class TestsService {
     await this.authService.verifyEmail(account, id, session);
   }
 
-  public async getTestPosthogCustomer(id: string, session: string) {
-    return this.customersService.CustomerModel.findOne({
-      posthogId: [id],
-    }).exec();
-  }
-
   public async getTestCustomerId(session: string) {
-    const customer = await this.customersService.CustomerModel.findOne({
-      ownerId: '00000000-0000-0000-0000-000000000000',
+    const account = await this.accountService.accountsRepository.findOneBy({
       email: 'testmail@gmail.com',
     });
+    const customer = await this.customersService.findOneByUUID(account, '00000000-0000-0000-0000-000000000000', session);
     return customer.id;
-  }
-
-  public async getAnyTestCustomerId(session: string) {
-    const customer = await this.customersService.CustomerModel.findOne({
-      ownerId: '00000000-0000-0000-0000-000000000000',
-    });
-    return customer.id;
-  }
-
-  public async getAudienceByCustomerId(id: string, session: string) {
-    const audiences = await this.audienceRepository.findBy({
-      owner: {
-        id: '00000000-0000-0000-0000-000000000000',
-        email: 'testmail@gmail.com',
-      },
-    });
-
-    return audiences.find((audience) => audience.customers.includes(id));
   }
 
   public async getTestRecovery(session: string) {
@@ -357,29 +315,14 @@ export class TestsService {
 
   //to do
   public async isCustomerInSegment(customerId: string, session: string) {
-    const cust = await this.segmentCustomersRepository.findOne({
-      where: {
-        customerId,
-      },
-    });
     return true;
-    //return !!cust?.id;
   }
 
   public async getSegmentSize(segmentId: string, session: string) {
     return await this.segmentCustomersRepository.count({
       where: {
-        segment: segmentId, //{id: segmentId,},
+        segment: { id: segmentId },
       },
     });
-  }
-
-  public async getWorkflowCustomersAmount(workflowId: string, session: string) {
-    const sum = await this.workflowsRepository.query(
-      'select sum(array_length(audience."customers",1)) from audience where audience."workflowId" = $1',
-      [workflowId]
-    );
-
-    return sum?.[0]?.sum || 0;
   }
 }

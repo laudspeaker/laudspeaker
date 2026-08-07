@@ -36,7 +36,8 @@
     "start:client": "npm run start -w packages/client",
     "start:client:ci": "npm run start:ci -w packages/client",
     "start:server": "npm run start:dev -w packages/server",
-    "migrations": "npm run typeorm:run -w packages/server"
+    "clickhouse:migrations": "clickhouse-migrations migrate --host localhost --port 8123 --user default --password '' --db default --migrations-home packages/server/src/migrations/clickhouse",
+    "migrations": "npm run clickhouse:migrations && npm run typeorm:run -w packages/server"
   },
   "author": "",
   "license": "MIT",
@@ -46,6 +47,14 @@
     "logform": "^2.4.2",
     "luxon": "^3.2.1",
     "p-map": "^5.5.0",
-    "taskforce-connector": "^1.24.3"
+    "taskforce-connector": "^1.24.3",
+    "uuid": "^11.0.3"
+  },
+  "overrides": {
+    "uuid": "^11.0.3"
+  },
+  "devDependencies": {
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.7.3"
   }
 }

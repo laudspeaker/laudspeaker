@@ -1,5 +1,4 @@
 /* eslint-disable no-case-declarations */
-import { InjectQueue } from '@nestjs/bullmq';
 import { Queue, QueueEvents } from 'bullmq';
 import {
   BadRequestException,
@@ -22,6 +21,8 @@ import handleDatabricks from './databricks.worker';
 import { Pool } from 'pg';
 import Cursor from 'pg-cursor';
 import handleMySql from './mysql.worker';
+import { QueueType } from '../../common/services/queue/types/queue-type';
+import { Producer } from '../../common/services/queue/classes/producer';
 
 @Injectable()
 export class IntegrationsService {
@@ -35,7 +36,6 @@ export class IntegrationsService {
     private integrationsRepository: Repository<Integration>,
     @InjectRepository(Database)
     private databaseRepository: Repository<Database>,
-    @InjectQueue('{integrations}') private readonly integrationsQueue: Queue
   ) {
     this.queueEvents = new QueueEvents('{integrations}', {
       connection: {
@@ -51,8 +51,9 @@ export class IntegrationsService {
     (integration: Integration) => Promise<void>
   > = {
     [IntegrationType.DATABASE]: async (integration) => {
-      const job = await this.integrationsQueue.add('db', { integration });
-      await job.waitUntilFinished(this.queueEvents);
+      const job = await Producer.add(QueueType.INTEGRATIONS,
+        integration, 'db');
+      // await job.waitUntilFinished(this.queueEvents);
     },
   };
 

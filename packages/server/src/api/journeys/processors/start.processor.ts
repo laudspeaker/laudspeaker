@@ -3,15 +3,10 @@ import { Inject, Logger } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import {
-  Processor,
-  WorkerHost,
-  InjectQueue,
   OnWorkerEvent,
 } from '@nestjs/bullmq';
 import { Job, MetricsTime, Queue } from 'bullmq';
 import { DataSource } from 'typeorm';
-import { InjectConnection } from '@nestjs/mongoose';
-import mongoose from 'mongoose';
 import * as _ from 'lodash';
 import * as Sentry from '@sentry/node';
 import { CustomersService } from '../../customers/customers.service';
@@ -20,41 +15,32 @@ import { Journey } from '../entities/journey.entity';
 import { JourneyLocationsService } from '../journey-locations.service';
 import { JourneysService } from '../journeys.service';
 import { Step } from '../../steps/entities/step.entity';
+import { StepType } from '../../steps/types/step.interface';
+import { StepsService } from '../../steps/steps.service';
+import { Processor } from '../../../common/services/queue/decorators/processor';
+import { ProcessorBase } from '../../../common/services/queue/classes/processor-base';
+import { QueueType } from '../../../common/services/queue/types/queue-type';
+import { Producer } from '../../../common/services/queue/classes/producer';
 
 const BATCH_SIZE = +process.env.START_BATCH_SIZE;
 
 @Injectable()
-@Processor('{start}', {
-  stalledInterval: process.env.START_PROCESSOR_STALLED_INTERVAL
-    ? +process.env.START_PROCESSOR_STALLED_INTERVAL
-    : 600000,
-  removeOnComplete: {
-    age: 0,
-    count: process.env.START_PROCESSOR_REMOVE_ON_COMPLETE
-      ? +process.env.START_PROCESSOR_REMOVE_ON_COMPLETE
-      : 0,
-  },
-  metrics: {
-    maxDataPoints: MetricsTime.ONE_WEEK,
-  },
-  concurrency: process.env.START_PROCESSOR_CONCURRENCY
-    ? +process.env.START_PROCESSOR_CONCURRENCY
-    : 1,
-})
-export class StartProcessor extends WorkerHost {
+@Processor(
+  'start', {
+    prefetchCount: 1
+  })
+export class StartProcessor extends ProcessorBase {
   constructor(
     private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
-    @InjectQueue('{start.step}') private readonly startStepQueue: Queue,
-    @InjectQueue('{start}') private readonly startQueue: Queue,
-    @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
     @Inject(JourneyLocationsService)
     private readonly journeyLocationsService: JourneyLocationsService,
     @Inject(JourneysService)
-    private readonly journeysService: JourneysService
+    private readonly journeysService: JourneysService,
+    @Inject(StepsService) private stepsService: StepsService,
   ) {
     super();
   }
@@ -124,8 +110,8 @@ export class StartProcessor extends WorkerHost {
    * `Job` type contains the following fields :
    * - `ownerID` Owner of the Journey
    * - `stepID` ID of journey's start step
-   * - `skip` How many documents to skip when querying mongo
-   * - `limit` Limit on returned number of mongo documents
+   * - `skip` How many documents to skip when querying
+   * - `limit` Limit on returned number of documents
    * - `query` The query to perform to lookup customers
    * - `session` Session used for logging
    *
@@ -161,35 +147,35 @@ export class StartProcessor extends WorkerHost {
       await queryRunner.connect();
       await queryRunner.startTransaction();
       try {
-        // Retrieve customers from mongo
-        const customers = await this.customersService.find(
-          job.data.owner,
-          job.data.query,
-          job.data.session,
-          null,
-          job.data.skip,
+        const workspaceId = job.data.owner.teams?.[0]?.organization?.workspaces?.[0].id;
+
+        const customerIds = await this.journeyLocationsService.getCustomerIds(
+          workspaceId,
+          job.data.journey.id,
           job.data.limit,
-          job.data.collectionName
+          job.data.skip);
+
+        const customers = await this.customersService.getCustomersByIds(
+          job.data.owner,
+          customerIds,
         );
         // Retreive locations from Postgres
         const locations = await this.journeyLocationsService.findForWriteBulk(
           job.data.journey,
-          customers.map((document) => {
-            return document._id.toString();
-          }),
+          customerIds,
           queryRunner
         );
-        const jobs = await this.journeysService.enrollCustomersInJourney(
+        const jobsData = await this.journeysService.enrollCustomersInJourney(
           job.data.owner,
           job.data.journey,
           customers,
           locations,
           job.data.session,
           queryRunner,
-          null
         );
         await queryRunner.commitTransaction();
-        if (jobs && jobs.length) await this.startStepQueue.addBulk(jobs);
+        if (jobsData && jobsData.length)
+          await Producer.addBulk(QueueType.START_STEP, jobsData);
       } catch (e) {
         this.error(e, this.process.name, job.data.session, job.data.owner.id);
         await queryRunner.rollbackTransaction();
@@ -201,34 +187,33 @@ export class StartProcessor extends WorkerHost {
     }
     //otherwise, split query in half and add both halves to the start queue
     else {
-      await this.startQueue.addBulk([
+      const jobsData = [
         {
-          name: 'start',
-          data: {
-            owner: job.data.owner,
-            journey: job.data.journey,
-            step: job.data.step,
-            session: job.data.session,
-            query: job.data.query,
-            skip: job.data.skip,
-            limit: Math.floor(job.data.limit / 2),
-            collectionName: job.data.collectionName,
-          },
+          owner: job.data.owner,
+          journey: job.data.journey,
+          step: job.data.step,
+          session: job.data.session,
+          query: job.data.query,
+          skip: job.data.skip,
+          limit: Math.floor(job.data.limit / 2),
+          collectionName: job.data.collectionName,
         },
         {
-          name: 'start',
-          data: {
-            owner: job.data.owner,
-            journey: job.data.journey,
-            step: job.data.step,
-            session: job.data.session,
-            query: job.data.query,
-            skip: job.data.skip + Math.floor(job.data.limit / 2),
-            limit: Math.ceil(job.data.limit / 2),
-            collectionName: job.data.collectionName,
-          },
+          owner: job.data.owner,
+          journey: job.data.journey,
+          step: job.data.step,
+          session: job.data.session,
+          query: job.data.query,
+          skip: job.data.skip + Math.floor(job.data.limit / 2),
+          limit: Math.ceil(job.data.limit / 2),
+          collectionName: job.data.collectionName,
         },
-      ]);
+      ];
+
+      await Producer.addBulk(
+        QueueType.START,
+        jobsData
+      );
     }
   }
 

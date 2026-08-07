@@ -2,8 +2,8 @@ import {
   Branch,
   BranchType,
   Condition,
+  EventType,
   LogicRelation,
-  MessageBranch,
   MessageCondition,
   TimeType,
   WaitUntilBranch,
@@ -11,7 +11,7 @@ import {
   WUAttributeCondition,
   WUAttributeHappenCondition,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
-import React, { FC } from "react";
+import React, { FC, useEffect } from "react";
 import { ProviderType } from "types/Workflow";
 import EventBranchEditor from "../components/EventBranchEditor";
 import { SidePanelComponentProps } from "../FlowBuilderSidePanel";
@@ -27,8 +27,6 @@ import { StatementValueType } from "reducers/flow-builder.reducer";
 const branchNaming = {
   [BranchType.EVENT]: "Event",
   [BranchType.MAX_TIME]: "Max time",
-  [BranchType.MESSAGE]: "Message",
-  [BranchType.WU_ATTRIBUTE]: "Attribute",
 };
 
 const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
@@ -45,6 +43,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
       type: BranchType.EVENT,
       conditions: [
         {
+          type: EventType.ANALYTICS,
           name: "",
           providerType: ProviderType.CUSTOM,
           relationToNext: LogicRelation.OR,
@@ -58,9 +57,10 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
   const handleAddMessageBranch = (providerType: ProviderType) => {
     const newBranch: Branch = {
       id: uuid(),
-      type: BranchType.MESSAGE,
+      type: BranchType.EVENT,
       conditions: [
         {
+          type: EventType.MESSAGE,
           providerType,
           relationToNext: LogicRelation.OR,
           from: undefined,
@@ -78,9 +78,10 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
   const handleWUAttributeBranch = () => {
     const newBranch: Branch = {
       id: uuid(),
-      type: BranchType.WU_ATTRIBUTE,
+      type: BranchType.EVENT,
       conditions: [
         {
+          type: EventType.ATTRIBUTE_CHANGE,
           providerType: ProviderType.WU_ATTRIBUTE,
           attributeName: "",
           happenCondition: WUAttributeHappenCondition.CHANGED,
@@ -118,15 +119,11 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
       ProviderType.SMS_MESSAGE,
     ].includes(providerType);
 
-    if (
-      branchToChange.type !== BranchType.EVENT &&
-      branchToChange.type !== BranchType.MESSAGE &&
-      branchToChange.type !== BranchType.WU_ATTRIBUTE
-    )
-      return;
+    if (branchToChange.type !== BranchType.EVENT) return;
 
     if (!isMessageEditing && providerType !== ProviderType.WU_ATTRIBUTE) {
       branchToChange.conditions.push({
+        type: EventType.ANALYTICS,
         name: "",
         providerType: ProviderType.CUSTOM,
         statements: [],
@@ -176,12 +173,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
   ) => {
     const branchToChange = branches[i];
 
-    if (
-      branchToChange.type !== BranchType.EVENT &&
-      branchToChange.type !== BranchType.MESSAGE &&
-      branchToChange.type !== BranchType.WU_ATTRIBUTE
-    )
-      return;
+    if (branchToChange.type !== BranchType.EVENT) return;
 
     const branchToCheck = deepCopy(branchToChange);
 
@@ -260,12 +252,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
   const handleDeleteCondition = (i: number, j: number) => {
     const branchToChange = branches[i];
 
-    if (
-      branchToChange.type !== BranchType.EVENT &&
-      branchToChange.type !== BranchType.MESSAGE &&
-      branchToChange.type !== BranchType.WU_ATTRIBUTE
-    )
-      return;
+    if (branchToChange.type !== BranchType.EVENT) return;
 
     branchToChange.conditions.splice(j, 1);
     setNodeData({ ...nodeData, branches });
@@ -306,9 +293,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
               Delete branch
             </Button>
           </div>
-          {branch.type === BranchType.EVENT ||
-          branch.type === BranchType.MESSAGE ||
-          branch.type === BranchType.WU_ATTRIBUTE ? (
+          {branch.type === BranchType.EVENT ? (
             <EventBranchEditor
               onAddCondition={onAddCondition(i)}
               onConditionChange={onConditionChange(i)}
@@ -331,10 +316,10 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
           value={""}
           onChange={(el) => {
             const value = el?.split(";;");
-            if (value.length === 2 && value[0] === "message") {
+            if (value.length === 2) {
               handleAddMessageBranch(value[1] as ProviderType);
-            } else if (value[0] === BranchType.WU_ATTRIBUTE) {
-              handleWUAttributeBranch();
+              // } else if (value[0] === BranchType.WU_ATTRIBUTE) {
+              //   handleWUAttributeBranch();
             } else {
               if (value[0] === BranchType.EVENT) {
                 handleAddEventBranch();
@@ -351,10 +336,6 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
               groupLabel: true,
             },
             {
-              key: BranchType.WU_ATTRIBUTE,
-              title: "Attribute",
-            },
-            {
               key: BranchType.EVENT,
               title: "Event",
             },
@@ -364,24 +345,24 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
               groupLabel: true,
             },
             {
-              key: `${BranchType.MESSAGE};;${ProviderType.EMAIL_MESSAGE}`,
+              key: `${BranchType.EVENT};;${ProviderType.EMAIL_MESSAGE}`,
               title: "Email",
             },
             {
-              key: `${BranchType.MESSAGE};;${ProviderType.PUSH_MESSAGE}`,
+              key: `${BranchType.EVENT};;${ProviderType.PUSH_MESSAGE}`,
               title: "Push",
             },
             {
-              key: `${BranchType.MESSAGE};;${ProviderType.SMS_MESSAGE}`,
+              key: `${BranchType.EVENT};;${ProviderType.SMS_MESSAGE}`,
               title: "SMS",
             },
-            {
-              key: `${BranchType.MESSAGE};;${ProviderType.IN_APP_MESSAGE}`,
-              title: "In-app message",
-            },
+            // {
+            //   key: `${BranchType.MESSAGE};;${ProviderType.IN_APP_MESSAGE}`,
+            //   title: "In-app message",
+            // },
           ]}
         />
-        <Button
+        {/* <Button
           type={ButtonType.SECONDARY}
           onClick={handleAddMaxTimeBranch}
           disabled={
@@ -391,7 +372,7 @@ const WaitUntilSettings: FC<SidePanelComponentProps<WaitUntilNodeData>> = ({
           id="set-max-time"
         >
           Set max. time
-        </Button>
+        </Button> */}
       </div>
     </div>
   );

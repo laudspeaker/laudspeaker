@@ -19,7 +19,7 @@ describe("company-setup", () => {
 
   it("passes", () => {
     setupOrganization(organizationName, timeZone);
-    cy.wait(10000);
+    cy.wait(1000);
     cy.visit("/home");
     cy.url().should("include", "/home");
   });

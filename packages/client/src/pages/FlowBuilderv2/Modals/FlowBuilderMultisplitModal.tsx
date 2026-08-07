@@ -47,12 +47,10 @@ const FlowBuilderMultisplitModal = ({
   };
 
   const handleSave = () => {
-    console.log("in handle save");
     if (Object.keys(errors).length) {
       setShowErrors(true);
       return;
     }
-    console.log("the segment data is", JSON.stringify(bufferBranch, null, 2));
 
     onSave(bufferBranch);
   };

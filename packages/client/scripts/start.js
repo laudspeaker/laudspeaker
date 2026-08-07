@@ -128,7 +128,9 @@ checkBrowsers(paths.appPath, isInteractive)
       }
 
       console.log(chalk.cyan("Starting the development server...\n"));
-      openBrowser(urls.localUrlForBrowser);
+
+      if(process.env.ENABLE_OPEN_BROWSER_ON_STARTUP !== 'false')
+        openBrowser(urls.localUrlForBrowser);
     });
 
     ["SIGINT", "SIGTERM"].forEach(function (sig) {

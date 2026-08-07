@@ -6,7 +6,7 @@ export default (email: string, additional_attributes: string[] = []) => {
   cy.get("input").clear().type("email");
   cy.contains("String").click();
   cy.get('[data-option="Email"]').click();
-  cy.contains("Select user attribute").click();
+  cy.contains("Select which customer attribute to use as the primary key").click();
   cy.contains("email").click();
   cy.contains("Add attribute").click();
   cy.get("input:last").clear().type("agreed");

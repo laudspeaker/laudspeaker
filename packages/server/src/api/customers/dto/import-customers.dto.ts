@@ -7,8 +7,9 @@ import {
   IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { AttributeType } from '../schemas/customer-keys.schema';
 import { Trim } from 'class-sanitizer';
+import { AttributeTypeName } from '../entities/attribute-type.entity';
+import { CustomerKey } from '../entities/customer-keys.entity';
 
 export enum ImportOptions {
   NEW = 'NEW',
@@ -28,15 +29,9 @@ class ManualSegmentCreation {
 }
 
 class ImportAttribute {
-  @IsString()
-  key: string;
-
-  @IsEnum(AttributeType)
-  type: AttributeType;
-
   @IsOptional()
-  @IsString()
-  dateFormat?: string;
+  @Type(() => CustomerKey)
+  attribute?: CustomerKey;
 
   @IsOptional()
   @IsBoolean()
@@ -51,7 +46,7 @@ export class MappingParam {
 
   @IsOptional()
   @IsBoolean()
-  isPrimary: boolean;
+  is_primary: boolean;
 
   @IsOptional()
   @IsBoolean()

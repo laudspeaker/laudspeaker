@@ -52,6 +52,10 @@ export const MultisplitNode: FC<NodeProps<MultisplitNodeData>> = ({
             <span className="font-inter font-normal text-[12px] text-[#F43F5E] leading-5">
               Set conditions
             </span>
+          ) : branches?.length === 1 ? (
+            <span className="font-inter font-normal text-[12px] text-[#f0a103] leading-5">
+              Add branches
+            </span>
           ) : (
             "Meet below conditions"
           )}

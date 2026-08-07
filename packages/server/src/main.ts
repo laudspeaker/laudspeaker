@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import p from '../package.json';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
@@ -10,23 +11,41 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { urlencoded } from 'body-parser';
 import { readFileSync } from 'fs';
 import * as Sentry from '@sentry/node';
-import { ProfilingIntegration } from '@sentry/profiling-node';
+// import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { setTimeout as originalSetTimeout } from 'timers';
 import { setInterval as originalSetInterval } from 'timers';
 import express from 'express';
 import cluster from 'cluster';
 import * as os from 'os';
 
+// import { Query } from '@/common/services/query';
+// const x = new Query();
+// x.add(AttrExpression());
+
+// console.log(`HELLOOOO ${x.kind}`);
+
+
 const morgan = require('morgan');
 
-const numCPUs = process.env.NODE_ENV === 'development' ? 1 : os.cpus().length;
+let numProcesses = 1;
+
+if (process.env.MAX_PROCESS_COUNT_PER_REPLICA)
+  numProcesses = Math.max(
+    1,
+    parseInt(process.env.MAX_PROCESS_COUNT_PER_REPLICA)
+  );
+
+console.log(`[${process.pid}] Booting up`);
 
 if (cluster.isPrimary) {
   console.log(`Primary ${process.pid} is running`);
   console.log(`[${process.env.LAUDSPEAKER_PROCESS_TYPE}] Starting.`);
+  console.log(`Number of processes to create: ${numProcesses}`);
   // Fork workers.
-  for (let i = 0; i < numCPUs; i++) {
-    cluster.fork();
+  for (let i = 0; i < numProcesses; i++) {
+    let p = cluster.fork();
+
+    console.log(`[${process.pid}] Forked process ${p.process.pid}`);
   }
 
   cluster.on('exit', (worker, code, signal) => {
@@ -37,41 +56,46 @@ if (cluster.isPrimary) {
     cluster.fork(); // Fork a new worker to replace the one that died
   });
 } else {
-  const expressApp = express();
 
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN_URL_BACKEND,
-    environment:
-      process.env.SENTRY_ENVIRONMENT ||
-      process.env.NODE_ENV ||
-      process.env.ENVIRONMENT,
-    release: process.env.SENTRY_RELEASE,
-    integrations: [
-      new Sentry.Integrations.Express({
-        app: expressApp,
-      }),
-      new Sentry.Integrations.Mongo({ useMongoose: true }),
-      new Sentry.Integrations.Postgres({ usePgNative: true }),
-      new Sentry.Integrations.Http({ tracing: true }),
-      new ProfilingIntegration(),
-      ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
-    ],
-    debug: false,
-    // Performance Monitoring
-    tracesSampleRate: process.env.NODE_ENV == 'production' ? 0.25 : 1.0,
-    // Set sampling rate for profiling - this is relative to tracesSampleRate
-    profilesSampleRate: 1.0, // Capture 100% of the transactions, reduce in production!
-    maxBreadcrumbs: Number.MAX_SAFE_INTEGER,
-  });
+  function initializeSentry(expressApp) {
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN_URL_BACKEND,
+      environment:
+        process.env.SENTRY_ENVIRONMENT ||
+        process.env.NODE_ENV ||
+        process.env.ENVIRONMENT,
+      release: process.env.SENTRY_RELEASE,
+      integrations: [
+        // new Sentry.Integrations.Express({
+        //   app: expressApp,
+        // }),
+        // new Sentry.postgresIntegration({ usePgNative: true }),
+        // new Sentry.Integrations.Http({ tracing: true }),
+        // nodeProfilingIntegration(),
+        // ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
+      ],
+      debug: false,
+      // Performance Monitoring
+      tracesSampleRate: process.env.NODE_ENV == 'production' ? 0.25 : 1.0,
+      // Set sampling rate for profiling - this is relative to tracesSampleRate
+      profilesSampleRate: 1.0, // Capture 100% of the transactions, reduce in production!
+      maxBreadcrumbs: Number.MAX_SAFE_INTEGER,
+    });
 
-  if (process.env.SENTRY_ENVIRONMENT_TAG) {
-    Sentry.setTag(
-      'laudspeaker_environment',
-      process.env.SENTRY_ENVIRONMENT_TAG
-    );
+    if (process.env.SENTRY_ENVIRONMENT_TAG) {
+      Sentry.setTag(
+        'laudspeaker_environment',
+        process.env.SENTRY_ENVIRONMENT_TAG
+      );
+    }
+
+    // expressApp.use(Sentry.Handlers.requestHandler());
+    // expressApp.use(Sentry.Handlers.tracingHandler());
+    // expressApp.use(Sentry.Handlers.errorHandler());
+    Sentry.setupExpressErrorHandler(expressApp);
   }
 
-  async function initializeApp() {
+  async function initializeApp(expressApp) {
     let app;
 
     if (process.env.LAUDSPEAKER_PROCESS_TYPE == 'WEB') {
@@ -131,17 +155,20 @@ if (cluster.isPrimary) {
 
     const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
 
+    // Starts listening for shutdown hooks
+    app.enableShutdownHooks();
+    
     app.useLogger(logger);
 
     return app;
   }
 
   async function bootstrap() {
-    expressApp.use(Sentry.Handlers.requestHandler());
-    expressApp.use(Sentry.Handlers.tracingHandler());
-    expressApp.use(Sentry.Handlers.errorHandler());
+    const expressApp = express();
 
-    const app: NestExpressApplication = await initializeApp();
+    initializeSentry(expressApp);
+
+    const app: NestExpressApplication = await initializeApp(expressApp);
     const port: number = parseInt(process.env.PORT);
 
     if (process.env.LAUDSPEAKER_PROCESS_TYPE == 'WEB') {

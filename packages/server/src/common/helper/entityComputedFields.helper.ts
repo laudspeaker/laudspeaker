@@ -1,4 +1,4 @@
-import { EntityWithComputedFields } from '@/common/entities/entityWithComputedFields.entity';
+import { EntityWithComputedFields } from '../../common/entities/entityWithComputedFields.entity';
 
 export class EntityComputedFieldsHelper {
   public static processCollection<T>(

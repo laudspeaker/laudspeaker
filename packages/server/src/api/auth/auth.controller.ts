@@ -102,7 +102,7 @@ export class AuthController {
       session
     );
     try {
-      return await this.service.register(body, session);
+      return this.service.register(body, session);
     } catch (e) {
       this.error(e, this.register.name, session);
       throw e;

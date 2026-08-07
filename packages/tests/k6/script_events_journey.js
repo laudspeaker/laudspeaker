@@ -4,8 +4,9 @@ import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
 
 export const options = {
   /* Option 0: Smoke test */
-  vus: 500,
+  vus: 1,
   duration: "1h",
+  iterations: 2,
 
   /* Option 1: Average load test*/
 
@@ -54,30 +55,75 @@ export default function () {
       name: "mahamad",
     },
   };
+  const batch_max = 1;
+  const events = [];
+
+  let event_names = ["event", "example", "test", "upload", "checkouPmt"];
+  let r_num;
+
+  let event;
+
+  let customer;
+
+  const customers = [
+      "ffff8e90-eacc-4818-b56f-4f27a90cf705",
+      "ffff4f05-b515-4434-8547-64440a4cfc40"
+    ];
+
+  const dateMin = -5;
+  const dateMax = 5;
+  let daysAgo;
+
+  for(let i = 0; i < batch_max; i++) {
+    r_num = Math.floor(Math.random() * 1000);
+    event = `${event_names[Math.floor(Math.random() * event_names.length)]}-${r_num}`;
+
+    customer = customers[Math.floor(Math.random() * customers.length)];
+
+    daysAgo = Math.floor(
+      Math.random() * (dateMax - dateMin + 1) +
+        dateMin
+    );
+
+    var d = new Date();
+    d.setDate(d.getDate() - daysAgo);
+
+    const uuid = uuidv4();
+
+    events.push({
+      timestamp: d.toISOString(),
+      uuid: uuid,
+      event: event,
+      source: "mobile",
+      correlationKey: "_id",
+      correlationValue: customer,
+      payload: {
+        credit_score: 500,
+      },
+      context: {
+        device_manufacturer: "samsung",
+      },
+    })
+  }
+
+  // console.log(event);
   let temp_id = uuidv4();
   let res = http.post(
     //"correlationValue": "${temp_id}"
     // 'https://api.laudspeaker.com/customers/upsert',
-    "https://test-laudspeaker.laudtest.com/api/events/batch",
+    "http://localhost:3001/events/batch",
     `{
-      "batch": [
-      {
-        "timestamp": "2024-03-15T02:31:05.295Z",
-        "uuid": "F451DF0A-D713-4076-AE20-41AB1641BC98",
-        "event": "example1",
-        "source": "mobile",
-        "correlationKey": "_id",
-        "correlationValue": "910af624-dee0-49bc-8765-f17f1f1de052"
-      }
-    ]
-  }`,
+      "batch": ${JSON.stringify(events)}
+    }`,
     {
       headers: {
-        Authorization: "Api-Key IHhUY1y9OcErRjVHksRORcPvND6KMV1v4tJkSXQJ",
+        Authorization: "Api-Key mzg6r91BikYNXXS3nYBS8963Byu9sazum3o6tk7z",
         "Content-Type": "application/json",
       },
     }
   );
+
+  // consl
 
   // console.log(JSON.stringify(res, null, 2))
   // sleep(1);

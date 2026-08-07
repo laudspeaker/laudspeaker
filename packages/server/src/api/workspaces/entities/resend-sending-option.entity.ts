@@ -24,7 +24,7 @@ export class ResendSendingOption {
   @Column()
   sendingEmail: string;
 
-  @Column()
+  @Column({nullable: true})
   sendingName: string;
 
   @Column()

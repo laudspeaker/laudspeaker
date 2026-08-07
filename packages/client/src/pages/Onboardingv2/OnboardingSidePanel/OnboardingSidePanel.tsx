@@ -123,14 +123,14 @@ const OnboardingSidePanel: FC<OnboardingSidePanelProps> = ({
     ),
     [NodeType.USER_ATTRIBUTE]: (
       <>
-        {nodeData.type === NodeType.USER_ATTRIBUTE && (
+        {/* {nodeData.type === NodeType.USER_ATTRIBUTE && (
           <UserAttributeSettings
             nodeData={nodeData}
             setNodeData={setNodeData}
             setIsError={setIsError}
             showErrors={showErrors}
           />
-        )}
+        )} */}
       </>
     ),
   };
@@ -207,8 +207,8 @@ const OnboardingSidePanel: FC<OnboardingSidePanelProps> = ({
                     return "Users on this trigger will move to another step only after a time delay";
                   case NodeType.TIME_WINDOW:
                     return "Users on this trigger will move to another step only during a time window";
-                  case NodeType.USER_ATTRIBUTE:
-                    return "Users on this trigger will move to another step only if they satisfy some user attribute condition";
+                  // case NodeType.USER_ATTRIBUTE:
+                  //   return "Users on this trigger will move to another step only if they satisfy some user attribute condition";
                   default:
                     return "";
                 }

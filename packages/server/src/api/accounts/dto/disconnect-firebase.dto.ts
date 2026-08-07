@@ -1,4 +1,4 @@
-import { PushPlatforms } from '@/api/templates/entities/template.entity';
+import { PushPlatforms } from '../../templates/entities/template.entity';
 import { IsEnum, IsNotEmpty } from 'class-validator';
 
 export class DisconnectFirebaseDTO {

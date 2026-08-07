@@ -12,7 +12,6 @@ import {
   Branch,
   BranchType,
   MultisplitBranch,
-  UserAttributeNodeData,
   WaitUntilNodeData,
 } from "../Nodes/NodeData";
 import { BranchEdgeData } from "./EdgeData";
@@ -53,7 +52,6 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
     ) ||
     !(
       sourceNode.data.type === NodeType.WAIT_UNTIL ||
-      sourceNode.data.type === NodeType.USER_ATTRIBUTE ||
       sourceNode.data.type === NodeType.MULTISPLIT ||
       sourceNode.data.type === NodeType.EXPERIMENT
     ) ||
@@ -88,9 +86,7 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
           >
             <BranchPopover
               branch={branch}
-              node={
-                sourceNode as Node<WaitUntilNodeData | UserAttributeNodeData>
-              }
+              node={sourceNode as Node<WaitUntilNodeData>}
             >
               <span className="bg-[#F3F4F6] flex gap-[5px] items-center py-2 px-1 leading-[22px] text-[14px] text-[#111827] border-b-[1px] border-b-black">
                 {branch.type === BranchType.MAX_TIME && (
@@ -123,18 +119,11 @@ export const BranchEdge: FC<EdgeProps<BranchEdgeData>> = ({
                     <span>Branch {branchIndex + 1}: </span>
                   </span>
                 )}
-                {branch.type === BranchType.EVENT ||
-                branch.type === BranchType.MESSAGE ? (
+                {branch.type === BranchType.EVENT ? (
                   branch.conditions.length === 0 ? (
                     <span className="text-[#E11D48]">Has no conditions</span>
                   ) : (
                     `Meet ${branch.conditions.length} conditions`
-                  )
-                ) : branch.type === BranchType.ATTRIBUTE ? (
-                  branch.attributeConditions.length === 0 ? (
-                    <span className="text-[#E11D48]">Has no conditions</span>
-                  ) : (
-                    `Meet ${branch.attributeConditions.length} conditions`
                   )
                 ) : branch.type === BranchType.MULTISPLIT ? (
                   branch.isOthers ? (

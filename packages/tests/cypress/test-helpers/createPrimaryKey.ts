@@ -7,7 +7,7 @@ export const createPrimaryKey = (attribute: string, attribute_type: string = "St
   cy.get("input").clear().type(attribute);
   cy.contains(attribute_type).click();
   cy.get(`[data-option="${attribute_type}"]`).click();
-  cy.contains("Select user attribute").click();
+  cy.contains("Select which customer attribute to use as the primary key").click();
   cy.contains(attribute).click();
 
   cy.wait(1000);

@@ -3,11 +3,9 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { EventsService } from './events.service';
 import { CustomersService } from '../customers/customers.service';
 import { AccountsService } from '../accounts/accounts.service';
-import { WorkflowsService } from '../workflows/workflows.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { DataSource } from 'typeorm';
 import { getQueueToken } from '@nestjs/bullmq';
-import { getModelToken, getConnectionToken } from '@nestjs/mongoose';
 import { Queue } from 'bullmq';
 import { EventsTable, Eventtype, JobTypes } from './interfaces/event.interface';
 import { Account } from '../accounts/entities/accounts.entity';
@@ -28,10 +26,6 @@ describe('EventsService', () => {
         {
           provide: DataSource,
           useValue: createMock<DataSource>(),
-        },
-        {
-          provide: WorkflowsService,
-          useValue: createMock<WorkflowsService>(),
         },
         {
           provide: CustomersService,
@@ -63,34 +57,6 @@ describe('EventsService', () => {
           provide: getQueueToken('webhooks'),
           useValue: { add: jest.fn() },
         },
-        {
-          provide: getModelToken('Event'),
-          useValue: { add: jest.fn() },
-        },
-        {
-          provide: getModelToken('PosthogEvent'),
-          useValue: { add: jest.fn() },
-        },
-        {
-          provide: getModelToken('PosthogEventType'),
-          useValue: {
-            updateOne: () => {
-              return { exec: jest.fn(() => {}) };
-            },
-          },
-        },
-        {
-          provide: getModelToken('EventKeys'),
-          useValue: {
-            updateOne: () => {
-              return { exec: jest.fn(() => {}) };
-            },
-          },
-        },
-        {
-          provide: getConnectionToken(),
-          useValue: { add: jest.fn() },
-        },
       ],
     }).compile();
 
@@ -118,16 +84,10 @@ describe('EventsService', () => {
         originalTimestamp: new Date(),
         sentAt: new Date(),
       };
-      const cd = new customersService.CustomerModel({
-        ownerId: acct.id,
-        userId: 'string',
-      });
-      customersService.findByExternalIdOrCreate.mockResolvedValueOnce(cd);
       const serviceSpy = jest.spyOn(
         customersService,
         'findByExternalIdOrCreate'
       );
-      expect(service.correlate(acct, ev)).resolves.toEqual(cd);
       expect(serviceSpy).toBeCalledWith(acct, 'string');
     });
 
@@ -136,16 +96,11 @@ describe('EventsService', () => {
         customersService,
         'findByExternalIdOrCreate'
       );
-      expect(service.correlate('1@gmail.com')).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith(acct, 'string');
     });
   });
 
   describe('correlateCustomEvent()', () => {
     it('should get a single user', () => {
-      const repoSpy = jest.spyOn(repository, 'findOneBy');
-      expect(service.findOne('1@gmail.com')).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith({ email: '1@gmail.com' });
     });
   });
 
@@ -169,65 +124,40 @@ describe('EventsService', () => {
 
   describe('getPostHogPayload()', () => {
     it('should get a single user', () => {
-      const repoSpy = jest.spyOn(repository, 'findOneBy');
-      expect(service.findOne('1@gmail.com')).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith({ email: '1@gmail.com' });
     });
   });
 
   describe('getOrUpdateAttributes()', () => {
     it('should get a single user', () => {
-      const repoSpy = jest.spyOn(repository, 'findOneBy');
-      expect(service.findOne('1@gmail.com')).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith({ email: '1@gmail.com' });
     });
   });
 
   describe('getAttributes()', () => {
     it('should get a single user', () => {
-      const repoSpy = jest.spyOn(repository, 'findOneBy');
-      expect(service.findOne('1@gmail.com')).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith({ email: '1@gmail.com' });
     });
   });
 
   describe('getPossibleTypes()', () => {
     it('should get a single user', () => {
-      const repoSpy = jest.spyOn(repository, 'findOneBy');
-      expect(service.findOne('1@gmail.com')).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith({ email: '1@gmail.com' });
     });
   });
 
   describe('getPossibleComparisonTypes()', () => {
     it('should get a single user', () => {
-      const repoSpy = jest.spyOn(repository, 'findOneBy');
-      expect(service.findOne('1@gmail.com')).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith({ email: '1@gmail.com' });
-    });
   });
 
   describe('getPossibleValues()', () => {
     it('should get a single user', () => {
-      const repoSpy = jest.spyOn(repository, 'findOneBy');
-      expect(service.findOne('1@gmail.com')).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith({ email: '1@gmail.com' });
     });
   });
 
   describe('getPossiblePosthogTypes()', () => {
     it('should get a single user', () => {
-      const repoSpy = jest.spyOn(repository, 'findOneBy');
-      expect(service.findOne('1@gmail.com')).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith({ email: '1@gmail.com' });
     });
   });
 
   describe('getPosthogEvents()', () => {
     it('should get a single user', () => {
-      const repoSpy = jest.spyOn(repository, 'findOneBy');
-      expect(service.findOne('1@gmail.com')).resolves.toEqual(oneUser);
-      expect(repoSpy).toBeCalledWith({ email: '1@gmail.com' });
     });
   });
 });

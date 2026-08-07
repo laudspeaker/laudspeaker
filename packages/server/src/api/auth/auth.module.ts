@@ -9,9 +9,6 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { ApiKeyStrategy } from './strategies/apiKey.strategy';
 import { Template } from '../templates/entities/template.entity';
-import { Workflow } from '../workflows/entities/workflow.entity';
-import { Audience } from '../audiences/entities/audience.entity';
-import { BullModule } from '@nestjs/bullmq';
 import { Verification } from './entities/verification.entity';
 import { CustomersModule } from '../customers/customers.module';
 import { Recovery } from './entities/recovery.entity';
@@ -20,6 +17,7 @@ import { StepsModule } from '../steps/steps.module';
 import { OrganizationTeam } from '../organizations/entities/organization-team.entity';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { OrganizationInvites } from '../organizations/entities/organization-invites.entity';
+import { CacheService } from '@/common/services/cache.service';
 
 @Module({
   imports: [
@@ -32,24 +30,19 @@ import { OrganizationInvites } from '../organizations/entities/organization-invi
     }),
     TypeOrmModule.forFeature([
       Account,
-      Audience,
       Template,
       Verification,
-      Workflow,
       Workspaces,
       Recovery,
       OrganizationTeam,
       OrganizationInvites,
     ]),
-    BullModule.registerQueue({
-      name: '{message}',
-    }),
     CustomersModule,
     forwardRef(() => JourneysModule),
     forwardRef(() => StepsModule),
   ],
   controllers: [AuthController],
-  providers: [AuthService, AuthHelper, JwtStrategy, ApiKeyStrategy],
+  providers: [AuthService, AuthHelper, JwtStrategy, ApiKeyStrategy, CacheService],
   exports: [AuthService, AuthHelper],
 })
 export class AuthModule {}

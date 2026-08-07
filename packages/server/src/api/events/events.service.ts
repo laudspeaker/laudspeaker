@@ -7,12 +7,8 @@ import {
   HttpStatus,
   BadRequestException,
 } from '@nestjs/common';
-import { Correlation, CustomersService } from '../customers/customers.service';
-import { CustomerDocument } from '../customers/schemas/customer.schema';
-import { AttributeType } from '../customers/schemas/customer-keys.schema';
+import { CustomersService } from '../customers/customers.service';
 import {
-  EventsTable,
-  CustomEventTable,
   JobTypes,
 } from './interfaces/event.interface';
 import { Account } from '../accounts/entities/accounts.entity';
@@ -20,63 +16,51 @@ import { PosthogBatchEventDto } from './dto/posthog-batch-event.dto';
 import { EventDto } from './dto/event.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { StatusJobDto } from './dto/status-event.dto';
-import {
-  Processor,
-  WorkerHost,
-  OnWorkerEvent,
-  InjectQueue,
-} from '@nestjs/bullmq';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Job, Queue, UnrecoverableError } from 'bullmq';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import mongoose, { ClientSession, Model, SortOrder } from 'mongoose';
-import { EventDocument, Event } from './schemas/event.schema';
 import mockData from '../../fixtures/mockData';
-import { EventKeys, EventKeysDocument } from './schemas/event-keys.schema';
 import { attributeConditions } from '../../fixtures/attributeConditions';
 import keyTypes from '../../fixtures/keyTypes';
 import { PostHogEventDto } from './dto/posthog-event.dto';
 import defaultEventKeys from '../../fixtures/defaultEventKeys';
-import {
-  PosthogEventType,
-  PosthogEventTypeDocument,
-} from './schemas/posthog-event-type.schema';
 import { DataSource } from 'typeorm';
 import posthogEventMappings from '../../fixtures/posthogEventMappings';
-import {
-  PosthogEvent,
-  PosthogEventDocument,
-} from './schemas/posthog-event.schema';
 import { JourneysService } from '../journeys/journeys.service';
 import admin from 'firebase-admin';
-import { Journey } from '../journeys/entities/journey.entity';
 import { CustomerPushTest } from './dto/customer-push-test.dto';
 import {
   PlatformSettings,
   PushPlatforms,
 } from '../templates/entities/template.entity';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
-import { ProviderType } from './events.preprocessor';
+import { ProviderType } from './processors/events.preprocessor';
 import { SendFCMDto } from './dto/send-fcm.dto';
 import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
-import {
-  CustomerKeys,
-  CustomerKeysDocument,
-} from '../customers/schemas/customer-keys.schema';
 import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
-import { MobileBatchDto } from './dto/mobile-batch.dto';
+import { BatchEventDto } from './dto/batch-event.dto';
 import e from 'express';
-import {
-  ClickHouseEventProvider,
-  ClickHouseMessage,
-  WebhooksService,
-} from '../webhooks/webhooks.service';
-import { Liquid } from 'liquidjs';
-import { cleanTagsForSending } from '@/shared/utils/helpers';
+import { WebhooksService } from '../webhooks/webhooks.service';
+import { Context, Liquid, TagToken } from 'liquidjs';
+import { cleanTagsForSending } from '../../shared/utils/helpers';
 import { randomUUID } from 'crypto';
 import * as Sentry from '@sentry/node';
 import { FindType } from '../customers/enums/FindType.enum';
+import { QueueType } from '../../common/services/queue/types/queue-type';
+import { Producer } from '../../common/services/queue/classes/producer';
+import { ClickHouseEventProvider } from '../../common/services/clickhouse/types/clickhouse-event-provider';
+import { ClickHouseMessage } from '../../common/services/clickhouse/interfaces/clickhouse-message';
+import { Customer } from '../customers/entities/customer.entity';
+import { CustomerKeysService } from '../customers/customer-keys.service';
+import { AttributeTypeName } from '../customers/entities/attribute-type.entity';
+import { ClickHouseClient, ClickHouseEvent, ClickHouseEventSource, ClickHouseTable } from '../../common/services/clickhouse';
+import { NodeFactory, Query, QuerySyntax } from '../../common/services/query';
+import { CacheService } from '@/common/services/cache.service';
+import { NotificationPreferenceService } from '../notification-preferences/notification-preferences.service';
+import { CacheConstants } from '@/common/services/cache.constants';
+
+interface CustomTagToken extends TagToken {
+  parsedData?: string[];
+}
 
 @Injectable()
 export class EventsService {
@@ -86,31 +70,21 @@ export class EventsService {
     private dataSource: DataSource,
     @Inject(forwardRef(() => CustomersService))
     private readonly customersService: CustomersService,
+    @Inject(forwardRef(() => CustomerKeysService))
+    private readonly customerKeysService: CustomerKeysService,
     @Inject(forwardRef(() => WebhooksService))
     private readonly webhooksService: WebhooksService,
-    @InjectModel(CustomerKeys.name)
-    public CustomerKeysModel: Model<CustomerKeysDocument>,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
-    @InjectQueue('{message}') private readonly messageQueue: Queue,
-    @InjectQueue('{events}') private readonly eventQueue: Queue,
-    @InjectQueue('{events_pre}')
-    private readonly eventPreprocessorQueue: Queue,
-    @InjectQueue('{slack}') private readonly slackQueue: Queue,
-    @InjectModel(Event.name)
-    private EventModel: Model<EventDocument>,
-    @InjectModel(PosthogEvent.name)
-    private PosthogEventModel: Model<PosthogEventDocument>,
-    @InjectModel(EventKeys.name)
-    private EventKeysModel: Model<EventKeysDocument>,
     @InjectRepository(Account)
     public accountsRepository: Repository<Account>,
-    @InjectModel(PosthogEventType.name)
-    private PosthogEventTypeModel: Model<PosthogEventTypeDocument>,
-    @InjectConnection() private readonly connection: mongoose.Connection,
-    @InjectQueue('{webhooks}') private readonly webhooksQueue: Queue,
     @Inject(forwardRef(() => JourneysService))
-    private readonly journeysService: JourneysService
+    private readonly journeysService: JourneysService,
+    @Inject(ClickHouseClient)
+    private clickhouseClient: ClickHouseClient,
+    @Inject(CacheService) private cacheService: CacheService,
+    @Inject(NotificationPreferenceService)
+    private readonly notificationPreferenceService: NotificationPreferenceService,
   ) {
     this.tagEngine.registerTag('api_call', {
       parse(token) {
@@ -143,48 +117,49 @@ export class EventsService {
         }
       },
     });
+    const parentThis = this;
+
+    this.tagEngine.registerTag('unsubscribe', {
+      parse: function (token: CustomTagToken) {
+        this.defininition = token.args.split('.');
+      },
+      render: async function (ctx: Context) {
+        const contextData = ctx.getAll();
+        const customerId = contextData['customerId'];
+        const workspaceId = contextData['workspaceId'];
+
+        if (!customerId || !workspaceId) {
+          throw new Error('Customer ID and workspace ID are required to generate an unsubscribe link.');
+        }
+
+        let unsubscribeUrl;
+
+        try {
+          const preferenceId = await parentThis.fetchUnsubscribeData(workspaceId, this.definition);
+
+          if (this.definition === 'all') {
+            unsubscribeUrl = `${process.env.FRONTEND_URL}/notification-preferences/${workspaceId}/${customerId}/all`;
+          } else {
+            unsubscribeUrl = `${process.env.FRONTEND_URL}/notification-preferences/${workspaceId}/${customerId}/${preferenceId}`;
+          }
+        } catch (error) {
+          parentThis.error(error, `unsubscribe_render`, randomUUID())
+          throw error;
+        }
+
+        return unsubscribeUrl;
+      },
+    });
 
     const session = randomUUID();
     (async () => {
       try {
-        const collection = this.connection.db.collection('events');
-        await collection.createIndex({ event: 1, workspaceId: 1 });
-        await collection.createIndex({ correlationKey: 1, workspaceId: 1 });
-        await collection.createIndex({ correlationValue: 1, workspaceId: 1 });
-        await collection.createIndex({ createdAt: 1 });
-        await collection.createIndex({ workspaceId: 1, _id: -1 });
-        await collection.createIndex({ event: 'text' });
       } catch (e) {
         this.error(e, EventsService.name, session);
       }
     })();
     for (const { name, property_type } of defaultEventKeys) {
       if (name && property_type) {
-        this.EventKeysModel.updateOne(
-          { key: name },
-          {
-            key: name,
-            type: property_type,
-            providerSpecific: 'posthog',
-            isDefault: true,
-          },
-          { upsert: true }
-        ).exec();
-      }
-    }
-    for (const { name, displayName, type, event } of posthogEventMappings) {
-      if (name && displayName && type && event) {
-        this.PosthogEventTypeModel.updateOne(
-          { name: name },
-          {
-            name: name,
-            displayName: displayName,
-            type: type,
-            event: event,
-            isDefault: true,
-          },
-          { upsert: true }
-        ).exec();
       }
     }
   }
@@ -248,39 +223,38 @@ export class EventsService {
     );
   }
 
-  async correlate(
-    account: Account,
-    ev: EventsTable
-  ): Promise<CustomerDocument> {
-    return this.customersService.findByExternalIdOrCreate(
-      account,
-      ev.userId ? ev.userId : ev.anonymousId
-    );
-  }
+  private async fetchUnsubscribeData(workspaceId: string, definition: string) {
 
-  async correlateCustomEvent(
-    account: Account,
-    ev: CustomEventTable
-  ): Promise<Correlation> {
-    return this.customersService.findByCustomEvent(account, ev.slackId);
+    const notificationPreference = await this.cacheService.getIgnoreError(
+      CacheConstants.NOTIFICATION_PREFERENCES,
+      `${workspaceId}:${definition}`,
+      async () => {
+        return await this.notificationPreferenceService.findOneByName(workspaceId, definition);
+      });
+    if (!notificationPreference) {
+      throw new Error(`Notification preference "${definition}" not found.`);
+    }
+
+    return notificationPreference.id;
   }
 
   async getJobStatus(body: StatusJobDto, type: JobTypes, session: string) {
-    const jobQueues = {
-      [JobTypes.email]: this.messageQueue,
-      [JobTypes.slack]: this.slackQueue,
-      [JobTypes.events]: this.eventQueue,
-      [JobTypes.webhooks]: this.webhooksQueue,
-    };
+    throw Error("Deprecated")
+    // const jobQueues = {
+    //   [JobTypes.email]: this.messageQueue,
+    //   [JobTypes.slack]: this.slackQueue,
+    //   [JobTypes.events]: this.eventQueue,
+    //   [JobTypes.webhooks]: this.webhooksQueue,
+    // };
 
-    try {
-      const job = await jobQueues[type].getJob(body.jobId);
-      const state = await job.getState();
-      return state;
-    } catch (err) {
-      this.logger.error(`Error getting ${type} job status: ` + err);
-      throw new HttpException(`Error getting ${type} job status`, 503);
-    }
+    // try {
+    //   const job = await jobQueues[type].getJob(body.jobId);
+    //   const state = await job.getState();
+    //   return state;
+    // } catch (err) {
+    //   this.logger.error(`Error getting ${type} job status: ` + err);
+    //   throw new HttpException(`Error getting ${type} job status`, 503);
+    // }
   }
 
   async posthogPayload(
@@ -310,18 +284,11 @@ export class EventsService {
         numEvent < chronologicalEvents.length;
         numEvent++
       ) {
-        await this.eventPreprocessorQueue.add(
-          'posthog',
-          {
-            account: account,
-            event: eventDto,
-            session: session,
-          },
-          {
-            attempts: 10,
-            backoff: { delay: 1000, type: 'exponential' },
-          }
-        );
+        await Producer.add(QueueType.EVENTS_PRE, {
+          account: account,
+          event: eventDto,
+          session: session,
+        }, 'posthog');
       }
     } catch (e) {
       await queryRunner.rollbackTransaction();
@@ -337,39 +304,20 @@ export class EventsService {
     eventDto: EventDto,
     session: string
   ) {
-    await this.eventPreprocessorQueue.add(ProviderType.LAUDSPEAKER, {
+    const jobData = {
       owner: auth.account,
       workspace: auth.workspace,
       event: eventDto,
       session: session,
-    });
+    };
+
+    await Producer.add(QueueType.EVENTS_PRE, jobData, ProviderType.LAUDSPEAKER)
   }
 
   async getOrUpdateAttributes(resourceId: string, session: string) {
-    const attributes = await this.EventKeysModel.find().exec();
     if (resourceId === 'attributes') {
-      return {
-        id: resourceId,
-        nextResourceURL: 'attributeConditions',
-        options: attributes.map((attribute) => ({
-          label: attribute.key,
-          id: attribute.key,
-          nextResourceURL: attribute.key,
-        })),
-        type: 'select',
-      };
+      return {};
     }
-
-    const attribute = attributes.find(
-      (attribute) => attribute.key === resourceId
-    );
-    if (attribute)
-      return {
-        id: resourceId,
-        options: attributeConditions(attribute.type, attribute.isArray),
-        type: 'select',
-      };
-
     return (
       mockData.resources.find((resource) => resource.id === resourceId) || {}
     );
@@ -387,21 +335,7 @@ export class EventsService {
     });
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    const attributes = await this.EventKeysModel.find({
-      $and: [
-        { key: RegExp(`.*${resourceId}.*`, 'i') },
-        { $or: [{ workspaceId: workspace.id }, { isDefault: true }] },
-      ],
-      providerSpecific,
-    }).exec();
-
-    return attributes.map((el) => ({
-      id: el.id,
-      key: el.key,
-      type: el.type,
-      isArray: el.isArray,
-      options: attributeConditions(el.type, el.isArray),
-    }));
+    return [];
   }
 
   async getPossibleEventNames(account: Account, search: string) {
@@ -411,16 +345,7 @@ export class EventsService {
     });
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    const eventNames = await this.EventModel.find({
-      $and: [
-        { workspaceId: workspace.id },
-        { event: RegExp(`.*${search}.*`, 'i') },
-      ],
-    })
-      .distinct('event')
-      .exec();
-
-    return eventNames;
+    return [];
   }
 
   async getPossibleEventProperties(
@@ -434,20 +359,8 @@ export class EventsService {
     });
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    const records = await this.EventModel.find({
-      $and: [{ workspaceId: workspace.id }, { event }],
-    }).exec();
-
-    if (records.length === 0) return [];
-
-    const uniqueProperties: string[] = records
-      .map((record) => Object.keys(record.payload))
-      .reduce((acc, el) => [...acc, ...el])
-      .reduce((acc, el) => (acc.includes(el) ? acc : [...acc, el]), []);
-
-    return uniqueProperties.filter((property) =>
-      property.match(RegExp(`.*${search}.*`, 'i'))
-    );
+    
+    return [];
   }
 
   async getPossibleTypes(session: string) {
@@ -464,65 +377,12 @@ export class EventsService {
 
   async getPossibleValues(key: string, search: string, session: string) {
     const searchRegExp = new RegExp(`.*${search}.*`, 'i');
-    const docs = await this.EventModel.aggregate([
-      { $match: { [`event.${key}`]: searchRegExp } },
-      { $group: { _id: `$event.${key}` } },
-      { $limit: 5 },
-    ]).exec();
-    return docs.map((doc) => doc?.['event']?.[key]).filter((item) => item);
-  }
-
-  async getPossiblePosthogTypes(ownerId: string, session: string, search = '') {
-    const searchRegExp = new RegExp(`.*${search}.*`, 'i');
-    // TODO: need to recheck, filtering not working in a correct way
-    const types = await this.PosthogEventTypeModel.find({
-      $and: [
-        { name: searchRegExp },
-        { $or: [{ ownerId }, { isDefault: true }] },
-      ],
-    }).exec();
-    return types.map((type) => type.displayName);
-  }
-
-  async getPosthogEvents(
-    account: Account,
-    session: string,
-    take = 100,
-    skip = 0,
-    search = ''
-  ) {
-    const searchRegExp = new RegExp(`.*${search}.*`, 'i');
-
-    const totalPages =
-      Math.ceil(
-        (await this.PosthogEventModel.count({
-          name: searchRegExp,
-          ownerId: (<Account>account).id,
-        }).exec()) / take
-      ) || 1;
-
-    const posthogEvents = await this.PosthogEventModel.find({
-      name: searchRegExp,
-      ownerId: (<Account>account).id,
-    })
-      .sort({ createdAt: 'desc' })
-      .skip(skip)
-      .limit(take > 100 ? 100 : take)
-      .exec();
-
-    return {
-      data: posthogEvents.map((posthogEvent) => ({
-        ...posthogEvent.toObject(),
-        createdAt: posthogEvent._id.getTimestamp(),
-      })),
-      totalPages,
-    };
+    return [];
   }
 
   /*
    *
    * Retrieves a number of events for the user to see in the event tracker
-   * uses mongo aggregation
    */
   async getCustomEvents(
     account: Account,
@@ -533,16 +393,10 @@ export class EventsService {
     id = '',
     lastPageId = ''
   ) {
+
     return Sentry.startSpan(
       { name: 'EventsService.getCustomEvents' },
       async () => {
-        this.debug(
-          ` in customEvents`,
-          this.getCustomEvents.name,
-          session,
-          account.id
-        );
-
         const result = await this.getCustomEventsCursorSearch(
           account,
           session,
@@ -574,7 +428,7 @@ export class EventsService {
     // on the direction
     ({ anchor, direction, cursorEventId } =
       this.computeCustomEventsQueryVariables(anchor, direction, cursorEventId));
-    const { filter, sort, limit } = this.prepareCustomEventsQuery(
+    const { query } = this.prepareCustomEventsQuery(
       account,
       pageSize,
       search,
@@ -583,11 +437,7 @@ export class EventsService {
       cursorEventId
     );
 
-    const customEvents = await this.executeCustomEventsQuery(
-      filter,
-      sort,
-      limit
-    );
+    const customEvents = await this.executeCustomEventsQuery(query);
 
     var resultSetHasMoreThanPageSize = false;
 
@@ -619,9 +469,9 @@ export class EventsService {
     var showPrevCursorEventId = '';
 
     if (showNext)
-      showNextCursorEventId = customEvents[customEvents.length - 1]._id;
+      showNextCursorEventId = customEvents[customEvents.length - 1].id;
 
-    if (showPrev) showPrevCursorEventId = customEvents[0]._id;
+    if (showPrev) showPrevCursorEventId = customEvents[0].id;
 
     const filteredCustomEvents =
       this.filterCustomEventsAttributes(customEvents);
@@ -674,82 +524,56 @@ export class EventsService {
   ) {
     const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-    const filter = {
-      workspaceId: workspace.id,
-    };
+    let filter = `workspace_id = '${workspace.id}'`;
 
     if (search !== '') {
-      const searchRegExp = new RegExp(`.*${search}.*`, 'i');
-      filter['event'] = searchRegExp;
-
-      // disable the use of text index until autocomplete is implemented
-      // text search supports whole word search only
-      // const searchObj = {
-      //   $search: `"${search}"`,
-      //   $caseSensitive: false
-      // }
-
-      // filter["$text"] = searchObj;
+      filter += ` AND event ILIKE '%${search}%'`;
     }
 
-    // default sort is most recent events first (_id desc)
-    const sort: Record<string, SortOrder> = {
-      _id: -1,
-    };
+    let sort = 'ORDER BY id DESC';
+    let cursorCondition = '';
 
-    // next page should find events with id < last event id on current page
     if (direction == 1) {
       if (cursorEventId != '')
-        filter['_id'] = { $lt: new mongoose.Types.ObjectId(cursorEventId) };
-    }
-    // previous page should find the first events with id > first event id on current page
-    else {
+        cursorCondition = ` AND id < ${cursorEventId}`;
+    } else {
       if (cursorEventId != '')
-        filter['_id'] = { $gt: new mongoose.Types.ObjectId(cursorEventId) };
-      sort['_id'] = 1;
+        cursorCondition = ` AND id > ${cursorEventId}`;
+      sort = 'ORDER BY id ASC';
     }
 
-    // fetch one more to find out if there is a next page
-    // if direction == 1, then next page is ->
     const limit = pageSize + 1;
 
-    const query = {
-      filter,
-      sort,
-      limit,
-    };
+    const query = `
+      SELECT *
+      FROM events
+      WHERE ${filter}${cursorCondition}
+      ${sort}
+      LIMIT ${limit}
+    `;
 
-    return query;
+    return { query };
   }
 
-  async executeCustomEventsQuery(
-    filter: Record<string, any>,
-    sort: Record<string, SortOrder>,
-    limit: number
-  ) {
-    const projection = {};
 
-    const result = await this.EventModel.find(filter, projection)
-      .sort(sort)
-      .limit(limit)
-      .lean()
-      .exec();
-
-    const parsedResult = this.parseCustomEventsQueryResult(result);
-
+  async executeCustomEventsQuery(query: string) {
+    const result = await this.clickhouseClient.query({ query });
+    const events = await result.json<any>();
+    const parsedResult = this.parseCustomEventsQueryResult(events.data);
     return parsedResult;
   }
 
   parseCustomEventsQueryResult(result) {
     for (var i = 0; i < result.length; i++) {
-      result[i]._id = result[i]._id.toString();
+      result[i].id = result[i].id.toString();
     }
 
     return result;
   }
 
+
   filterCustomEventsAttributes(customEvents) {
-    const attributesToRemove = ['_id', 'workspaceId'];
+    const attributesToRemove = ['id', 'workspaceId'];
 
     for (const attribute of attributesToRemove) {
       for (var i = 0; i < customEvents.length; i++) {
@@ -761,16 +585,8 @@ export class EventsService {
   }
 
   //to do need to specify how this is
-  async getEventsByMongo(mongoQuery: any, customer: CustomerDocument) {
-    //console.log("In getEvents by mongo");
-
-    // const tehevents = await this.EventModel.find(mongoQuery).exec();
-    //console.log("events are", JSON.stringify(tehevents, null, 2))
-
-    //console.log("events are", JSON.stringify(await this.EventModel.find(mongoQuery).exec(),null, 2));
-    const count = await this.EventModel.count(mongoQuery).exec();
-    //console.log("count is", count);
-    return count;
+  async getEventsByMongo(mongoQuery: any, customer: Customer) {
+    return 0;
   }
 
   //to do need to specify how this is
@@ -779,11 +595,8 @@ export class EventsService {
     //externalId: boolean,
     //numberOfTimes: Number,
   ) {
-    //console.log("In getCustomersbyEventsMongo by mongo");
 
-    const docs = await this.EventModel.aggregate(aggregationPipeline).exec();
-
-    return docs;
+    return [];
   }
 
   async sendTestPush(account: Account, token: string) {
@@ -893,148 +706,26 @@ export class EventsService {
     const organization = auth.account.teams[0].organization;
     const workspace = auth.workspace;
 
-    let customer = await this.customersService.CustomerModel.findOne({
-      _id: body.customerId,
-      workspaceId: workspace.id,
-    });
+    let customer = await this.customersService.findByCustomerId(auth.account, body.customerId);
 
     if (!customer) {
-      this.error('Customer not found', this.sendFCMToken.name, session);
+      this.warn('Customer not found, creating anonymous customer', this.sendFCMToken.name, session);
 
       await this.customersService.checkCustomerLimit(organization);
 
-      customer = await this.customersService.CustomerModel.create({
-        isAnonymous: true,
-        workspaceId: workspace.id,
-      });
+      customer = await this.customersService.createAnonymous(auth.account);
     }
 
-    await this.customersService.CustomerModel.updateOne(
-      { _id: customer._id },
+    await this.customersService.updateCustomer(auth.account, customer.id, 'user_attributes',
       {
         [body.type === PushPlatforms.ANDROID
           ? 'androidDeviceToken'
           : 'iosDeviceToken']: body.token,
-      }
-    );
-
-    return customer._id;
-  }
-
-  async identifyCustomer(
-    auth: { account: Account; workspace: Workspaces },
-    body: IdentifyCustomerDTO,
-    session: string
-  ) {
-    if (!body.__PrimaryKey)
-      throw new HttpException(
-        'No Primary Key given',
-        HttpStatus.NOT_ACCEPTABLE
-      );
-
-    if (!auth?.account || !body?.customerId) {
-      return;
-    }
-
-    const organization = auth.account.teams[0].organization;
-    const workspace = auth.workspace;
-
-    let customer = await this.customersService.CustomerModel.findOne({
-      _id: body.customerId,
-      workspaceId: workspace.id,
-    });
-
-    if (!customer) {
-      await this.customersService.checkCustomerLimit(organization);
-
-      this.error(
-        'Invalid customer id. Creating new anonymous customer...',
-        this.identifyCustomer.name,
+      },
         session
       );
-      customer = await this.customersService.CustomerModel.create({
-        _id: body.customerId, // Assuming body.customerId is a valid UUID and unique
-        workspaceId: workspace.id,
-        // Set other necessary fields for a new customer
-        isAnonymous: true, // or false, as appropriate for your use case
-        // Include any other properties you need to initialize for a new customer
-      });
-    }
 
-    if (!customer.isAnonymous) {
-      throw new HttpException(
-        'Failed to identify: already identified',
-        HttpStatus.NOT_ACCEPTABLE
-      );
-    }
-
-    const primaryKey = await this.CustomerKeysModel.findOne({
-      workspaceId: workspace.id,
-      isPrimary: true,
-    });
-
-    const identifiedCustomer =
-      await this.customersService.CustomerModel.findOne({
-        workspaceId: workspace.id,
-        [primaryKey.key]: body.__PrimaryKey,
-      });
-
-    if (identifiedCustomer) {
-      await this.customersService.deleteEverywhere(customer._id);
-
-      await customer.deleteOne();
-
-      return identifiedCustomer._id;
-    } else {
-      await this.customersService.CustomerModel.findByIdAndUpdate(
-        customer._id,
-        {
-          ...customer.toObject(),
-          ...body.optionalProperties,
-          //...uniqueProperties,
-          [primaryKey.key]: body.__PrimaryKey,
-          workspaceId: workspace.id,
-          isAnonymous: false,
-        }
-      );
-    }
-
-    return customer._id;
-  }
-
-  async setCustomerProperties(
-    auth: { account: Account; workspace: Workspaces },
-    body: SetCustomerPropsDTO,
-    session: string
-  ) {
-    if (!auth.account || !body.customerId) {
-      return;
-    }
-
-    const workspace = auth.workspace;
-
-    const customer = await this.customersService.CustomerModel.findOne({
-      _id: body.customerId,
-      workspaceId: workspace.id,
-    });
-
-    if (!customer || customer.isAnonymous) {
-      this.error(
-        'Invalid customer id. Please call identify first',
-        this.setCustomerProperties.name,
-        session
-      );
-      throw new HttpException(
-        'Invalid customer id. Please call identify first',
-        HttpStatus.NOT_FOUND
-      );
-    }
-
-    await this.customersService.CustomerModel.findByIdAndUpdate(customer._id, {
-      ...customer.toObject(),
-      ...body.optionalProperties,
-      workspaceId: workspace.id,
-    });
+    return customer.id;
   }
 
   async sendTestPushByCustomer(account: Account, body: CustomerPushTest) {
@@ -1051,12 +742,15 @@ export class EventsService {
       );
     }
 
-    const customer = await this.customersService.findById(
+    const customer = await this.customersService.findByCustomerId(
       account,
       body.customerId
     );
 
-    if (!customer.androidDeviceToken && !customer.iosDeviceToken) {
+    const androidDeviceToken = customer?.getUserAttribute('androidDeviceToken');
+    const iosDeviceToken = customer?.getUserAttribute('iosDeviceToken');
+
+    if (!androidDeviceToken && !iosDeviceToken) {
       throw new HttpException(
         "Selected customer don't have androidDeviceToken nor iosDeviceToken.",
         HttpStatus.NOT_ACCEPTABLE
@@ -1079,7 +773,7 @@ export class EventsService {
 
           if (
             platform === PushPlatforms.ANDROID &&
-            !customer.androidDeviceToken
+            !androidDeviceToken
           ) {
             this.logger.warn(
               `Customer ${body.customerId} don't have androidDeviceToken property to test push notification. Skipping.`
@@ -1087,7 +781,7 @@ export class EventsService {
             return;
           }
 
-          if (platform === PushPlatforms.IOS && !customer.iosDeviceToken) {
+          if (platform === PushPlatforms.IOS && !iosDeviceToken) {
             this.logger.warn(
               `Customer ${body.customerId} don't have iosDeviceToken property to test push notification. Skipping.`
             );
@@ -1116,8 +810,8 @@ export class EventsService {
             }
           }
 
-          const { _id, workspaceId, workflows, ...tags } = customer.toObject();
-          const filteredTags = cleanTagsForSending(tags);
+          // const { _id, workspaceId, workflows, ...tags } = customer.toObject();
+          const filteredTags = null; //cleanTagsForSending(tags);
 
           const messaging = admin.messaging(firebaseApp);
 
@@ -1125,8 +819,8 @@ export class EventsService {
             await messaging.send({
               token:
                 platform === PushPlatforms.ANDROID
-                  ? customer.androidDeviceToken
-                  : customer.iosDeviceToken,
+                  ? androidDeviceToken
+                  : iosDeviceToken,
               notification: {
                 title: await this.tagEngine.parseAndRender(
                   settings.title,
@@ -1185,14 +879,13 @@ export class EventsService {
 
   async batch(
     auth: { account: Account; workspace: Workspaces },
-    MobileBatchDto: MobileBatchDto,
+    eventBatch: BatchEventDto,
     session: string
   ) {
     return Sentry.startSpan({ name: 'EventsService.batch' }, async () => {
       let err: any;
-
       try {
-        for (const thisEvent of MobileBatchDto.batch) {
+        for (const thisEvent of eventBatch.batch) {
           if (
             thisEvent.source === 'message' &&
             thisEvent.event === '$delivered'
@@ -1200,11 +893,16 @@ export class EventsService {
             continue;
           if (thisEvent.source === 'message' && thisEvent.event === '$opened') {
             const clickHouseRecord: ClickHouseMessage = {
-              workspaceId: thisEvent.payload.workspaceID,
-              stepId: thisEvent.payload.stepID,
-              customerId: thisEvent.payload.customerID,
-              templateId: String(thisEvent.payload.templateID),
-              messageId: thisEvent.payload.messageID,
+              workspaceId:
+                thisEvent.payload.workspaceID || thisEvent.payload.workspaceId,
+              stepId: thisEvent.payload.stepID || thisEvent.payload.stepId,
+              customerId:
+                thisEvent.payload.customerID || thisEvent.payload.customerId,
+              templateId:
+                String(thisEvent.payload.templateID) ||
+                String(thisEvent.payload.templateId),
+              messageId:
+                thisEvent.payload.messageID || thisEvent.payload.messageId,
               event: 'opened',
               eventProvider: ClickHouseEventProvider.PUSH,
               processed: false,
@@ -1271,26 +969,25 @@ export class EventsService {
     }
 
     // Retrieve all CustomerKeys for the workspace
-    const customerKeys = await this.CustomerKeysModel.find({ workspaceId });
+    const customerKeys = await this.customerKeysService.getAll(workspaceId, session);
 
-    const customersPrimaryKey = customerKeys.find((k) => k.isPrimary);
+    const customersPrimaryKey = customerKeys.find((k) => k.is_primary);
 
     if (!customersPrimaryKey) {
-      this.debug(
+      this.warn(
         `Primary key not found for workspace --set a primary key first`,
         this.handleSet.name,
         session,
-        auth.account.id
+        auth.account.email
       );
-      // Handle the absence of a primary key definition
       return;
     }
 
     const { customer, findType } = await this.findOrCreateCustomer(
-      workspaceId,
+      auth.workspace,
       session,
-      null,
-      null,
+      event.correlationKey !== '_id' ? event.correlationValue as string : null,
+      event.correlationKey !== '_id' ? event.correlationKey : null,
       event
     );
 
@@ -1298,11 +995,11 @@ export class EventsService {
     // Exclude the primary key and 'other_ids' from updates
     const filteredPayload = {};
     Object.keys(event.payload).forEach((key) => {
-      if (key !== customersPrimaryKey.key && key !== 'other_ids') {
-        const customerKey = customerKeys.find((k) => k.key === key);
+      if (key !== customersPrimaryKey.name && key !== 'other_ids') {
+        const customerKey = customerKeys.find((k) => k.name === key);
         if (
           customerKey &&
-          this.isValidType(event.payload[key], customerKey.type)
+          this.isValidType(event.payload[key], customerKey.attribute_type.name)
         ) {
           filteredPayload[key] = event.payload[key];
         } else {
@@ -1313,48 +1010,52 @@ export class EventsService {
       }
     });
 
-    // Update the customer with validated and filtered payload
-    await this.customersService.CustomerModel.updateOne(
-      { _id: customer._id },
-      { $set: filteredPayload },
-      { new: true }
+    await this.customersService.updateCustomer(auth.account, customer.id, 'user_attributes',
+      {
+        ...filteredPayload
+      },
+      session
     );
 
-    await this.EventModel.create({
-      event: event.event,
-      workspaceId: workspaceId,
-      payload: filteredPayload,
-      //we should really standardize on .toISOString() or .toUTCString()
-      //createdAt: new Date().toUTCString(),
-      createdAt: new Date().toISOString(),
-    });
+    const clickHouseRecord: ClickHouseEvent = await this.recordEvent(
+      event,
+      workspaceId,
+      ClickHouseEventSource.MOBILE,
+      customer
+    );
 
-    return customer._id;
+    return customer.id;
   }
 
-  async deduplication(customer, correlationValue) {
-    // Step 1: Check if the customer's _id is not equal to the given correlation value
-    if (customer._id.toString() !== correlationValue) {
-      // Step 2: Update the customer's other_ids array with the correlation value if it doesn't already have it
-      const updateResult = await this.customersService.CustomerModel.updateOne(
-        {
-          _id: customer._id,
-          other_ids: { $ne: correlationValue }, // Ensures we don't add duplicates
-        },
-        {
-          $push: { other_ids: correlationValue },
-        }
-      );
+  async deduplication(
+    customer: Customer,
+    correlationValue: string | string[],
+    session: string,
+    account: Account
+  ) {
 
-      //console.log('Update result:', updateResult);
+    // event might not have a correlation value
+    // need to filter identify call
+    if (!correlationValue)
+        return;
+
+    let updateResult;
+
+    // Step 1: Check if the customer's _id is not equal to the given correlation value
+    if (customer.id.toString() !== correlationValue) {
+      const newValue = (typeof correlationValue) === 'string'
+            ? [correlationValue, ...customer.other_ids]
+            : [...correlationValue, ...customer.other_ids];
+      // Step 2: Update the customer's other_ids array with the correlation value if it doesn't already have it
+      updateResult = await this.customersService.updateCustomer(account, customer.id, 'other_ids',
+        newValue,
+        session);
     }
 
+    const customerCorrelationValue = Array.isArray(correlationValue) ? correlationValue[0] : correlationValue;
+
     // Additional Step: Retrieve the potential duplicate customer to compare deviceTokenSetAt for both device types
-    const duplicateCustomer = await this.customersService.CustomerModel.findOne(
-      {
-        _id: correlationValue,
-      }
-    );
+    const duplicateCustomer = await this.customersService.findOneByUUID(account, customerCorrelationValue, session);
 
     // Determine which deviceTokenSetAt fields to compare
     const deviceTypes = ['ios', 'android'];
@@ -1379,24 +1080,26 @@ export class EventsService {
 
     // If there are fields to update (i.e., a more recent token was found), perform the update
     if (Object.keys(updateFields).length > 0) {
-      await this.customersService.CustomerModel.updateOne(
+      await this.customersService.updateCustomer(account, customer.id, 'user_attributes',
         {
-          _id: customer._id,
+          ...updateFields,
         },
-        {
-          $set: updateFields,
-        }
-      );
+        session);
     }
 
     // Step 3: Delete any other customers that have an _id matching the correlation value
-    const deleteResult = await this.customersService.CustomerModel.deleteMany({
-      _id: correlationValue,
-    });
+    if (typeof correlationValue === 'string') {
+      await this.customersService.deleteByUUID(account, correlationValue);
+    }
+    else {
+      for (const id of correlationValue) {
+        await this.customersService.deleteByUUID(account, id);
+      }
+    }
   }
 
   async findOrCreateCustomer(
-    workspaceId: string,
+    workspace: Workspaces,
     session: string,
     primaryKeyValue?: string,
     primaryKeyName?: string,
@@ -1404,12 +1107,13 @@ export class EventsService {
   ): Promise<{ customer: any; findType: FindType }> {
     let { customer, findType } =
       await this.customersService.findOrCreateCustomerBySearchOptions(
-        workspaceId,
+        workspace,
         {
           primaryKey: { name: primaryKeyName, value: primaryKeyValue },
         },
         session,
         {},
+        'event',
         event
       );
 
@@ -1441,10 +1145,10 @@ export class EventsService {
     const workspaceId = auth.workspace.id;
 
     // Retrieve all CustomerKeys for the workspace to validate and filter updates
-    const customerKeys = await this.CustomerKeysModel.find({ workspaceId });
+    const customerKeys = await this.customerKeysService.getAll(workspaceId, session);
 
     // Find the primary key among the CustomerKeys
-    const customersPrimaryKey = customerKeys.find((k) => k.isPrimary);
+    const customersPrimaryKey = customerKeys.find((k) => k.is_primary);
 
     if (!customersPrimaryKey) {
       this.debug(
@@ -1458,8 +1162,8 @@ export class EventsService {
     }
 
     // Now you have the primary key's name and type
-    const primaryKeyName = customersPrimaryKey.key;
-    const primaryKeyType = customersPrimaryKey.type;
+    const primaryKeyName = customersPrimaryKey.name;
+    const primaryKeyType = customersPrimaryKey.attribute_type.name;
 
     // Check if the primary key value matches the expected type
     if (!this.isValidType(primaryKeyValue, primaryKeyType)) {
@@ -1474,7 +1178,7 @@ export class EventsService {
     }
 
     const { customer, findType } = await this.findOrCreateCustomer(
-      workspaceId,
+      auth.workspace,
       session,
       primaryKeyValue,
       primaryKeyName,
@@ -1492,13 +1196,17 @@ export class EventsService {
           session,
           auth.account.id
         );
-        //console.log("found customers primary key", customer.primaryKeyName, "does not match event primary key", primaryKeyValue )
         return;
       }
     }
 
-    if (customer._id !== event.correlationValue) {
-      await this.deduplication(customer, event.correlationValue);
+    if (event.correlationValue && (customer.uuid !== event.correlationValue)) {
+      await this.deduplication(
+        customer,
+        event.correlationValue,
+        session,
+        auth.account
+      );
     }
 
     // Filter and validate the event payload against CustomerKeys, with special handling for distinct_id and $anon_distinct_id
@@ -1518,23 +1226,23 @@ export class EventsService {
         // Check and add $anon_distinct_id to other_ids if not already present and valid and not equal to the customer's own _id
         const isValid = this.isValidType(
           event.payload[key],
-          AttributeType.STRING
+          AttributeTypeName.STRING
         ); // Assuming $anon_distinct_id should always be a string
         const anonId = event.payload[key];
         if (
           isValid &&
           !customer.other_ids.includes(event.payload[key]) &&
-          customer._id !== anonId
+          customer.id !== anonId
         ) {
           otherIdsUpdates.push(anonId);
         } else {
         }
       } else {
         // Handle other keys normally
-        const customerKey = customerKeys.find((k) => k.key === key);
+        const customerKey = customerKeys.find((k) => k.name === key);
         if (
           customerKey &&
-          this.isValidType(event.payload[key], customerKey.type)
+          this.isValidType(event.payload[key], customerKey.attribute_type.name)
         ) {
           filteredPayload[key] = event.payload[key];
         } else {
@@ -1542,27 +1250,27 @@ export class EventsService {
       }
     });
 
-    // Assuming the merging logic or creation of a new customer has been handled before this
-    // Update the customer with validated and filtered payload, including handling of arrays
-    await this.customersService.CustomerModel.updateOne(
-      { _id: customer._id },
+    await this.customersService.updateCustomer(auth.account, customer.id, 'other_ids',
+      [
+        ...otherIdsUpdates,
+        ...customer.other_ids
+      ],
+      session);
+
+    await this.customersService.updateCustomer(auth.account, customer.id, 'user_attributes',
       {
-        $set: filteredPayload,
-        ...(otherIdsUpdates.length > 0 && {
-          $addToSet: { other_ids: { $each: otherIdsUpdates } },
-        }),
+        ...filteredPayload,
       },
-      { upsert: true }
+      session);
+
+    const clickHouseRecord: ClickHouseEvent = await this.recordEvent(
+      event,
+      workspaceId,
+      ClickHouseEventSource.MOBILE,
+      customer
     );
 
-    await this.EventModel.create({
-      event: event.event,
-      workspaceId: workspaceId,
-      payload: filteredPayload,
-      createdAt: new Date().toISOString(),
-    });
-
-    return customer._id;
+    return customer.id;
   }
 
   async handleFCM(
@@ -1591,14 +1299,13 @@ export class EventsService {
         session,
         auth.account.id
       );
-      // Optionally, handle the error condition here
       return;
     }
 
     // Retrieve the customer based on customerId
     const workspaceId = auth.workspace.id;
     const { customer, findType } = await this.findOrCreateCustomer(
-      workspaceId,
+      auth.workspace,
       session,
       null,
       null,
@@ -1607,50 +1314,112 @@ export class EventsService {
 
     // Update the customer with the provided device token
     const updatedCustomer =
-      await this.customersService.CustomerModel.findOneAndUpdate(
-        { _id: customer._id, workspaceId },
+      await this.customersService.updateCustomer(auth.account, customer.id, 'user_attributes',
         {
-          $set: {
             [deviceTokenField]: deviceTokenValue,
-            [deviceTokenSetAtField]: new Date(), // Dynamically sets the appropriate deviceTokenSetAt field
-          },
+          [deviceTokenSetAtField]: new Date(),
         },
-        { new: true }
+        session
       );
-
-    this.debug(
-      `FCM event processed for customer ${customerId}, Device Token Field: ${deviceTokenField}`,
-      this.handleFCM.name,
-      session,
-      auth.account.id
-    );
-
     return updatedCustomer;
   }
 
-  isValidType(value: any, type: AttributeType): boolean {
+  isValidType(value: any, type: string): boolean {
     switch (type) {
-      case AttributeType.STRING:
+      case "String":
         return typeof value === 'string';
-      case AttributeType.NUMBER:
+      case "Number":
         return typeof value === 'number';
-      case AttributeType.BOOLEAN:
+      case "Boolean":
         return typeof value === 'boolean';
-      case AttributeType.EMAIL:
-        // Simple regex for email validation, consider a library for production use
+      case "Email":
         return typeof value === 'string' && /^\S+@\S+\.\S+$/.test(value);
-      case AttributeType.DATE:
-      case AttributeType.DATE_TIME:
-        // Check if it's a valid Date
+      case "Date":
+      case "DateTime":
         return !isNaN(Date.parse(value));
-      case AttributeType.ARRAY:
+      case "Array":
         return Array.isArray(value);
-      case AttributeType.OBJECT:
+      case "Object":
         return (
           typeof value === 'object' && !Array.isArray(value) && value !== null
         );
       default:
         return false;
     }
+  }
+
+  async getNewEventPayloadAttributes(clickHouseRecord: ClickHouseEvent) {
+
+  }
+
+  async createMaterializedColumnsForEventPayload(clickHouseRecord: ClickHouseEvent) {
+
+
+  }
+
+  async recordEvent(
+    event: EventDto,
+    workspaceId: string,
+    source: ClickHouseEventSource,
+    customer?: Customer
+  ): Promise<ClickHouseEvent> {
+    const clickHouseRecord: ClickHouseEvent = await this.insertEvent(
+      event,
+      workspaceId,
+      ClickHouseEventSource.MOBILE,
+      customer
+    );
+
+    const newEventPayloadAttributes = await this.getNewEventPayloadAttributes(clickHouseRecord);
+    await this.createMaterializedColumnsForEventPayload(clickHouseRecord);
+
+    return clickHouseRecord;
+  }
+
+  async insertEvent(
+    event: EventDto,
+    workspaceId: string,
+    source: ClickHouseEventSource,
+    customer?: Customer
+  ): Promise<ClickHouseEvent> {
+    const clickHouseRecord: ClickHouseEvent = this.toClickHouseEvent(
+      event,
+      workspaceId,
+      ClickHouseEventSource.MOBILE,
+      customer
+    );
+
+    await this.clickhouseClient.insertAsync({
+      table: ClickHouseTable.EVENTS,
+      values: [clickHouseRecord],
+      format: 'JSONEachRow',
+    });
+
+    return clickHouseRecord;
+  }
+
+  toClickHouseEvent(
+    event: EventDto,
+    workspaceId: string,
+    source: ClickHouseEventSource,
+    customer?: Customer
+  ): ClickHouseEvent {
+    // Fields to be set by DB:
+    // created_at
+
+    const clickHouseRecord: ClickHouseEvent = {
+      uuid: event.uuid,
+      generated_at: event.timestamp || new Date(),
+      correlation_key: event.correlationKey,
+      correlation_value: event.correlationValue,
+      event: event.event,
+      payload: event.payload,
+      context: event.context,
+      source: source,
+      workspace_id: workspaceId,
+      customer_id: customer?.id,
+    };
+
+    return clickHouseRecord;
   }
 }

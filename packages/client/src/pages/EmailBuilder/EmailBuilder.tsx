@@ -124,13 +124,15 @@ const EmailBuilder = () => {
   const onSave = async () => {
     setIsSaving(true);
     try {
+      const html = editor?.runCommand("gjs-get-inlined-html", {});
+      const unescapedHtml = html.replace(/&quot;/g, `"`);
       const reqBody = {
         name: templateName,
         subject: title,
         cc: cc.split(",").filter(function (entry) {
           return /\S/.test(entry);
         }),
-        text: editor?.runCommand("gjs-get-inlined-html", {}),
+        text: unescapedHtml,
         style: editor?.getCss(),
         type: "email",
       };

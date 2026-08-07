@@ -1,35 +1,36 @@
-import { AttributeType } from '@/api/customers/schemas/customer-keys.schema';
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsBoolean,
-  IsEnum,
   IsNotEmpty,
-  IsObject,
   IsOptional,
   IsString,
   ValidateNested,
+  IsInstance,
+  IsNumber
 } from 'class-validator';
+import { AttributeType } from '../entities/attribute-type.entity';
 
 export class CreateAttributeDto {
   @IsString()
   @IsNotEmpty()
-  key: string;
+  name: string;
 
-  @IsEnum(AttributeType)
+  @Type(() => AttributeType)
+  @IsInstance(AttributeType)
   @IsNotEmpty()
-  type: AttributeType;
+  attribute_type: AttributeType;
 
   @IsString()
   @IsOptional()
-  dateFormat?: string;
+  attribute_subtype?: string;
 
-  @IsBoolean()
-  isArray: boolean;
+  @IsString()
+  @IsOptional()
+  attribute_parameter?: string;
 }
 
 export class UpdateAttributeDto {
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
   id: string;
 
@@ -39,9 +40,9 @@ export class UpdateAttributeDto {
 }
 
 export class DeleteAttributeDto {
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
-  id: string;
+  id: number;
 }
 
 export class ModifyAttributesDto {

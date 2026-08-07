@@ -7,7 +7,6 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { createMock } from '@golevelup/ts-jest';
 import { CustomersService } from '../customers/customers.service';
 import { AuthService } from '../auth/auth.service';
-import { getConnectionToken } from '@nestjs/mongoose';
 import { WebhooksService } from '../webhooks/webhooks.service';
 
 const userArray = [
@@ -62,10 +61,6 @@ describe('AccountsService', () => {
         {
           provide: AuthService,
           useValue: createMock<AuthService>(),
-        },
-        {
-          provide: getConnectionToken(),
-          useValue: { add: jest.fn() },
         },
         {
           provide: getRepositoryToken(Account),

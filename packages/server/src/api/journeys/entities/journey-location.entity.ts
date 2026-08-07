@@ -1,34 +1,32 @@
-import { Account } from '../../accounts/entities/accounts.entity';
 import {
   Entity,
   Column,
-  PrimaryGeneratedColumn,
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
-  ManyToMany,
-  CreateDateColumn,
 } from 'typeorm';
-import { VisualLayout } from '../types/visual-layout.interface';
 import { Step } from '../../steps/entities/step.entity';
 import { Journey } from './journey.entity';
 import { Workspaces } from '../../workspaces/entities/workspaces.entity';
+import { Customer } from '../../customers/entities/customer.entity';
 
 @Entity()
 export class JourneyLocation {
-  @PrimaryColumn({ name: 'journeyId' })
+  @PrimaryColumn({ name: 'journey_id' })
   @ManyToOne(() => Journey, (journey) => journey.id, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'journeyId' })
+  @JoinColumn({ name: 'journey_id' })
   public journey!: string;
 
-  @PrimaryColumn()
-  customer!: string;
+  @PrimaryColumn({ name: 'customer_id' })
+  @ManyToOne(() => Customer, (customer) => customer.id, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'customer_id' })
+  public customer!: Customer;
 
-  @JoinColumn()
+  @JoinColumn({ name: 'step_id' })
   @ManyToOne(() => Step, (step) => step.id, { onDelete: 'CASCADE' })
   step!: Step;
 
-  @JoinColumn()
+  @JoinColumn({ name: 'workspace_id' })
   @ManyToOne(() => Workspaces, (workspace) => workspace.id, {
     onDelete: 'CASCADE',
   })
@@ -73,4 +71,19 @@ export class JourneyLocation {
     nullable: true,
   })
   messageSent?: boolean | null;
+
+  // use these fields in queries to improve perf.
+  // prevents joining related tables while querying current
+  // table
+  @Column('uuid', { name: 'journey_id', nullable: false })
+  journey_id: string;
+
+  @Column('uuid', { name: 'step_id', nullable: false })
+  step_id: string;
+
+  @Column('bigint', { name: 'customer_id', nullable: false })
+  customer_id: string;
+
+  @Column('uuid', { name: 'workspace_id', nullable: false })
+  workspace_id: string;
 }

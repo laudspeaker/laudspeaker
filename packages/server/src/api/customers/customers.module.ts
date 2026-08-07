@@ -1,24 +1,13 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { CustomersController } from './customers.controller';
 import { CustomersService } from './customers.service';
-import { BullModule } from '@nestjs/bullmq';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Customer, CustomerSchema } from './schemas/customer.schema';
-import {
-  CustomerKeys,
-  CustomerKeysSchema,
-} from './schemas/customer-keys.schema';
+import { Customer } from './entities/customer.entity';
 import { AccountsModule } from '../accounts/accounts.module';
 import { SegmentsModule } from '../segments/segments.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
-import { AudiencesHelper } from '../audiences/audiences.helper';
-import { AudiencesModule } from '../audiences/audiences.module';
-import { WorkflowsModule } from '../workflows/workflows.module';
 import { EventsModule } from '../events/events.module';
 import { StepsModule } from '../steps/steps.module';
-import { CustomersConsumerService } from './customers.consumer';
-import { KafkaModule } from '../kafka/kafka.module';
 import { JourneysModule } from '../journeys/journeys.module';
 import { S3Service } from '../s3/s3.service';
 import { Imports } from './entities/imports.entity';
@@ -29,12 +18,16 @@ import { SegmentsService } from '../segments/segments.service';
 import { Segment } from '../segments/entities/segment.entity';
 import { SegmentCustomers } from '../segments/entities/segment-customers.entity';
 import { CustomerChangeProcessor } from './processors/customers.processor';
-import { CacheService } from '@/common/services/cache.service';
+import { CacheService } from '../../common/services/cache.service';
+import { CustomerKeysService } from './customer-keys.service';
+import { CustomerKey } from './entities/customer-keys.entity';
+import { AttributeType } from './entities/attribute-type.entity';
+import { AttributeParameter } from './entities/attribute-parameter.entity';
 
 function getProvidersList() {
   let providerList: Array<any> = [
     CustomersService,
-    AudiencesHelper,
+    CustomerKeysService,
     S3Service,
     JourneyLocationsService,
     CacheService,
@@ -44,7 +37,6 @@ function getProvidersList() {
     providerList = [
       ...providerList,
       ImportProcessor,
-      CustomersConsumerService,
       CustomerChangeProcessor,
     ];
   }
@@ -53,12 +45,11 @@ function getProvidersList() {
 }
 
 function getExportsList() {
-  let exportList: Array<any> = [CustomersService];
+  let exportList: Array<any> = [CustomersService, CustomerKeysService];
 
   if (process.env.LAUDSPEAKER_PROCESS_TYPE == 'QUEUE') {
     exportList = [
       ...exportList,
-      CustomersConsumerService,
       CustomerChangeProcessor,
     ];
   }
@@ -68,42 +59,25 @@ function getExportsList() {
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Customer.name, schema: CustomerSchema },
-    ]),
-    MongooseModule.forFeature([
-      { name: CustomerKeys.name, schema: CustomerKeysSchema },
-    ]),
-    BullModule.registerQueue({
-      name: '{customers}',
-    }),
-    BullModule.registerQueue({
-      name: '{customer_change}',
-    }),
-    BullModule.registerQueue({
-      name: '{imports}',
-    }),
-    BullModule.registerQueue({
-      name: '{events_pre}',
-    }),
-    AccountsModule,
-    SegmentsModule,
-    AudiencesModule,
-    WorkflowsModule,
-    EventsModule,
-    StepsModule,
+    forwardRef(() => AccountsModule),
+    forwardRef(() => SegmentsModule),
+    forwardRef(() => StepsModule),
+    forwardRef(() => JourneysModule),
+    forwardRef(() => EventsModule),
     TypeOrmModule.forFeature([
       Account,
+      Customer,
+      CustomerKey,
       Imports,
       JourneyLocation,
       Segment,
       SegmentCustomers,
+      AttributeType,
+      AttributeParameter
     ]),
-    KafkaModule,
-    JourneysModule,
   ],
   controllers: [CustomersController],
   providers: getProvidersList(),
   exports: getExportsList(),
 })
-export class CustomersModule {}
+export class CustomersModule { }

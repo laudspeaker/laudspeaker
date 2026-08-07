@@ -12,6 +12,7 @@ import { Workspaces } from '../../workspaces/entities/workspaces.entity';
 export enum SegmentType {
   AUTOMATIC = 'automatic',
   MANUAL = 'manual',
+  SYSTEM = 'system',
 }
 
 @Entity()
@@ -19,7 +20,7 @@ export class Segment extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   public id: string;
 
-  @JoinColumn()
+  @JoinColumn({name: "workspace_id"})
   @ManyToOne(() => Workspaces, (workspace) => workspace.id, {
     onDelete: 'CASCADE',
   })
@@ -64,4 +65,7 @@ export class Segment extends BaseEntity {
     },
   })
   public resources: any;
+
+  @Column('uuid', { name: 'workspace_id', nullable: false })
+  workspace_id: string;
 }

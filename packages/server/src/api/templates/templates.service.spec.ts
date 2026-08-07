@@ -6,8 +6,6 @@ import { TemplatesController } from './templates.controller';
 import { TemplatesService } from './templates.service';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
 
 describe('TemplatesService', () => {
   let service: TemplatesService;
@@ -32,9 +30,6 @@ describe('TemplatesService', () => {
         }),
         TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
         TypeOrmModule.forFeature([Template]),
-        MongooseModule.forFeature([
-          { name: Customer.name, schema: CustomerSchema },
-        ]),
       ],
       providers: [TemplatesService],
       controllers: [TemplatesController],

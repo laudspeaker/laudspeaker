@@ -1,65 +1,63 @@
 import { Account } from '../accounts/entities/accounts.entity';
 import { isMainThread, workerData, Worker, parentPort } from 'worker_threads';
 import mysql from 'mysql2';
-import mongoose from 'mongoose';
-import { CustomerSchema } from '../customers/schemas/customer.schema';
 
 const handleMySqlSync = async (
   { connectionString, query }: { connectionString: string; query: string },
   owner: Account,
   isReview = false
 ) => {
-  if (isReview) {
-    const connection = mysql.createConnection(connectionString);
+  // if (isReview) {
+  //   const connection = mysql.createConnection(connectionString);
 
-    const stream = connection.query(query).stream({ objectMode: true });
+  //   const stream = connection.query(query).stream({ objectMode: true });
 
-    const records = [];
+  //   const records = [];
 
-    for await (const record of stream) {
-      records.push(record);
-      if (records.length === 10) {
-        stream.destroy();
-        break;
-      }
-    }
-    connection.end();
-    parentPort.postMessage(records);
-  } else {
-    console.log(connectionString, query);
-    await mongoose.connect(process.env.MONGOOSE_URL);
-    const customerModel = mongoose.model('customers', CustomerSchema);
+  //   for await (const record of stream) {
+  //     records.push(record);
+  //     if (records.length === 10) {
+  //       stream.destroy();
+  //       break;
+  //     }
+  //   }
+  //   connection.end();
+  //   parentPort.postMessage(records);
+  // } else {
+  //   console.log(connectionString, query);
+  //   await mongoose.connect(process.env.MONGOOSE_URL);
+  //   const customerModel = mongoose.model('customers', CustomerSchema);
 
-    const connection = mysql.createConnection(connectionString);
+  //   const connection = mysql.createConnection(connectionString);
 
-    const stream = connection.query(query).stream({ objectMode: true });
-    const workspace = owner?.teams?.[0]?.organization?.workspaces?.[0];
+  //   const stream = connection.query(query).stream({ objectMode: true });
+  //   const workspace = owner?.teams?.[0]?.organization?.workspaces?.[0];
 
-    for await (const customer of stream) {
-      if (!customer.id) continue;
-      const customerInDb = await customerModel
-        .findOne({ mysqlId: customer.id, workspaceId: workspace.id })
-        .exec();
+  //   for await (const customer of stream) {
+  //     if (!customer.id) continue;
+  //     const customerInDb = await customerModel
+  //       .findOne({ mysqlId: customer.id, workspaceId: workspace.id })
+  //       .exec();
 
-      if (customerInDb) {
-        for (const key of Object.keys(customer)) {
-          if (key === 'id') continue;
+  //     if (customerInDb) {
+  //       for (const key of Object.keys(customer)) {
+  //         if (key === 'id') continue;
 
-          customerInDb[key] = customer[key];
-        }
-        await customerInDb.save();
-      } else {
-        await customerModel.create({
-          ...customer,
-          workspaceId: workspace.id,
-          id: undefined,
-          mysqlId: customer.id,
-        });
-      }
-    }
+  //         customerInDb[key] = customer[key];
+  //       }
+  //       await customerInDb.save();
+  //     } else {
+  //       await customerModel.create({
+  //         ...customer,
+  //         workspaceId: workspace.id,
+  //         id: undefined,
+  //         mysqlId: customer.id,
+  //       });
+  //     }
+  //   }
 
-    parentPort.postMessage('success');
-  }
+  //   parentPort.postMessage('success');
+  // }
 };
 
 const handleMySql = (

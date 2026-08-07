@@ -110,6 +110,8 @@ export class CommonBranch {
   index: number;
   /** Step ID (UUID) */
   destination: string;
+  /** Segment ID (UUID) */
+  systemSegment?: string;
 }
 
 /*
@@ -140,9 +142,9 @@ export class Event {}
 export class MessageEvent extends Event {
   providerType: string; // Email, SMS, etc
   eventCondition: string; // Received, opened, delivered, etc
-  happenCondition: string; // has, has not
   journey: string; // Journey ID
   step: string; // StepID or ANY
+  relation?:string
 }
 
 /*
@@ -280,6 +282,9 @@ export class MessageStepMetadata extends SingleBranchMetadata {
   selectedPlatform?: string;
   connectionId: string;
   sendingOptionId?: string;
+  replyToOptionId?: string;
+  oneClickUnsubscribeOptionId?: string;
+  oneClickUnsubscribeEnabled: boolean;
 }
 
 /**

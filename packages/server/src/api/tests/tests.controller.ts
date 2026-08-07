@@ -119,28 +119,10 @@ export class TestsController {
     return this.testsService.verifyTestAccount(id, session);
   }
 
-  @Get('test-posthog-customer/:id')
-  async getTestPosthogCustomer(@Param('id') id: string) {
-    const session = randomUUID();
-    return this.testsService.getTestPosthogCustomer(id, session);
-  }
-
   @Get('test-customer-id')
   async getTestCustomerId() {
     const session = randomUUID();
     return this.testsService.getTestCustomerId(session);
-  }
-
-  @Get('any-test-customer-id')
-  async getAnyTestCustomerId() {
-    const session = randomUUID();
-    return this.testsService.getAnyTestCustomerId(session);
-  }
-
-  @Get('audience-by-customer/:id')
-  async getAudienceByCustomerId(@Param('id') id: string) {
-    const session = randomUUID();
-    return this.testsService.getAudienceByCustomerId(id, session);
   }
 
   @Get('test-recovery')
@@ -159,11 +141,5 @@ export class TestsController {
   async getSegmentSize(@Param('segmentId') segmentId: string) {
     const session = randomUUID();
     return this.testsService.getSegmentSize(segmentId, session);
-  }
-
-  @Get('get-workflow-customer-amount/:workflowId')
-  async getWorkflowCustomersAmount(@Param('workflowId') workflowId: string) {
-    const session = randomUUID();
-    return this.testsService.getWorkflowCustomersAmount(workflowId, session);
   }
 }

@@ -11,12 +11,19 @@ import { ResendSendingOption } from './entities/resend-sending-option.entity';
 import { WorkspaceTwilioConnection } from './entities/workspace-twilio-connection.entity';
 import { WorkspacePushConnection } from './entities/workspace-push-connection.entity';
 import { WebhooksModule } from '../webhooks/webhooks.module';
+import { ChannelsModule } from '../channels/channels.module';
+import { MailgunReplyToOption } from './entities/mailgun-reply-to-option.entity';
+import { SendgridReplyToOption } from './entities/sendgrid-reply-to-option.entity';
+import { ResendReplyToOption } from './entities/resend-reply-to-option.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       WorkspaceMailgunConnection,
       MailgunSendingOption,
+      MailgunReplyToOption,
+      SendgridReplyToOption,
+      ResendReplyToOption,
       WorkspaceSendgridConnection,
       SendgridSendingOption,
       WorkspaceResendConnection,
@@ -25,9 +32,10 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
       WorkspacePushConnection,
     ]),
     forwardRef(() => WebhooksModule),
+    forwardRef(() => ChannelsModule),
   ],
   controllers: [WorkspacesController],
   providers: [WorkspacesService],
   exports: [WorkspacesService],
 })
-export class WorkspacesModule {}
+export class WorkspacesModule { }

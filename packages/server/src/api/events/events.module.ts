@@ -1,42 +1,20 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MongooseModule } from '@nestjs/mongoose';
-import { BullModule } from '@nestjs/bullmq';
 import { EventsController } from './events.controller';
 import { EventsService } from './events.service';
-import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
 import { Account } from '../accounts/entities/accounts.entity';
-import { Workflow } from '../workflows/entities/workflow.entity';
 import { Template } from '../templates/entities/template.entity';
-import { Audience } from '../audiences/entities/audience.entity';
 import { Installation } from '../slack/entities/installation.entity';
 import { State } from '../slack/entities/state.entity';
-import {
-  CustomerKeys,
-  CustomerKeysSchema,
-} from '../customers/schemas/customer-keys.schema';
 import { AuthModule } from '../auth/auth.module';
-import { Event, EventSchema } from './schemas/event.schema';
-import { EventKeys, EventKeysSchema } from './schemas/event-keys.schema';
 import { CustomersModule } from '../customers/customers.module';
 import { AccountsModule } from '../accounts/accounts.module';
 import { TemplatesModule } from '../templates/templates.module';
-import { WorkflowsModule } from '../workflows/workflows.module';
-import { AudiencesModule } from '../audiences/audiences.module';
 import { SlackModule } from '../slack/slack.module';
-import {
-  PosthogEventType,
-  PosthogEventTypeSchema,
-} from './schemas/posthog-event-type.schema';
-import { EventsProcessor } from './events.processor';
-import {
-  PosthogEvent,
-  PosthogEventSchema,
-} from './schemas/posthog-event.schema';
+import { EventsProcessor } from './processors/events.processor';
 import { JourneysModule } from '../journeys/journeys.module';
-import { AudiencesHelper } from '../audiences/audiences.helper';
 import { SegmentsModule } from '../segments/segments.module';
-import { EventsPreProcessor } from './events.preprocessor';
+import { EventsPreProcessor } from './processors/events.preprocessor';
 import { WebsocketsModule } from '@/websockets/websockets.module';
 import { RedlockModule } from '../redlock/redlock.module';
 import { RedlockService } from '../redlock/redlock.service';
@@ -49,27 +27,25 @@ import { S3Service } from '../s3/s3.service';
 import { Step } from '../steps/entities/step.entity';
 import { Journey } from '../journeys/entities/journey.entity';
 import { WebhooksModule } from '../webhooks/webhooks.module';
-import { CacheService } from '@/common/services/cache.service';
-import { WaitUntilStepProcessor } from '../steps/processors/wait.until.step.processor';
-import { ExitStepProcessor } from '../steps/processors/exit.step.processor';
-import { ExperimentStepProcessor } from '../steps/processors/experiment.step.processor';
-import { JumpToStepProcessor } from '../steps/processors/jump.to.step.processor';
-import { MessageStepProcessor } from '../steps/processors/message.step.processor';
-import { MultisplitStepProcessor } from '../steps/processors/multisplit.step.processor';
-import { StartStepProcessor } from '../steps/processors/start.step.processor';
-import { TimeDelayStepProcessor } from '../steps/processors/time.delay.step.processor';
-import { TimeWindowStepProcessor } from '../steps/processors/time.window.step.processor';
+import { CacheService } from '../../common/services/cache.service';
 import { OrganizationsModule } from '../organizations/organizations.module';
+import { EventsPostProcessor } from './processors/events.postprocessor';
+import { Customer } from '../customers/entities/customer.entity';
+import { EventsPGSyncProcessor } from './processors/events-pg-sync.processor';
+import { PGEvent } from '../events/entities/pg-event.entity';
+import { NotificationPreferenceModule } from '../notification-preferences/notification-preferences.module';
+import { NotificationPreferenceService } from '../notification-preferences/notification-preferences.service';
+import { NotificationPreference } from '../notification-preferences/entities/notification-preference.entity';
 
 function getProvidersList() {
   let providerList: Array<any> = [
     EventsService,
-    AudiencesHelper,
     RedlockService,
     JourneyLocationsService,
     CustomersService,
     S3Service,
     CacheService,
+    NotificationPreferenceService,
   ];
 
   if (process.env.LAUDSPEAKER_PROCESS_TYPE == 'QUEUE') {
@@ -77,15 +53,8 @@ function getProvidersList() {
       ...providerList,
       EventsProcessor,
       EventsPreProcessor,
-      ExitStepProcessor,
-      ExperimentStepProcessor,
-      JumpToStepProcessor,
-      MessageStepProcessor,
-      MultisplitStepProcessor,
-      StartStepProcessor,
-      TimeDelayStepProcessor,
-      TimeWindowStepProcessor,
-      WaitUntilStepProcessor,
+      EventsPostProcessor,
+      EventsPGSyncProcessor
     ];
   }
 
@@ -96,85 +65,26 @@ function getProvidersList() {
   imports: [
     TypeOrmModule.forFeature([
       Account,
-      Audience,
+      Customer,
       Installation,
       State,
       Template,
-      Workflow,
       JourneyLocation,
       Imports,
       Step,
       Journey,
+      PGEvent,
+      NotificationPreference
     ]),
-    MongooseModule.forFeature([
-      { name: Customer.name, schema: CustomerSchema },
-      { name: CustomerKeys.name, schema: CustomerKeysSchema },
-      { name: Event.name, schema: EventSchema },
-      { name: PosthogEvent.name, schema: PosthogEventSchema },
-      { name: EventKeys.name, schema: EventKeysSchema },
-      { name: PosthogEventType.name, schema: PosthogEventTypeSchema },
-    ]),
-    BullModule.registerQueue({
-      name: '{message}',
-    }),
-    BullModule.registerQueue({
-      name: '{slack}',
-    }),
-    BullModule.registerQueue({
-      name: '{customers}',
-    }),
-    BullModule.registerQueue({
-      name: '{events}',
-    }),
-    BullModule.registerQueue({
-      name: '{start.step}',
-    }),
-    BullModule.registerQueue({
-      name: '{wait.until.step}',
-    }),
-    BullModule.registerQueue({
-      name: '{time.window.step}',
-    }),
-    BullModule.registerQueue({
-      name: '{exit.step}',
-    }),
-    BullModule.registerQueue({
-      name: '{jump.to.step}',
-    }),
-    BullModule.registerQueue({
-      name: '{message.step}',
-    }),
-    BullModule.registerQueue({
-      name: '{time.delay.step}',
-    }),
-    BullModule.registerQueue({
-      name: '{multisplit.step}',
-    }),
-    BullModule.registerQueue({
-      name: '{experiment.step}',
-    }),
-    BullModule.registerQueue({
-      name: '{events_pre}',
-    }),
-    BullModule.registerQueue({
-      name: '{webhooks}',
-    }),
-    BullModule.registerQueue({
-      name: '{transition}',
-    }),
-    BullModule.registerQueue({
-      name: '{imports}',
-    }),
     forwardRef(() => AuthModule),
     forwardRef(() => CustomersModule),
     forwardRef(() => WebhooksModule),
     forwardRef(() => AccountsModule),
     forwardRef(() => TemplatesModule),
-    forwardRef(() => WorkflowsModule),
     forwardRef(() => JourneysModule),
     forwardRef(() => SegmentsModule),
     forwardRef(() => WebsocketsModule),
-    AudiencesModule,
+    forwardRef(() => NotificationPreferenceModule),
     SlackModule,
     forwardRef(() => RedlockModule),
     forwardRef(() => StepsModule),
@@ -184,4 +94,4 @@ function getProvidersList() {
   providers: getProvidersList(),
   exports: [EventsService],
 })
-export class EventsModule {}
+export class EventsModule { }

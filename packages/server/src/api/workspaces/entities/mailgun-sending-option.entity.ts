@@ -24,7 +24,7 @@ export class MailgunSendingOption {
   @Column()
   sendingEmail: string;
 
-  @Column()
+  @Column({nullable: true})
   sendingName: string;
 
   @Column()

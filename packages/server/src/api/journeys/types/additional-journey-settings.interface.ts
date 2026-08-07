@@ -83,9 +83,30 @@ export interface JourneySettingsMaxMessageSends {
   maxSendRate?: MaxOptions;
 }
 
+export enum JourneySettingsConversionTrackingTimeLimitUnit {
+  Days = "Days",
+}
+
+export interface JourneySettingsConversionTrackingTimeLimit {
+  unit: JourneySettingsConversionTrackingTimeLimitUnit,
+  value: number;
+}
+
+export interface JourneySettingsConversionTracking {
+  enabled: boolean;
+  events: string[];
+  timeLimit: JourneySettingsConversionTrackingTimeLimit;
+}
+
+export interface JourneySettingsStrictLiquidChecking {
+  enabled: boolean;
+}
+
 export interface JourneySettings {
   tags: string[];
   quietHours: JourneySettingsQuietHours;
   maxEntries: JourneySettingsMaxUserEntries;
   maxMessageSends: JourneySettingsMaxMessageSends;
+  conversionTracking: JourneySettingsConversionTracking;
+  strictLiquidChecking: JourneySettingsStrictLiquidChecking;
 }

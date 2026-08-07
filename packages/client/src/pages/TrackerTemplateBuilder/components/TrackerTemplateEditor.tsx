@@ -120,7 +120,7 @@ const TrackerTemplateEditor: FC<TrackerTemplateEditorProps> = ({
                   </option>
                 ))}
               </select>
-              <DynamicInput
+              {/* <DynamicInput
                 type={field.type}
                 value={field.defaultValue}
                 onChange={(value) =>
@@ -129,7 +129,7 @@ const TrackerTemplateEditor: FC<TrackerTemplateEditorProps> = ({
                     defaultValue: value,
                   })
                 }
-              />
+              /> */}
             </div>
 
             <button onClick={() => handleFieldDelete(i)}>

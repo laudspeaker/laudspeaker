@@ -1,5 +1,5 @@
 /* eslint-disable no-case-declarations */
-import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
+import { OnWorkerEvent } from '@nestjs/bullmq';
 import { Job, MetricsTime } from 'bullmq';
 import { Inject, LoggerService } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
@@ -8,10 +8,7 @@ import Mailgun from 'mailgun.js';
 import formData from 'form-data';
 import { Liquid } from 'liquidjs';
 import { MailService } from '@sendgrid/mail';
-import {
-  ClickHouseEventProvider,
-  WebhooksService,
-} from '../webhooks/webhooks.service';
+import { WebhooksService } from '../webhooks/webhooks.service';
 import twilio from 'twilio';
 import { PostHog } from 'posthog-node';
 import * as admin from 'firebase-admin';
@@ -20,6 +17,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Repository } from 'typeorm';
 import { workspacesUrl } from 'twilio/lib/jwt/taskrouter/util';
+import { Processor } from '../../common/services/queue/decorators/processor';
+import { ProcessorBase } from '../../common/services/queue/classes/processor-base';
+import { ClickHouseEventProvider } from '../../common/services/clickhouse/types/clickhouse-event-provider';
 
 export enum MessageType {
   SMS = 'sms',
@@ -28,24 +28,8 @@ export enum MessageType {
 }
 
 @Injectable()
-@Processor('{message}', {
-  stalledInterval: process.env.MESSAGE_PROCESSOR_STALLED_INTERVAL
-    ? +process.env.MESSAGE_PROCESSOR_STALLED_INTERVAL
-    : 30000,
-  removeOnComplete: {
-    age: 0,
-    count: process.env.MESSAGE_PROCESSOR_REMOVE_ON_COMPLETE
-      ? +process.env.MESSAGE_PROCESSOR_REMOVE_ON_COMPLETE
-      : 0,
-  },
-  metrics: {
-    maxDataPoints: MetricsTime.ONE_WEEK,
-  },
-  concurrency: process.env.MESSAGE_PROCESSOR_CONCURRENCY
-    ? +process.env.MESSAGE_PROCESSOR_CONCURRENCY
-    : 1,
-})
-export class MessageProcessor extends WorkerHost {
+@Processor('message')
+export class MessageProcessor extends ProcessorBase {
   private MAXIMUM_SMS_LENGTH = 1600;
   private MAXIMUM_PUSH_LENGTH = 256;
   private MAXIMUM_PUSH_TITLE_LENGTH = 48;

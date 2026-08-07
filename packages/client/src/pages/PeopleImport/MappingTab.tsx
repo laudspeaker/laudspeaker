@@ -4,15 +4,10 @@ import Select from "components/Elements/Selectv2";
 import RadioOption from "components/Radio/RadioOption";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { StatementValueType } from "reducers/flow-builder.reducer";
 import ApiService from "services/api.service";
 import AddAttributeModal from "./Modals/AddAttributeModal";
-import {
-  AttributeType,
-  ImportAttribute,
-  ImportParams,
-  MappingParams,
-} from "./PeopleImport";
+import { ImportAttribute, ImportParams, MappingParams } from "./PeopleImport";
+import { Attribute, AttributeType } from "pages/PeopleSettings/PeopleSettings";
 
 interface MappingTabProps {
   fileData?: ImportParams;
@@ -33,9 +28,16 @@ const MappingTab = ({
     Record<string, { search: string; isLoading: boolean }>
   >({});
   const [activeHead, setActiveHead] = useState<string>();
-  const [possibleKeys, setPossibleKeys] = useState<
-    { key: string; type: AttributeType; dateFormat?: string }[]
+  const [possibleKeys, setPossibleKeys] = useState<Attribute[]>([]);
+  const [possibleKeysLoaded, setPossibleKeysLoaded] = useState<boolean>(false);
+  const [possibleAttributeTypes, setPossibleAttributeTypes] = useState<
+    AttributeType[]
   >([]);
+  const [newAttributeCreated, setNewAttributeCreated] =
+    useState<boolean>(false);
+  const [lastAttributeCreated, setLastAttributeCreated] = useState<
+    Record<string, any>
+  >({});
 
   const handleSearchUpdate = (head: string) => (value: string) => {
     const newSearch = { ...search };
@@ -56,33 +58,35 @@ const MappingTab = ({
   };
 
   const loadPossibleKeys = async () => {
+    setPossibleKeysLoaded(false);
+
     const { data } = await ApiService.get<any[]>({
       url: `/customers/possible-attributes?removeLimit=true&type=String&type=Number&type=Boolean&type=Email&type=Date&type=DateTime`,
     });
 
     if (
       fileData?.primaryAttribute &&
-      !Object.values(mappingSettings).find((el) => el.isPrimary)
+      !Object.values(mappingSettings).find((el) => el.is_primary)
     ) {
-      const pk = data.find((el) => el.isPrimary);
+      const pk = data.find((el) => el.is_primary);
       if (
-        fileData?.primaryAttribute.key === pk.key &&
-        fileData?.primaryAttribute.type === pk.type
+        pk &&
+        fileData?.primaryAttribute?.name === pk?.name &&
+        fileData?.primaryAttribute?.attribute_type?.name ===
+          pk?.attribute_type?.name
       ) {
         const suggestedFieldForPK = Object.keys(fileData.headers).find(
-          (el: string) => el.toLowerCase().includes(pk.key.toLowerCase())
+          (el: string) => el.toLowerCase().includes(pk.name.toLowerCase())
         );
         if (suggestedFieldForPK) {
           updateSettings({
             [suggestedFieldForPK]: {
               ...mappingSettings[suggestedFieldForPK],
               asAttribute: {
-                key: pk.key,
-                type: pk.type,
-                dateFormat: pk.dateFormat,
+                attribute: pk,
                 skip: false,
               },
-              isPrimary: true,
+              is_primary: true,
             },
           });
         }
@@ -90,6 +94,44 @@ const MappingTab = ({
     }
 
     setPossibleKeys(data);
+    setPossibleKeysLoaded(true);
+  };
+
+  const loadKeyTypes = async () => {
+    const { data } = await ApiService.get<any[]>({
+      url: `/customers/possible-attribute-types`,
+    });
+
+    setPossibleAttributeTypes(data);
+  };
+
+  const handleNewAttributeCreated = async () => {
+    let newActiveHeadSettings = {};
+
+    const keySearchResult = possibleKeys.find((key) => {
+      return key.name === lastAttributeCreated.keyName;
+    });
+
+    if (keySearchResult) {
+      newActiveHeadSettings = {
+        asAttribute: {
+          attribute: keySearchResult,
+          skip: false,
+        },
+        is_primary: possibleKeys.length == 1,
+      };
+    }
+    if (!activeHead) return;
+
+    updateSettings({
+      [activeHead]: {
+        ...mappingSettings[activeHead],
+        ...newActiveHeadSettings,
+      },
+    });
+    setActiveHead(undefined);
+    setNewAttributeCreated(false);
+    setLastAttributeCreated({});
   };
 
   const handleSelectChange = (head: string) => (selectKey: string) => {
@@ -104,11 +146,13 @@ const MappingTab = ({
 
     if (
       Object.values(mappingSettings).some(
-        (el) => el.asAttribute?.key === key && el.asAttribute?.type === type
+        (el) =>
+          el.asAttribute?.attribute.name === key &&
+          el.asAttribute?.attribute.attribute_type?.name === type
       ) &&
       type !== "_SKIP_RECORD_"
     ) {
-      toast.error("This attribute already in use");
+      toast.error("This attribute is already in use!");
       return;
     }
 
@@ -116,22 +160,26 @@ const MappingTab = ({
       [head]: {
         ...mappingSettings[head],
         asAttribute: {
-          key: key,
-          type: type as AttributeType,
-          dateFormat,
+          attribute:
+            possibleKeys.find((possibleKey) => {
+              return (
+                possibleKey.name === key &&
+                possibleKey.attribute_type?.name === type
+              );
+            }) || possibleKeys[0],
           skip: selectKey === "_SKIP_RECORD_;-;_SKIP_RECORD_",
         },
-        isPrimary:
+        is_primary:
           selectKey === "_SKIP_RECORD_;-;_SKIP_RECORD_" ||
           (fileData?.primaryAttribute &&
-            fileData?.primaryAttribute.key !== key &&
-            fileData?.primaryAttribute.type !== type)
+            fileData?.primaryAttribute.name !== key &&
+            fileData?.primaryAttribute.attribute_type?.name !== type)
             ? false
             : fileData?.primaryAttribute &&
-              fileData?.primaryAttribute.key === key &&
-              fileData?.primaryAttribute.type === type
+              fileData?.primaryAttribute.name === key &&
+              fileData?.primaryAttribute.attribute_type?.name === type
             ? true
-            : mappingSettings[head].isPrimary,
+            : mappingSettings[head].is_primary,
       },
     });
   };
@@ -151,13 +199,13 @@ const MappingTab = ({
 
     Object.keys(mappingSettings).forEach((el) => {
       if (
-        newSettings[el].asAttribute?.key === key &&
-        newSettings[el].asAttribute?.type === type
+        newSettings[el].asAttribute?.attribute?.name === key &&
+        newSettings[el].asAttribute?.attribute?.attribute_type?.name === type
       ) {
-        newSettings[el].isPrimary = true;
+        newSettings[el].is_primary = true;
         newSettings[el].doNotOverwrite = true;
       } else {
-        newSettings[el].isPrimary = false;
+        newSettings[el].is_primary = false;
       }
     });
 
@@ -167,7 +215,7 @@ const MappingTab = ({
   };
 
   const handleOverwriteUpdate = (head: string) => (checked: boolean) => {
-    if (mappingSettings[head].isPrimary) return;
+    if (mappingSettings[head].is_primary) return;
 
     const newSettings = { ...mappingSettings };
     newSettings[head].doNotOverwrite = checked;
@@ -176,13 +224,20 @@ const MappingTab = ({
 
   const isProperAttribute = (head: string) =>
     !!mappingSettings[head]?.asAttribute &&
-    mappingSettings[head].asAttribute?.key !== "_SKIP_RECORD_";
+    !mappingSettings[head].asAttribute?.skip;
 
-  const primaryKey = Object.values(mappingSettings).find((el) => el.isPrimary);
+  const primaryKey = Object.values(mappingSettings).find((el) => el.is_primary);
 
   useEffect(() => {
     loadPossibleKeys();
+    loadKeyTypes();
   }, []);
+
+  useEffect(() => {
+    if (!newAttributeCreated || !possibleKeysLoaded) return;
+
+    handleNewAttributeCreated();
+  }, [newAttributeCreated, possibleKeysLoaded]);
 
   return (
     <div className="py-10 px-5">
@@ -192,11 +247,11 @@ const MappingTab = ({
         needed. For any unmatched attributes, manually select the appropriate
         attribute from the dropdown menu or opt to create a new attribute.
       </div>
-      <div className="mt-5 flow-root max-h-[calc(100vh-480px)] overflow-y-auto">
+      <div className="mt-5 flow-root max-h-[calc(100vh)] overflow-y-auto">
         <RadioGroup
           value={
-            primaryKey?.asAttribute?.key
-              ? `${primaryKey.asAttribute.key};-;${primaryKey.asAttribute.type}`
+            primaryKey?.asAttribute?.attribute
+              ? `${primaryKey.asAttribute.attribute.name};-;${primaryKey.asAttribute.attribute.attribute_type?.name}`
               : ""
           }
           onChange={handlePrimaryKeyChange}
@@ -284,11 +339,13 @@ const MappingTab = ({
                       >
                         <Select
                           value={
-                            mappingSettings[head]?.asAttribute
-                              ? `${mappingSettings[head].asAttribute!.key};-;${
-                                  mappingSettings[head].asAttribute!.type
+                            mappingSettings[head]?.asAttribute?.attribute
+                              ? `${
+                                  mappingSettings[head].asAttribute!.attribute
+                                    .name
                                 };-;${
-                                  mappingSettings[head].asAttribute?.dateFormat
+                                  mappingSettings[head].asAttribute!.attribute
+                                    .attribute_type?.name
                                 }`
                               : ""
                           }
@@ -372,11 +429,11 @@ const MappingTab = ({
                             },
                             ...possibleKeys
                               .filter((el) =>
-                                el.key.includes(search[head]?.search || "")
+                                el.name.includes(search[head]?.search || "")
                               )
                               .map((el) => ({
-                                key: `${el.key};-;${el.type};-;${el.dateFormat}`,
-                                title: el.key,
+                                key: `${el.name};-;${el.attribute_type?.name}`,
+                                title: el.name,
                               })),
                           ]}
                           placeholder={"Select an attribute"}
@@ -395,11 +452,13 @@ const MappingTab = ({
                         >
                           <RadioOption
                             value={
-                              mappingSettings[head]?.asAttribute
+                              mappingSettings[head]?.asAttribute?.attribute
                                 ? `${
-                                    mappingSettings[head]!.asAttribute!.key
+                                    mappingSettings[head]!.asAttribute!
+                                      .attribute.name
                                   };-;${
-                                    mappingSettings[head]!.asAttribute!.type
+                                    mappingSettings[head]!.asAttribute!
+                                      .attribute.attribute_type?.name
                                   }`
                                 : "-1"
                             }
@@ -425,7 +484,7 @@ const MappingTab = ({
                           propControl
                           initValue={mappingSettings[head].doNotOverwrite}
                           className={`${
-                            (mappingSettings[head].isPrimary ||
+                            (mappingSettings[head].is_primary ||
                               !isProperAttribute(head)) &&
                             "opacity-70 pointer-events-none"
                           }`}
@@ -448,21 +507,17 @@ const MappingTab = ({
           keyType: AttributeType,
           dateFormat?: string
         ) => {
-          loadPossibleKeys();
+          setNewAttributeCreated(false);
+          setPossibleKeysLoaded(false);
+          setLastAttributeCreated({});
 
-          if (!activeHead) return;
-          updateSettings({
-            [activeHead]: {
-              ...mappingSettings[activeHead],
-              asAttribute: {
-                key: keyName,
-                type: keyType,
-                dateFormat,
-                skip: false,
-              },
-            },
+          loadPossibleKeys();
+          setNewAttributeCreated(true);
+          setLastAttributeCreated({
+            keyName,
+            keyType,
+            dateFormat,
           });
-          setActiveHead(undefined);
         }}
       />
     </div>

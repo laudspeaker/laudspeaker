@@ -3,7 +3,6 @@ import { createMock } from '@golevelup/ts-jest';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { DataSource } from 'typeorm';
 import { getQueueToken } from '@nestjs/bullmq';
-import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { Queue } from 'bullmq';
 import { JourneysService } from './journeys.service';
 import { Journey } from './entities/journey.entity';
@@ -54,10 +53,6 @@ describe('JourneysService', () => {
             remove: jest.fn(),
             delete: jest.fn(),
           },
-        },
-        {
-          provide: getConnectionToken(),
-          useValue: { add: jest.fn() },
         },
       ],
     }).compile();

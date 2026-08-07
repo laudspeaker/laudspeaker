@@ -10,7 +10,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { Account } from './entities/accounts.entity';
 import * as bcrypt from 'bcryptjs';
@@ -19,8 +19,6 @@ import { AuthService } from '../auth/auth.service';
 import { MailService } from '@sendgrid/mail';
 import { Client } from '@sendgrid/client';
 import { RemoveAccountDto } from './dto/remove-account.dto';
-import { InjectConnection } from '@nestjs/mongoose';
-import mongoose, { ClientSession } from 'mongoose';
 import { WebhooksService } from '../webhooks/webhooks.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { JourneysService } from '../journeys/journeys.service';
@@ -71,7 +69,6 @@ export class AccountsService extends BaseJwtHelper {
     private templatesService: TemplatesService,
     @Inject(forwardRef(() => StepsService))
     private stepsService: StepsService,
-    @InjectConnection() private readonly connection: mongoose.Connection,
     @Inject(forwardRef(() => WebhooksService))
     private webhookService: WebhooksService
   ) {
@@ -167,7 +164,16 @@ export class AccountsService extends BaseJwtHelper {
         where: {
           id: owner.id,
         },
-        relations: ['teams.organization.workspaces'],
+        relations: [
+          'teams.organization.workspaces',
+          'teams.organization.plan',
+          'teams.organization.workspaces.mailgunConnections.sendingOptions',
+          'teams.organization.workspaces.sendgridConnections.sendingOptions',
+          'teams.organization.workspaces.resendConnections.sendingOptions',
+          'teams.organization.workspaces.twilioConnections',
+          'teams.organization.workspaces.pushConnections',
+          'teams.organization.owner',
+        ],
       });
 
       if (!account) {
@@ -349,9 +355,6 @@ export class AccountsService extends BaseJwtHelper {
         oldUser.expectedOnboarding.length === oldUser.currentOnboarding.length;
     }
 
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
-
     let verified = oldUser.verified;
     const needEmailUpdate =
       updateUserDto.email && oldUser.email !== updateUserDto.email;
@@ -481,18 +484,15 @@ export class AccountsService extends BaseJwtHelper {
           session
         );
 
-      await transactionSession.commitTransaction();
       await queryRunner.commitTransaction();
 
       return updatedUser;
     } catch (e) {
-      await transactionSession.abortTransaction();
       err = e;
       this.error(e, this.update.name, session);
       await queryRunner.rollbackTransaction();
     } finally {
       await queryRunner.release();
-      await transactionSession.endSession();
     }
     if (err) throw err;
   }
@@ -534,75 +534,47 @@ export class AccountsService extends BaseJwtHelper {
   }
 
   async remove(
-    user: Express.User,
+    user: Account,
     removeAccountDto: RemoveAccountDto,
     session: string
   ): Promise<void> {
-    let transactionSession: ClientSession;
-    try {
+
       const account = await this.findOne(user, session);
-      /*
-      this.debug(
-        `Found ${JSON.stringify({ id: account.id })}`,
-        this.remove.name,
-        session,
-        (<Account>user).id
-      );
-    */
-      const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
-
       if (!bcrypt.compareSync(removeAccountDto.password, account.password))
-        throw new BadRequestException('Password is incorrect');
+      throw new BadRequestException('Password is incorrect!');
+    this.debug(`Account deletion request,please contact support@laudspeaker.com`, this.remove.name, session, user.email)
 
-      transactionSession = await this.connection.startSession();
-      transactionSession.startTransaction();
+    //     const queryRunner = this.dataSource.createQueryRunner();
+    //     const client = await queryRunner.connect();
+    //     await queryRunner.startTransaction();
 
-      await this.customersService.CustomerModel.deleteMany(
-        {
-          workspaceId: workspace.id,
-        },
-        { session: transactionSession }
-      )
-        .session(transactionSession)
-        .exec();
-      this.debug(
-        `Deleted customers for ${JSON.stringify({ id: account.id })}`,
-        this.remove.name,
-        session,
-        (<Account>user).id
-      );
+    //     try {
+    //       const workspace = account?.teams?.[0]?.organization?.workspaces?.[0];
 
-      await this.customersService.CustomerKeysModel.deleteMany(
-        {
-          workspaceId: workspace.id,
-        },
-        { session: transactionSession }
-      )
-        .session(transactionSession)
-        .exec();
-      this.debug(
-        `Deleted customer keys for ${JSON.stringify({ id: account.id })}`,
-        this.remove.name,
-        session,
-        (<Account>user).id
-      );
 
-      await this.accountsRepository.delete(account.id);
-      this.debug(
-        `Deleted ${JSON.stringify({ id: account.id })}`,
-        this.remove.name,
-        session,
-        (<Account>user).id
-      );
+    //       this.debug(
+    //         `Deleted customers for ${JSON.stringify({ id: account.id })}`,
+    //         this.remove.name,
+    //         session,
+    //         (<Account>user).id
+    //       );
+    // await queryRunner.manager.delete()
+    //       await this.accountsRepository.delete(account.id);
+    //       this.debug(
+    //         `Deleted ${JSON.stringify({ id: account.id })}`,
+    //         this.remove.name,
+    //         session,
+    //         (<Account>user).id
+    //       );
 
-      await transactionSession.commitTransaction();
-    } catch (e) {
-      await transactionSession.abortTransaction();
-      this.error(e, this.remove.name, session, (<Account>user).id);
-      throw e;
-    } finally {
-      await transactionSession.endSession();
-    }
+    //       await transactionSession.commitTransaction();
+    //     } catch (e) {
+    //       await transactionSession.abortTransaction();
+    //       this.error(e, this.remove.name, session, (<Account>user).id);
+    //       throw e;
+    //     } finally {
+    //       await transactionSession.endSession();
+    //     }
   }
 
   async createOnboadingAccount() {
@@ -669,6 +641,8 @@ export class AccountsService extends BaseJwtHelper {
         throw new BadRequestException(
           'Error during onboarding account organization creation'
         );
+      } finally {
+        await queryRunner.release();
       }
     }
 
@@ -701,7 +675,7 @@ export class AccountsService extends BaseJwtHelper {
           smsText: null,
           pushObject: null,
           webhookData: null,
-          modalState: null,
+          inAppState: null,
           customEvents: [
             'show-start-journey-page',
             'show-customers-page',
@@ -780,15 +754,15 @@ export class AccountsService extends BaseJwtHelper {
                     )?.id ||
                     (node.data.type
                       ? (
-                          await this.stepsService.insert(
-                            account,
-                            {
-                              journeyID: journey.id,
-                              type: node.data.type as StepType,
-                            },
-                            session
-                          )
-                        ).id
+                        await this.stepsService.insert(
+                          account,
+                          {
+                            journeyID: journey.id,
+                            type: node.data.type as StepType,
+                          },
+                          session
+                        )
+                      ).id
                       : undefined),
                 },
               })
@@ -914,8 +888,8 @@ export class AccountsService extends BaseJwtHelper {
         after_completion: {
           type: 'redirect',
           redirect: {
-            //url: process.env.FRONTEND_URL + '/payment-gate',
-            url:  'https://app.laudspeaker.com/home',
+            url: `${process.env.FRONTEND_URL}/home`,
+            //url: 'https://app.laudspeaker.com/home',
           },
         },
         //success_url: 'http://your_success_url_here',
@@ -935,33 +909,43 @@ export class AccountsService extends BaseJwtHelper {
   }
 
   async checkActivePlanForUser(
-    userId: string,
+    account: Account,
     session: string
   ): Promise<boolean> {
     try {
-      // Find the related organization using the userId as the owner
-      const organization = await this.organizationRepository.findOne({
-        where: { owner: { id: userId } },
-        relations: ['plan'],
-      });
-
+      const organization = account.teams?.[0]?.organization;
       if (!organization) {
         this.warn(
           'User does not own any organization',
           this.checkActivePlanForUser.name,
           session,
-          userId
+          account.email
+        );
+        return false;
+      }
+      const organizationWithPlan = await this.organizationRepository.find({
+        where: { id: organization.id },
+        relations: ['plan']
+      })
+
+      if (!organizationWithPlan.length) {
+        this.warn(
+          'User is not part of any organization',
+          this.checkActivePlanForUser.name,
+          session,
+          account.email
         );
         return false;
       }
 
-      // Check if the organization's plan is active
-      const isActive =
-        organization.plan && organization.plan.activePlan == true;
-      return isActive;
+      // Check if at least one organization the user belongs to has an active plan
+      const hasActivePlan = organizationWithPlan[0].plan.activePlan === true
+
+      return hasActivePlan;
     } catch (error) {
-      this.error(error, this.checkActivePlanForUser.name, session, userId);
+      this.error(error, this.checkActivePlanForUser.name, session, account.email);
       throw error;
     }
   }
+
 }

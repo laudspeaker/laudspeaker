@@ -1,7 +1,7 @@
-import { Account } from '@/api/accounts/entities/accounts.entity';
-import { Customer } from '@/api/customers/schemas/customer.schema';
-import { Journey } from '@/api/journeys/entities/journey.entity';
-import { Workspaces } from '@/api/workspaces/entities/workspaces.entity';
+import { Account } from '../../accounts/entities/accounts.entity';
+import { Customer } from '../../customers/entities/customer.entity';
+import { Journey } from '../../journeys/entities/journey.entity';
+import { Workspaces } from '../../workspaces/entities/workspaces.entity';
 import {
   BaseEntity,
   Column,

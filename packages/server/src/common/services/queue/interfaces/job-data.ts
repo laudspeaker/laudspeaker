@@ -1,0 +1,1 @@
+export interface JobData extends Record <string, any> {}

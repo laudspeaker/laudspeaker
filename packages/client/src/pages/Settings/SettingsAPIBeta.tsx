@@ -48,6 +48,17 @@ export default function SettingsAPIBeta() {
 
   return (
     <>
+      <div className="text-[#4B5563]">
+        You must set up your user schema before you can send and receive events{" "}
+        <a
+          href="https://laudspeaker.com/docs/getting-started/setting-up-schema-and-channels"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#111827] font-bold underline"
+        >
+          Documentation
+        </a>
+      </div>
       <div className="mt-10 divide-y divide-gray-200">
         <div className="space-y-1">
           <h3 className="text-lg font-medium leading-6 text-gray-900">Keys</h3>

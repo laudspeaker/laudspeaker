@@ -6,11 +6,13 @@ import { Account } from '../../accounts/entities/accounts.entity';
 import { Workspaces } from '../../workspaces/entities/workspaces.entity';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { CacheService } from '../../../common/services/cache.service';
+import { CacheConstants } from '../../../common/services/cache.constants';
 
 @Injectable()
 export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
   constructor(
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    @Inject(CacheService) private cacheService: CacheService,
     private authService: AuthService
   ) {
     super(
@@ -19,11 +21,12 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
       async (apikey, done, req) => {
         let checkKey: { account: Account; workspace: Workspaces };
         try {
-          checkKey = await this.cacheManager.get(apikey);
-          if (!checkKey) {
-            checkKey = await this.authService.validateAPIKey(apikey);
-            await this.cacheManager.set(apikey, checkKey, 60000);
-          }
+          checkKey = await this.cacheService.getIgnoreError(
+            CacheConstants.API_KEY,
+            apikey,
+            async () => {
+              return await this.authService.validateAPIKey(apikey);
+            });
         } catch (e) {
           return done(e, false);
         }

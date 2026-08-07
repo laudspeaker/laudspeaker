@@ -6,9 +6,7 @@ import {
   ElementKey,
   EventBranch,
   LogicRelation,
-  MessageBranch,
   StatementType,
-  WUAttributeBranch,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
 import React, { FC, useEffect, useState } from "react";
 import { useAppSelector } from "store/hooks";
@@ -18,7 +16,7 @@ import ConditionEditor from "./ConditionEditor";
 import ConditionViewer from "./ConditionViewer";
 
 interface EventBranchEditorProps {
-  branch: EventBranch | MessageBranch | WUAttributeBranch;
+  branch: EventBranch;
   onAddCondition: (providerType: ProviderType) => void;
   onConditionChange: (
     j: number,
@@ -113,7 +111,7 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
               className="border border-[#E5E7EB] max-w-[80px] px-[15px] py-[4px] rounded font-roboto font-normal text-[14px] leading-[22px]"
             >
               <option value={LogicRelation.OR}>Or</option>
-              <option value={LogicRelation.AND}>And</option>
+              {/* <option value={LogicRelation.AND}>And</option> */}
             </select>
           )}
         </React.Fragment>
@@ -148,10 +146,10 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
                   title: "User Data",
                   groupLabel: true,
                 },
-                {
-                  key: ProviderType.WU_ATTRIBUTE,
-                  title: "Attribute",
-                },
+                // {
+                //   key: ProviderType.WU_ATTRIBUTE,
+                //   title: "Attribute",
+                // },
                 {
                   key: BranchType.EVENT,
                   title: "Event",
@@ -173,10 +171,10 @@ const EventBranchEditor: FC<EventBranchEditorProps> = ({
                   key: `${ProviderType.SMS_MESSAGE}`,
                   title: "SMS",
                 },
-                {
-                  key: `${ProviderType.IN_APP_MESSAGE}`,
-                  title: "In-app message",
-                },
+                // {
+                //   key: `${ProviderType.IN_APP_MESSAGE}`,
+                //   title: "In-app message",
+                // },
               ]}
             />
           </>

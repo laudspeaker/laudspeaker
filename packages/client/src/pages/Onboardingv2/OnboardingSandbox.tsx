@@ -3,7 +3,7 @@ import FlowBuilderDrawer, {
 } from "pages/FlowBuilderv2/Drawer/FlowBuilderDrawer";
 import FlowEditor, { EdgeType, NodeType } from "pages/FlowBuilderv2/FlowEditor";
 import {
-  CustomModalIcon,
+  InAppMessageIcon,
   EmailIcon,
   ExitIcon,
   JumpToIcon,
@@ -19,6 +19,7 @@ import {
 import {
   Branch,
   BranchType,
+  EventType,
   LogicRelation,
   StatementType,
   TimeType,
@@ -487,6 +488,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
       type: BranchType.EVENT,
       conditions: [
         {
+          type: EventType.ANALYTICS,
           name: "Event_name",
           providerType: ProviderType.CUSTOM,
           statements: [
@@ -580,6 +582,7 @@ const OnboardingSandbox: FC<OnboardingSandboxProps> = ({
               type: MessageType.EMAIL,
               selected: { id: -1, name: "Remind email" },
             },
+            oneClickUnsubscribeEnabled: false,
           },
           position: { x: 0, y: 0 },
         },

@@ -22,7 +22,8 @@
     "typeRoots": ["./node_modules/@types"],
     "esModuleInterop": true,
     "resolveJsonModule": true,
-
+    // "noImplicitReturns": true,
+    // "noUnusedLocals": true,
     "plugins": [
       {
         "transform": "tst-reflect-transformer"

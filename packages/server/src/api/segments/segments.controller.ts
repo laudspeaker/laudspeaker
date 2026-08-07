@@ -32,11 +32,13 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { RavenInterceptor } from 'nest-raven';
 import { CountSegmentUsersSizeDTO } from './dto/size-count.dto';
 import { DeleteBatchedCustomersDto } from './dto/delete-batched-customers.dto';
+import { SegmentCustomersService } from './segment-customers.service';
 
 @Controller('segments')
 export class SegmentsController {
   constructor(
-    private segmentsService: SegmentsService,
+    @Inject(SegmentsService) private segmentsService: SegmentsService,
+    @Inject(SegmentCustomersService) private segmentCustomersService: SegmentCustomersService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger
   ) {}
@@ -129,21 +131,21 @@ export class SegmentsController {
     return this.segmentsService.findOne(<Account>user, id, session);
   }
 
-  @Get('/person/:id')
+  @Get('/person/:uuid')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async findAllSegmentsForPerson(
     @Req() { user }: Request,
-    @Param('id') id: string,
+    @Param('uuid') uuid: string,
     @Query('take') take?: string,
     @Query('skip') skip?: string,
     @Query('search') search?: string
   ) {
     const session = randomUUID();
 
-    return this.segmentsService.findAllSegmentsForCustomer(
+    return this.segmentCustomersService.getSegmentsForCustomer(
       <Account>user,
-      id,
+      uuid,
       take && +take,
       skip && +skip,
       search,
@@ -168,7 +170,7 @@ export class SegmentsController {
 
   @Post('/size')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  // @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   public async size(
     @Req() { user }: Request,
     @Body() countSegmentUsersSizeDTO: CountSegmentUsersSizeDTO
@@ -183,7 +185,7 @@ export class SegmentsController {
       session
     );
 
-    return await this.segmentsService.size(
+    return this.segmentsService.size(
       <Account>user,
       countSegmentUsersSizeDTO,
       session

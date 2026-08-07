@@ -11,13 +11,8 @@ import Select from "components/Elements/Selectv2/Select";
 
 export enum SnippetMode {
   JS_FETCH,
-  JS_JQUERY,
-  JS_XHR,
   NODEJS_AXIOS,
-  NODEJS_NATIVE,
-  NODEJS_REQUEST,
   PYTHON_HTTP_CLIENT,
-  PYTHON_REQUESTS,
   CURL,
 }
 
@@ -25,13 +20,8 @@ export type EditorType = "javascript" | "python" | "plain_text";
 
 const snippetModeToEditorModeMap: Record<SnippetMode, EditorType> = {
   [SnippetMode.JS_FETCH]: "javascript",
-  [SnippetMode.JS_JQUERY]: "javascript",
-  [SnippetMode.JS_XHR]: "javascript",
   [SnippetMode.NODEJS_AXIOS]: "javascript",
-  [SnippetMode.NODEJS_NATIVE]: "javascript",
-  [SnippetMode.NODEJS_REQUEST]: "javascript",
   [SnippetMode.PYTHON_HTTP_CLIENT]: "python",
-  [SnippetMode.PYTHON_REQUESTS]: "python",
   [SnippetMode.CURL]: "plain_text",
 };
 
@@ -67,32 +57,12 @@ const SnippetPicker: FC<SnippetPickerProps> = ({
             title: "Javascript - Fetch",
           },
           {
-            key: SnippetMode.JS_JQUERY,
-            title: "Javascript - JQuery",
-          },
-          {
-            key: SnippetMode.JS_XHR,
-            title: "Javascript - XHR",
-          },
-          {
             key: SnippetMode.NODEJS_AXIOS,
             title: "Node.js - Axios",
           },
           {
-            key: SnippetMode.NODEJS_NATIVE,
-            title: "Node.js - Native",
-          },
-          {
-            key: SnippetMode.NODEJS_REQUEST,
-            title: "Node.js - Request",
-          },
-          {
             key: SnippetMode.PYTHON_HTTP_CLIENT,
             title: "Python - http.client",
-          },
-          {
-            key: SnippetMode.PYTHON_REQUESTS,
-            title: "Python - requests",
           },
           { key: SnippetMode.CURL, title: "cURL" },
         ]}

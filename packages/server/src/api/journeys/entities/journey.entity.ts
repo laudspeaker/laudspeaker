@@ -98,4 +98,10 @@ export class Journey {
 
   @OneToMany(() => JourneyLocation, (location) => location.journey)
   journeyLocations: Promise<JourneyLocation[]>;
+
+  @Column('int', { nullable: false, default: 0 })
+  completedSystemSegments: number;
+
+  @Column('int', { nullable: false, default: 0 })
+  totalSystemSegments: number;
 }

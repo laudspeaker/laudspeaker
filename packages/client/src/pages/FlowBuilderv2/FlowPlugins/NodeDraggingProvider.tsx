@@ -28,17 +28,11 @@ export const dragActionsNotToDoBetweenNodes: (
   | NodeAction
   | OnboardingAction
   | undefined
-)[] = [
-  DrawerAction.EXIT,
-  DrawerAction.JUMP_TO,
-  DrawerAction.WAIT_UNTIL,
-  DrawerAction.USER_ATTRIBUTE,
-  DrawerAction.EXPERIMENT,
-];
+)[] = [DrawerAction.EXIT, DrawerAction.JUMP_TO, DrawerAction.USER_ATTRIBUTE];
 
 const NodeDraggingProvider: FC<NodeDraggingProviderProps> = ({ flowRef }) => {
   const drawerActionToNodeTypeMap: Record<DrawerAction, NodeType> = {
-    [DrawerAction.CUSTOM_MODAL]: NodeType.MESSAGE,
+    [DrawerAction.IN_APP_MESSAGE]: NodeType.MESSAGE,
     [DrawerAction.TRACKER]: NodeType.TRACKER,
     [DrawerAction.EMAIL]: NodeType.MESSAGE,
     [DrawerAction.EXIT]: NodeType.EXIT,

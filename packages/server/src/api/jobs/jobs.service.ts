@@ -5,8 +5,6 @@ import { Account } from '../accounts/entities/accounts.entity';
 import { CreateJobDto } from './dto/create-job.dto';
 import { Job } from './entities/job.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { Workflow } from '../workflows/entities/workflow.entity';
-import { Audience } from '../audiences/entities/audience.entity';
 
 const MAX_DATE = new Date(8640000000000000);
 const MIN_DATE = new Date(0);

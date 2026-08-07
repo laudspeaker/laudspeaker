@@ -84,7 +84,7 @@ const DataTransfer = () => {
   }, []);
 
   useEffect(() => {
-    setPrimatyAttribute(attributes.find((attribute) => attribute.isPrimary));
+    setPrimatyAttribute(attributes.find((attribute) => attribute.is_primary));
   }, [attributes]);
 
   useEffect(() => {

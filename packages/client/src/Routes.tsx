@@ -60,6 +60,9 @@ import SegmentViewer from "pages/SegmentViewer";
 import DataTransferTable from "pages/DataTransferTable";
 import DataTransfer from "pages/DataTransfer";
 import SubscriptionPayment from "pages/SubscriptionPayment/SubscriptionPayment";
+import NotificationPreferences from "pages/NotificationPreferences/NotificationPreferences";
+import InAppBackgroundProvider from "pages/InAppBuilder/InAppBackgroundProvider";
+import InAppBuilder from "pages/InAppBuilder";
 
 interface IProtected {
   children: ReactElement;
@@ -357,6 +360,10 @@ const RouteComponent: React.FC = () => {
           }
         />
         <Route
+          path="/notification-preferences"
+          element={<NotificationPreferences />}
+        />
+        <Route
           path="/payment-gate"
           element={
             <Protected>
@@ -492,6 +499,7 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
+        {
         <Route
           path="/person/:id"
           element={
@@ -504,6 +512,7 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
+        }
         <Route
           path="/segment"
           element={
@@ -635,8 +644,8 @@ const RouteComponent: React.FC = () => {
               <VerificationProtected>
                 <DrawerLayout
                   crumbs={[
-                    { text: "Message Template", link: "/templates" },
-                    { text: "Create a SMS" },
+                    { text: "Message Templates", link: "/templates" },
+                    { text: "Create an SMS" },
                   ]}
                 >
                   <SmsBuilder />
@@ -652,8 +661,8 @@ const RouteComponent: React.FC = () => {
               <VerificationProtected>
                 <DrawerLayout
                   crumbs={[
-                    { text: "Message Template", link: "/templates" },
-                    { text: "Create a Push" },
+                    { text: "Message Templates", link: "/templates" },
+                    { text: "Create a Push Notification" },
                   ]}
                 >
                   <PushBuilder />
@@ -662,20 +671,6 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
-        {/* Removed for 1 release
-        <Route
-          path="/templates/firebase/:name"
-          element={
-            <Protected>
-              <VerificationProtected>
-                <DrawerLayout>
-                  <FirebaseBuilder />
-                </DrawerLayout>
-              </VerificationProtected>
-            </Protected>
-          }
-        />
-        */}
         <Route
           path="/templates/webhook/:id"
           element={
@@ -684,7 +679,7 @@ const RouteComponent: React.FC = () => {
                 <DrawerLayout
                   expandable
                   crumbs={[
-                    { text: "Message template", link: "/templates" },
+                    { text: "Message Templates", link: "/templates" },
                     { text: "Create a webhook" },
                   ]}
                 >
@@ -694,19 +689,26 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
-        {/*
         <Route
-          path="/templates/modal/:name"
+          path="/templates/in-app/:id"
           element={
             <Protected>
               <VerificationProtected>
-                <ModalBackgroundProvider>
-                  <ModalBuilder />
-                </ModalBackgroundProvider>
+                {/* <DrawerLayout
+                  expandable
+                  crumbs={[
+                    { text: "Message Templates", link: "/templates" },
+                    { text: "Create an In-App Message" },
+                  ]}
+                > */}
+                <InAppBackgroundProvider>
+                  <InAppBuilder />
+                </InAppBackgroundProvider>
+                {/* </DrawerLayout> */}
               </VerificationProtected>
             </Protected>
           }
-        /> */}
+        />
         <Route
           path="/templates"
           element={
@@ -755,6 +757,7 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
+        {
         <Route
           path="/data-transfer/:id"
           element={
@@ -767,6 +770,7 @@ const RouteComponent: React.FC = () => {
             </Protected>
           }
         />
+        }
 
         {/* Removed for version 1 release
         <Route
@@ -857,6 +861,18 @@ const RouteComponent: React.FC = () => {
         />
         <Route
           path="/settings/sms"
+          element={
+            <Protected>
+              <VerificationProtected>
+                <DrawerLayout>
+                  <TwilioSettings />
+                </DrawerLayout>
+              </VerificationProtected>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings/sms/:id"
           element={
             <Protected>
               <VerificationProtected>

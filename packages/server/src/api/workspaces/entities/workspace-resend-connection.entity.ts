@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Workspaces } from './workspaces.entity';
 import { ResendSendingOption } from './resend-sending-option.entity';
+import { ResendReplyToOption } from './resend-reply-to-option.entity';
 
 @Entity()
 export class WorkspaceResendConnection {
@@ -36,6 +37,9 @@ export class WorkspaceResendConnection {
 
   @OneToMany(() => ResendSendingOption, (option) => option.resendConnection)
   sendingOptions: ResendSendingOption[];
+
+  @OneToMany(() => ResendReplyToOption, (option) => option.resendConnection)
+  replyToOptions: ResendReplyToOption[];
 
   @Column()
   workspaceId: string;

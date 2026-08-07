@@ -14,6 +14,7 @@ import {
   Post,
   UploadedFile,
   Param,
+  forwardRef,
 } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
 import { UpdateAccountDto } from './dto/update-account.dto';
@@ -28,12 +29,7 @@ import { imageFileFilter } from '../auth/middleware/file.validation';
 import { S3Service } from '../s3/s3.service';
 import { randomUUID } from 'crypto';
 import { RavenInterceptor } from 'nest-raven';
-import { InjectModel } from '@nestjs/mongoose';
-import {
-  CustomerKeys,
-  CustomerKeysDocument,
-} from '../customers/schemas/customer-keys.schema';
-import { Model } from 'mongoose';
+import { CustomerKeysService } from '../customers/customer-keys.service';
 
 @Controller('accounts')
 export class AccountsController {
@@ -42,9 +38,9 @@ export class AccountsController {
     private readonly logger: Logger,
     private readonly accountsService: AccountsService,
     private readonly s3Service: S3Service,
-    @InjectModel(CustomerKeys.name)
-    public CustomerKeysModel: Model<CustomerKeysDocument>
-  ) {}
+    @Inject(forwardRef(() => CustomerKeysService))
+    private readonly customerKeysService: CustomerKeysService,
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -143,13 +139,10 @@ export class AccountsController {
       let pk;
       if (workspace?.id) {
         pk = (
-          await this.CustomerKeysModel.findOne({
-            isPrimary: true,
-            workspaceId: workspace.id,
-          })
-        )?.toObject();
+          await this.customerKeysService.getPrimaryKey(workspace.id, session)
+        );
         if (pk) {
-          pk._id = pk._id.toString();
+          pk._id = pk.id.toString();
           delete pk?.workspaceId;
           delete pk?.__v;
         }
@@ -170,7 +163,7 @@ export class AccountsController {
         //return { isActive: true };
       }
       const isActive = await this.accountsService.checkActivePlanForUser(
-        (<Account>user).id,
+        <Account>user,
         session
       );
 
@@ -320,7 +313,7 @@ export class AccountsController {
       (<Account>user).id
     );
     try {
-      return this.accountsService.remove(user, removeAccountDto, session);
+      return this.accountsService.remove(<Account>user, removeAccountDto, session);
     } catch (e) {
       this.error(e, this.remove.name, session, (<Account>user).id);
       throw e;
@@ -388,7 +381,7 @@ export class AccountsController {
         return { isActive: true };
       }
       const isActive = await this.accountsService.checkActivePlanForUser(
-        (<Account>user).id,
+        <Account>user,
         session
       );
       return { isActive };

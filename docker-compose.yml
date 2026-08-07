@@ -2,7 +2,7 @@ services:
   redis:
     hostname: redis
     container_name: redis
-    image: redis:alpine
+    image: redis:7-alpine
     command: redis-server
     ports:
       - "6379:6379"
@@ -17,7 +17,9 @@ services:
       - laudspeaker_default
 
   postgres:
-    image: postgres:14.4-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
     hostname: postgres
     container_name: postgres
     environment:
@@ -30,34 +32,40 @@ services:
     networks:
       - laudspeaker_default
 
-  mongo:
-    image: "mongo:latest"
-    hostname: mongo
-    container_name: mongo
+  pgbouncer:
+    image: bitnami/pgbouncer:1.23.1
+    container_name: pgbouncer
+    hostname: pgbouncer
+    environment:
+      - PGBOUNCER_PORT=6432
+      - POSTGRESQL_HOST=postgres
+      - POSTGRESQL_PORT=5432
+      - POSTGRESQL_USERNAME=${POSTGRES_USER:-postgres}
+      - POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - PGBOUNCER_DATABASE=laudspeaker
+      - PGBOUNCER_AUTH_USER=${POSTGRES_USER:-postgres}
+      - PGBOUNCER_AUTH_TYPE=scram-sha-256
+      - PGBOUNCER_POOL_MODE=transaction
+      - PGBOUNCER_MAX_DB_CONNECTIONS=100
+      - PGBOUNCER_MAX_CLIENT_CONN=1000
+      - PGBOUNCER_MIN_POOL_SIZE=5
+      - PGBOUNCER_DEFAULT_POOL_SIZE=100
+      - PGBOUNCER_RESERVE_POOL_SIZE=0
+      - PGBOUNCER_IGNORE_STARTUP_PARAMETERS=lock_timeout,statement_timeout,idle_in_transaction_session_timeout
     ports:
-      - "27017:27017"
-    command: "--bind_ip_all --replSet rs0"
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "mongosh",
-          "admin",
-          "--port",
-          "27017",
-          "--eval",
-          "db.adminCommand('ping').ok",
-        ]
-      interval: 5s
-      timeout: 2s
-      retries: 20
+      - "6432:6432"
+    depends_on:
+      - postgres
     networks:
       - laudspeaker_default
 
+  # Ensure the following settings are set
+  # date_time_input_format: 'best_effort'
+  # output_format_json_array_of_rows: 1
   clickhouse:
     hostname: clickhouse
     container_name: clickhouse
-    image: clickhouse/clickhouse-server:latest
+    image: clickhouse/clickhouse-server:24.9
     restart: on-failure
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
@@ -69,72 +77,9 @@ services:
       - "9000:9000"
     networks:
       - laudspeaker_default
-
-  #### START kafka related containers
-  zoo1:
-    image: bitnami/zookeeper:latest
-    hostname: zoo1
-    container_name: zoo1
-    ports:
-      - "2181:2181"
-    environment:
-      ZOO_SERVERS: zoo1:2888:3888
-      ALLOW_ANONYMOUS_LOGIN: yes
-    networks:
-      - laudspeaker_default
-
-  kafka1:
-    image: bitnami/kafka:3.6.0
-    hostname: kafka1
-    container_name: kafka1
-    ports:
-      - "29092:29092"
-      - "9092:9092"
-    healthcheck:
-      test: kafka-cluster.sh cluster-id --bootstrap-server kafka1:19092 || exit 1
-      interval: 1s
-      timeout: 60s
-      retries: 60
-    environment:
-      KAFKA_CFG_LISTENERS: INTERNAL://kafka1:19092,EXTERNAL://kafka1:29092,DEV://kafka1:9092
-      KAFKA_CFG_ADVERTISED_LISTENERS: INTERNAL://kafka1:19092,EXTERNAL://host.docker.internal:29092,DEV://localhost:9092
-      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DEV:PLAINTEXT
-      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: INTERNAL
-      KAFKA_ZOOKEEPER_PROTOCOL: PLAINTEXT
-      KAFKA_CFG_ZOOKEEPER_CONNECT: "zoo1:2181"
-      KAFKA_TLS_CLIENT_AUTH: none
-      ALLOW_PLAINTEXT_LISTENER: "yes"
-    depends_on:
-      - zoo1
-    networks:
-      - laudspeaker_default
-
-  #### END kafka related containers
-
-  #### START kafka connect related containers
-  kafka-connect1:
-    image: bitnami/kafka:latest
-    hostname: kafka-connect1
-    container_name: kafka-connect1
-    healthcheck:
-      test: ["CMD", "curl", "localhost:8083"]
-      interval: 5s
-      timeout: 2s
-      retries: 20
-    ports:
-      - "8083:8083"
-    volumes:
-      - ./local-env/kafkaconnect:/opt/bitnami/kafka-connect
-    depends_on:
-      kafka1:
-        condition: service_healthy
-    networks:
-      - laudspeaker_default
-    command:
-      - bash
-      - -c
-      - /opt/bitnami/kafka/bin/connect-distributed.sh /opt/bitnami/kafka-connect/connect.properties
-  #### END kafka connect related containers
+    configs:
+      - source: clickhouse_rmq_config
+        target: /etc/clickhouse-server/config.d/rmq.xml
 
   init-environment:
     build:
@@ -142,13 +87,7 @@ services:
       dockerfile: Dockerfile.initenv
     container_name: init-environment
     depends_on:
-      mongo:
-        condition: service_healthy
-      kafka1:
-        condition: service_started
       clickhouse:
-        condition: service_healthy
-      kafka-connect1:
         condition: service_healthy
       s3:
         condition: service_healthy
@@ -156,6 +95,19 @@ services:
       - laudspeaker_default
     command:
       - "environment"
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    hostname: rabbitmq
+    command:
+      - rabbitmq-server
+    ports:
+      - "5672:5672"
+      - "1883:1883"
+      - "15672:15672"
+    container_name: rabbitmq
+    networks:
+      - laudspeaker_default
 
   s3:
     image: quay.io/minio/minio
@@ -172,16 +124,6 @@ services:
       MINIO_ROOT_USER: test
       MINIO_ROOT_PASSWORD: 12345678
     container_name: s3
-    networks:
-      - laudspeaker_default
-
-  ping-server:
-    image: jaredhanson11/ping-server:latest
-    container_name: ping-server
-    ports:
-      - "8555:8555"
-    environment:
-      PORT: 8555
     networks:
       - laudspeaker_default
 
@@ -248,9 +190,6 @@ services:
 
   s3-createbuckets:
     image: minio/mc
-    profiles:
-      - "testing"
-      - gui
     depends_on:
       s3:
         condition: service_healthy
@@ -265,48 +204,6 @@ services:
       - ./local-env/env-docker-compose
     networks:
       - laudspeaker_default
-
-  init-connectors:
-    build:
-      context: ./local-env/
-      dockerfile: Dockerfile.initenv
-    container_name: init-connectors
-    profiles:
-      - testing
-    depends_on:
-      laudspeaker-web:
-        condition: service_healthy
-    networks:
-      - laudspeaker_default
-    command:
-      - "connectors"
-
-  # GUIs for all supporting services.
-  # currently:
-  #   - no gui setup for postgres
-  #   - clickhouse gui is deployed with the clickhouse server
-
-  kafka-gui:
-    container_name: kafka-gui
-    image: provectuslabs/kafka-ui:latest
-    profiles:
-      - gui
-    ports:
-      - 8090:8080
-    depends_on:
-      kafka1:
-        condition: service_started
-      kafka-connect1:
-        condition: service_healthy
-    environment:
-      KAFKA_CLUSTERS_0_NAME: laudspeaker
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:29092
-      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect1:8083
-      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: kafka-connect
-      DYNAMIC_CONFIG_ENABLED: "true"
-    networks:
-      - laudspeaker_default
-
   redis-gui:
     container_name: redis-gui
     image: redis/redisinsight:latest
@@ -336,6 +233,16 @@ services:
       - laudspeaker_default
     command:
       - "guis"
+
+configs:
+  clickhouse_rmq_config:
+    content: |
+      <clickhouse>
+        <rabbitmq>
+           <username>guest</username>
+           <password>guest</password>
+        </rabbitmq>
+      </clickhouse>
 
 networks:
   laudspeaker_default:

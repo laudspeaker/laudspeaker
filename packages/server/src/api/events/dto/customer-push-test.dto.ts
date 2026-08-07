@@ -1,4 +1,4 @@
-import { PushBuilderDataDto } from '@/api/templates/dto/push.dto';
+import { PushBuilderDataDto } from '../../templates/dto/push.dto';
 import { IsNotEmpty, IsObject, IsString } from 'class-validator';
 
 export class CustomerPushTest {

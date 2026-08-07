@@ -1,6 +1,4 @@
-import { Account } from '@/api/accounts/entities/accounts.entity';
-import { PushPlatforms } from '@/api/templates/entities/template.entity';
-import { Exclude } from 'class-transformer';
+import { Account } from '../../accounts/entities/accounts.entity';
 import {
   BaseEntity,
   Column,

@@ -200,14 +200,14 @@ const AttributeConditionEditor: FC<AttributeConditionEditorProps> = ({
             </select>
           </div>
           <div>
-            <DynamicInput
+            {/* <DynamicInput
               type={statement.valueType}
               value={statement.value}
               onChange={(value) => {
                 condition.statements[i].value = value;
                 setCondition({ ...condition });
               }}
-            />
+            /> */}
             {showErrors &&
               errors[i].some(
                 (statementError) =>

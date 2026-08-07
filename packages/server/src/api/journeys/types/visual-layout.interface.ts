@@ -112,9 +112,10 @@ export enum StatementValueType {
 }
 
 export enum BranchType {
-  EVENT = 'event',
-  MAX_TIME = 'maxTime',
-  ATTRIBUTE = 'attribute',
+  EVENT = 'event', //branches coming out of waituntil
+  MAX_TIME = 'maxTime', // branch coming out of wait until
+  ATTRIBUTE = 'attribute', // branch coming out ofmultisplit
+  EXPERIMENT= 'experiment',//branch coming out of experiment
   WU_ATTRIBUTE = 'wu_attribute',
   MESSAGE = 'message',
   MULTISPLIT = 'multisplit',

@@ -8,8 +8,6 @@ import { AuthController } from './auth.controller';
 import { PassportModule } from '@nestjs/passport';
 import { Account } from '../accounts/entities/accounts.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MongooseModule } from '@nestjs/mongoose';
-import { BullModule } from '@nestjs/bullmq';
 import { WinstonModule } from 'nest-winston';
 import { TypeOrmConfigService } from '../../shared/typeorm/typeorm.service';
 import * as winston from 'winston';
@@ -30,17 +28,6 @@ describe('AuthController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       imports: [
-        MongooseModule.forRoot(process.env.MONGOOSE_URL),
-        BullModule.forRoot({
-          connection: {
-            host: process.env.REDIS_HOST,
-            port: parseInt(process.env.REDIS_PORT),
-            password: process.env.REDIS_PASSWORD,
-          },
-        }),
-        BullModule.registerQueue({
-          name: '{message}',
-        }),
         WinstonModule.forRootAsync({
           useFactory: () => ({
             level: 'debug',

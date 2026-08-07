@@ -1,7 +1,13 @@
 {
   "compilerOptions": {
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -16,7 +22,15 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "baseUrl": "src",
-    "types": ["node", "cypress", "@4tw/cypress-drag-drop"]
+    "types": [
+      "node",
+      "cypress",
+      "@4tw/cypress-drag-drop"
+    ]
   },
-  "include": ["src", ".eslintrc.js", "src/components/AutoCompletev2/.tsx"]
+  "include": [
+    "src",
+    ".eslintrc.js",
+    "src/components/AutoCompletev2/.tsx"
+  ]
 }

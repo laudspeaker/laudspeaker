@@ -28,7 +28,6 @@ import { ApiKeyAuthGuard } from '../auth/guards/apikey-auth.guard';
 import { randomUUID } from 'crypto';
 import { GetBulkCustomerCountDto } from './dto/get-bulk-customer-count.dto';
 import { RavenInterceptor } from 'nest-raven';
-import { AttributeType } from './schemas/customer-keys.schema';
 import { ImportCustomersDTO } from './dto/import-customers.dto';
 import { extname } from 'path';
 import { UpdatePK_DTO } from './dto/update-pk.dto';
@@ -36,10 +35,13 @@ import { UpsertCustomerDto } from './dto/upsert-customer.dto';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { DeleteCustomerDto } from './dto/delete-customer.dto';
 import { ReadCustomerDto } from './dto/read-customer.dto';
-import { ModifyAttributesDto } from './dto/modify-attributes.dto';
+import { CreateAttributeDto, ModifyAttributesDto } from './dto/modify-attributes.dto';
 import { SendFCMDto } from './dto/send-fcm.dto';
 import { IdentifyCustomerDTO } from './dto/identify-customer.dto';
 import { SetCustomerPropsDTO } from './dto/set-customer-props.dto';
+import { AttributeType, AttributeTypeName } from './entities/attribute-type.entity';
+import { CustomerKeysService } from './customer-keys.service';
+import { UpdateNotificationPreferencesDto } from './dto/update-notification-preferences.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -48,9 +50,11 @@ export class CustomersController {
     private readonly logger: Logger,
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
+    @Inject(CustomerKeysService)
+    private readonly customerKeysService: CustomerKeysService,
     @Inject(AccountsService)
     private readonly userService: AccountsService
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -135,7 +139,7 @@ export class CustomersController {
       searchKey,
       searchValue,
       showFreezed === 'true',
-      orderType === 'asc' ? 'asc' : 'desc'
+      orderType === 'asc' ? 'asc' : 'desc',
     );
   }
 
@@ -148,8 +152,10 @@ export class CustomersController {
     @Query('skip') skip = 0,
     @Query('search') search = ''
   ) {
+    const session = randomUUID();
     return await this.customersService.searchForTest(
       <Account>user,
+      session,
       take,
       skip,
       search
@@ -165,8 +171,10 @@ export class CustomersController {
     @Query('skip') skip = 0,
     @Query('search') search = ''
   ) {
+    const session = randomUUID();
     return await this.customersService.searchForTest(
       <Account>user,
+      session,
       take,
       skip,
       search,
@@ -180,7 +188,7 @@ export class CustomersController {
   async updatePrimaryKey(@Req() { user }: Request, @Body() body: UpdatePK_DTO) {
     const session = randomUUID();
 
-    await this.customersService.updatePrimaryKey(<Account>user, body, session);
+    await this.customerKeysService.updatePrimaryKey(<Account>user, body, session);
   }
 
   @Get('/system-attributes')
@@ -190,6 +198,22 @@ export class CustomersController {
     return this.customersService.getSystemAttributes();
   }
 
+  @Get('/notification-preferences/:customerId/:workspaceId')
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getNotificationPreferences(
+    @Param() { customerId }: { customerId: string },
+    @Param() { workspaceId }: { workspaceId: string }
+  ) {
+    return this.customersService.getNotificationPreferences(customerId, workspaceId);
+  }
+
+  @Post('/notification-preferences')
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async setNotificationPreferences(@Body() updateNotificationPreferencesDto: UpdateNotificationPreferencesDto
+  ) {
+    return this.customersService.setNotificationPreferences(updateNotificationPreferencesDto);
+  }
+
   @Get('/possible-attributes')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
@@ -197,40 +221,44 @@ export class CustomersController {
     @Req() { user }: Request,
     @Query('key') key = '',
     @Query('type') type = null,
-    @Query('isArray') isArray = null,
     @Query('removeLimit') removeLimit = null
   ) {
     const session = randomUUID();
 
-    return await this.customersService.getPossibleAttributes(
+    return await this.customerKeysService.getPossibleAttributes(
       <Account>user,
       session,
       key,
       type,
-      isArray,
       removeLimit
     );
   }
 
-  @Get('/audienceStats')
+  @Get('/possible-attribute-types')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  findAudienceStatsCustomers(
+  async getPossibleAttributeTypes(
     @Req() { user }: Request,
-    @Query('take') take?: string,
-    @Query('skip') skip?: string,
-    @Query('event') event?: string,
-    @Query('audienceId') audienceId?: string
   ) {
     const session = randomUUID();
 
-    return this.customersService.findAudienceStatsCustomers(
+    return await this.customerKeysService.getPossibleAttributeTypes(
       <Account>user,
       session,
-      take && +take,
-      skip && +skip,
-      event,
-      audienceId
+    );
+  }
+
+  @Get('/possible-attribute-parameters')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
+  async getPossibleAttributeParameters(
+    @Req() { user }: Request,
+  ) {
+    const session = randomUUID();
+
+    return await this.customerKeysService.getPossibleAttributeParameters(
+      <Account>user,
+      session,
     );
   }
 
@@ -264,25 +292,17 @@ export class CustomersController {
     return this.customersService.getLastImportCSV(<Account>user, session);
   }
 
-  @Get('/:id')
+  @Get('/:uuid')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  async findOne(@Req() { user }: Request, @Param() { id }: { id: string }) {
+  async findOne(@Req() { user }: Request, @Param() { uuid }: { uuid: string }) {
     const session = randomUUID();
     const {
-      _id,
-      __v,
-      workspaceId,
-      verified,
-      journeys,
-      journeyEnrollmentsDates,
-      slackTeamId,
-      posthogId,
-      workflows,
-      customComponents,
+      id,
+      workspace,
       ...customer
-    } = await this.customersService.findOne(<Account>user, id, session);
-    const createdAt = customer.createdAt;
+    } = await this.customersService.findOneByUUID(<Account>user, uuid, session);
+    const createdAt = customer.created_at;
     return { ...customer, createdAt };
   }
 
@@ -295,7 +315,7 @@ export class CustomersController {
     @Body() updateCustomerDto: Record<string, unknown>
   ) {
     const session = randomUUID();
-    return this.customersService.update(
+    return this.customersService.updateByUUID(
       <Account>user,
       id,
       updateCustomerDto,
@@ -314,7 +334,7 @@ export class CustomersController {
       createCustomerDto,
       session
     );
-    return cust._id;
+    return cust.uuid;
   }
 
   @Post('/upsert/')
@@ -334,36 +354,6 @@ export class CustomersController {
     return await this.customersService.upsert(
       <{ account: Account; workspace: Workspaces }>user,
       upsertCustomerDto,
-      session
-    );
-  }
-
-  @Post('/delete/')
-  @UseGuards(ApiKeyAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  async delete(
-    @Req() { user }: Request,
-    @Body() deleteCustomerDto: DeleteCustomerDto
-  ) {
-    const session = randomUUID();
-    return await this.customersService.delete(
-      <{ account: Account; workspace: Workspaces }>user,
-      deleteCustomerDto,
-      session
-    );
-  }
-
-  @Post('/read/')
-  @UseGuards(ApiKeyAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  async read(
-    @Req() { user }: Request,
-    @Body() readCustomerDto: ReadCustomerDto
-  ) {
-    const session = randomUUID();
-    return await this.customersService.read(
-      <{ account: Account; workspace: Workspaces }>user,
-      readCustomerDto,
       session
     );
   }
@@ -388,20 +378,16 @@ export class CustomersController {
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
   async createAttribute(
     @Req() { user }: Request,
-    @Body()
-    {
-      name,
-      type,
-      dateFormat,
-    }: { name: string; type: AttributeType; dateFormat: unknown }
+    @Body() createAttributeDTO: CreateAttributeDto
   ) {
     const session = randomUUID();
-    return this.customersService.createAttribute(
+    return this.customerKeysService.createKey(
       <Account>user,
-      name,
-      type,
-      dateFormat,
-      session
+      createAttributeDTO.name,
+      createAttributeDTO.attribute_type,
+      session,
+      createAttributeDTO.attribute_subtype,
+      createAttributeDTO.attribute_parameter,
     );
   }
 
@@ -412,9 +398,11 @@ export class CustomersController {
     @Req() { user }: Request,
     @Body() modifyAttributes: ModifyAttributesDto
   ) {
-    return this.customersService.modifyAttributes(
+    const session = randomUUID();
+    return this.customerKeysService.modifyKeys(
       <Account>user,
-      modifyAttributes
+      modifyAttributes,
+      session
     );
   }
 
@@ -616,48 +604,6 @@ export class CustomersController {
       custId,
       take,
       skip
-    );
-  }
-
-  @Post('/send-fcm')
-  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  @UseGuards(ApiKeyAuthGuard)
-  async sendFCMToken(@Req() { user }: Request, @Body() body: SendFCMDto) {
-    const session = randomUUID();
-    return this.customersService.sendFCMToken(
-      <{ account: Account; workspace: Workspaces }>user,
-      body,
-      session
-    );
-  }
-
-  @Post('/identify-customer')
-  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  @UseGuards(ApiKeyAuthGuard)
-  async identifyCustomer(
-    @Req() { user }: Request,
-    @Body() body: IdentifyCustomerDTO
-  ) {
-    const session = randomUUID();
-    return this.customersService.identifyCustomer(
-      <{ account: Account; workspace: Workspaces }>user,
-      body,
-      session
-    );
-  }
-
-  @Post('/set-customer-props')
-  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  @UseGuards(ApiKeyAuthGuard)
-  async setCustomerProperpties(
-    @Req() { user }: Request,
-    @Body() body: SetCustomerPropsDTO
-  ) {
-    const session = randomUUID();
-    return this.customersService.setCustomerProperties(
-      <{ account: Account; workspace: Workspaces }>user,
-      body,
-      session
     );
   }
 }

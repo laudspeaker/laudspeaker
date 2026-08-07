@@ -16,11 +16,14 @@ import { NodeType } from "../FlowEditor";
 export enum BranchType {
   EVENT = "event",
   MAX_TIME = "maxTime",
-  ATTRIBUTE = "attribute",
-  WU_ATTRIBUTE = "wu_attribute",
-  MESSAGE = "message",
   MULTISPLIT = "multisplit",
   EXPERIMENT = "experiment",
+}
+
+export enum EventType {
+  ANALYTICS = "analytics",
+  MESSAGE = "message",
+  ATTRIBUTE_CHANGE = "attribute_change",
 }
 
 export enum LogicRelation {
@@ -70,6 +73,7 @@ export interface TrackerCondition extends CommonCondition {
 }
 
 export interface HitCondition extends CommonCondition {
+  type: EventType;
   providerType: Exclude<ProviderType, ProviderType.TRACKER>;
   name: string;
   statements: Statement[];
@@ -89,6 +93,7 @@ export interface WUAttributeCondition extends CommonCondition {
     StatementValueType.ARRAY | StatementValueType.OBJECT
   >;
   value: string;
+  type: EventType;
 }
 
 export interface MessageCondition extends CommonCondition {
@@ -104,6 +109,7 @@ export interface MessageCondition extends CommonCondition {
     | MessageSMSEventCondition
     | MessageInAPPEventCondition;
   fromSpecificMessage: GeneralSelectedType;
+  type: EventType;
 }
 
 export type Condition =
@@ -118,16 +124,6 @@ export interface CommonBranch {
 
 export interface EventBranch extends CommonBranch {
   type: BranchType.EVENT;
-  conditions: Condition[];
-}
-
-export interface MessageBranch extends CommonBranch {
-  type: BranchType.MESSAGE;
-  conditions: Condition[];
-}
-
-export interface WUAttributeBranch extends CommonBranch {
-  type: BranchType.WU_ATTRIBUTE;
   conditions: Condition[];
 }
 
@@ -170,11 +166,7 @@ export interface TimeWindowBranch extends CommonMaxTimeBranch {
 
 export type MaxTimeBranch = TimeDelayBranch | TimeWindowBranch;
 
-export type WaitUntilBranch =
-  | EventBranch
-  | MaxTimeBranch
-  | MessageBranch
-  | WUAttributeBranch;
+export type WaitUntilBranch = EventBranch | MaxTimeBranch;
 
 export interface AttributeStatement {
   key: string;
@@ -189,17 +181,9 @@ export interface AttributeCondition {
   relationToNext: LogicRelation;
 }
 
-export interface AttributeBranch extends CommonBranch {
-  type: BranchType.ATTRIBUTE;
-  attributeConditions: AttributeCondition[];
-}
-
 export type Branch =
   | EventBranch
   | MaxTimeBranch
-  | AttributeBranch
-  | MessageBranch
-  | WUAttributeBranch
   | MultisplitBranch
   | ExperimentBranch;
 
@@ -236,8 +220,11 @@ export interface MessageNodeData<T extends MessageType = MessageType>
       pushBuilder?: MessageTemplatePushbuilderData;
     };
   };
+  oneClickUnsubscribeEnabled: boolean;
   connectionId?: string;
   sendingOptionId?: string;
+  replyToOptionId?: string;
+  oneClickUnsubscribeOptionId?: string;
 }
 
 export interface WaitUntilNodeData extends CommonNodeData {
@@ -273,11 +260,6 @@ export interface TimeWindowNodeData extends CommonNodeData {
   toTime?: string;
   from?: string;
   to?: string;
-}
-
-export interface UserAttributeNodeData extends CommonNodeData {
-  type: NodeType.USER_ATTRIBUTE;
-  branches: AttributeBranch[];
 }
 
 export interface JumpToNodeData extends CommonNodeData {
@@ -322,7 +304,6 @@ export type NodeData =
   | WaitUntilNodeData
   | TimeDelayNodeData
   | TimeWindowNodeData
-  | UserAttributeNodeData
   | JumpToNodeData
   | MultisplitNodeData
   | ExperimentNodeData

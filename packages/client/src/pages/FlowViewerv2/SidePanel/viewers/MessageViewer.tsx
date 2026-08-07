@@ -4,6 +4,7 @@ import React, { FC, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ApiService from "services/api.service";
 import { SidePanelComponentProps } from "../FlowViewerSidePanel";
+import Tooltip from "components/Elements/Tooltip";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -17,6 +18,7 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
   const [pickedStat, setPickedStat] = useState<keyof Stats | undefined>(
     fixtures.statsToShow?.[0].key
   );
+  const [customersCount, setCustomersCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [statCustomers, setStatCustomers] = useState<
@@ -30,9 +32,10 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
     if (!pickedStat || !nodeData.stepId) return;
 
     const {
-      data: { data, totalPages: pagesCount },
+      data: { data, totalCustomers, totalPages: pagesCount },
     } = await ApiService.get<{
       data: { id: string; email?: string }[];
+      totalCustomers: number;
       totalPages: number;
     }>({
       url: `/customers/stats-from-step?event=${pickedStat}&stepId=${
@@ -41,6 +44,7 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
     });
 
     setStatCustomers(data || []);
+    setCustomersCount(totalCustomers || 0);
     setTotalPages(pagesCount || 1);
   };
 
@@ -79,10 +83,19 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
                     )
                   }
                 >
-                  <div className="font-roboto text-[14px] leading-[22px] text-[#6B7280]">
-                    {stat.name}
-                  </div>
+                  <Tooltip
+                    placement="top-start"
+                    className="bg-[#111827] rounded-none p-[5px] text-white"
+                    content={`${nodeData.stats?.[stat.key] || 0}`}
+                  >
+                    <div className="font-roboto text-[14px] leading-[22px] text-[#6B7280]">
+                      {stat.name}
+                    </div>
+                  </Tooltip>
                   <div className="font-roboto text-[24px] leading-[28px]">
+                    <div className="relative">
+                      <div className="w-[8px] h-[8px] bg-transparent rounded-[100%]" />
+                    </div>
                     {stat.renderLabel(nodeData.stats?.[stat.key] || 0)}
                   </div>
                 </div>
@@ -99,7 +112,7 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
               <div className="font-semibold w-full">Email</div>
             </div>
             <div className="py-[10px]">
-              {statCustomers?.map((customer, i) => (
+              {/*statCustomers?.map((customer, i) => (
                 <div
                   key={i}
                   className="py-[11px] flex justify-between gap-[30px] font-inter font-normal text-[14px] leading-[22px] border-b-[1px] border-[#E5E7EB]"
@@ -114,8 +127,8 @@ const MessageViewer: FC<SidePanelComponentProps<MessageNodeData>> = ({
                     {customer.email}
                   </div>
                 </div>
-              ))}
-              {!statCustomers.length && (
+              ))*/}
+              {customersCount == 0 && (
                 <p className="py-3 block border-b mb-5 font-inter text-gray-600">
                   0 emails sent
                 </p>

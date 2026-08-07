@@ -27,23 +27,17 @@ const ImportCompletion = ({
     <div className="w-full flex justify-center">
       <div className="py-10 max-w-[800px] w-full">
         <div className="text-[#111827] text-base font-inter font-semibold mb-[10px]">
-          From your file, we can
+          Import Report:
         </div>
         <div className="flex w-full mb-[10px] gap-[10px]">
           <div className="px-[10px] py-1 rounded border border-[#E5E7EB] w-full">
-            <div className="text-[#6B7280] text-sm font-roboto">Create</div>
+            <div className="text-[#6B7280] text-sm font-roboto">Total</div>
             <div className="mt-[10px] text-2xl text-[#111827] font-roboto">
-              {preview?.created}
-            </div>
-          </div>
-          <div className="px-[10px] py-1 rounded border border-[#E5E7EB] w-full">
-            <div className="text-[#6B7280] text-sm font-roboto">Update</div>
-            <div className="mt-[10px] text-2xl text-[#111827] font-roboto">
-              {preview?.updated}
+              {preview?.total}
             </div>
           </div>
           <div className="relative px-[10px] py-1 rounded border border-[#E5E7EB] w-full">
-            <div className="text-[#6B7280] text-sm font-roboto">Skip</div>
+            <div className="text-[#6B7280] text-sm font-roboto">Skipped</div>
             <div className="mt-[10px] text-2xl text-[#111827] font-roboto">
               {preview?.skipped}
             </div>
@@ -52,6 +46,12 @@ const ImportCompletion = ({
                 <CloudArrowDownIcon className="transition-all absolute top-1/2 right-4 p-1 cursor-pointer -translate-y-1/2 w-10 h-10 text-[#111827] hover:text-[#6366F1]" />
               </a>
             )}
+          </div>
+          <div className="px-[10px] py-1 rounded border border-[#E5E7EB] w-full">
+            <div className="text-[#6B7280] text-sm font-roboto">Final</div>
+            <div className="mt-[10px] text-2xl text-[#111827] font-roboto">
+              {preview?.final}
+            </div>
           </div>
         </div>
         {!inSegment && (

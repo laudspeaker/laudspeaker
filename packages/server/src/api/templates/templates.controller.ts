@@ -33,7 +33,7 @@ export class TemplatesController {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
     private readonly templatesService: TemplatesService
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -136,16 +136,6 @@ export class TemplatesController {
     );
   }
 
-  @Get(':id/usedInJourneys')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  findUsedInJourneys(
-    @Req() { user }: Request,
-    @Param('id', ParseIntPipe) id: string
-  ) {
-    const session = randomUUID();
-    return this.templatesService.findUsedInJourneys(<Account>user, id, session);
-  }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
@@ -190,8 +180,8 @@ export class TemplatesController {
   @Post('/test-webhook')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(ClassSerializerInterceptor, new RavenInterceptor())
-  testWebhookTemplate(@Body() testWebhookDto: TestWebhookDto) {
+  testWebhookTemplate(@Req() { user }: Request, @Body() testWebhookDto: TestWebhookDto) {
     const session = randomUUID();
-    return this.templatesService.testWebhookTemplate(testWebhookDto, session);
+    return this.templatesService.testWebhookTemplate(<Account>user, testWebhookDto, session);
   }
 }

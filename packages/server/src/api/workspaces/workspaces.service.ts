@@ -18,6 +18,12 @@ import { UpdateSendgridChannelDto } from './dto/sendgrid/update-sendgrid-channel
 import { WebhooksService } from '../webhooks/webhooks.service';
 import { MailService } from '@sendgrid/mail';
 import { Client } from '@sendgrid/client';
+import { UpdateResendChannelDto } from './dto/resend/update-resend-channel.dto';
+import { CreateResendChannelDto } from './dto/resend/create-resend-channel.dto';
+import { ResendSendingOption } from './entities/resend-sending-option.entity';
+import { MailgunReplyToOption } from './entities/mailgun-reply-to-option.entity';
+import { SendgridReplyToOption } from './entities/sendgrid-reply-to-option.entity';
+import { ResendReplyToOption } from './entities/resend-reply-to-option.entity';
 
 export type WorkspaceConnection =
   | WorkspaceMailgunConnection
@@ -36,13 +42,13 @@ export type WorkspaceConnectionsKeys =
 export type WorkspaceConnections = Pick<Workspaces, WorkspaceConnectionsKeys>;
 
 const messageChannelToKeyMap: Record<MessageChannel, WorkspaceConnectionsKeys> =
-  {
-    [MessageChannel.MAILGUN]: 'mailgunConnections',
-    [MessageChannel.SENDGRID]: 'sendgridConnections',
-    [MessageChannel.RESEND]: 'resendConnections',
-    [MessageChannel.TWILIO]: 'twilioConnections',
-    [MessageChannel.PUSH]: 'pushConnections',
-  };
+{
+  [MessageChannel.MAILGUN]: 'mailgunConnections',
+  [MessageChannel.SENDGRID]: 'sendgridConnections',
+  [MessageChannel.RESEND]: 'resendConnections',
+  [MessageChannel.TWILIO]: 'twilioConnections',
+  [MessageChannel.PUSH]: 'pushConnections',
+};
 
 @Injectable()
 export class WorkspacesService {
@@ -55,11 +61,21 @@ export class WorkspacesService {
     private workspaceMailgunConnectionRepository: Repository<WorkspaceMailgunConnection>,
     @InjectRepository(MailgunSendingOption)
     private mailgunSendingOptionRepository: Repository<MailgunSendingOption>,
+    @InjectRepository(MailgunReplyToOption)
+    private mailgunReplyToOptionRepository: Repository<MailgunReplyToOption>,
     @InjectRepository(WorkspaceSendgridConnection)
     private workspaceSendgridConnectionRepository: Repository<WorkspaceSendgridConnection>,
     @InjectRepository(SendgridSendingOption)
-    private sendgridSendingOptionRepository: Repository<SendgridSendingOption>
-  ) {}
+    private sendgridSendingOptionRepository: Repository<SendgridSendingOption>,
+    @InjectRepository(SendgridReplyToOption)
+    private sendgridReplyToOptionRepository: Repository<SendgridReplyToOption>,
+    @InjectRepository(WorkspaceResendConnection)
+    private workspaceResendConnectionRepository: Repository<WorkspaceResendConnection>,
+    @InjectRepository(ResendSendingOption)
+    private resendSendingOptionRepository: Repository<ResendSendingOption>,
+    @InjectRepository(ResendReplyToOption)
+    private resendReplyToOptionRepository: Repository<ResendReplyToOption>
+  ) { }
 
   public async getChannels(account: Account): Promise<WorkspaceConnections> {
     const workspace = account.teams[0].organization.workspaces[0];
@@ -107,7 +123,7 @@ export class WorkspacesService {
     createMailgunChannelDto: CreateMailgunChannelDto
   ) {
     const workspace = account.teams[0].organization.workspaces[0];
-    const { sendingOptions, ...channelSettings } = createMailgunChannelDto;
+    const { sendingOptions, replyToOptions, ...channelSettings } = createMailgunChannelDto;
 
     await this.webhookService.setupMailgunWebhook(
       channelSettings.apiKey,
@@ -119,14 +135,52 @@ export class WorkspacesService {
       workspace: { id: workspace.id },
     });
 
-    if (sendingOptions.length === 0) return;
+    if (sendingOptions.length !== 0) {
+      await this.mailgunSendingOptionRepository.save(
+        sendingOptions.map((option) => ({
+          ...option,
+          mailgunConnection: { id: connection.id },
+        }))
+      );
+    }
 
-    await this.mailgunSendingOptionRepository.save(
-      sendingOptions.map((option) => ({
-        ...option,
-        mailgunConnection: { id: connection.id },
-      }))
-    );
+    if (replyToOptions.length !== 0) {
+      await this.mailgunReplyToOptionRepository.save(
+        replyToOptions.map((option) => ({
+          ...option,
+          mailgunConnection: { id: connection.id },
+        }))
+      );
+    }
+  }
+
+
+  public async createResendChannel(account: Account, createResendChannelDto: CreateResendChannelDto) {
+    const workspace = account.teams[0].organization.workspaces[0];
+    const { sendingOptions, replyToOptions, ...channelSettings } = createResendChannelDto;
+
+    const connection = await this.workspaceResendConnectionRepository.save({
+      ...channelSettings,
+      workspace: { id: workspace.id },
+    });
+
+    if (sendingOptions.length !== 0) {
+      await this.resendSendingOptionRepository.save(
+        sendingOptions.map((option) => ({
+          ...option,
+          resendConnection: { id: connection.id },
+        }))
+      );
+    }
+
+    if (replyToOptions.length !== 0) {
+      await this.resendReplyToOptionRepository.save(
+        replyToOptions.map((option) => ({
+          ...option,
+          resendConnection: { id: connection.id },
+        }))
+      );
+    }
   }
 
   public async updateMailgunChannel(
@@ -141,7 +195,7 @@ export class WorkspacesService {
       MessageChannel.MAILGUN
     )) as WorkspaceMailgunConnection[];
 
-    const { sendingOptions, ...channelSettings } = updateMailgunChannelDto;
+    const { sendingOptions, replyToOptions, ...channelSettings } = updateMailgunChannelDto;
 
     const channel = mailgunChannels.find((channel) => channel.id === id);
     if (!channel) throw new NotFoundException('Channel not found');
@@ -160,20 +214,78 @@ export class WorkspacesService {
       workspace: { id: workspace.id },
     });
 
-    if (!sendingOptions) return;
+    if (sendingOptions) {
+      await this.mailgunSendingOptionRepository.delete({
+        mailgunConnection: { id: channel.id },
+      });
+      if (sendingOptions.length !== 0)
+        await this.mailgunSendingOptionRepository.save(
+          sendingOptions.map((option) => ({
+            ...option,
+            mailgunConnection: { id: channel.id },
+          }))
+        );
+    }
 
-    await this.mailgunSendingOptionRepository.delete({
-      mailgunConnection: { id: channel.id },
+    if (replyToOptions) {
+      await this.mailgunReplyToOptionRepository.delete({
+        mailgunConnection: { id: channel.id },
+      });
+      if (replyToOptions.length !== 0)
+        await this.mailgunReplyToOptionRepository.save(
+          replyToOptions.map((option) => ({
+            ...option,
+            mailgunConnection: { id: channel.id },
+          }))
+        );
+    }
+  }
+
+  public async updateResendChannel(account: Account, id: string, updateResendChannelDto: UpdateResendChannelDto) {
+    const workspace = account.teams[0].organization.workspaces[0];
+
+    const resendChannels = (await this.getSpecificChannels(
+      account,
+      MessageChannel.RESEND
+    )) as WorkspaceResendConnection[];
+
+    const { sendingOptions,replyToOptions, ...channelSettings } = updateResendChannelDto;
+
+    const channel = resendChannels.find((channel) => channel.id === id);
+    if (!channel) throw new NotFoundException('Channel not found');
+
+    await this.workspaceResendConnectionRepository.save({
+      ...channel,
+      ...channelSettings,
+      id,
+      workspace: { id: workspace.id },
     });
 
-    if (sendingOptions.length === 0) return;
+    if (sendingOptions) {
+      await this.resendSendingOptionRepository.delete({
+        resendConnection: { id: channel.id },
+      });
+      if (sendingOptions.length !== 0)
+        await this.resendSendingOptionRepository.save(
+          sendingOptions.map((option) => ({
+            ...option,
+            resendConnection: { id: channel.id },
+          }))
+        );
+    }
 
-    await this.mailgunSendingOptionRepository.save(
-      sendingOptions.map((option) => ({
-        ...option,
-        mailgunConnection: { id: channel.id },
-      }))
-    );
+    if (replyToOptions) {
+      await this.resendReplyToOptionRepository.delete({
+        resendConnection: { id: channel.id },
+      });
+      if (replyToOptions.length !== 0)
+        await this.resendReplyToOptionRepository.save(
+          replyToOptions.map((option) => ({
+            ...option,
+            resendConnection: { id: channel.id },
+          }))
+        );
+    }
   }
 
   public async createSendgridChannel(
@@ -181,10 +293,10 @@ export class WorkspacesService {
     createSendgridChannelDto: CreateSendgridChannelDto
   ) {
     const workspace = account.teams[0].organization.workspaces[0];
-    const { sendingOptions, ...channelSettings } = createSendgridChannelDto;
+    const { sendingOptions, replyToOptions, ...channelSettings } = createSendgridChannelDto;
 
     this.sgClient.setApiKey(channelSettings.apiKey);
-    await this.sgClient.request({
+    let res = await this.sgClient.request({
       url: '/v3/user/webhooks/event/settings',
       method: 'PATCH',
       body: {
@@ -222,20 +334,40 @@ export class WorkspacesService {
 
     for (const option of sendingOptions) {
       this.sgMailService.setApiKey(channelSettings.apiKey);
-      await this.sgMailService.send({
-        subject: 'Sendgrid connection to Laudspeaker',
-        from: option.sendingEmail,
-        to: account.email,
-        html: '<h1>If you see this message, you successfully connected your sendgrid email to laudspeaker</h1>',
-      });
+      try {
+        await this.sgMailService.send({
+          subject: 'Sendgrid connection to Laudspeaker',
+          from: option.sendingEmail,
+          to: account.email,
+          html: '<h1>If you see this message, you successfully connected your sendgrid email to laudspeaker</h1>',
+        });
+      } catch (error: any) {
+        if (error.response) {
+          console.error('Error status code:', error.response.statusCode);
+          console.error('Error response body:', error.response.body);
+        } else {
+          console.error('Error:', error);
+        }
+      }
     }
 
-    await this.sendgridSendingOptionRepository.save(
-      sendingOptions.map((option) => ({
-        ...option,
-        sendgridConnection: { id: connection.id },
-      }))
-    );
+    if (sendingOptions.length !== 0) {
+      await this.sendgridSendingOptionRepository.save(
+        sendingOptions.map((option) => ({
+          ...option,
+          sendgridConnection: { id: connection.id },
+        }))
+      );
+    }
+
+    if (replyToOptions.length !== 0) {
+      await this.sendgridReplyToOptionRepository.save(
+        replyToOptions.map((option) => ({
+          ...option,
+          sendgridConnection: { id: connection.id },
+        }))
+      );
+    }
   }
 
   public async updateSendgridChannel(
@@ -250,7 +382,7 @@ export class WorkspacesService {
       MessageChannel.SENDGRID
     )) as WorkspaceSendgridConnection[];
 
-    const { sendingOptions, ...channelSettings } = updateSendgridChannelDto;
+    const { sendingOptions, replyToOptions, ...channelSettings } = updateSendgridChannelDto;
 
     const channel = sendgridChannels.find((channel) => channel.id === id);
     if (!channel) throw new NotFoundException('Channel not found');
@@ -262,19 +394,30 @@ export class WorkspacesService {
       workspace: { id: workspace.id },
     });
 
-    if (!sendingOptions) return;
-
-    await this.sendgridSendingOptionRepository.delete({
-      sendgridConnection: { id: channel.id },
-    });
-
-    if (sendingOptions.length === 0) return;
-
-    await this.sendgridSendingOptionRepository.save(
-      sendingOptions.map((option) => ({
-        ...option,
+    if (sendingOptions) {
+      await this.sendgridSendingOptionRepository.delete({
         sendgridConnection: { id: channel.id },
-      }))
-    );
+      });
+      if (sendingOptions.length !== 0)
+        await this.sendgridSendingOptionRepository.save(
+          sendingOptions.map((option) => ({
+            ...option,
+            sendgridConnection: { id: channel.id },
+          }))
+        );
+    }
+
+    if (replyToOptions) {
+      await this.sendgridReplyToOptionRepository.delete({
+        sendgridConnection: { id: channel.id },
+      });
+      if (replyToOptions.length !== 0)
+        await this.sendgridReplyToOptionRepository.save(
+          replyToOptions.map((option) => ({
+            ...option,
+            sendgridConnection: { id: channel.id },
+          }))
+        );
+    }
   }
 }

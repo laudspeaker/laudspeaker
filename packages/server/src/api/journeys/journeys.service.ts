@@ -22,15 +22,8 @@ import { UpdateJourneyDto } from './dto/update-journey.dto';
 import { Journey } from './entities/journey.entity';
 import errors from '../../shared/utils/errors';
 import { CustomersService } from '../customers/customers.service';
-import {
-  Customer,
-  CustomerDocument,
-} from '../customers/schemas/customer.schema';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { createClient } from '@clickhouse/client';
 import { isUUID } from 'class-validator';
-import mongoose, { ClientSession, Model } from 'mongoose';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { StepsService } from '../steps/steps.service';
 import { Step } from '../steps/entities/step.entity';
@@ -56,7 +49,6 @@ import {
   ElementCondition,
   EventBranch,
   MessageEvent,
-  CommonMultiBranchMetadata,
   PropertyCondition,
   StartStepMetadata,
   StepType,
@@ -79,16 +71,22 @@ import {
   JourneyEnrollmentType,
 } from './types/additional-journey-settings.interface';
 import { JourneyLocationsService } from './journey-locations.service';
-import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { RedisService } from '@liaoliaots/nestjs-redis';
 import { JourneyChange } from './entities/journey-change.entity';
-import isObjectDeepEqual from '@/utils/isObjectDeepEqual';
+import isObjectDeepEqual from '../../utils/isObjectDeepEqual';
 import { JourneyLocation } from './entities/journey-location.entity';
-import { format, eachDayOfInterval, eachWeekOfInterval } from 'date-fns';
-import { CacheService } from '@/common/services/cache.service';
-import { EntityComputedFieldsHelper } from '@/common/helper/entityComputedFields.helper';
-import { EntityWithComputedFields } from '@/common/entities/entityWithComputedFields.entity';
+import { eachDayOfInterval, eachWeekOfInterval } from 'date-fns';
+import { CacheService } from '../../common/services/cache.service';
+import { EntityComputedFieldsHelper } from '../../common/helper/entityComputedFields.helper';
+import { EntityWithComputedFields } from '../../common/entities/entityWithComputedFields.entity';
+import { QueueType } from '../../common/services/queue/types/queue-type';
+import { Producer } from '../../common/services/queue/classes/producer';
+import { Segment, SegmentType } from '../segments/entities/segment.entity';
+import { Customer } from '../customers/entities/customer.entity';
+import { CustomerKeysService } from '../customers/customer-keys.service';
+import { CacheConstants } from '../../common/services/cache.constants';
+import { JourneyStatisticsService } from './journey-statistics.service';
 
 export enum JourneyStatus {
   ACTIVE = 'Active',
@@ -185,22 +183,22 @@ interface TagChange {
 
 interface QuietHoursChange {
   type:
-    | SettingsChangeType.ENABLE_QUIETE_HOURS
-    | SettingsChangeType.CHANGE_QUIETE_HOURS;
+  | SettingsChangeType.ENABLE_QUIETE_HOURS
+  | SettingsChangeType.CHANGE_QUIETE_HOURS;
   quietHours: any;
 }
 
 interface MaxUserEntriesChange {
   type:
-    | SettingsChangeType.ENABLE_MAX_USER_ENTRIES
-    | SettingsChangeType.CHANGE_MAX_USER_ENTRIES;
+  | SettingsChangeType.ENABLE_MAX_USER_ENTRIES
+  | SettingsChangeType.CHANGE_MAX_USER_ENTRIES;
   maxUserEntries: any;
 }
 
 interface MaxMessageSendsChange {
   type:
-    | SettingsChangeType.ENABLE_MAX_MESSAGE_SENDS
-    | SettingsChangeType.CHANGE_MAX_MESSAGE_SENDS;
+  | SettingsChangeType.ENABLE_MAX_MESSAGE_SENDS
+  | SettingsChangeType.CHANGE_MAX_MESSAGE_SENDS;
   maxMessageSends: any;
 }
 
@@ -225,17 +223,6 @@ export interface ActivityEvent {
 
 @Injectable()
 export class JourneysService {
-  private clickhouseClient = createClient({
-    host: process.env.CLICKHOUSE_HOST
-      ? process.env.CLICKHOUSE_HOST.includes('http')
-        ? process.env.CLICKHOUSE_HOST
-        : `http://${process.env.CLICKHOUSE_HOST}`
-      : 'http://localhost:8123',
-    username: process.env.CLICKHOUSE_USER ?? 'default',
-    password: process.env.CLICKHOUSE_PASSWORD ?? '',
-    database: process.env.CLICKHOUSE_DB ?? 'default',
-  });
-
   constructor(
     private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
@@ -245,16 +232,15 @@ export class JourneysService {
     @InjectRepository(JourneyChange)
     public journeyChangesRepository: Repository<JourneyChange>,
     @Inject(StepsService) private stepsService: StepsService,
-    @InjectModel(Customer.name) public CustomerModel: Model<CustomerDocument>,
     @Inject(forwardRef(() => CustomersService))
     private customersService: CustomersService,
-    @InjectConnection() private readonly connection: mongoose.Connection,
+    @Inject(forwardRef(() => CustomerKeysService))
+    private customerKeysService: CustomerKeysService,
     @Inject(JourneyLocationsService)
     private readonly journeyLocationsService: JourneyLocationsService,
-    @InjectQueue('{transition}') private readonly transitionQueue: Queue,
     @Inject(RedisService) private redisService: RedisService,
-    @InjectQueue('{enrollment}') private readonly enrollmentQueue: Queue,
-    @Inject(CacheService) private cacheService: CacheService
+    @Inject(CacheService) private cacheService: CacheService,
+    @Inject(JourneyStatisticsService) private journeyStatisticsService: JourneyStatisticsService
   ) {}
 
   log(message, method, session, user = 'ANONYMOUS') {
@@ -324,10 +310,7 @@ export class JourneysService {
    * @param session
    * @returns
    */
-
   async getJourneys(account: Account, session: string) {
-    console.log('In getJourneys');
-
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -612,15 +595,15 @@ export class JourneysService {
       }
 
       visualLayout = JSON.parse(visualLayout);
-      await this.updateLayoutTransactional(
+      await this.updateLayout(
         user,
         {
           id: newJourney.id,
           nodes: visualLayout.nodes,
           edges: visualLayout.edges,
         },
+        session,
         queryRunner,
-        session
       );
 
       await queryRunner.commitTransaction();
@@ -649,7 +632,6 @@ export class JourneysService {
     customerUpdateType: 'NEW' | 'CHANGE',
     session: string,
     queryRunner: QueryRunner,
-    clientSession: ClientSession
   ) {
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -665,10 +647,9 @@ export class JourneysService {
         isDynamic: true,
       },
     });
-    const customer = await this.customersService.findById(
+    const customer = await this.customersService.findByCustomerId(
       account,
       customerId,
-      clientSession
     );
     for (const journey of journeys) {
       // get segments for journey
@@ -707,7 +688,7 @@ export class JourneysService {
           change = 'ADD';
         } else if (
           journeyEntrySettings.enrollmentType ===
-            JourneyEnrollmentType.OnlyFuture &&
+          JourneyEnrollmentType.OnlyFuture &&
           customerUpdateType === 'NEW'
         ) {
           change = 'ADD';
@@ -725,7 +706,6 @@ export class JourneysService {
             [],
             session,
             queryRunner,
-            clientSession
           );
           break;
         case 'REMOVE':
@@ -734,7 +714,6 @@ export class JourneysService {
             journey,
             customer,
             session,
-            clientSession
           );
           break;
       }
@@ -751,20 +730,45 @@ export class JourneysService {
   async enrollCustomersInJourney(
     account: Account,
     journey: Journey,
-    customers: CustomerDocument[],
+    customers: Customer[],
     locations: JourneyLocation[],
     session: string,
     queryRunner: QueryRunner,
-    clientSession?: ClientSession
-  ): Promise<{ name: string; data: any }[]> {
-    const jobs: { name: string; data: any }[] = [];
-    const step = await this.stepsService.findByJourneyAndType(
+  ): Promise<any[]> {
+    const jobsData: any[] = [];
+
+    const startStep = await this.stepsService.getStartStep(
       account,
-      journey.id,
-      StepType.START,
-      session,
-      queryRunner
+      journey,
+      session
     );
+
+    // Construct a new journey object with an empty visualLayout, inclusionCriteria
+    // to save space in job queue later
+    const modifiedJourney: Journey = {
+      ...journey,
+      visualLayout: {
+        edges: [],
+        nodes: [],
+      },
+      inclusionCriteria: {},
+    };
+    // Prepare a deep copy of the account to modify without affecting the original account object
+    const modifiedAccount = {
+      ...account,
+      teams: account.teams.map((team) => ({
+        ...team,
+        organization: {
+          ...team.organization,
+          workspaces: team.organization.workspaces.map((workspace) => ({
+            ...workspace,
+            pushConnections: [], //, Clears the pushConnections array
+            //pushPlatforms: null // Clears the pushPlatforms info
+          })),
+        },
+      })),
+    };
+
     for (const customer of customers) {
       if (
         await this.rateLimitEntryByUniqueEnrolledCustomers(
@@ -774,32 +778,31 @@ export class JourneysService {
         )
       ) {
         this.log(
-          `Max customer limit reached on journey: ${journey.id}. Preventing customer: ${customer._id} from being enrolled.`,
+          `Max customer limit reached on journey: ${journey.id}. Preventing customer: ${customer.id} from being enrolled.`,
           this.enrollCustomersInJourney.name,
           session,
           account.id
         );
         continue;
       }
-      const job = {
-        name: 'start',
-        data: {
-          owner: account,
-          journey: journey,
-          step: step,
-          location: locations.find((location: JourneyLocation) => {
-            return (
-              location.customer === (customer._id ?? customer._id.toString()) &&
-              location.journey === journey.id
-            );
-          }),
-          session: session,
-          customer, //customer.id ?? customer._id.toString(),
-        },
+      const jobData = {
+        owner: modifiedAccount,
+        journey: modifiedJourney,
+        step: startStep,
+        location: locations.find((location: JourneyLocation) => {
+          return (
+            location.customer.toString() === (customer.id ?? customer.id.toString()) &&
+            location.journey === journey.id
+          );
+        }),
+        session: session,
+        customer,
+        stepDepth: 1,
       };
-      jobs.push(job);
+
+      jobsData.push(jobData);
     }
-    return jobs;
+    return jobsData;
   }
 
   /**
@@ -808,25 +811,10 @@ export class JourneysService {
   public async unenrollCustomerFromJourney(
     account: Account,
     journey: Journey,
-    customer: CustomerDocument,
+    customer: Customer,
     session: string,
-    clientSession: ClientSession
   ) {
     // TODO_JH: remove from steps also
-    await this.CustomerModel.updateOne(
-      { _id: customer._id },
-      {
-        $pullAll: {
-          journeys: [journey.id],
-        },
-        // TODO_JH: This logic needs to be checked
-        $unset: {
-          journeyEnrollmentsDates: [journey.id],
-        },
-      }
-    )
-      .session(clientSession)
-      .exec();
   }
 
   /**
@@ -843,10 +831,9 @@ export class JourneysService {
    */
   async enrollCustomer(
     account: Account,
-    customer: CustomerDocument,
+    customer: Customer,
     queryRunner: QueryRunner,
-    clientSession: ClientSession,
-    session: string
+    session: string,
   ): Promise<void> {
     try {
       const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
@@ -862,38 +849,6 @@ export class JourneysService {
           isDynamic: true,
         },
       });
-      for (
-        let journeyIndex = 0;
-        journeyIndex < journeys?.length;
-        journeyIndex++
-      ) {
-        const journey = journeys[journeyIndex];
-        if (
-          (await this.customersService.checkInclusion(
-            customer,
-            journey.inclusionCriteria,
-            session,
-            account
-          )) &&
-          customer.journeys.indexOf(journey.id) < 0
-        ) {
-          await this.CustomerModel.updateOne(
-            { _id: customer._id },
-            {
-              $addToSet: {
-                journeys: journey.id,
-              },
-              $set: {
-                journeyEnrollmentsDates: {
-                  [journey.id]: new Date().toUTCString(),
-                },
-              },
-            }
-          )
-            .session(clientSession)
-            .exec();
-        }
-      }
     } catch (err) {
       this.error(err, this.enrollCustomer.name, session, account.id);
       throw err;
@@ -993,8 +948,8 @@ export class JourneysService {
               ...(key === 'isActive'
                 ? { isStopped: false, isPaused: false }
                 : key === 'isPaused'
-                ? { isStopped: false }
-                : {}),
+                  ? { isStopped: false }
+                  : {}),
             });
         }
       } else {
@@ -1019,10 +974,6 @@ export class JourneysService {
         .take(take < 100 ? take : 100)
         .skip(skip)
         .leftJoin('journey.latestChanger', 'account')
-        .loadRelationCountAndMap(
-          'journey.totalEnrolled',
-          'journey.journeyLocations'
-        )
         .addSelect('account.email', 'latestChangerEmail');
 
       if (orderBy)
@@ -1032,12 +983,19 @@ export class JourneysService {
         );
 
       const journeys = await query.getRawAndEntities();
-      const computedFieldsList = ['latestChangerEmail', 'totalEnrolled'];
+      const journeyIds = journeys.entities.map((journey) => journey.id);
+
+      const totalCounts = await this.journeyLocationsService.getJourneyListTotalEnrolled(journeyIds);
+
+      const computedFieldsList = ['latestChangerEmail'];
 
       const result = EntityComputedFieldsHelper.processCollection<Journey>(
         journeys,
         computedFieldsList
       );
+
+      for (const i in result)
+        result[i].computed.totalEnrolled = totalCounts[result[i].entity.id];
 
       return { data: result, totalPages };
     } catch (err) {
@@ -1066,99 +1024,15 @@ export class JourneysService {
 
     if (!frequency) frequency = 'daily';
 
-    const dbFrequency = frequency == 'weekly' ? 'week' : 'day';
-
-    const pointDates =
-      frequency === 'daily'
-        ? eachDayOfInterval({ start: startTime, end: endTime })
-        : // Postgres' week starts on Monday
-          eachWeekOfInterval(
-            { start: startTime, end: endTime },
-            { weekStartsOn: 1 }
-          );
-
-    const totalPoints = pointDates.length;
-
-    const enrollementGroupedByDate =
-      await this.journeyLocationsService.journeyLocationsRepository
-        .createQueryBuilder('location')
-        .where({
-          journey: journey.id,
-          journeyEntryAt: Between(
-            startTime.toISOString(),
-            endTime.toISOString()
-          ),
-        })
-        .select([
-          `date_trunc('${dbFrequency}', "journeyEntryAt") as "date"`,
-          `count(*)::INTEGER as group_count`,
-        ])
-        .groupBy('date')
-        .orderBy('date', 'ASC')
-        .getRawMany();
-
-    const terminalSteps = await this.stepsService.findAllTerminalInJourney(
-      journey.id,
-      session,
-      ['step.id']
-    );
-    const terminalStepIds = terminalSteps.map((step) => step.id);
-
-    const finishedGroupedByDate =
-      await this.journeyLocationsService.journeyLocationsRepository
-        .createQueryBuilder('location')
-        .where({
-          journey: journey.id,
-          stepEntryAt: Between(startTime.toISOString(), endTime.toISOString()),
-          step: In(terminalStepIds),
-        })
-        .select([
-          `date_trunc('${dbFrequency}', "journeyEntryAt") as "date"`,
-          `count(*)::INTEGER as group_count`,
-        ])
-        .groupBy('date')
-        .orderBy('date', 'ASC')
-        .getRawMany();
-
-    const enrolledCount = enrollementGroupedByDate.reduce((acc, group) => {
-      return acc + group['group_count'];
-    }, 0);
-
-    const finishedCount = finishedGroupedByDate.reduce((acc, group) => {
-      return acc + group['group_count'];
-    }, 0);
-
-    const enrolledDataPoints: number[] = new Array(totalPoints).fill(
-      0,
-      0,
-      totalPoints
-    );
-    const finishedDataPoints: number[] = new Array(totalPoints).fill(
-      0,
-      0,
-      totalPoints
+    const statistics = await this.journeyStatisticsService.getStatistics(
+      journey,
+      startTime,
+      endTime,
+      frequency,
+      session
     );
 
-    for (const group of enrollementGroupedByDate) {
-      for (var i = 0; i < pointDates.length; i++) {
-        if (group.date.getTime() == pointDates[i].getTime())
-          enrolledDataPoints[i] += group.group_count;
-      }
-    }
-
-    for (const group of finishedGroupedByDate) {
-      for (var i = 0; i < pointDates.length; i++) {
-        if (group.date.getTime() == pointDates[i].getTime())
-          finishedDataPoints[i] += group.group_count;
-      }
-    }
-
-    return {
-      enrolledDataPoints,
-      finishedDataPoints,
-      enrolledCount,
-      finishedCount,
-    };
+    return statistics;
   }
 
   async getJourneyCustomers(
@@ -1202,18 +1076,16 @@ export class JourneysService {
           LEFT JOIN step ON step.id = journey_location."stepId"
           WHERE journey_location."journeyId" = $1 AND "customer" LIKE $2
         ) as a
-      ${
-        filter === 'all'
-          ? ''
-          : filter === 'in-progress'
+      ${filter === 'all'
+        ? ''
+        : filter === 'in-progress'
           ? `WHERE a."isFinished" = false`
           : filter === 'finished'
-          ? `WHERE a."isFinished" = true`
-          : ''
+            ? `WHERE a."isFinished" = true`
+            : ''
       }
-      ORDER BY a.${sortBy === 'status' ? `"isFinished"` : `"lastUpdate"`} ${
-      sortType === 'asc' ? 'ASC' : 'DESC'
-    }
+      ORDER BY a.${sortBy === 'status' ? `"isFinished"` : `"lastUpdate"`} ${sortType === 'asc' ? 'ASC' : 'DESC'
+      }
     `;
 
     const countQuery = `SELECT COUNT(*) as count FROM (${baseQuery}) as a`;
@@ -1240,29 +1112,26 @@ export class JourneysService {
 
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
-    const pk = await this.customersService.CustomerKeysModel.findOne({
-      isPrimary: true,
-      workspaceId: workspace.id,
-    });
+    const pk = await this.customerKeysService.getPrimaryKey(workspace.id, session);
 
     if (pk) {
       const customerIds = data.map((item) => item.customerId);
 
-      const customers = this.CustomerModel.find({
-        _id: { $in: customerIds },
-      }).cursor();
+      // const customers = this.CustomerModel.find({
+      //   _id: { $in: customerIds },
+      // }).cursor();
 
-      for await (const customer of customers) {
-        const dataItem = data.find((item) => item.customerId === customer.id);
+      // for await (const customer of customers) {
+      //   const dataItem = data.find((item) => item.customerId === customer.id);
 
-        if (dataItem) dataItem[pk.key] = customer[pk.key];
-      }
+      //   if (dataItem) dataItem[pk.key] = customer[pk.key];
+      // }
     }
 
     return {
       data: data.map((item) => ({
         customerId: item.customerId,
-        [pk.key]: item[pk.key],
+        [pk.name]: item[pk.name],
         status: item.isFinished ? 'Finished' : 'Enrolled',
         lastUpdate: +item.lastUpdate,
       })),
@@ -1338,8 +1207,8 @@ export class JourneysService {
       ? ActivityEventType.SETTINGS
       : changedKeys.includes('journeyEntrySettings') ||
         changedKeys.includes('inclusionCriteria')
-      ? ActivityEventType.ENTRY
-      : ActivityEventType.JOURNEY;
+        ? ActivityEventType.ENTRY
+        : ActivityEventType.JOURNEY;
 
     const changes: Change[] = [];
 
@@ -1740,7 +1609,7 @@ export class JourneysService {
         isActive: true,
       });
 
-      if (organization.plan.activeJourneyLimit != -1) {
+      if (process.env.NODE_ENV != "development" && organization.plan.activeJourneyLimit != -1) {
         if (activeJourneysCount + 1 > organization.plan.activeJourneyLimit) {
           throw new HttpException(
             'Active journeys limit has been exceeded',
@@ -1815,6 +1684,56 @@ export class JourneysService {
       if (!alg.isAcyclic(graph))
         throw new Error('Flow has infinite loops, cannot start.');
 
+      let jobs = [];
+      const multiSplitSteps: Step[] =
+        await this.stepsService.transactionalfindAllByTypeInJourney(
+          account,
+          StepType.MULTISPLIT,
+          journey.id,
+          queryRunner,
+          session
+        );
+      if (multiSplitSteps.length) {
+        for (
+          let stepIndex = 0;
+          stepIndex < multiSplitSteps.length;
+          stepIndex++
+        ) {
+          for (
+            let branchIndex = 0;
+            branchIndex < multiSplitSteps[stepIndex].metadata.branches.length;
+            branchIndex++
+          ) {
+            const segment = await queryRunner.manager.save(Segment, {
+              type: SegmentType.SYSTEM,
+              name: '__SYSTEM__',
+              inclusionCriteria:
+                multiSplitSteps[stepIndex].metadata.branches[branchIndex]
+                  .conditions,
+              workspace: {
+                id: account.teams?.[0]?.organization.workspaces?.[0].id,
+              },
+              isUpdating: false,
+            });
+            multiSplitSteps[stepIndex].metadata.branches[
+              branchIndex
+            ].systemSegment = segment.id;
+
+            await queryRunner.manager.save(Step, multiSplitSteps[stepIndex]);
+
+            jobs.push({
+              name: 'createSystem',
+              data: {
+                account,
+                journey,
+                session,
+                segment,
+              },
+            });
+          }
+        }
+      }
+
       if (
         journey.journeyEntrySettings.entryTiming.type ===
         EntryTiming.WhenPublished
@@ -1826,6 +1745,7 @@ export class JourneysService {
           isActive: true,
           isEnrolling: true,
           startedAt: new Date(Date.now()),
+          totalSystemSegments: jobs.length,
         });
       } else {
         journey = await queryRunner.manager.save(Journey, {
@@ -1833,16 +1753,26 @@ export class JourneysService {
           isEnrolling: true,
           isActive: true,
           startedAt: new Date(Date.now()),
+          totalSystemSegments: jobs.length,
         });
       }
 
       await this.trackChange(account, journeyID, queryRunner);
       await queryRunner.commitTransaction();
-      await this.enrollmentQueue.add('enroll', {
-        account,
-        journey,
-        session,
-      });
+      if (jobs.length)
+        await Producer.addBulk(QueueType.SEGMENT_UPDATE,
+          jobs.map((job) => {
+            return {
+              ...job.data,
+              journey,
+            };
+          }), 'createSystem');
+      else
+        await Producer.add(QueueType.ENROLLMENT, {
+          account,
+          journey,
+          session,
+        });
     } catch (e) {
       err = e;
       this.error(e, this.start.name, session, account.email);
@@ -1963,7 +1893,7 @@ export class JourneysService {
 
       if (
         JSON.stringify(journey.inclusionCriteria) !==
-          JSON.stringify(inclusionCriteria) &&
+        JSON.stringify(inclusionCriteria) &&
         (journey.isActive || journey.isPaused)
       ) {
         // TODO: add logic of eligable users update on parameters change (using changeSegmentOption)
@@ -2005,9 +1935,11 @@ export class JourneysService {
   async updateLayout(
     account: Account,
     updateJourneyDto: UpdateJourneyLayoutDto,
-    session: string
+    session: string,
+    runner?: QueryRunner
   ): Promise<Journey> {
-    const queryRunner = this.dataSource.createQueryRunner();
+    let queryRunner: QueryRunner;
+    runner ? queryRunner = runner : queryRunner = this.dataSource.createQueryRunner();
     queryRunner.startTransaction();
     let err;
     try {
@@ -2065,6 +1997,9 @@ export class JourneysService {
 
             metadata.connectionId = nodes[i].data.connectionId;
             metadata.sendingOptionId = nodes[i].data.sendingOptionId;
+            metadata.replyToOptionId = nodes[i].data.replyToOptionId;
+            metadata.oneClickUnsubscribeOptionId = nodes[i].data.oneClickUnsubscribeOptionId;
+            metadata.oneClickUnsubscribeEnabled = nodes[i].data.oneClickUnsubscribeEnabled;
 
             metadata.customName = nodes[i].data['customName'] || 'Unknown name';
             if (nodes[i].data['template']['selected'])
@@ -2092,7 +2027,7 @@ export class JourneysService {
               if (nodes[i].data['template']['selected']['pushBuilder'])
                 metadata.selectedPlatform =
                   nodes[i].data['template']['selected']['pushBuilder'][
-                    'selectedPlatform'
+                  'selectedPlatform'
                   ];
             }
             this.debug(
@@ -2182,136 +2117,121 @@ export class JourneysService {
                   relevantEdges[i].data['branch'].conditions.length;
                   eventsIndex++
                 ) {
-                  let event;
-                  if (
-                    relevantEdges[i].data['branch'].conditions[eventsIndex]
-                      .providerType === ProviderType.Tracker
-                  ) {
-                    event = new ComponentEvent();
-                    event.event =
-                      relevantEdges[i].data['branch'].conditions[
-                        eventsIndex
-                      ].event;
-                    event.trackerID =
-                      relevantEdges[i].data['branch'].conditions[
-                        eventsIndex
-                      ].trackerId;
-                  } else {
-                    event = new AnalyticsEvent();
-                    event.conditions = [];
-                    event.event =
-                      relevantEdges[i].data['branch'].conditions[
-                        eventsIndex
-                      ].name;
-                    event.provider =
-                      relevantEdges[i].data['branch'].conditions[
-                        eventsIndex
-                      ].providerType;
-                    event.relation =
-                      relevantEdges[i].data['branch'].conditions[
-                        eventsIndex
-                      ].statements[0]?.relationToNext;
-                    for (
-                      let conditionsIndex = 0;
-                      conditionsIndex <
+                  if (relevantEdges[i].data['branch'].conditions[eventsIndex].type === "analytics") {
+                    let event;
+                    if (
                       relevantEdges[i].data['branch'].conditions[eventsIndex]
-                        .statements.length;
-                      conditionsIndex++
+                        .providerType === ProviderType.Tracker
                     ) {
-                      const condition = new AnalyticsEventCondition();
-                      condition.type =
+                      event = new ComponentEvent();
+                      event.event =
                         relevantEdges[i].data['branch'].conditions[
                           eventsIndex
-                        ].statements[conditionsIndex].type;
-                      if (condition.type === FilterByOption.ELEMENTS) {
-                        condition.elementCondition = new ElementCondition();
-                        condition.elementCondition.comparisonType =
+                        ].event;
+                      event.trackerID =
+                        relevantEdges[i].data['branch'].conditions[
+                          eventsIndex
+                        ].trackerId;
+                    } else {
+                      event = new AnalyticsEvent();
+                      event.conditions = [];
+                      event.event =
+                        relevantEdges[i].data['branch'].conditions[
+                          eventsIndex
+                        ].name;
+                      event.provider =
+                        relevantEdges[i].data['branch'].conditions[
+                          eventsIndex
+                        ].providerType;
+                      event.relation =
+                        relevantEdges[i].data['branch'].conditions[
+                          eventsIndex
+                        ].statements[0]?.relationToNext;
+                      for (
+                        let conditionsIndex = 0;
+                        conditionsIndex <
+                        relevantEdges[i].data['branch'].conditions[eventsIndex]
+                          .statements.length;
+                        conditionsIndex++
+                      ) {
+                        const condition = new AnalyticsEventCondition();
+                        condition.type =
                           relevantEdges[i].data['branch'].conditions[
                             eventsIndex
-                          ].statements[conditionsIndex].comparisonType;
-                        condition.elementCondition.filter =
-                          relevantEdges[i].data['branch'].conditions[
-                            eventsIndex
-                          ].statements[conditionsIndex].elementKey;
-                        condition.elementCondition.filterType =
-                          relevantEdges[i].data['branch'].conditions[
-                            eventsIndex
-                          ].statements[conditionsIndex].valueType;
-                        condition.elementCondition.order =
-                          relevantEdges[i].data['branch'].conditions[
-                            eventsIndex
-                          ].statements[conditionsIndex].order;
-                        condition.elementCondition.value =
-                          relevantEdges[i].data['branch'].conditions[
-                            eventsIndex
-                          ].statements[conditionsIndex].value;
-                      } else {
-                        condition.propertyCondition = new PropertyCondition();
-                        condition.propertyCondition.comparisonType =
-                          relevantEdges[i].data['branch'].conditions[
-                            eventsIndex
-                          ].statements[conditionsIndex].comparisonType;
-                        condition.propertyCondition.key =
-                          relevantEdges[i].data['branch'].conditions[
-                            eventsIndex
-                          ].statements[conditionsIndex].key;
-                        condition.propertyCondition.keyType =
-                          relevantEdges[i].data['branch'].conditions[
-                            eventsIndex
-                          ].statements[conditionsIndex].valueType;
-                        condition.propertyCondition.value =
-                          relevantEdges[i].data['branch'].conditions[
-                            eventsIndex
-                          ].statements[conditionsIndex].value;
+                          ].statements[conditionsIndex].type;
+                        if (condition.type === FilterByOption.ELEMENTS) {
+                          condition.elementCondition = new ElementCondition();
+                          condition.elementCondition.comparisonType =
+                            relevantEdges[i].data['branch'].conditions[
+                              eventsIndex
+                            ].statements[conditionsIndex].comparisonType;
+                          condition.elementCondition.filter =
+                            relevantEdges[i].data['branch'].conditions[
+                              eventsIndex
+                            ].statements[conditionsIndex].elementKey;
+                          condition.elementCondition.filterType =
+                            relevantEdges[i].data['branch'].conditions[
+                              eventsIndex
+                            ].statements[conditionsIndex].valueType;
+                          condition.elementCondition.order =
+                            relevantEdges[i].data['branch'].conditions[
+                              eventsIndex
+                            ].statements[conditionsIndex].order;
+                          condition.elementCondition.value =
+                            relevantEdges[i].data['branch'].conditions[
+                              eventsIndex
+                            ].statements[conditionsIndex].value;
+                        } else {
+                          condition.propertyCondition = new PropertyCondition();
+                          condition.propertyCondition.comparisonType =
+                            relevantEdges[i].data['branch'].conditions[
+                              eventsIndex
+                            ].statements[conditionsIndex].comparisonType;
+                          condition.propertyCondition.key =
+                            relevantEdges[i].data['branch'].conditions[
+                              eventsIndex
+                            ].statements[conditionsIndex].key;
+                          condition.propertyCondition.keyType =
+                            relevantEdges[i].data['branch'].conditions[
+                              eventsIndex
+                            ].statements[conditionsIndex].valueType;
+                          condition.propertyCondition.value =
+                            relevantEdges[i].data['branch'].conditions[
+                              eventsIndex
+                            ].statements[conditionsIndex].value;
+                        }
+                        event.conditions.push(condition);
                       }
-                      event.conditions.push(condition);
                     }
-                  }
-                  branch.events.push(event);
-                }
-                metadata.branches.push(branch);
-              } else if (
-                relevantEdges[i].data['branch'].type === BranchType.MESSAGE
-              ) {
-                const branch = new EventBranch();
-                branch.events = [];
-                branch.relation =
-                  relevantEdges[i].data['branch'].conditions[0].relationToNext;
-                branch.index = i;
-                branch.destination = nodes.filter((node) => {
-                  return node.id === relevantEdges[i].target;
-                })[0].data.stepId;
-                for (
-                  let eventsIndex = 0;
-                  eventsIndex <
-                  relevantEdges[i].data['branch'].conditions.length;
-                  eventsIndex++
-                ) {
-                  const event = new MessageEvent();
-                  event.providerType =
-                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                    branch.events.push(event);
+                  } else {
+                    const event = new MessageEvent();
+                    event.providerType =
+                      relevantEdges[i].data['branch'].conditions[eventsIndex][
                       'providerType'
-                    ];
-                  event.journey =
-                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                      ];
+                    event.journey =
+                      relevantEdges[i].data['branch'].conditions[eventsIndex][
                       'from'
-                    ]['key'];
-                  event.step =
-                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                      ]['key'];
+                    event.step =
+                      relevantEdges[i].data['branch'].conditions[eventsIndex][
                       'fromSpecificMessage'
-                    ]['key'];
-                  event.eventCondition =
-                    relevantEdges[i].data['branch'].conditions[eventsIndex][
+                      ]['key'];
+                    event.eventCondition =
+                      relevantEdges[i].data['branch'].conditions[eventsIndex][
                       'eventCondition'
-                    ];
-                  event.happenCondition =
-                    relevantEdges[i].data['branch'].conditions[eventsIndex][
-                      'happenCondition'
-                    ];
-                  branch.events.push(event);
+                      ];
+                    // event.happenCondition =
+                    //   relevantEdges[i].data['branch'].conditions[eventsIndex][
+                    //     'happenCondition'
+                    //   ];
+                    branch.events.push(event);
+                  }
                 }
                 metadata.branches.push(branch);
-              } else if (
+              }
+              else if (
                 relevantEdges[i].data['branch'].type === BranchType.WU_ATTRIBUTE
               ) {
                 const branch = new EventBranch();
@@ -2335,16 +2255,16 @@ export class JourneysService {
                     ].split(';;')[0];
                   event.happenCondition =
                     relevantEdges[i].data['branch'].conditions[eventsIndex][
-                      'happenCondition'
+                    'happenCondition'
                     ];
                   if (event.happenCondition === 'changed to') {
                     event.value =
                       relevantEdges[i].data['branch'].conditions[eventsIndex][
-                        'value'
+                      'value'
                       ];
                     event.valueType =
                       relevantEdges[i].data['branch'].conditions[eventsIndex][
-                        'valueType'
+                      'valueType'
                       ];
                   }
 
@@ -2487,312 +2407,12 @@ export class JourneysService {
     } catch (e) {
       this.error(e, this.updateLayout.name, session, account.email);
       err = e;
-      await queryRunner.rollbackTransaction();
+      if (!runner) await queryRunner.rollbackTransaction();
     } finally {
-      await queryRunner.release();
+      if (!runner) await queryRunner.release();
       if (err) throw err;
     }
   }
-
-  /**
-   * Update a journey.
-   * @param account
-   * @param updateJourneyDto
-   * @param session
-   * @returns
-   */
-  async updateLayoutTransactional(
-    account: Account,
-    updateJourneyDto: UpdateJourneyLayoutDto,
-    queryRunner: QueryRunner,
-    session: string
-  ): Promise<Journey> {
-    let journey = await queryRunner.manager.findOne(Journey, {
-      where: {
-        id: updateJourneyDto.id,
-      },
-    });
-
-    if (!journey) throw new NotFoundException('Journey not found');
-    if (journey.isActive || journey.isDeleted || journey.isPaused)
-      throw new Error('Journey is no longer editable.');
-
-    const { nodes, edges } = updateJourneyDto;
-    for (let i = 0; i < nodes.length; i++) {
-      const step = await queryRunner.manager.findOne(Step, {
-        where: {
-          id: nodes[i].data.stepId,
-        },
-      });
-      const relevantEdges = edges.filter((edge) => {
-        return edge.source === nodes[i].id;
-      });
-      let metadata;
-      switch (nodes[i].type) {
-        case NodeType.START:
-          if (relevantEdges.length > 1)
-            throw new Error('Cannot have more than one branch for Start Step');
-          metadata = new StartStepMetadata();
-          metadata.destination = nodes.filter((node) => {
-            return node.id === relevantEdges[0].target;
-          })[0].data.stepId;
-          break;
-        case NodeType.EMPTY:
-          break;
-        case NodeType.MESSAGE:
-          if (relevantEdges.length > 1)
-            throw new Error(
-              'Cannot have more than one branch for Message Step'
-            );
-          metadata = new MessageStepMetadata();
-          metadata.destination = nodes.filter((node) => {
-            return node.id === relevantEdges[0].target;
-          })[0].data.stepId;
-          metadata.channel = nodes[i].data['template']['type'];
-          if (nodes[i].data['template']['selected'])
-            metadata.template = nodes[i].data['template']['selected']['id'];
-          break;
-        case NodeType.TRACKER:
-          if (relevantEdges.length > 1) {
-            throw new Error(
-              'Cannot have more than one branch for Custom Component Step'
-            );
-          }
-          metadata = new CustomComponentStepMetadata();
-          metadata.destination = nodes.filter((node) => {
-            return node.id === relevantEdges[0].target;
-          })[0].data.stepId;
-          if (nodes[i].data['tracker']) {
-            if (nodes[i].data['tracker']['trackerTemplate']) {
-              metadata.template =
-                nodes[i].data['tracker']['trackerTemplate']['id'];
-            }
-            metadata.action = nodes[i].data['tracker']['visibility'];
-            metadata.humanReadableName = nodes[i].data['tracker']['trackerId'];
-            metadata.pushedValues = {} as Record<string, any>;
-            nodes[i].data['tracker']['fields'].forEach((field) => {
-              metadata.pushedValues[field.name] = field.value;
-            });
-          }
-          this.debug(
-            JSON.stringify({ trackerMetadata: metadata }),
-            this.updateLayout.name,
-            account.email,
-            session
-          );
-          break;
-        case NodeType.WAIT_UNTIL:
-          metadata = new WaitUntilStepMetadata();
-
-          //Time Branch configuration
-          const timeBranch = nodes[i].data['branches'].filter((branch) => {
-            return branch.type === BranchType.MAX_TIME;
-          })[0];
-          if (timeBranch?.timeType === TimeType.TIME_DELAY) {
-            metadata.timeBranch = new TimeDelayStepMetadata();
-            metadata.timeBranch.delay = new Temporal.Duration(
-              timeBranch.delay.years,
-              timeBranch['delay']['months'],
-              timeBranch['delay']['weeks'],
-              timeBranch['delay']['days'],
-              timeBranch['delay']['hours'],
-              timeBranch['delay']['minutes']
-            );
-          } else if (timeBranch?.timeType === TimeType.TIME_WINDOW) {
-            metadata.timeBranch = new TimeWindowStepMetadata();
-            metadata.timeBranch.window = new TimeWindow();
-            metadata.timeBranch.window.from = Temporal.Instant.from(
-              new Date(timeBranch['from']).toISOString()
-            );
-            metadata.timeBranch.window.to = Temporal.Instant.from(
-              new Date(timeBranch['to']).toISOString()
-            );
-          }
-          metadata.branches = [];
-          for (let i = 0; i < relevantEdges.length; i++) {
-            if (relevantEdges[i].data['branch'].type === BranchType.MAX_TIME)
-              metadata.timeBranch.destination = nodes.filter((node) => {
-                return node.id === relevantEdges[i].target;
-              })[0].data.stepId;
-            else if (
-              relevantEdges[i].data['branch'].type === BranchType.EVENT
-            ) {
-              const branch = new EventBranch();
-              branch.events = [];
-              branch.relation =
-                relevantEdges[i].data['branch'].conditions[0].relationToNext;
-              branch.index = i;
-              branch.destination = nodes.filter((node) => {
-                return node.id === relevantEdges[i].target;
-              })[0].data.stepId;
-              for (
-                let eventsIndex = 0;
-                eventsIndex < relevantEdges[i].data['branch'].conditions.length;
-                eventsIndex++
-              ) {
-                let event;
-                if (
-                  relevantEdges[i].data['branch'].conditions[eventsIndex]
-                    .providerType === ProviderType.Tracker
-                ) {
-                  event = new ComponentEvent();
-                  event.event =
-                    relevantEdges[i].data['branch'].conditions[
-                      eventsIndex
-                    ].event;
-                  event.trackerID =
-                    relevantEdges[i].data['branch'].conditions[
-                      eventsIndex
-                    ].trackerId;
-                } else {
-                  event = new AnalyticsEvent();
-                  event.conditions = [];
-                  event.event =
-                    relevantEdges[i].data['branch'].conditions[
-                      eventsIndex
-                    ].name;
-                  event.provider =
-                    relevantEdges[i].data['branch'].conditions[
-                      eventsIndex
-                    ].providerType;
-                  event.relation =
-                    relevantEdges[i].data['branch'].conditions[
-                      eventsIndex
-                    ].statements[0]?.relationToNext;
-                  for (
-                    let conditionsIndex = 0;
-                    conditionsIndex <
-                    relevantEdges[i].data['branch'].conditions[eventsIndex]
-                      .statements.length;
-                    conditionsIndex++
-                  ) {
-                    const condition = new AnalyticsEventCondition();
-                    condition.type =
-                      relevantEdges[i].data['branch'].conditions[
-                        eventsIndex
-                      ].statements[conditionsIndex].type;
-                    if (condition.type === FilterByOption.ELEMENTS) {
-                      condition.elementCondition = new ElementCondition();
-                      condition.elementCondition.comparisonType =
-                        relevantEdges[i].data['branch'].conditions[
-                          eventsIndex
-                        ].statements[conditionsIndex].comparisonType;
-                      condition.elementCondition.filter =
-                        relevantEdges[i].data['branch'].conditions[
-                          eventsIndex
-                        ].statements[conditionsIndex].elementKey;
-                      condition.elementCondition.filterType =
-                        relevantEdges[i].data['branch'].conditions[
-                          eventsIndex
-                        ].statements[conditionsIndex].valueType;
-                      condition.elementCondition.order =
-                        relevantEdges[i].data['branch'].conditions[
-                          eventsIndex
-                        ].statements[conditionsIndex].order;
-                      condition.elementCondition.value =
-                        relevantEdges[i].data['branch'].conditions[
-                          eventsIndex
-                        ].statements[conditionsIndex].value;
-                    } else {
-                      condition.propertyCondition = new PropertyCondition();
-                      condition.propertyCondition.comparisonType =
-                        relevantEdges[i].data['branch'].conditions[
-                          eventsIndex
-                        ].statements[conditionsIndex].comparisonType;
-                      condition.propertyCondition.key =
-                        relevantEdges[i].data['branch'].conditions[
-                          eventsIndex
-                        ].statements[conditionsIndex].key;
-                      condition.propertyCondition.keyType =
-                        relevantEdges[i].data['branch'].conditions[
-                          eventsIndex
-                        ].statements[conditionsIndex].valueType;
-                      condition.propertyCondition.value =
-                        relevantEdges[i].data['branch'].conditions[
-                          eventsIndex
-                        ].statements[conditionsIndex].value;
-                    }
-                    event.conditions.push(condition);
-                  }
-                }
-                branch.events.push(event);
-              }
-              metadata.branches.push(branch);
-            }
-          }
-          break;
-        case NodeType.JUMP_TO:
-          metadata = new LoopStepMetadata();
-          metadata.destination = nodes.filter((node) => {
-            return node.id === nodes[i]?.data?.targetId;
-          })[0]?.data?.stepId;
-          break;
-        case NodeType.EXIT:
-          if (relevantEdges.length > 0)
-            throw new Error('Cannot have any branches for Exit Step');
-          metadata = new ExitStepMetadata();
-          break;
-        case NodeType.TIME_DELAY:
-          if (relevantEdges.length > 1)
-            throw new Error(
-              'Cannot have more than one branch for Time Delay Step'
-            );
-          metadata = new TimeDelayStepMetadata();
-          metadata.destination = nodes.filter((node) => {
-            return node.id === relevantEdges[0].target;
-          })[0].data.stepId;
-          metadata.delay = new Temporal.Duration(
-            nodes[i].data['delay']['years'],
-            nodes[i].data['delay']['months'],
-            nodes[i].data['delay']['weeks'],
-            nodes[i].data['delay']['days'],
-            nodes[i].data['delay']['hours'],
-            nodes[i].data['delay']['minutes']
-          );
-          break;
-        case NodeType.TIME_WINDOW:
-          if (relevantEdges.length > 1)
-            throw new Error(
-              'Cannot have more than one branch for Time Window Step'
-            );
-          metadata = new TimeWindowStepMetadata();
-          metadata.destination = nodes.filter((node) => {
-            return node.id === relevantEdges[0].target;
-          })[0].data.stepId;
-          metadata.window = new TimeWindow();
-          if (nodes[i].data?.windowType === 'SpecDates') {
-            metadata.window.from = Temporal.Instant.from(
-              new Date(nodes[i].data['from']).toISOString()
-            );
-            metadata.window.to = Temporal.Instant.from(
-              new Date(nodes[i].data['to']).toISOString()
-            );
-          } else {
-            metadata.window.fromTime = nodes[i].data.fromTime;
-            metadata.window.toTime = nodes[i].data.toTime;
-            metadata.window.onDays = nodes[i].data.onDays;
-          }
-
-          break;
-      }
-      await queryRunner.manager.save(Step, {
-        ...step,
-        metadata,
-      });
-    }
-
-    journey = await queryRunner.manager.save(Journey, {
-      ...journey,
-      latestChanger: { id: account.id },
-      latestSave: new Date(),
-      visualLayout: {
-        nodes,
-        edges,
-      },
-    });
-    return Promise.resolve(journey);
-  }
-
   async getAllJourneyTags(account: Account, session: string): Promise<any> {
     const workspace = account.teams?.[0]?.organization?.workspaces?.[0];
 
@@ -3000,7 +2620,7 @@ export class JourneysService {
   async cleanupJourneyCache(data: { workspaceId: string }) {
     // invalidate journeys cache entry set in eventPreprocessor
     if (data.workspaceId) {
-      await this.cacheService.delete('Journeys', data.workspaceId);
+      await this.cacheService.delete(CacheConstants.JOURNEYS, data.workspaceId);
     }
   }
 }

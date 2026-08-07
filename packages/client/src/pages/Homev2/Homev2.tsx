@@ -1,25 +1,116 @@
 import { format } from "date-fns";
-import React from "react";
-import { useAppSelector } from "store/hooks";
+import React, { ReactNode, useEffect, useState } from "react";
+import { useAppSelector, useAppDispatch } from "store/hooks";
 import journeyBuilderImage from "./svg/journey-builder.svg";
 import messageChannelsImage from "./svg/message-channels.svg";
 import eventProviderImage from "./svg/event-provider.svg";
+import userSchemaImage from "./svg/user-schema.svg";
 import { useNavigate } from "react-router-dom";
 import Button, { ButtonType } from "components/Elements/Buttonv2";
 import { AppConfig } from "../../constants";
 import config, { JOURNEY_ONBOARDING_KEY } from "config";
+import ApiService from "services/api.service";
+import Account from "types/Account";
+import {
+  setOnboarded,
+  setMessageSetupped,
+  setEventProviderSetupped,
+  setUserSchemaSetupped,
+} from "reducers/onboarding.reducer";
+
+interface CustomEvent {
+  event: string;
+  source: string;
+  correlationKey: string;
+  correlationValue: string;
+  payload: string;
+  createdAt: string;
+  errorMessage?: string;
+}
 
 const Homev2 = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+
+  const [account, setAccount] = useState<Account>();
 
   const { firstName } = useAppSelector((state) => state.auth.userData);
-  const { onboarded, messageSetupped, eventProviderSetupped } = useAppSelector(
-    (state) => state.onboarding
-  );
+  const {
+    onboarded,
+    messageSetupped,
+    eventProviderSetupped,
+    userSchemaSetupped,
+  } = useAppSelector((state) => state.onboarding);
+  const [customEvents, setCustomEvents] = useState<CustomEvent[]>([]);
+  const itemsPerPage = 3;
+
+  useEffect(() => {
+    const fetchAccountData = async () => {
+      try {
+        const { data } = await ApiService.get<Account>({ url: "/accounts" });
+        setAccount(data);
+
+        const {
+          mailgunConnections,
+          sendgridConnections,
+          resendConnections,
+          twilioConnections,
+          pushConnections,
+          pushPlatforms,
+          pk,
+        } = data.workspace;
+
+        // Check if any of the connection arrays are not empty
+        const messageSetuppedCondition =
+          [
+            mailgunConnections,
+            sendgridConnections,
+            resendConnections,
+            twilioConnections,
+            pushConnections,
+          ].some((arr) => arr && arr.length > 0) ||
+          Object.keys(pushPlatforms).length > 0;
+
+        // Dispatch the actions based on conditions
+        if (messageSetuppedCondition) {
+          dispatch(setMessageSetupped(true));
+        }
+
+        // Check for user schema setup (primary key set)
+        if (pk && pk.name) {
+          dispatch(setUserSchemaSetupped(true));
+        }
+
+        const { data: customEventsData } = await ApiService.get({
+          url: `/events/custom-events?take=${itemsPerPage}`,
+        });
+        const eventsCondition = customEventsData.data.length > 0;
+
+        /*
+        // Check if any of the connection arrays are not empty
+        const eventsCondition = [customEventsData].some(
+          (arr) => arr && arr.length > 0
+        );
+        */
+
+        if (eventsCondition) {
+          dispatch(setEventProviderSetupped(true));
+        }
+
+        // Dispatch actions to update the Redux store based on the API response
+        //dispatch(setOnboarded(data.workspace.onboarded));
+        //dispatch(setEventProviderSetupped(data.workspace.eventProviderSetupped));
+      } catch (error) {
+        console.error("Error fetching account data:", error);
+      }
+    };
+
+    fetchAccountData();
+  }, [dispatch]);
 
   const onboardingFixtures: {
     title: string;
-    description: string;
+    description: string | ReactNode;
     link: string;
     linkText: string;
     image: string;
@@ -27,34 +118,72 @@ const Homev2 = () => {
     done: boolean;
   }[] = [
     {
-      title: "Explore journey builder",
-      description:
-        "Create your first journey with guided tutorials. Unleash your creativity and engage your audience with customized journeys.",
-      image: journeyBuilderImage,
-      link: "/onboarding",
-      linkText: "Start",
-      doneLinkText: "Restart",
-      done: onboarded,
+      title: "Set up your user schema",
+      description: (
+        <>
+          Define the list of user properties that Laudspeaker should track to
+          create segments, and personalize messages.{" "}
+          <strong>
+            You must show Laudspeaker how to identify users by setting the
+            primary key
+          </strong>{" "}
+          before you can send messages to any users, or receive events.
+        </>
+      ),
+      image: userSchemaImage,
+      link: "/people/setting",
+      linkText: "Setup now",
+      doneLinkText: "Revisit setup",
+      done: userSchemaSetupped,
     },
     {
       title: "Add message channels",
-      description:
-        "Seamlessly connect your email, SMS, and Slack platforms to reach your customers on their preferred channels.",
+      description: (
+        <>
+          Seamlessly connect your push, SMS, and email platforms to reach your
+          customers on their preferred channels.{" "}
+          <strong>
+            Head to the Message Channels tab of Settings, and add the channels
+            you want.
+          </strong>{" "}
+          Checkout our documentation for more support:
+          https://laudspeaker.com/docs/getting-started/setting-up-mobile-push
+        </>
+      ),
       image: messageChannelsImage,
-      link: "",
+      link: "/settings",
       linkText: "Setup now",
       doneLinkText: "Revisit setup",
       done: messageSetupped,
     },
     {
-      title: "Setup message service and event provider",
-      description:
-        "We'll guide you through connecting your message service and event provider for a comprehensive messaging solution.",
+      title: "Send events to Laudspeaker",
+      description: (
+        <>
+          We'll guide you through how to send events to Laudspeaker to trigger
+          messages at the right time.{" "}
+          <strong>
+            Head to the API tab of Settings, and copy the snippet, then check
+            out the Event Tracker page
+          </strong>{" "}
+          When you fire the events, they should appear on that page.
+        </>
+      ),
       image: eventProviderImage,
-      link: "",
+      link: "/settings",
       linkText: "Setup now",
       doneLinkText: "Revisit setup",
       done: eventProviderSetupped,
+    },
+    {
+      title: "Create your first journey!",
+      description:
+        "Create your first journey with guided tutorials. Unleash your creativity and engage your audience with customized journeys.",
+      image: journeyBuilderImage,
+      link: "/flow",
+      linkText: "Start",
+      doneLinkText: "Restart",
+      done: onboarded,
     },
   ];
 
@@ -73,7 +202,7 @@ const Homev2 = () => {
         <div>{format(new Date(), "MM/dd/yyyy")}</div>
       </div>
 
-      {config.get(JOURNEY_ONBOARDING_KEY) === "true" && (
+      {
         <div className="flex justify-between gap-5">
           <div className="flex flex-col gap-5 w-full">
             <div className="p-5 rounded-lg flex flex-col bg-white">
@@ -172,7 +301,7 @@ const Homev2 = () => {
           </div>
           {/* <div className="min-w-[360px] w-[360px]">3</div> */}
         </div>
-      )}
+      }
     </div>
   );
 };

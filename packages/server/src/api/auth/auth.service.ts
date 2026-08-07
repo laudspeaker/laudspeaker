@@ -12,12 +12,9 @@ import { DataSource, EntityManager, QueryRunner, Repository } from 'typeorm';
 import { RegisterDto } from '../auth/dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthHelper } from './auth.helper';
-import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Verification } from './entities/verification.entity';
 import { CustomersService } from '../customers/customers.service';
-import mongoose from 'mongoose';
-import { InjectConnection } from '@nestjs/mongoose';
 import { RequestResetPasswordDto } from './dto/request-reset-password.dto';
 import { Recovery } from './entities/recovery.entity';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -25,7 +22,8 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Workspaces } from '../workspaces/entities/workspaces.entity';
 import { OrganizationInvites } from '../organizations/entities/organization-invites.entity';
 import { OrganizationTeam } from '../organizations/entities/organization-team.entity';
-import { randomUUID } from 'node:crypto';
+import { QueueType } from '../../common/services/queue/types/queue-type';
+import { Producer } from '../../common/services/queue/classes/producer';
 
 @Injectable()
 export class AuthService {
@@ -33,7 +31,6 @@ export class AuthService {
     private dataSource: DataSource,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
-    @InjectQueue('{message}') private readonly messageQueue: Queue,
     @InjectRepository(Account)
     public readonly accountRepository: Repository<Account>,
     @InjectRepository(Verification)
@@ -47,10 +44,9 @@ export class AuthService {
     @Inject(AuthHelper)
     public readonly helper: AuthHelper,
     @Inject(CustomersService) private customersService: CustomersService,
-    @InjectConnection() private readonly connection: mongoose.Connection,
     @InjectRepository(OrganizationInvites)
     public organizationInvitesRepository: Repository<OrganizationInvites>
-  ) {}
+  ) { }
 
   log(message, method, session, user = 'ANONYMOUS') {
     this.logger.log(
@@ -215,6 +211,17 @@ export class AuthService {
       relations: [
         'organization.owner.teams.organization.workspaces',
         'organization.owner.teams.organization.plan',
+        'organization.owner.teams.organization.workspaces.mailgunConnections.sendingOptions',
+        'organization.owner.teams.organization.workspaces.sendgridConnections.sendingOptions',
+        'organization.owner.teams.organization.workspaces.resendConnections.sendingOptions',
+        'organization.owner.teams.organization.workspaces.mailgunConnections.replyToOptions',
+        'organization.owner.teams.organization.workspaces.sendgridConnections.replyToOptions',
+        'organization.owner.teams.organization.workspaces.resendConnections.replyToOptions',
+        'organization.owner.teams.organization.workspaces.twilioConnections',
+        'organization.owner.teams.organization.workspaces.pushConnections',
+        'organization.owner.teams.organization.owner',
+        'organization.plan',
+        'organization.owner',
       ],
     });
     return { account: workspace.organization.owner, workspace: workspace };
@@ -243,7 +250,7 @@ export class AuthService {
     const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verification.id}`;
 
     if (process.env.EMAIL_VERIFICATION_PROVIDER === 'gmail') {
-      await this.messageQueue.add('email', {
+      await Producer.add(QueueType.MESSAGE, {
         eventProvider: 'gmail',
         key: process.env.GMAIL_APP_CRED,
         from: 'Laudspeaker',
@@ -253,9 +260,9 @@ export class AuthService {
         plainText:
           'Paste the following link into your browser:' + verificationLink,
         text: `Paste the following link into your browser: <a href="${verificationLink}">${verificationLink}</a>`,
-      });
+      }, 'email');
     } else if (process.env.EMAIL_VERIFICATION_PROVIDER === 'mailgun') {
-      await this.messageQueue.add('email', {
+      await Producer.add(QueueType.MESSAGE, {
         key: process.env.MAILGUN_API_KEY,
         from: 'Laudspeaker',
         domain: process.env.MAILGUN_DOMAIN,
@@ -263,10 +270,10 @@ export class AuthService {
         to: user.email,
         subject: 'Email verification',
         text: `Link: <a href="${verificationLink}">${verificationLink}</a>`,
-      });
+      }, 'email');
     } else {
       //default is mailgun right now
-      await this.messageQueue.add('email', {
+      await Producer.add(QueueType.MESSAGE, {
         key: process.env.MAILGUN_API_KEY,
         from: 'Laudspeaker',
         domain: process.env.MAILGUN_DOMAIN,
@@ -274,7 +281,7 @@ export class AuthService {
         to: user.email,
         subject: 'Email verification',
         text: `Link: <a href="${verificationLink}">${verificationLink}</a>`,
-      });
+      }, 'email');
     }
     return verification;
   }
@@ -304,19 +311,14 @@ export class AuthService {
 
     const { email, firstName, lastName, verified } = account;
 
-    const transactionSession = await this.connection.startSession();
-    transactionSession.startTransaction();
 
     try {
       await this.dataSource.transaction(async (transactionSession) => {
         await transactionSession.save(account);
         await transactionSession.save(verification);
       });
-      await transactionSession.commitTransaction();
     } catch (e) {
-      await transactionSession.abortTransaction();
     } finally {
-      await transactionSession.endSession();
     }
   }
 
@@ -337,7 +339,7 @@ export class AuthService {
       switch (process.env.EMAIL_VERIFICATION_PROVIDER) {
         case 'gmail':
           //console.log("sending gmail email resend");
-          await this.messageQueue.add('email', {
+          await Producer.add(QueueType.MESSAGE, {
             eventProvider: 'gmail',
             key: process.env.GMAIL_APP_CRED,
             from: 'Laudspeaker',
@@ -346,10 +348,10 @@ export class AuthService {
             subject: 'Password recovery',
             plaintext: `Recovery link: "${recoveryLink}"`,
             text: `Recovery link: <a href="${recoveryLink}">${recoveryLink}</a>`,
-          });
+          }, 'email');
           break;
         default:
-          await this.messageQueue.add('email', {
+          await Producer.add(QueueType.MESSAGE, {
             key: process.env.MAILGUN_API_KEY,
             from: 'Laudspeaker',
             domain: process.env.MAILGUN_DOMAIN,
@@ -357,7 +359,7 @@ export class AuthService {
             to: account.email,
             subject: 'Password recovery',
             text: `Recovery link: <a href="${recoveryLink}">${recoveryLink}</a>`,
-          });
+          }, 'email');
           break;
       }
     });

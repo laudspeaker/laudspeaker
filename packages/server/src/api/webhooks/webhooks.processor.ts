@@ -1,15 +1,11 @@
 /* eslint-disable no-case-declarations */
-import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job, MetricsTime } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Liquid } from 'liquidjs';
 import { format, parseISO } from 'date-fns';
-import {
-  ClickHouseEventProvider,
-  WebhooksService,
-} from '../webhooks/webhooks.service';
+import { WebhooksService } from '../webhooks/webhooks.service';
 import { fetch } from 'undici';
 import wait from '../../utils/wait';
 import {
@@ -22,26 +18,14 @@ import { TemplatesService } from '../templates/templates.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Account } from '../accounts/entities/accounts.entity';
 import { Repository } from 'typeorm';
+import { Processor } from '../../common/services/queue/decorators/processor';
+import { ProcessorBase } from '../../common/services/queue/classes/processor-base';
+import { ClickHouseEventProvider } from '../../common/services/clickhouse/types/clickhouse-event-provider';
 
-@Processor('{webhooks}', {
-  stalledInterval: process.env.WEBHOOKS_PROCESSOR_STALLED_INTERVAL
-    ? +process.env.WEBHOOKS_PROCESSOR_STALLED_INTERVAL
-    : 600000,
-  removeOnComplete: {
-    age: 0,
-    count: process.env.WEBHOOKS_PROCESSOR_REMOVE_ON_COMPLETE
-      ? +process.env.WEBHOOKS_PROCESSOR_REMOVE_ON_COMPLETE
-      : 0,
-  },
-  metrics: {
-    maxDataPoints: MetricsTime.ONE_WEEK,
-  },
-  concurrency: process.env.WEBHOOKS_PROCESSOR_CONCURRENCY
-    ? +process.env.WEBHOOKS_PROCESSOR_CONCURRENCY
-    : 1,
-})
+
+@Processor('webhooks')
 @Injectable()
-export class WebhooksProcessor extends WorkerHost {
+export class WebhooksProcessor extends ProcessorBase {
   private tagEngine = new Liquid();
 
   constructor(
@@ -159,14 +143,14 @@ export class WebhooksProcessor extends WorkerHost {
   }
 
   async process(job: Job<{ template: Template; [key: string]: any }>) {
-    const { template, filteredTags } = job.data;
+    const { template, filteredTags, strictLiquidChecking } = job.data;
 
     const { method, retries, fallBackAction, mimeType } = template.webhookData;
 
     let { body, headers, url } = template.webhookData;
 
     url = await this.tagEngine.parseAndRender(url, filteredTags || {}, {
-      strictVariables: true,
+      strictVariables: strictLiquidChecking,
     });
     url = await this.templatesService.parseTemplateTags(url);
 
@@ -182,7 +166,7 @@ export class WebhooksProcessor extends WorkerHost {
     } else {
       body = await this.templatesService.parseTemplateTags(body);
       body = await this.tagEngine.parseAndRender(body, filteredTags || {}, {
-        strictVariables: true,
+        strictVariables: strictLiquidChecking,
       });
     }
 
@@ -191,12 +175,12 @@ export class WebhooksProcessor extends WorkerHost {
         Object.entries(headers).map(async ([key, value]) => [
           await this.templatesService.parseTemplateTags(
             await this.tagEngine.parseAndRender(key, filteredTags || {}, {
-              strictVariables: true,
+              strictVariables: strictLiquidChecking,
             })
           ),
           await this.templatesService.parseTemplateTags(
             await this.tagEngine.parseAndRender(value, filteredTags || {}, {
-              strictVariables: true,
+              strictVariables: strictLiquidChecking,
             })
           ),
         ])

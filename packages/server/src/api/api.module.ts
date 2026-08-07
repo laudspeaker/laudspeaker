@@ -3,15 +3,11 @@ import { AuthModule } from './auth/auth.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { CustomersModule } from './customers/customers.module';
 import { EmailModule } from './email/email.module';
-import { WorkflowsModule } from './workflows/workflows.module';
-import { AudiencesModule } from './audiences/audiences.module';
 import { EventsModule } from './events/events.module';
 import { TemplatesModule } from './templates/templates.module';
 import { SlackModule } from './slack/slack.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Workflow } from './workflows/entities/workflow.entity';
 import { Template } from './templates/entities/template.entity';
-import { Audience } from './audiences/entities/audience.entity';
 import { TestsModule } from './tests/tests.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { SegmentsModule } from './segments/segments.module';
@@ -27,15 +23,13 @@ import { ModalsModule } from './modals/modals.module';
 import { randomUUID } from 'crypto';
 import { StepsModule } from './steps/steps.module';
 import { JourneysModule } from './journeys/journeys.module';
-import { DevModeModule } from './dev-mode/dev-mode.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
+import { ChannelsModule } from './channels/channels.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      Audience,
       Template,
-      Workflow,
       WebhookJob,
       Accounts,
     ]),
@@ -43,8 +37,6 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
     AuthModule,
     CustomersModule,
     EmailModule,
-    WorkflowsModule,
-    AudiencesModule,
     EventsModule,
     TemplatesModule,
     SlackModule,
@@ -60,8 +52,8 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
     ModalsModule,
     StepsModule,
     JourneysModule,
-    DevModeModule,
     WorkspacesModule,
+    ChannelsModule,
   ],
 })
 export class ApiModule {

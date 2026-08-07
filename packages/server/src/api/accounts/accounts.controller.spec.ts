@@ -1,6 +1,4 @@
 import { TypeOrmConfigService } from '../../shared/typeorm/typeorm.service';
-import { BullModule } from '@nestjs/bullmq';
-import { MongooseModule } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { WinstonModule } from 'nest-winston';
@@ -24,14 +22,6 @@ describe('UsersController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       imports: [
-        MongooseModule.forRoot(process.env.MONGOOSE_URL),
-        BullModule.forRoot({
-          connection: {
-            host: process.env.REDIS_HOST,
-            port: parseInt(process.env.REDIS_PORT),
-            password: process.env.REDIS_PASSWORD,
-          },
-        }),
         WinstonModule.forRootAsync({
           useFactory: () => ({
             level: 'debug',

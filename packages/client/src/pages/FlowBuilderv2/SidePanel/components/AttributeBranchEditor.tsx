@@ -1,6 +1,5 @@
 import Button, { ButtonType } from "components/Elements/Buttonv2/Button";
 import {
-  AttributeBranch,
   AttributeCondition,
   LogicRelation,
 } from "pages/FlowBuilderv2/Nodes/NodeData";
@@ -9,7 +8,7 @@ import deepCopy from "utils/deepCopy";
 import AttributeConditionEditor from "./AttributeConditionEditor";
 
 interface AttributeBranchEditorProps {
-  branch: AttributeBranch;
+  branch: any;
   onAddCondition: () => void;
   onDeleteBranch: () => void;
   onConditionChange: (j: number, condition: AttributeCondition) => void;
@@ -41,7 +40,7 @@ const AttributeBranchEditor: FC<AttributeBranchEditorProps> = ({
 
   return (
     <div className="flex flex-col gap-[10px]">
-      {branch.attributeConditions.map((condition, i) => (
+      {branch.attributeConditions.map((condition: any, i: any) => (
         <React.Fragment key={i}>
           {conditionIndexToChange === i ? (
             <AttributeConditionEditor
@@ -107,7 +106,7 @@ const AttributeBranchEditor: FC<AttributeBranchEditorProps> = ({
                   </div>
                 </div>
               </div>
-              {condition.statements.map((statement, k) => (
+              {condition.statements.map((statement: any, k: any) => (
                 <React.Fragment key={k}>
                   <div
                     className="font-inter font-normal text-[14px] leading-[22px]"

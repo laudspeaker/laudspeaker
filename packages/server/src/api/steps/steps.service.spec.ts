@@ -3,7 +3,6 @@ import { createMock } from '@golevelup/ts-jest';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { DataSource } from 'typeorm';
 import { getQueueToken } from '@nestjs/bullmq';
-import { getConnectionToken } from '@nestjs/mongoose';
 import { Queue } from 'bullmq';
 import { StepsService } from './steps.service';
 
@@ -31,10 +30,6 @@ describe('StepsService', () => {
         },
         {
           provide: getQueueToken('transition'),
-          useValue: { add: jest.fn() },
-        },
-        {
-          provide: getConnectionToken(),
           useValue: { add: jest.fn() },
         },
       ],
