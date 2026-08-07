@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MailgunProvider } from './email/providers/mailgun.provider';
+import { MailkiteProvider } from './email/providers/mailkite.provider';
 import { ChannelsController } from './channels.controller';
 import { ChannelsService } from './channels.service';
 import { ProviderFactory } from './interfaces/provider.factory';
@@ -10,7 +11,7 @@ function getImportsList() {
   return importList;
 }
 function getProvidersList() {
-  let providerList: Array<any> = [MailgunProvider, ChannelsService, ProviderFactory];
+  let providerList: Array<any> = [MailgunProvider, MailkiteProvider, ChannelsService, ProviderFactory];
 
   return providerList;
 }
@@ -22,7 +23,7 @@ function getControllersList() {
 }
 
 function getExportsList() {
-  let exportList: Array<any> = [MailgunProvider];
+  let exportList: Array<any> = [MailgunProvider, MailkiteProvider];
 
   return exportList;
 }

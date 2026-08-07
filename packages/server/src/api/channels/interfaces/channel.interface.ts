@@ -19,4 +19,5 @@ export enum Provider {
     FIREBASE_IOS = 'firebase_ios',
     FIREBASE_ANDROID = 'firebase_android',
     RESEND = 'resend',
+    MAILKITE = 'mailkite',
 }

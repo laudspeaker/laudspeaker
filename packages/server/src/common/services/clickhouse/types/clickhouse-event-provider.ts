@@ -7,4 +7,5 @@ export enum ClickHouseEventProvider {
   WEBHOOKS = 'webhooks',
   TRACKER = 'tracker',
   RESEND = 'resend',
+  MAILKITE = 'mailkite',
 }
